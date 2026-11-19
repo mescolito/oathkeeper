@@ -340,7 +340,7 @@ html[data-mode="dark"] .awardin .btn.primary{color:var(--inv)}
 /* to-do tabs and priority groups */
 .tdtabs{display:flex;gap:18px;overflow-x:auto;scrollbar-width:none;margin:0 -18px;padding:2px 18px 4px;align-items:center}
 .tdtabs::-webkit-scrollbar{display:none}
-.tdtab{flex:none;border:0;background:none;font-family:var(--sans);font-size:28px;font-weight:700;color:var(--muted);opacity:.5;cursor:pointer;padding:4px 0;min-height:44px;white-space:nowrap;letter-spacing:-.02em}
+.tdtab{flex:none;border:0;background:none;font-family:'Fraunces',Georgia,serif;font-size:30px;font-weight:500;color:var(--muted);opacity:.5;cursor:pointer;padding:4px 0;min-height:44px;white-space:nowrap;letter-spacing:-.02em}
 .tdtab.on{color:var(--ink);opacity:1}
 .tdtab.add{opacity:.6;display:flex;align-items:center;justify-content:center;width:44px;font-family:inherit}
 .tdbar{gap:8px}
@@ -364,29 +364,33 @@ html[data-mode="dark"] .awardin .btn.primary{color:var(--inv)}
 .addsteps{border:0;background:transparent;color:var(--muted);font-size:12.5px;font-weight:600;padding:0 2px;cursor:pointer;min-height:24px}
 .stepadd{padding:4px 0 8px 58px}
 .clitem .xbtn.sm{width:32px;height:32px}
-.clitem.td{grid-template-columns:1fr auto}
+.clitem.td{grid-template-columns:1fr auto;padding-left:46px}
 .steprow{gap:6px;flex-wrap:nowrap}
 .steprow input{flex:1;min-width:0}
 .steplist{display:flex;flex-direction:column;gap:8px}
 .sgrip{display:grid;grid-template-columns:repeat(2,5px);gap:4px;padding:10px 6px;cursor:grab;touch-action:none;flex:none;color:var(--muted)}
 .sgrip i{display:block;width:5px;height:5px;border-radius:50%;background:currentColor}
 .sdragging{opacity:.85;box-shadow:0 8px 20px rgba(0,0,0,.18);border-radius:14px;background:var(--card);position:relative;z-index:2}
-.clitem.td.grab{grid-template-columns:auto 1fr auto;padding-left:34px}
+.clitem.td.grab{grid-template-columns:auto 1fr auto;padding-left:8px}
 .xbtn.sm[disabled]{opacity:.25}
 .clitem.td .clcheck{margin:0 13px 0 4px}
 .tditem .cl{grid-column:1/-1}
-.tditem{display:grid;grid-template-columns:44px 1fr auto 44px;gap:12px;align-items:center;background:var(--card);border-radius:22px;padding:12px;box-shadow:0 1px 0 var(--line)}
-.tditem.done{grid-template-columns:44px 1fr 44px;opacity:.5;background:transparent;box-shadow:inset 0 0 0 1.5px var(--line)}
+.tditem{display:grid;grid-template-columns:24px 1fr auto 44px;gap:12px;align-items:center;background:var(--card);border-radius:22px;padding:12px 12px 12px 10px;box-shadow:0 1px 0 var(--line)}
+.tditem.done{grid-template-columns:24px 1fr 44px;opacity:.5;background:transparent;box-shadow:inset 0 0 0 1.5px var(--line)}
 .tditem.done .tname{text-decoration:line-through;color:var(--muted)}
-.tdgrip{width:44px;height:44px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:#ece5d6;cursor:grab;touch-action:none;flex:none}
-.tdgrip i{display:block;width:16px;height:2.5px;border-radius:2px;background:currentColor;opacity:.6}
-.tdgrip.pri-high{background:#e7b9bd;color:#171614} .tdgrip.pri-med{background:#e3dba0;color:#171614} .tdgrip.pri-low{background:#bccbd6;color:#171614}
-.tditem.done .tdgrip{cursor:default}
+/* the 4-dot handle, tinted with the item's priority; the title takes the same color */
+.tdgrip{width:24px;height:44px;display:grid;grid-template-columns:repeat(2,5px);gap:4px;align-content:center;justify-content:center;cursor:grab;touch-action:none;flex:none;color:var(--muted)}
+.tdgrip i{display:block;width:5px;height:5px;border-radius:50%;background:currentColor}
+.tdgrip.pri-high,.tditem.pri-high .tname{color:#b8606b} .tdgrip.pri-med,.tditem.pri-med .tname{color:#86791f} .tdgrip.pri-low,.tditem.pri-low .tname{color:#56728c}
+html[data-mode="dark"] .tdgrip.pri-high,html[data-mode="dark"] .tditem.pri-high .tname{color:#e7b9bd}
+html[data-mode="dark"] .tdgrip.pri-med,html[data-mode="dark"] .tditem.pri-med .tname{color:#e3dba0}
+html[data-mode="dark"] .tdgrip.pri-low,html[data-mode="dark"] .tditem.pri-low .tname{color:#bccbd6}
+.tditem.done .tdgrip{cursor:default;color:var(--muted)}
 .check.round{border-radius:50%}
 .tditem.dragging{position:fixed;z-index:80;pointer-events:none;box-shadow:0 12px 30px rgba(0,0,0,.25);transform:scale(1.02);margin:0}
 .tdph{border-radius:22px;border:2px dashed var(--line);background:transparent}
 body.dragmode{user-select:none;-webkit-user-select:none;cursor:grabbing}
-html[data-mode="dark"] .tdplus,html[data-mode="dark"] .tdgrip.pri-none{background:#2d2a26;color:var(--ink)}
+html[data-mode="dark"] .tdplus{background:#2d2a26;color:var(--ink)}
 
 .sprows{display:flex;flex-direction:column;gap:0;padding:4px 14px}
 .sprow{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
@@ -548,7 +552,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '752b4ed9a5';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'cac94948b7';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -2545,8 +2549,8 @@ function renderTodo(){
   if (!L) return `${tabs}${newList || `<p class="how">No lists yet. Tap + to make one.</p>`}`;
   const itemRow = it => { const isD = !!it.doneOn, canUndo = isD && it.doneOn === D.today, g = priOf(it);
     const meta = isD ? `Done ${it.doneOn === D.today ? 'today' : fmt(it.doneOn)}${D.todoPaid.has(it.id) ? '' : ' · no bonus'}` : it.createdOn === D.today ? 'Bonus starts tomorrow' : todoLeft > 0 ? '+8 XP, +6 G' : 'Daily to-do bonus used up';
-    return `<div class="tditem ${isD ? 'done' : ''}" data-item="${esc(it.id)}">
-      <span class="tdgrip pri-${g}" ${isD ? '' : `data-drag="${esc(it.id)}"`} aria-hidden="true">${isD ? svg('check',16,2.6) : '<i></i><i></i><i></i>'}</span>
+    return `<div class="tditem pri-${g} ${isD ? 'done' : ''}" data-item="${esc(it.id)}">
+      <span class="tdgrip pri-${g}" ${isD ? '' : `data-drag="${esc(it.id)}"`} aria-hidden="true"><i></i><i></i><i></i><i></i></span>
       <span class="tbody"><span class="tname">${esc(it.text)}</span><span class="tmeta">${meta}${todoEdit && !isD && !(it.steps && it.steps.length) && !clOpen.has('td:' + it.id) ? `<button class="addsteps" data-clopen="td:${esc(it.id)}">+ Steps</button>` : ''}</span></span>
       ${!isD ? `<button class="xbtn" data-delitem="${esc(L.id)}|${esc(it.id)}" aria-label="Delete ${esc(it.text)}">${svg('x',16,2.4)}</button>` : ''}
       <button class="check round" data-todo="${esc(L.id)}|${esc(it.id)}" aria-pressed="${isD}" aria-label="${isD ? 'Undo' : 'Complete'} ${esc(it.text)}" ${isD && !canUndo ? 'disabled' : ''}>${svg('check',18,2.8)}</button>
