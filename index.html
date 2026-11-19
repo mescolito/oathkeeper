@@ -552,7 +552,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '295190e647';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '8d259cc00c';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1498,8 +1498,15 @@ function syncHtml(){
 const GIST_CFG = 'oathkeeper-gist', GIST_FILE = 'oathkeeper-save.json';
 const gistCfg = () => { try { const c = JSON.parse(localStorage.getItem(GIST_CFG) || 'null'); return c && typeof c.token === 'string' ? c : null; } catch(e){ return null; } };
 async function gh(path, token, opt = {}){
-  const r = await fetch('https://api.github.com' + path, {...opt, headers: {'Accept':'application/vnd.github+json', 'Authorization':'Bearer ' + token, 'X-GitHub-Api-Version':'2022-11-28', ...(opt.body ? {'Content-Type':'application/json'} : {})}});
-  if (!r.ok){ const e = new Error('GitHub ' + r.status); e.status = r.status; e.code = r.status === 401 ? 'bad_token' : r.status === 403 || r.status === 429 ? 'rate' : 'unavailable'; throw e; }
+  let r;
+  try { r = await fetch('https://api.github.com' + path, {...opt, headers: {'Accept':'application/vnd.github+json', 'Authorization':'Bearer ' + token, 'X-GitHub-Api-Version':'2022-11-28', ...(opt.body ? {'Content-Type':'application/json'} : {})}}); }
+  catch(err){ const e = new Error('offline'); e.code = 'unavailable'; e.offline = true; throw e; }
+  if (!r.ok){
+    let said = ''; try { said = String(((await r.json()) || {}).message || '').slice(0, 140); } catch(err){}
+    const e = new Error('GitHub ' + r.status); e.status = r.status; e.said = said;
+    // 403/404 without a rate limit means the token works but isn't allowed to use gists
+    e.code = r.status === 401 ? 'bad_token' : r.status === 429 || (r.status === 403 && /rate limit/i.test(said)) ? 'rate' : r.status === 403 || r.status === 404 ? 'no_gists' : 'unavailable';
+    throw e; }
   return r.status === 204 ? null : r.json();
 }
 // finds your Oathkeeper gist, or makes one the first time
@@ -3549,8 +3556,15 @@ function onClick(e){
         const snap = await gistRef({token, gistId}).get();
         if (snap.exists){ const remote = normalize(clone(snap.data())); if (remote.createdTs !== S.createdTs && !gamePristine(S)){ gistChoice = {token, gistId, here: gameSummary(S), there: gameSummary(remote)}; return 'ask'; } }
         try { localStorage.setItem(GIST_CFG, JSON.stringify({token, gistId})); } catch(e){} return initGist(true); })
-      .then(r => { render(); if (r === 'ask') return; if (cloud.mode === 'cloud') toast('Connected. Your save now syncs through GitHub.'); else { const m = document.getElementById('gistMsg'); if (m) m.textContent = 'Saved the token, but GitHub didn’t answer. It will retry.'; } }, err => { msg.textContent = err && err.code === 'bad_token' ? 'GitHub didn’t accept that token.' : 'Could not reach GitHub. Try again.'; });
+      .then(r => { render(); if (r === 'ask') return; if (cloud.mode === 'cloud') toast('Connected. Your save now syncs through GitHub.'); else { const m = document.getElementById('gistMsg'); if (m) m.textContent = 'Saved the token, but GitHub didn’t answer. It will retry.'; } }, err => { msg.textContent = gistErrText(err); });
     return; }
+  function gistErrText(err){
+    const c = err && err.code, tail = err && err.status ? ` (GitHub ${err.status}${err.said ? ': ' + err.said : ''})` : '';
+    return c === 'bad_token' ? 'GitHub didn’t accept that token. Copy it again; it starts with github_pat_.' + tail
+      : c === 'no_gists' ? 'That token works, but it isn’t allowed to use gists. Edit it on GitHub: Account permissions → Gists → Read and write.' + tail
+      : c === 'rate' ? 'GitHub is limiting requests right now. Wait a minute and try again.' + tail
+      : err && err.offline ? 'Could not reach GitHub. Check your connection and try again.' : 'GitHub had a problem. Try again in a moment.' + tail;
+  }
   if (PAGES && el.dataset.gistpick && gistChoice){ const pick = el.dataset.gistpick, c = gistChoice; gistChoice = null;
     if (pick === 'cancel'){ render(); return; }
     try { localStorage.setItem(GIST_CFG, JSON.stringify({token: c.token, gistId: c.gistId})); localStorage.removeItem(SYNC_META); } catch(e){}
