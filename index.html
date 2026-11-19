@@ -505,6 +505,8 @@ details.howto .how{padding-bottom:12px;margin:0}
 
 .ptog{border:0;border-radius:999px;min-width:64px;min-height:36px;padding:0 14px;font:inherit;font-weight:700;background:rgba(255,255,255,.12);color:#bdb6c8;cursor:pointer}
 .ptog.on{background:#f1eee4;color:#141312}
+.fmusic{cursor:pointer;gap:6px}
+.fmusic.on{background:rgba(241,238,228,.92);color:#141312}
 
 .sneed{display:block;font-size:12px;color:#b4555f;margin-top:3px}
 .sneed.ok{color:var(--muted)}
@@ -558,7 +560,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '00190b6513';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'd8119a0e58';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -915,7 +917,7 @@ function defaults(){
     log:{}, pickLog:{}, rerolls:{}, owned:['dawn','axo'], equip:{hat:null, bg:'dawn', color:'axo'},
     gear:{weapon:null, offhand:null, armor:null}, gearLog:[], bag:[], seenDrops:[],
     skills:{}, skillUnlock:{}, skillLog:[], waives:{}, lightens:{}, buys:[], snap:{}, firstTs:{}, picks:{}, results:{}, statMeta:{}, wkTg:{}, wkBn:{},
-    todos:{lists:[{id:'l_home', name:'House repairs', items:[]}]}, potions:[], runeBuys:[], faintLog:{}, legends:{}, checks:{}, stepLog:{}, schema:SCHEMA, inn:[], pomo:{cfg:{focus:25, short:5, long:15, every:4, sound:true, haptic:true}, run:null}, pomoLog:[], settings:{theme:'light', rollover:0, hideDone:false, collapse:{vitals:false, boss:false}, dismissed:{}}, sells:[], mig:7, updated:0};
+    todos:{lists:[{id:'l_home', name:'House repairs', items:[]}]}, potions:[], runeBuys:[], faintLog:{}, legends:{}, checks:{}, stepLog:{}, schema:SCHEMA, inn:[], pomo:{cfg:{focus:25, short:5, long:15, every:4, sound:true, music:true, haptic:true}, run:null}, pomoLog:[], settings:{theme:'light', rollover:0, hideDone:false, collapse:{vitals:false, boss:false}, dismissed:{}}, sells:[], mig:7, updated:0};
 }
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const isDate = v => typeof v === 'string' && DATE_RE.test(v);
@@ -1007,7 +1009,7 @@ function sanitize(s, created){
   out.inn = (Array.isArray(s.inn) ? s.inn : []).filter(st => obj(st) && isDate(st.from) && (st.to == null || isDate(st.to))).map(st => ({from: st.from, to: st.to || null, ts: num(st.ts, 0), paid: isDate(st.paid) ? st.paid : null})).filter(st => !st.to || st.to >= st.from).sort((a,b) => a.from < b.from ? -1 : 1);
   { let open = false; out.inn = out.inn.filter(st => { if (st.to) return true; if (open) return false; open = true; return true; }); }
   if (obj(s.pomo)){ const c = obj(s.pomo.cfg) ? s.pomo.cfg : {}; const r = s.pomo.run;
-    out.pomo = {cfg: {focus: int(c.focus, 5, 90, 25), short: int(c.short, 1, 30, 5), long: int(c.long, 5, 60, 15), every: int(c.every, 2, 8, 4), sound: c.sound !== false, haptic: c.haptic !== false},
+    out.pomo = {cfg: {focus: int(c.focus, 5, 90, 25), short: int(c.short, 1, 30, 5), long: int(c.long, 5, 60, 15), every: int(c.every, 2, 8, 4), sound: c.sound !== false, music: c.music !== false, haptic: c.haptic !== false},
       run: obj(r) && ['focus','short','long'].includes(r.phase) ? {phase: r.phase, startTs: num(r.startTs, 0), pausedMs: num(r.pausedMs, 0), pauseAt: r.pauseAt ? num(r.pauseAt, 0) : null, n: int(r.n, 0, 999, 0), idle: !!r.idle, ...(r.mins ? {mins: int(r.mins, 5, 90, 25)} : {}), ...(r.extra ? {extra: int(r.extra, 0, 3600000, 0)} : {})} : null}; }
   out.pomoLog = (Array.isArray(s.pomoLog) ? s.pomoLog : []).filter(x => obj(x)).map(x => ({ts: num(x.ts, 0), mins: int(x.mins, 1, 90, 25)})).filter(x => x.ts > 0);
   out.testGold = PREVIEW && Array.isArray(s.testGold) ? s.testGold.filter(x => obj(x)).map(x => ({ts: num(x.ts, 0), g: int(x.g, 0, 100000, 0)})) : [];
@@ -2327,7 +2329,7 @@ function renderHeader(){
   const d = parseKey(D.today).toLocaleDateString('en-US', {weekday:'long', month:'short', day:'numeric'});
   document.body.classList.toggle('focusmode', tab === 'focus'); document.documentElement.classList.toggle('focusmode', tab === 'focus'); document.body.dataset.pomo = pomoState();
   if (tab === 'focus'){
-    document.getElementById('top').innerHTML = `<button class="fpill" data-back aria-label="Back to ${TITLES[prevTab] || 'Today'}">${svg('back',20,2.4)} Back</button><span class="fpill" aria-label="${D.balance} gold"><i class="gdot"></i>${D.balance} G</span>`;
+    document.getElementById('top').innerHTML = `<button class="fpill" data-back aria-label="Back to ${TITLES[prevTab] || 'Today'}">${svg('back',20,2.4)} Back</button><span class="row" style="gap:8px">${musicBtn()}<span class="fpill" aria-label="${D.balance} gold"><i class="gdot"></i>${D.balance} G</span></span>`;
     return;
   }
   if (tab === 'settings'){
@@ -2771,6 +2773,11 @@ const pomoMins = (ph, r) => ph === 'focus' ? ((r && r.mins) || S.pomo.cfg.focus)
 const pomoTotal = r => (r && !r.idle) ? pomoMins(r.phase, r) * 60000 + (r.extra || 0) : pomoMins('focus') * 60000;
 function pomoLeft(){ const r = S.pomo.run; if (!r || r.idle) return pomoMins('focus') * 60000; const el = (r.pauseAt || Date.now()) - r.startTs - r.pausedMs; return Math.max(0, pomoTotal(r) - el); }
 const mmss = ms => { const t = Math.ceil(ms / 1000); return `${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`; };
+// the lo-fi toggle sits at the top of the focus screen, always in reach
+function musicBtn(){
+  const on = S.pomo.cfg.music;
+  return `<button class="fpill fmusic ${on ? 'on' : ''}" data-ptog="music" aria-pressed="${on}" aria-label="Lo-fi music ${on ? 'on, tap to mute' : 'muted, tap to turn on'}">${on ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>' : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>'} Lo-fi</button>`;
+}
 function renderFocus(){
   const r = S.pomo.run, c = S.pomo.cfg, running = r && !r.idle, paused = running && r.pauseAt;
   const phase = running ? r.phase : 'focus', n = r ? r.n : 0;
@@ -2801,7 +2808,8 @@ function renderFocus(){
   <section class="pbelow">
     <h3>Timer</h3>
     <div class="psteps">${step('focus','Focus',5,90,5)}${step('short','Short break',1,30,1)}${step('long','Long break',5,60,5)}${step('every','Sessions per set',2,8,1)}
-      <div class="pstep"><span>Sounds</span><button class="ptog ${c.sound ? 'on' : ''}" data-ptog="sound" aria-pressed="${c.sound}">${c.sound ? 'On' : 'Off'}</button></div>
+      <div class="pstep"><span>Lo-fi music during focus</span><button class="ptog ${c.music ? 'on' : ''}" data-ptog="music" aria-pressed="${c.music}">${c.music ? 'On' : 'Off'}</button></div>
+      <div class="pstep"><span>Timer chimes</span><button class="ptog ${c.sound ? 'on' : ''}" data-ptog="sound" aria-pressed="${c.sound}">${c.sound ? 'On' : 'Off'}</button></div>
       <div class="pstep"><span>Vibration</span><button class="ptog ${c.haptic ? 'on' : ''}" data-ptog="haptic" aria-pressed="${c.haptic}">${c.haptic ? 'On' : 'Off'}</button></div></div>
     <p class="phow">Vibration works on Android phones; iPhones don't let web pages vibrate, so you'll get the sounds there.</p>
     ${running ? '<p class="phow">Stop the timer to change these.</p>' : ''}
@@ -3003,7 +3011,7 @@ function showRecovery(){
 }
 function render(){
   if (recoveryMode){ showRecovery(); return; }
-  try { renderInner(); }
+  try { renderInner(); musicSync(); }
   catch(err){ console.error(err); enterRecovery(String(err && err.message || err)); showRecovery(); }
 }
 function renderInner(){
@@ -3398,7 +3406,7 @@ function onClick(e){
     const st = innNow(); if (!st) return;
     if (st.from >= D.today) S.inn = S.inn.filter(x => x !== st); else st.to = D.yest;
     save(); render(); toast('Checked out. The fight is back on.'); return; }
-  if (el.dataset.ptog){ const k = el.dataset.ptog; if (k !== 'sound' && k !== 'haptic') return; S.pomo.cfg[k] = !S.pomo.cfg[k]; save(); render(); if (k === 'sound' && S.pomo.cfg.sound) sfx('resume'); if (k === 'haptic' && S.pomo.cfg.haptic) buzz(40); return; }
+  if (el.dataset.ptog){ const k = el.dataset.ptog; if (k !== 'sound' && k !== 'haptic' && k !== 'music') return; S.pomo.cfg[k] = !S.pomo.cfg[k]; if (k === 'music') sfxInit(); save(); render(); if (k === 'sound' && S.pomo.cfg.sound) sfx('resume'); if (k === 'haptic' && S.pomo.cfg.haptic) buzz(40); return; }
   if (el.dataset.pomo){ const a = el.dataset.pomo, r = S.pomo.run, now = Date.now(); sfxInit();
     const cue = {start:['start',[30,40,60]], pause:['pause',30], resume:['resume',30], stop:['stop',[60]], skip:['stop',[40]], plus1:['tick',15]}[a]; if (cue){ sfx(cue[0]); buzz(cue[1]); }
     if (a === 'start'){ if (r && !r.idle) return; S.pomo.run = {phase:'focus', startTs: now, pausedMs: 0, pauseAt: null, n: r ? r.n : 0, mins: S.pomo.cfg.focus}; }
@@ -3816,6 +3824,93 @@ function sfx(name){
     for (const [f, dt, d] of SFX[name]) tone(f, t + dt, d, vol); } catch(e){}
 }
 function buzz(pattern){ try { if (S.pomo.cfg.haptic && navigator.vibrate) navigator.vibrate(pattern); } catch(e){} }
+
+/* ---------- lo-fi music while a focus session runs: made live with Web Audio (no files, no streaming) ----------
+   72 bpm, swung: soft electric-piano 7th chords, a round bass, a dusty kick/snare/hat beat, a few lazy melody
+   notes and a little vinyl crackle, all through a warm low-pass. It fades in when focus starts and out on
+   pause, breaks or stop. */
+const LOFI_BPM = 72, LOFI_PROGS = [
+  [[50,53,57,60,64],[43,53,55,59,62],[48,52,55,59,62],[45,48,52,55,59]],   // Dm9  G13  Cmaj9  Am9
+  [[41,52,55,57,60],[40,50,55,59,62],[38,53,57,60,64],[43,53,57,59,64]],   // Fmaj7 Em7 Dm9 G7
+  [[45,55,60,64,67],[50,57,60,64,65],[43,53,57,59,62],[48,55,59,62,64]]    // Am7 Dm7 G9 Cmaj7
+];
+let lofi = null;
+const midiHz = m => 440 * Math.pow(2, (m - 69) / 12);
+function lofiWanted(){ const r = S.pomo && S.pomo.run; return !!(S.pomo && S.pomo.cfg.music && r && !r.idle && !r.pauseAt && r.phase === 'focus' && !recoveryMode); }
+function musicSync(){
+  try {
+    const want = lofiWanted();
+    if (want && !lofi) lofiStart();
+    else if (!want && lofi) lofiStop();
+  } catch(e){}
+}
+// a timer restored after a reload can't start sound until you touch the page; the first tap wakes it
+document.addEventListener('pointerdown', () => { try { if (lofi && actx && actx.state === 'suspended') actx.resume(); } catch(e){} }, {passive: true});
+function lofiStart(){
+  sfxInit(); if (!actx) return;
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch(e){}   // play even with the iPhone's silent switch on
+  const now = actx.currentTime;
+  const master = actx.createGain(); master.gain.setValueAtTime(0.0001, now); master.gain.exponentialRampToValueAtTime(0.85, now + 2.5);
+  const warm = actx.createBiquadFilter(); warm.type = 'lowpass'; warm.frequency.value = 2400; warm.Q.value = 0.4;
+  master.connect(warm); warm.connect(actx.destination);
+  // one second of white noise, reused for drums and crackle
+  const nb = actx.createBuffer(1, actx.sampleRate, actx.sampleRate), nd = nb.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+  // vinyl: a quiet hiss plus sparse pops, looping
+  const vb = actx.createBuffer(1, actx.sampleRate * 3, actx.sampleRate), vd = vb.getChannelData(0);
+  for (let i = 0; i < vd.length; i++) vd[i] = (Math.random() * 2 - 1) * 0.012 + (Math.random() < 0.00035 ? (Math.random() * 2 - 1) * 0.5 : 0);
+  const vin = actx.createBufferSource(); vin.buffer = vb; vin.loop = true; const vf = actx.createBiquadFilter(); vf.type = 'bandpass'; vf.frequency.value = 3000; vf.Q.value = 0.6;
+  const vg = actx.createGain(); vg.gain.value = 0.5; vin.connect(vf); vf.connect(vg); vg.connect(master); vin.start(now);
+  lofi = {master, noise: nb, vin, next: now + 0.15, step: 0, bar: 0, prog: LOFI_PROGS[Math.floor(Math.random() * LOFI_PROGS.length)], timer: 0};
+  lofi.timer = setInterval(lofiSchedule, 200); lofiSchedule();
+}
+function lofiStop(){
+  const L = lofi; lofi = null; if (!L) return;
+  clearInterval(L.timer);
+  try { const t = actx.currentTime; L.master.gain.cancelScheduledValues(t); L.master.gain.setValueAtTime(Math.max(0.0001, L.master.gain.value), t); L.master.gain.exponentialRampToValueAtTime(0.0001, t + 1.2);
+    setTimeout(() => { try { L.vin.stop(); L.master.disconnect(); } catch(e){} }, 1400); } catch(e){}
+}
+// schedules ~1.5s ahead so a backgrounded tab (timers slowed to once a second) doesn't leave gaps
+function lofiSchedule(){
+  const L = lofi; if (!L || !actx) return;
+  const eighth = 60 / LOFI_BPM / 2;
+  while (L.next < actx.currentTime + 1.5){
+    const st = L.step % 8, t = L.next + (st % 2 ? eighth * 0.18 : 0);   // swing the off-beats
+    if (st === 0){ if (L.bar % 4 === 0 && L.bar && Math.random() < 0.35) L.prog = LOFI_PROGS[Math.floor(Math.random() * LOFI_PROGS.length)]; lofiChord(L, L.prog[L.bar % 4], t, eighth * 8); }
+    const root = L.prog[L.bar % 4][0];
+    if (st === 0 || st === 5) lofiBass(L, root - 12, t, eighth * (st === 0 ? 3.5 : 2.5));
+    if (st === 0 || st === 3 || (st === 6 && Math.random() < 0.4)) lofiKick(L, t);
+    if (st === 2 || st === 6) lofiSnare(L, t);
+    if (Math.random() < 0.85) lofiHat(L, t, st % 2 ? 0.05 : 0.08);
+    if (st % 2 === 0 && Math.random() < 0.22){ const ch = L.prog[L.bar % 4]; lofiKey(L, ch[1 + Math.floor(Math.random() * (ch.length - 1))] + 12, t, eighth * (1.5 + Math.random() * 2), 0.05); }
+    L.next += eighth; L.step++; if (L.step % 8 === 0) L.bar++;
+  }
+}
+function lofiKey(L, m, t, dur, vol){
+  // electric-piano-ish: a sine with a quieter detuned triangle, soft attack and a long fade
+  const f = midiHz(m), g = actx.createGain(), o = actx.createOscillator(), o2 = actx.createOscillator(), g2 = actx.createGain();
+  o.type = 'sine'; o.frequency.value = f; o2.type = 'triangle'; o2.frequency.value = f; o2.detune.value = 7; g2.gain.value = 0.35;
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.04); g.gain.exponentialRampToValueAtTime(vol * 0.45, t + 0.6); g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.4);
+  o.connect(g); o2.connect(g2); g2.connect(g); g.connect(L.master); o.start(t); o2.start(t); o.stop(t + dur + 0.5); o2.stop(t + dur + 0.5);
+}
+function lofiChord(L, notes, t, dur){ notes.slice(1).forEach((m, i) => lofiKey(L, m, t + i * 0.012, dur, 0.045)); }
+function lofiBass(L, m, t, dur){
+  const o = actx.createOscillator(), g = actx.createGain(); o.type = 'sine'; o.frequency.value = midiHz(m);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.16, t + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(L.master); o.start(t); o.stop(t + dur + 0.05);
+}
+function lofiKick(L, t){
+  const o = actx.createOscillator(), g = actx.createGain(); o.type = 'sine';
+  o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.18);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.32, t + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+  o.connect(g); g.connect(L.master); o.start(t); o.stop(t + 0.4);
+}
+function lofiNoise(L, t, dur, type, freq, vol){
+  const n = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain(); n.buffer = L.noise;
+  f.type = type; f.frequency.value = freq; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  n.connect(f); f.connect(g); g.connect(L.master); n.start(t, Math.random() * 0.5); n.stop(t + dur + 0.02);
+}
+function lofiSnare(L, t){ lofiNoise(L, t, 0.22, 'bandpass', 1700, 0.12); }
+function lofiHat(L, t, vol){ lofiNoise(L, t, 0.045, 'highpass', 7000, vol * 0.6); }
 </script>
 </body>
 </html>
