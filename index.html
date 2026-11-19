@@ -552,7 +552,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '8ef8a84abe';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '46bc500871';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -2346,6 +2346,9 @@ function taskRow(t, k){
     meta = (n >= tg ? 'Weekly goal hit' : `+${r.xp} xp each`) + (tg < weekTarget(t,k) ? ' · lightened' : '') + (t.bonus ? ` · bonus at ${t.bonus}` : '');
     if (!isDue(t,k)){ disabled = !isD; meta = `Not open today · opens ${daysText(schedAt(t,k).days)}`; }
   }
+  // a change to how often waits for tomorrow; say where the task is headed so it doesn't look stuck
+  const nextCad = schedAt(t, addDays(k,1)).cad;
+  if (nextCad !== cad) meta += nextCad === 'week' ? ' · moves to This week tomorrow' : ' · moves to Dailies tomorrow';
   const closed = !isD && !rested && !isDue(t,k);
   const name = isPool ? pick.name : t.name;
   let rr = '';
@@ -3507,7 +3510,10 @@ function onClick(e){
     } else out.sched = [entry];
     if (i >= 0) S.tasks[i] = out; else S.tasks.push(out);
     if (out.pool) for (const dk of relock){ if (S.picks[dk]) delete S.picks[dk][out.id]; const p = pickFor(out, dk); (S.picks[dk] || (S.picks[dk] = {}))[out.id] = {n:p.name, s:p.stats.slice()}; }
-    save(); closeEditor(); render(); return;
+    const nowCad = schedAt(out, D.today).cad, nextCad = schedAt(out, addDays(D.today,1)).cad;
+    save(); closeEditor(); render();
+    if (old && nowCad !== nextCad) toast(nowCad === 'day' ? 'Saved. It’s still a daily today (so it can’t dodge tonight), then moves to This week tomorrow.' : 'Saved. It moves to Dailies tomorrow.');
+    return;
   }
   if ('copy' in el.dataset){ const msg = document.getElementById('copyMsg');
     try { navigator.clipboard.writeText(JSON.stringify(S)).then(() => msg.textContent = 'Copied. Paste it somewhere safe.', () => msg.textContent = 'Copy was blocked here. Try from the full-page view.'); } catch(err){ msg.textContent = 'Copy was blocked here.'; } return; }
