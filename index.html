@@ -507,6 +507,10 @@ details.howto .how{padding-bottom:12px;margin:0}
 .ptog.on{background:#f1eee4;color:#141312}
 .fmusic{cursor:pointer;gap:6px}
 .fmusic.on{background:rgba(241,238,228,.92);color:#141312}
+.lofimenu{position:fixed;top:calc(env(safe-area-inset-top) + 76px);right:18px;z-index:30;display:flex;flex-direction:column;gap:6px;padding:8px;border-radius:22px;background:rgba(28,30,52,.96);box-shadow:0 12px 32px rgba(0,0,0,.4);min-width:220px}
+.lofiopt{display:flex;flex-direction:column;align-items:flex-start;gap:2px;border:0;border-radius:16px;padding:10px 14px;background:transparent;color:#f1eee4;font:inherit;text-align:left;cursor:pointer}
+.lofiopt b{font-size:15px}.lofiopt span{font-size:12px;color:#bdb6c8}
+.lofiopt.on{background:rgba(241,238,228,.92);color:#141312}.lofiopt.on span{color:#4a4640}
 
 .sneed{display:block;font-size:12px;color:#b4555f;margin-top:3px}
 .sneed.ok{color:var(--muted)}
@@ -560,7 +564,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '4b66d9d289';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '56f094cdf5';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -917,7 +921,7 @@ function defaults(){
     log:{}, pickLog:{}, rerolls:{}, owned:['dawn','axo'], equip:{hat:null, bg:'dawn', color:'axo'},
     gear:{weapon:null, offhand:null, armor:null}, gearLog:[], bag:[], seenDrops:[],
     skills:{}, skillUnlock:{}, skillLog:[], waives:{}, lightens:{}, buys:[], snap:{}, firstTs:{}, picks:{}, results:{}, statMeta:{}, wkTg:{}, wkBn:{},
-    todos:{lists:[{id:'l_home', name:'House repairs', items:[]}]}, potions:[], runeBuys:[], faintLog:{}, legends:{}, checks:{}, stepLog:{}, schema:SCHEMA, inn:[], pomo:{cfg:{focus:25, short:5, long:15, every:4, sound:true, music:true, haptic:true}, run:null}, pomoLog:[], settings:{theme:'light', rollover:0, hideDone:false, collapse:{vitals:false, boss:false}, dismissed:{}}, sells:[], mig:7, updated:0};
+    todos:{lists:[{id:'l_home', name:'House repairs', items:[]}]}, potions:[], runeBuys:[], faintLog:{}, legends:{}, checks:{}, stepLog:{}, schema:SCHEMA, inn:[], pomo:{cfg:{focus:25, short:5, long:15, every:4, sound:true, music:true, lofi:'chill', haptic:true}, run:null}, pomoLog:[], settings:{theme:'light', rollover:0, hideDone:false, collapse:{vitals:false, boss:false}, dismissed:{}}, sells:[], mig:7, updated:0};
 }
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const isDate = v => typeof v === 'string' && DATE_RE.test(v);
@@ -1009,7 +1013,7 @@ function sanitize(s, created){
   out.inn = (Array.isArray(s.inn) ? s.inn : []).filter(st => obj(st) && isDate(st.from) && (st.to == null || isDate(st.to))).map(st => ({from: st.from, to: st.to || null, ts: num(st.ts, 0), paid: isDate(st.paid) ? st.paid : null})).filter(st => !st.to || st.to >= st.from).sort((a,b) => a.from < b.from ? -1 : 1);
   { let open = false; out.inn = out.inn.filter(st => { if (st.to) return true; if (open) return false; open = true; return true; }); }
   if (obj(s.pomo)){ const c = obj(s.pomo.cfg) ? s.pomo.cfg : {}; const r = s.pomo.run;
-    out.pomo = {cfg: {focus: int(c.focus, 5, 90, 25), short: int(c.short, 1, 30, 5), long: int(c.long, 5, 60, 15), every: int(c.every, 2, 8, 4), sound: c.sound !== false, music: c.music !== false, haptic: c.haptic !== false},
+    out.pomo = {cfg: {focus: int(c.focus, 5, 90, 25), short: int(c.short, 1, 30, 5), long: int(c.long, 5, 60, 15), every: int(c.every, 2, 8, 4), sound: c.sound !== false, music: c.music !== false, lofi: c.lofi === 'upbeat' ? 'upbeat' : 'chill', haptic: c.haptic !== false},
       run: obj(r) && ['focus','short','long'].includes(r.phase) ? {phase: r.phase, startTs: num(r.startTs, 0), pausedMs: num(r.pausedMs, 0), pauseAt: r.pauseAt ? num(r.pauseAt, 0) : null, n: int(r.n, 0, 999, 0), idle: !!r.idle, ...(r.mins ? {mins: int(r.mins, 5, 90, 25)} : {}), ...(r.extra ? {extra: int(r.extra, 0, 3600000, 0)} : {})} : null}; }
   out.pomoLog = (Array.isArray(s.pomoLog) ? s.pomoLog : []).filter(x => obj(x)).map(x => ({ts: num(x.ts, 0), mins: int(x.mins, 1, 90, 25)})).filter(x => x.ts > 0);
   out.testGold = PREVIEW && Array.isArray(s.testGold) ? s.testGold.filter(x => obj(x)).map(x => ({ts: num(x.ts, 0), g: int(x.g, 0, 100000, 0)})) : [];
@@ -2776,7 +2780,14 @@ const mmss = ms => { const t = Math.ceil(ms / 1000); return `${Math.floor(t/60)}
 // the lo-fi toggle sits at the top of the focus screen, always in reach
 function musicBtn(){
   const on = S.pomo.cfg.music;
-  return `<button class="fpill fmusic ${on ? 'on' : ''}" data-ptog="music" aria-pressed="${on}" aria-label="Lo-fi music ${on ? 'on, tap to mute' : 'muted, tap to turn on'}">${on ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>' : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>'} Lo-fi</button>`;
+  return `<button class="fpill fmusic ${on ? 'on' : ''}" data-musicmenu aria-expanded="${musicMenu}" aria-label="Lo-fi music: ${on ? (LOFI_STYLES[S.pomo.cfg.lofi] || LOFI_STYLES.chill).label : 'off'}. Tap for options">${on ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>' : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>'} ${on ? (LOFI_STYLES[S.pomo.cfg.lofi] || LOFI_STYLES.chill).label : 'Lo-fi off'}</button>`;
+}
+var musicMenu = false;
+function musicMenuHtml(){
+  if (!musicMenu) return '';
+  const c = S.pomo.cfg, cur = c.music ? (c.lofi || 'chill') : 'off';
+  const opt = (k, label, note) => `<button class="lofiopt ${cur === k ? 'on' : ''}" data-lofi="${k}" aria-pressed="${cur === k}"><b>${label}</b><span>${note}</span></button>`;
+  return `<div class="lofimenu" role="group" aria-label="Lo-fi music">${Object.entries(LOFI_STYLES).map(([k, st]) => opt(k, st.label, st.note)).join('')}${opt('off', 'Off', 'No music')}</div>`;
 }
 function renderFocus(){
   const r = S.pomo.run, c = S.pomo.cfg, running = r && !r.idle, paused = running && r.pauseAt;
@@ -2792,7 +2803,7 @@ function renderFocus(){
   const step = (key, label2, lo, hi, d) => `<div class="pstep"><span>${label2}</span><span class="row" style="gap:6px"><button class="pbtn-sq" data-pcfg="${key}:-${d}" ${running || c[key] <= lo ? 'disabled' : ''} aria-label="Less ${label2}">−</button><b>${c[key]}${key === 'every' ? '' : ' min'}</b><button class="pbtn-sq" data-pcfg="${key}:${d}" ${running || c[key] >= hi ? 'disabled' : ''} aria-label="More ${label2}">+</button></span></div>`;
   const coll = [...LEGENDARY_GEAR, LEGENDARY_PET].map(id => { const it = ITEM[id] || {...GEAR_BY[id], gear:true}, have = D.drops.has(id);
     return `<div class="legslot ${have ? 'have' : ''}">${have ? itemArt(it, true) : '<span class="legq">?</span>'}<span>${have ? esc(it.name) : id === LEGENDARY_PET ? 'Legendary pet' : SLOTS[it.slot] || 'Helmet'}</span></div>`; }).join('');
-  return `<section class="space" aria-label="Focus timer">
+  return `${musicMenuHtml()}<section class="space" aria-label="Focus timer">
     <h2 class="ptitle">${title}</h2>
     <div class="psub">${sub}</div>
     <div class="ringwrap"><svg class="ring" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="${R}" class="rtrack"/><circle id="pRing" cx="50" cy="50" r="${R}" class="rbar st-${pomoState()} ${running ? '' : 'idle'}" stroke-dasharray="${circ.toFixed(2)}" stroke-dashoffset="${(circ * (1 - frac)).toFixed(2)}"/></svg>
@@ -3406,6 +3417,10 @@ function onClick(e){
     const st = innNow(); if (!st) return;
     if (st.from >= D.today) S.inn = S.inn.filter(x => x !== st); else st.to = D.yest;
     save(); render(); toast('Checked out. The fight is back on.'); return; }
+  if ('musicmenu' in el.dataset){ musicMenu = !musicMenu; sfxInit(); render(); return; }
+  if (el.dataset.lofi){ const v = el.dataset.lofi; musicMenu = false; sfxInit();
+    if (v === 'off') S.pomo.cfg.music = false; else if (LOFI_STYLES[v]){ S.pomo.cfg.music = true; S.pomo.cfg.lofi = v; }
+    save(); render(); return; }
   if (el.dataset.ptog){ const k = el.dataset.ptog; if (k !== 'sound' && k !== 'haptic' && k !== 'music') return; S.pomo.cfg[k] = !S.pomo.cfg[k]; if (k === 'music') sfxInit(); save(); render(); if (k === 'sound' && S.pomo.cfg.sound) sfx('resume'); if (k === 'haptic' && S.pomo.cfg.haptic) buzz(40); return; }
   if (el.dataset.pomo){ const a = el.dataset.pomo, r = S.pomo.run, now = Date.now(); sfxInit();
     const cue = {start:['start',[30,40,60]], pause:['pause',30], resume:['resume',30], stop:['stop',[60]], skip:['stop',[40]], plus1:['tick',15]}[a]; if (cue){ sfx(cue[0]); buzz(cue[1]); }
@@ -3843,7 +3858,12 @@ const LOFI_PROGS = {
     [[39,55,58,62,65],[44,56,60,63,67],[39,55,58,62,65],[37,56,60,63,65]]    // Ebmaj9 Abmaj9 Ebmaj9 Dbmaj9
   ]
 };
-const LOFI_BPM = {focus: 72, break: 62};
+// styles you pick from the Lo-fi button; each sets the tempo for focus and breaks and how busy the beat is
+const LOFI_STYLES = {
+  chill:  {label: 'Chill',  note: 'Slow and dusty', bpm: {focus: 72, break: 62}, swing: 0.18, hat: 0.85, ghost: 0,    lead: 0.22},
+  upbeat: {label: 'Upbeat', note: 'Faster, bouncier beat', bpm: {focus: 94, break: 76}, swing: 0.12, hat: 1,    ghost: 0.35, lead: 0.3}
+};
+const lofiStyle = () => LOFI_STYLES[S.pomo.cfg.lofi] || LOFI_STYLES.chill;
 let lofi = null;
 const midiHz = m => 440 * Math.pow(2, (m - 69) / 12);
 const lofiPick = mode => LOFI_PROGS[mode][Math.floor(Math.random() * LOFI_PROGS[mode].length)];
@@ -3856,10 +3876,13 @@ function musicSync(){
   try {
     const want = lofiWanted();
     if (want && !lofi) lofiStart(want);
+    else if (want && lofi.style !== (S.pomo.cfg.lofi || 'chill')){ lofiStop(); lofiStart(want); }   // switching style: the old one fades as the new one comes in
     else if (want && lofi.mode !== want) lofiMode(want);
     else if (!want && lofi) lofiStop();
   } catch(e){}
 }
+// tapping anywhere outside the Lo-fi menu closes it
+document.addEventListener('pointerdown', e => { if (musicMenu && !(e.target.closest && e.target.closest('.lofimenu, [data-musicmenu]'))){ musicMenu = false; setTimeout(render, 0); } }, {passive: true});
 // a timer restored after a reload can't start sound until you touch the page; the first tap wakes it
 document.addEventListener('pointerdown', () => { try { if (lofi && actx && actx.state === 'suspended') actx.resume(); } catch(e){} }, {passive: true});
 function lofiStart(mode){
@@ -3883,7 +3906,7 @@ function lofiStart(mode){
   for (let i = 0; i < rd.length; i++){ last = (last + 0.04 * (Math.random() * 2 - 1)) / 1.04; rd[i] = last * 2.2 + (Math.random() < 0.0006 ? (Math.random() * 2 - 1) * 0.12 : 0); }
   const rs = actx.createBufferSource(); rs.buffer = rb; rs.loop = true; const rf = actx.createBiquadFilter(); rf.type = 'lowpass'; rf.frequency.value = 1400;
   rs.connect(rf); rf.connect(rain); rs.start(now);
-  lofi = {mode, master, warm, drums, keys, rain, noise: nb, srcs: [vin, rs], next: now + 0.15, step: 0, bar: 0, bpm: LOFI_BPM[mode], prog: lofiPick(mode), swap: false, timer: 0};
+  lofi = {mode, master, warm, drums, keys, rain, noise: nb, srcs: [vin, rs], next: now + 0.15, step: 0, bar: 0, style: S.pomo.cfg.lofi || 'chill', bpm: lofiStyle().bpm[mode], prog: lofiPick(mode), swap: false, timer: 0};
   lofi.timer = setInterval(lofiSchedule, 200); lofiSchedule();
 }
 // focus <-> break without stopping: buses and filter glide over a few seconds, new chords from the next bar
@@ -3903,8 +3926,9 @@ function lofiStop(){
 function lofiSchedule(){
   const L = lofi; if (!L || !actx) return;
   while (L.next < actx.currentTime + 1.5){
-    L.bpm += Math.max(-0.4, Math.min(0.4, LOFI_BPM[L.mode] - L.bpm));   // tempo drifts, it doesn't jump
-    const eighth = 60 / L.bpm / 2, st = L.step % 8, t = L.next + (st % 2 ? eighth * 0.18 : 0), brk = L.mode === 'break';
+    const sty = LOFI_STYLES[L.style] || LOFI_STYLES.chill;
+    L.bpm += Math.max(-0.4, Math.min(0.4, sty.bpm[L.mode] - L.bpm));   // tempo drifts, it doesn't jump
+    const eighth = 60 / L.bpm / 2, st = L.step % 8, t = L.next + (st % 2 ? eighth * sty.swing : 0), brk = L.mode === 'break';
     if (st === 0){
       if (L.swap || (L.bar % 4 === 0 && L.bar && Math.random() < 0.35)){ if (L.swap ? L.bar % 2 === 0 : true){ L.prog = lofiPick(L.mode); L.swap = false; L.bar = 0; } }
       lofiChord(L, L.prog[L.bar % 4], t, eighth * 8, brk);
@@ -3919,8 +3943,9 @@ function lofiSchedule(){
     } else {
       if (st === 0 || st === 3 || (st === 6 && Math.random() < 0.4)) lofiKick(L, t);
       if (st === 2 || st === 6) lofiSnare(L, t);
-      if (Math.random() < 0.85) lofiHat(L, t, st % 2 ? 0.05 : 0.08);
-      if (st % 2 === 0 && Math.random() < 0.22){ const ch = L.prog[L.bar % 4]; lofiKey(L, ch[1 + Math.floor(Math.random() * (ch.length - 1))] + 12, t, eighth * (1.5 + Math.random() * 2), 0.05); }
+      if (Math.random() < sty.hat) lofiHat(L, t, st % 2 ? 0.05 : 0.08);
+      if ((st === 7 || st === 3) && Math.random() < sty.ghost) lofiNoise(L, t, 0.08, 'bandpass', 1900, 0.045);   // ghost snare
+      if (st % 2 === 0 && Math.random() < sty.lead){ const ch = L.prog[L.bar % 4]; lofiKey(L, ch[1 + Math.floor(Math.random() * (ch.length - 1))] + 12, t, eighth * (1.5 + Math.random() * 2), 0.05); }
     }
     L.next += eighth; L.step++; if (L.step % 8 === 0) L.bar++;
   }
