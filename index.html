@@ -359,6 +359,12 @@ html[data-mode="dark"] .awardin .btn.primary{color:var(--inv)}
 .tdgroup.empty .tdpill{opacity:.55}
 .tdplus{width:36px;height:36px;border-radius:50%;border:0;background:#ece5d6;color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer}
 .tdlist{display:flex;flex-direction:column;gap:10px;min-height:6px}
+.addsteps{border:0;background:transparent;color:var(--muted);font-size:12.5px;font-weight:600;padding:0 2px;cursor:pointer;min-height:24px}
+.stepadd{padding:4px 0 8px 58px}
+.clitem .xbtn.sm{width:32px;height:32px}
+.clitem.td{grid-template-columns:1fr auto}
+.clitem.td .clcheck{margin:0 13px 0 4px}
+.tditem .cl{grid-column:1/-1}
 .tditem{display:grid;grid-template-columns:44px 1fr auto 44px;gap:12px;align-items:center;background:var(--card);border-radius:22px;padding:12px;box-shadow:0 1px 0 var(--line)}
 .tditem.done{grid-template-columns:44px 1fr 44px;opacity:.5;background:transparent;box-shadow:inset 0 0 0 1.5px var(--line)}
 .tditem.done .tname{text-decoration:line-through;color:var(--muted)}
@@ -532,7 +538,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'ad6950978c';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '686064a33d';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -957,7 +963,10 @@ function sanitize(s, created){
   out.runeBuys = (Array.isArray(s.runeBuys) ? s.runeBuys : []).filter(r => obj(r) && RUNE_BY[r.id] && isDate(r.date)).map(r => { const o = {id: r.id, ts: num(r.ts, 0), date: r.date, g: int(r.g, 0, 100000, 0)}; if (r.token) o.token = true; if (r.bag){ o.bag = true; o.g = 0; delete o.token; } return o; });
   if (obj(s.todos) && Array.isArray(s.todos.lists)){
     // generous caps; finished items are never dropped, because their rewards are part of history
-    const cleanItem = it => { const o = {id: it.id.slice(0,40), text: it.text.slice(0,80)}; if (isDate(it.createdOn)) o.createdOn = it.createdOn; if (it.pri === 'high' || it.pri === 'med' || it.pri === 'low') o.pri = it.pri; if (isDate(it.doneOn)){ o.doneOn = it.doneOn; o.doneTs = num(it.doneTs, 0); } return o; };
+    const cleanItem = it => { const o = {id: it.id.slice(0,40), text: it.text.slice(0,80)}; if (isDate(it.createdOn)) o.createdOn = it.createdOn; if (it.pri === 'high' || it.pri === 'med' || it.pri === 'low') o.pri = it.pri; if (isDate(it.doneOn)){ o.doneOn = it.doneOn; o.doneTs = num(it.doneTs, 0); }
+      // optional sub-checklist; steps never give a reward of their own
+      if (Array.isArray(it.steps)){ const st = it.steps.filter(obj).map(x => ({id: str(x.id, 20, ''), text: str(x.text, 60, '').trim(), ...(x.done ? {done: true} : {})})).filter((x, i, a) => x.id && x.text && a.findIndex(y => y.id === x.id) === i).slice(0, CHECK_MAX); if (st.length) o.steps = st; }
+      return o; };
     const lists = s.todos.lists.filter(L => obj(L) && typeof L.id === 'string' && !PROTO_KEYS.has(L.id));
     const keepL = lists.filter(L => L.hidden || (Array.isArray(L.items) && L.items.some(it => obj(it) && isDate(it.doneOn)))).concat(lists.filter(L => !L.hidden).slice(0, 1000));
     out.todos = {lists: lists.filter(L => keepL.includes(L)).map(L => { const raw = (Array.isArray(L.items) ? L.items : []).filter(it => obj(it) && typeof it.id === 'string' && typeof it.text === 'string');
@@ -2486,6 +2495,17 @@ function renderBattle(){
 }
 
 /* ---------- to-dos ---------- */
+// a to-do's own checklist of steps: collapsible like the task checklists, with an add row while it's open
+function todoSteps(L, it){
+  const st = it.steps || [], open = clOpen.has('td:' + it.id), isD = !!it.doneOn, key = `${esc(L.id)}|${esc(it.id)}`;
+  if (!st.length && !open) return '';
+  const got = st.filter(x => x.done).length;
+  return `<div class="cl ${open ? 'open' : ''}">
+    ${open ? `<div class="cllist">${st.map(x => `<div class="clitem td ${x.done ? 'on' : ''}"><span class="cltext">${esc(x.text)}</span><span class="row" style="gap:2px;flex-wrap:nowrap">${!isD ? `<button class="xbtn sm" data-tdstepdel="${key}|${esc(x.id)}" aria-label="Remove step ${esc(x.text)}">${svg('x',14,2.4)}</button>` : ''}<button class="clcheck" data-tdstep="${key}|${esc(x.id)}" aria-pressed="${!!x.done}" aria-label="${x.done ? 'Untick' : 'Tick'} ${esc(x.text)}" ${isD ? 'disabled' : ''}>${svg('check',14,3)}</button></span></div>`).join('')}
+      ${!isD && st.length < CHECK_MAX ? `<form class="addrow stepadd" data-addstep="${key}"><input type="text" id="step-${esc(it.id)}" maxlength="60" placeholder="Add a step" aria-label="Add a step to ${esc(it.text)}"><button class="btn" type="submit">Add</button></form>` : ''}</div>` : ''}
+    <button class="clhead" data-clopen="td:${esc(it.id)}" aria-expanded="${open}" aria-label="${open ? 'Hide' : 'Show'} steps, ${got} of ${st.length} done">${st.length ? `${bar(100*got/st.length, null, 'clbar')}<span class="cln">${got}/${st.length}</span>` : '<span class="cln">Steps</span>'}<span class="clchev">${svg(open ? 'up' : 'down',16,2.4)}</span></button>
+  </div>`;
+}
 /* To-dos: lists are tabs; inside a list, items sit in priority groups you can drag between. */
 const PRI = [['high','High','▲'],['med','Medium','●'],['low','Low','▼'],['none','To-do','']];
 const priOf = it => it.pri === 'high' || it.pri === 'med' || it.pri === 'low' ? it.pri : 'none';
@@ -2506,9 +2526,10 @@ function renderTodo(){
     const meta = isD ? `Done ${it.doneOn === D.today ? 'today' : fmt(it.doneOn)}${D.todoPaid.has(it.id) ? '' : ' · no bonus'}` : it.createdOn === D.today ? 'Bonus starts tomorrow' : todoLeft > 0 ? '+8 XP, +6 G' : 'Daily to-do bonus used up';
     return `<div class="tditem ${isD ? 'done' : ''}" data-item="${esc(it.id)}">
       <span class="tdgrip pri-${g}" ${isD ? '' : `data-drag="${esc(it.id)}"`} aria-hidden="true">${isD ? svg('check',16,2.6) : '<i></i><i></i><i></i>'}</span>
-      <span class="tbody"><span class="tname">${esc(it.text)}</span><span class="tmeta">${meta}</span></span>
+      <span class="tbody"><span class="tname">${esc(it.text)}</span><span class="tmeta">${meta}${!isD && !(it.steps && it.steps.length) && !clOpen.has('td:' + it.id) ? `<button class="addsteps" data-clopen="td:${esc(it.id)}">+ Steps</button>` : ''}</span></span>
       ${!isD ? `<button class="xbtn" data-delitem="${esc(L.id)}|${esc(it.id)}" aria-label="Delete ${esc(it.text)}">${svg('x',16,2.4)}</button>` : ''}
       <button class="check round" data-todo="${esc(L.id)}|${esc(it.id)}" aria-pressed="${isD}" aria-label="${isD ? 'Undo' : 'Complete'} ${esc(it.text)}" ${isD && !canUndo ? 'disabled' : ''}>${svg('check',18,2.8)}</button>
+      ${todoSteps(L, it)}
     </div>`; };
   const groups = PRI.map(([g, label, mark]) => {
     const all = L.items.filter(it => priOf(it) === g), items = hide ? all.filter(it => !it.doneOn) : all;
@@ -3212,6 +3233,15 @@ function onClick(e){
   if (el.dataset.tab){ if ((el.dataset.tab === 'settings' || el.dataset.tab === 'focus') && tab !== 'settings' && tab !== 'focus') prevTab = tab; tab = el.dataset.tab; resetArmed = false; restoreArmed = false; render(); window.scrollTo(0,0); return; }
   if (el.dataset.vday){ vday = el.dataset.vday; render(); return; }
   if (el.dataset.toggle){ toggle(el.dataset.toggle, el); return; }
+  if (el.dataset.tdstep || el.dataset.tdstepdel){
+    const [lid, iid, sid] = (el.dataset.tdstep || el.dataset.tdstepdel).split('|'); const L = S.todos.lists.find(x => x.id === lid); const it = L && L.items.find(x => x.id === iid); if (!it || it.doneOn || !it.steps) return;
+    const x = it.steps.find(y => y.id === sid); if (!x) return;
+    if (el.dataset.tdstepdel){ it.steps = it.steps.filter(y => y.id !== sid); if (!it.steps.length) delete it.steps; save(); render(); return; }
+    if (x.done) delete x.done; else x.done = true;
+    save();
+    // ticking the last step finishes the to-do (normal to-do bonus rules); unticking never undoes it
+    if (it.steps.every(y => y.done)){ const b = document.createElement('button'); b.dataset.todo = lid + '|' + iid; onClick({target: b}); return; }
+    render(); return; }
   if (el.dataset.clopen){ const id = el.dataset.clopen; if (clOpen.has(id)) clOpen.delete(id); else clOpen.add(id); try { localStorage.setItem(CL_OPEN_KEY, JSON.stringify([...clOpen])); } catch(e){} render(); return; }
   if (el.dataset.clitem){
     const [tid, cid] = el.dataset.clitem.split('|'), k = vday === 'today' ? D.today : D.yest;
@@ -3412,6 +3442,10 @@ document.addEventListener('submit', e => {
   try {
     if ('addlist' in f.dataset){ const inp = document.getElementById('newList'); const name = (inp.value || '').trim().slice(0,40); if (!name) return; if (S.todos.lists.filter(L => !L.hidden).length >= TODO_LISTS){ toast(`You can have up to ${TODO_LISTS} lists`); return; } const nid = 'l' + Date.now().toString(36); S.todos.lists.push({id:nid, name, items:[]}); todoList = nid; todoAdd = null; save(); render(); return; }
     if (f.dataset.renamelist){ const L = S.todos.lists.find(x => x.id === f.dataset.renamelist && !x.hidden); const name = (document.getElementById('renameList').value || '').trim().slice(0,40); if (!L || !name) return; L.name = name; todoRename = false; todoMenu = false; save(); render(); return; }
+    if (f.dataset.addstep){ const [lid, iid] = f.dataset.addstep.split('|'); const L = S.todos.lists.find(x => x.id === lid); const it = L && L.items.find(x => x.id === iid); if (!it || it.doneOn) return;
+      const inp = document.getElementById('step-' + iid); const text = (inp && inp.value || '').trim().slice(0, 60); if (!text) return;
+      const st = it.steps || (it.steps = []); if (st.length >= CHECK_MAX) return;
+      st.push({id: 's' + Date.now().toString(36) + st.length, text}); save(); render(); const n = document.getElementById('step-' + iid); if (n) n.focus(); return; }
     if (f.dataset.additem){ const L = S.todos.lists.find(x => x.id === f.dataset.additem); if (!L) return; const inp = document.getElementById('add-' + L.id); const text = (inp.value || '').trim().slice(0,80); if (!text) return;
       if (L.items.filter(it => !it.doneOn).length >= TODO_OPEN){ toast(`This list is full (${TODO_OPEN} open items)`); return; }
       const it = {id:'i' + Date.now().toString(36) + Math.floor(Math.random()*1e4), text, createdOn: D.today}; const pri = f.dataset.pri; if (pri === 'high' || pri === 'med' || pri === 'low') it.pri = pri;
