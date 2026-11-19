@@ -532,7 +532,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'cbf2fd516b';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'ad6950978c';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -556,7 +556,7 @@ function cleanEmoji(v){
   first = first.slice(0, 16);
   return /\p{Extended_Pictographic}|\p{Regional_Indicator}/u.test(first) ? first : '';
 }
-const taskIconOk = v => typeof v === 'string' && (TASK_ICONS.includes(v) || (v.startsWith('e:') && cleanEmoji(v.slice(2)) === v.slice(2)));
+const taskIconOk = v => typeof v === 'string' && (TASK_ICONS.includes(v) || (v.startsWith('e:') && v.length > 2 && cleanEmoji(v.slice(2)) === v.slice(2)));
 const STAT_COLORS = ['#f2d982','#b8c9ef','#eeb7d8','#a9b97c','#f4bf92','#c9b8f0','#9fd8cf','#e9a3a3'];
 function applySettings(){ const st = (S && S.settings) || {}; ROLLOVER_H = st.rollover || 0; try { document.documentElement.setAttribute('data-mode', st.theme === 'dark' ? 'dark' : 'light'); } catch(e){} }
 function applyStatMeta(){ applySettings();
@@ -883,7 +883,7 @@ function defaults(){
     log:{}, pickLog:{}, rerolls:{}, owned:['dawn','axo'], equip:{hat:null, bg:'dawn', color:'axo'},
     gear:{weapon:null, offhand:null, armor:null}, gearLog:[], bag:[], seenDrops:[],
     skills:{}, skillUnlock:{}, skillLog:[], waives:{}, lightens:{}, buys:[], snap:{}, firstTs:{}, picks:{}, results:{}, statMeta:{}, wkTg:{}, wkBn:{},
-    todos:{lists:[{id:'l_home', name:'House repairs', items:[]}]}, potions:[], runeBuys:[], faintLog:{}, legends:{}, checks:{}, inn:[], pomo:{cfg:{focus:25, short:5, long:15, every:4, sound:true, haptic:true}, run:null}, pomoLog:[], settings:{theme:'light', rollover:0, hideDone:false, collapse:{vitals:false, boss:false}, dismissed:{}}, sells:[], mig:7, updated:0};
+    todos:{lists:[{id:'l_home', name:'House repairs', items:[]}]}, potions:[], runeBuys:[], faintLog:{}, legends:{}, checks:{}, schema:SCHEMA, inn:[], pomo:{cfg:{focus:25, short:5, long:15, every:4, sound:true, haptic:true}, run:null}, pomoLog:[], settings:{theme:'light', rollover:0, hideDone:false, collapse:{vitals:false, boss:false}, dismissed:{}}, sells:[], mig:7, updated:0};
 }
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const isDate = v => typeof v === 'string' && DATE_RE.test(v);
@@ -895,7 +895,7 @@ const statList = a => { const r = (Array.isArray(a) ? a : []).filter(x => SK.inc
 // repeating schedules: every N days, every N weeks on chosen days, or every N months on a date
 const REP_MAX = {day: 365, week: 52, month: 24};
 function cleanRep(r, withStart){
-  if (!r || typeof r !== 'object' || !REP_MAX[r.unit]) return null;
+  if (!r || typeof r !== 'object' || typeof r.unit !== 'string' || !Object.prototype.hasOwnProperty.call(REP_MAX, r.unit)) return null;
   const o = {unit: r.unit, every: int(r.every, 1, REP_MAX[r.unit], 1)};
   if (r.unit === 'month') o.dom = r.dom === 'last' ? 'last' : int(r.dom, 1, 31, 1);
   if (withStart && typeof r.start === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(r.start)) o.start = r.start;
@@ -925,7 +925,7 @@ function sanitize(s, created){
     if (Array.isArray(t.off)) o.off = t.off.filter(p => Array.isArray(p) && isDate(p[0])).map(p => [p[0], isDate(p[1]) ? p[1] : null]);
     if (taskIconOk(t.icon)) o.icon = t.icon;
     // optional checklist of steps (like Tiimo subtasks); steps are just progress, the task itself gives the reward
-    if (Array.isArray(t.checklist)){ const cl = t.checklist.filter(obj).map(c => ({id: str(c.id, 20, ''), text: str(c.text, 60, '').trim()})).filter(c => c.id && c.text).slice(0, CHECK_MAX); if (cl.length) o.checklist = cl; }
+    if (Array.isArray(t.checklist)){ const cl = t.checklist.filter(obj).map(c => ({id: str(c.id, 20, ''), text: str(c.text, 60, '').trim()})).filter((c, i, a) => c.id && c.text && a.findIndex(x => x.id === c.id) === i).slice(0, CHECK_MAX); if (cl.length) o.checklist = cl; }
     return o;
   });
   out.log = byDate(s.log, v => byId(v, x => { const n = num(x, NaN); return Number.isFinite(n) ? n : undefined; }));
@@ -993,10 +993,21 @@ function sanitize(s, created){
   out.petName = s.petName;
   return out;
 }
+/* Saves carry a schema number. Older builds drop fields they don't know, so a save without it may have lost
+   newer things (repeating schedules, checklists, icons); sync puts them back from the other copy. */
+const SCHEMA = 2;
+const isStripped = raw => !!raw && typeof raw === 'object' && !(Number(raw.schema) >= SCHEMA);
+const TASK_KNOWN = new Set(['id','name','stats','cad','created','target','bonus','days','archived','rep','pool','sched','off','checklist','icon']);
 function normalize(s){
   const d = defaults();
-  s = (s && typeof s === 'object') ? sanitize(s, d.created) : {};
+  const raw = (s && typeof s === 'object') ? s : null;
+  s = raw ? sanitize(raw, d.created) : {};
   const out = {...d, ...s};
+  // keep anything a newer build added that this build doesn't know about, so it's never thrown away
+  if (raw){
+    for (const k of Object.keys(raw)) if (!(k in out) && !PROTO_KEYS.has(k)) out[k] = raw[k];
+    if (Array.isArray(raw.tasks) && Array.isArray(s.tasks)) for (const t of s.tasks){ const rt = raw.tasks.find(x => x && x.id === t.id); if (rt) for (const k of Object.keys(rt)) if (!TASK_KNOWN.has(k) && !PROTO_KEYS.has(k) && !(k in t)) t[k] = rt[k]; }
+  }
   out.tasks = Array.isArray(s.tasks) ? s.tasks.filter(t => t && t.id && t.name) : d.tasks;
   out.log = (s.log && typeof s.log === 'object') ? s.log : {};
   out.owned = Array.isArray(s.owned) ? Array.from(new Set(['dawn','axo', ...s.owned])) : d.owned;
@@ -1065,13 +1076,13 @@ function normalize(s){
   return out;
 }
 var migratedNow = false, recoveryMode = false, recoveryReason = '';
-let hadLocal = false;
+let hadLocal = false, localStripped = false;
 let S = (() => {
   let raw = null;
   try { raw = localStorage.getItem(LS_KEY); } catch(e){ return defaults(); }
   if (!raw) return defaults();
   hadLocal = true;
-  try { return normalize(JSON.parse(raw)); }
+  try { const parsed = JSON.parse(raw); localStripped = isStripped(parsed); return normalize(parsed); }
   catch(e){
     try { if (!localStorage.getItem(LS_KEY + '.failed')) localStorage.setItem(LS_KEY + '.failed', raw); } catch(e2){}
     recoveryMode = true; recoveryReason = 'Your save could not be read.';
@@ -1169,9 +1180,10 @@ function repDue(rp, k, days){
   return d.getDate() === want;
 }
 // first day a repeating schedule that begins on `from` comes due (months start in the month of the first matching date)
-function repStart(rp, from){
+function repStart(rp, from, days){
   if (rp.unit === 'day') return from;
-  if (rp.unit === 'week') return weekKey(from);
+  // weeks count from the week of the first matching weekday on or after the start, so a start late in a week doesn't skip a cycle
+  if (rp.unit === 'week'){ let d = from; if (days && days.length) for (let i = 0; i < 7 && !days.includes(parseKey(d).getDay()); i++) d = addDays(d, 1); return weekKey(d); }
   const f = parseKey(from), want = rp.dom === 'last' ? lastDom(f.getFullYear(), f.getMonth()) : Math.min(rp.dom, lastDom(f.getFullYear(), f.getMonth()));
   const m = f.getDate() <= want ? new Date(f.getFullYear(), f.getMonth(), 1) : new Date(f.getFullYear(), f.getMonth() + 1, 1);
   return dkey(m);
@@ -1473,10 +1485,16 @@ function gistRef(c){
       // a save that can't be read is an error, never "empty": an empty answer would let this device overwrite it
       let data; try { data = JSON.parse(txt); } catch(e){ throw Object.assign(new Error('unreadable'), {code:'unavailable'}); }
       if (!data || typeof data !== 'object' || !Array.isArray(data.tasks)) throw Object.assign(new Error('unreadable'), {code:'unavailable'});
-      return {exists: true, data: () => data, at};
+      return {exists: true, data: () => data, at, version: g.history && g.history[0] && g.history[0].version};
     },
     // GitHub's own time for the save, so a phone and a Mac with slightly different clocks still agree on which copy is newer
-    async set(obj){ const g = await gh('/gists/' + c.gistId, c.token, {method:'PATCH', body: JSON.stringify({files:{[GIST_FILE]:{content: JSON.stringify(obj)}}})}); return Date.parse(g && g.updated_at) || 0; }
+    async set(obj){ const g = await gh('/gists/' + c.gistId, c.token, {method:'PATCH', body: JSON.stringify({files:{[GIST_FILE]:{content: JSON.stringify(obj)}}})});
+      const h = (g && g.history) || [];
+      return {at: Date.parse(g && g.updated_at) || 0, version: h[0] && h[0].version, prev: h[1] && h[1].version}; },
+    // one earlier version of the save, by GitHub's version id
+    async getVersion(v){ const g = await gh('/gists/' + c.gistId + '/' + v, c.token); const f = g.files && g.files[GIST_FILE]; if (!f) return null;
+      let txt = f.content; if (f.truncated){ const r = await fetch(f.raw_url); if (!r.ok) return null; txt = await r.text(); }
+      try { const d = JSON.parse(txt); return d && Array.isArray(d.tasks) ? d : null; } catch(e){ return null; } }
   };
 }
 // what this device last agreed with the gist on, kept outside the save: the save's "updated" at that moment, and whether you've changed anything since
@@ -1523,6 +1541,20 @@ function mergeSaves(a, b){
   out.updated = Math.max(Date.now(), (a.updated || 0) + 1, (b.updated || 0) + 1);
   return normalize(out);
 }
+// put back what an older build dropped (it can't remove these on purpose, it simply doesn't know them)
+function restoreLost(target, source){
+  if (!target || !source || !Array.isArray(target.tasks) || !Array.isArray(source.tasks)) return target;
+  const out = clone(target);
+  for (const t of out.tasks){
+    const st = source.tasks.find(x => x && x.id === t.id); if (!st) continue;
+    if (!t.rep && st.rep && t.cad === st.cad) t.rep = clone(st.rep);
+    if (!t.checklist && st.checklist) t.checklist = clone(st.checklist);
+    if (!t.icon && st.icon) t.icon = st.icon;
+    if (Array.isArray(t.sched) && Array.isArray(st.sched)) for (const e of t.sched){ if (e.rep) continue; const se = st.sched.find(x => x.from === e.from && x.rep); if (se && se.cad === e.cad) e.rep = clone(se.rep); }
+  }
+  for (const k of ['checks', 'legends']){ const a = out[k] || {}, b = source[k] || {}; out[k] = {...b, ...a}; }
+  return out;
+}
 // local is kept in "Undo last restore" whenever it holds changes the gist doesn't have
 function adoptRemote(remote, why, at){
   const changed = !!syncMeta().dirty && saveDiffers(S, remote);
@@ -1546,9 +1578,18 @@ async function gistSync(opts = {}){
     const m = syncMeta();
     if (!snap.exists){ await pushNow(); }
     else {
-      const remote = normalize(clone(snap.data()));
-      // only a copy GitHub saved after the one this device last agreed on counts as a change; an older copy is a stale read and is ignored
-      const remoteChanged = (remote.updated || 0) !== (m.synced || 0) && (snap.at && m.syncedAt ? snap.at > m.syncedAt : (remote.updated || 0) > (m.synced || 0));
+      const rawRemote = snap.data(), remoteStripped = isStripped(rawRemote);
+      let remote = normalize(clone(rawRemote)), repairPush = false;
+      // an older build rewrote one of the two copies and dropped newer fields: put them back from the other copy
+      if (remoteStripped && !localStripped){ remote = normalize(restoreLost(remote, S)); repairPush = true; }
+      if (localStripped && !remoteStripped){ S = normalize(restoreLost(S, remote)); applyStatMeta(); try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch(e){} render(); }
+      localStripped = false;
+      // a copy GitHub saved before the one this device last agreed on is a stale read and is ignored.
+      // GitHub's times are to the second, so the same second still counts as a possible change.
+      const stale = snap.at && m.syncedAt && snap.at < m.syncedAt;
+      const remoteChanged = !stale && (remote.updated || 0) !== (m.synced || 0);
+      if (!stale && snap.version && !remoteChanged) syncMeta({syncedVersion: snap.version});
+      cloud.pushed = false;
       if (opts.preferRemote){
         // reconnecting the same game: combine; a different game on this device: the synced one wins and this one is kept in "Undo last restore"
         if (m.dirty && S.createdTs === remote.createdTs && saveDiffers(S, remote)){ adoptRemote(mergeSaves(S, remote), 'Combined this device’s changes with your synced save.', snap.at); syncMeta({dirty: true}); await pushNow(); }
@@ -1567,16 +1608,25 @@ async function gistSync(opts = {}){
         syncMeta({dirty: true}); await pushNow();
       }
       else if (m.dirty) await pushNow();
+      if (!stale && snap.version && !cloud.pushed && remoteChanged) syncMeta({syncedVersion: snap.version});
+      if (repairPush && !cloud.pushed){ syncMeta({dirty: true}); await pushNow(); }
     }
     setSync('cloud');
   } catch(e){ setSync(e && e.code === 'bad_token' ? 'token' : 'error'); }
   cloud.writing = false;
   if (cloud.pending){ cloud.pending = false; gistSync(); }
 }
-async function pushNow(){
+async function pushNow(again){
+  const before = syncMeta().syncedVersion;
   const sent = clone(S);
-  const at = await cloud.ref.set(sent);
-  syncMeta({synced: sent.updated || 0, dirty: (S.updated || 0) !== (sent.updated || 0), ...(at ? {syncedAt: at} : {})});
+  const r = await cloud.ref.set(sent) || {};
+  syncMeta({synced: sent.updated || 0, dirty: (S.updated || 0) !== (sent.updated || 0), ...(r.at ? {syncedAt: r.at} : {}), ...(r.version ? {syncedVersion: r.version} : {})});
+  cloud.pushed = true;
+  // someone else saved between the copy this device last saw and this push (e.g. GitHub answered with an old copy): combine theirs back in
+  if (!again && before && r.prev && r.prev !== before && cloud.ref.getVersion){
+    const other = await cloud.ref.getVersion(r.prev);
+    if (other){ const o = normalize(other); if (saveDiffers(S, o) && S.createdTs === o.createdTs){ adoptRemote(mergeSaves(S, o), 'Your other device saved at the same moment, so the two were combined.'); syncMeta({dirty: true}); await pushNow(true); } }
+  }
 }
 // every save GitHub ever stored for this gist, newest first, so an earlier one can be brought back
 async function gistHistory(){
@@ -3036,7 +3086,7 @@ function renderEditor(){
     <label class="f" for="tCad">How often<select id="tCad"><option value="day" ${t.cad==='day' && !t.rep?'selected':''}>Every day (daily)</option><option value="week" ${t.cad==='week'?'selected':''}>Times per week</option><option value="xday" ${t.rep && t.rep.unit==='day'?'selected':''}>Every few days</option><option value="xweek" ${t.rep && t.rep.unit==='week'?'selected':''}>Every few weeks</option><option value="xmonth" ${t.rep && t.rep.unit==='month'?'selected':''}>Every few months</option></select></label>
     ${t.rep ? `<div class="row"><label class="f" for="tEvery" style="flex:1">Every how many ${t.rep.unit === 'day' ? 'days' : t.rep.unit === 'week' ? 'weeks' : 'months'}<input type="number" id="tEvery" min="1" max="${REP_MAX[t.rep.unit]}" value="${t.rep.every}"></label>
       ${t.rep.unit === 'month' ? `<label class="f" for="tDom" style="flex:1.4">On the<select id="tDom">${[...Array(31)].map((_, i) => `<option value="${i+1}" ${t.rep.dom === i+1 ? 'selected' : ''}>${ordinal(i+1)}</option>`).join('')}<option value="last" ${t.rep.dom === 'last' ? 'selected' : ''}>Last day</option></select></label>` : ''}</div>
-      <label class="f" for="tStart">Starts on<input type="date" id="tStart" min="${t.isNew ? D.today : addDays(D.today,1)}" value="${t.rep.first && t.rep.first >= (t.isNew ? D.today : addDays(D.today,1)) ? t.rep.first : (t.isNew ? D.today : addDays(D.today,1))}"></label>
+      <label class="f" for="tStart">Starts on<input type="date" id="tStart" min="${D.today}" value="${t.rep.first && t.rep.first >= D.today ? t.rep.first : D.today}"></label>
       <p class="how small">${t.rep.unit === 'month' ? 'Months without that date use their last day. ' : ''}It first comes up on the start date or the next matching day after it. On the days it comes up it works like a daily: same reward, and missing it lets the boss hit you that night. It only shows on Today when it's due.</p>` : ''}
     ${t.cad==='week' ? `<div class="row"><label class="f" for="tTarget" style="flex:1">Target per week<input type="number" id="tTarget" min="1" max="7" value="${t.target||1}"></label><label class="f" for="tBonus" style="flex:1">Bonus goal (optional)<input type="number" id="tBonus" min="0" max="7" value="${t.bonus||''}"></label></div>` : ''}
     <div class="f" style="display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;font-weight:600;color:var(--muted)">Checklist (optional): steps you tick off; finishing them all completes the task</span>
@@ -3053,7 +3103,7 @@ function readEditorFields(){
   const c = document.getElementById('tCad');
   if (c){ const v = c.value, unit = {xday:'day', xweek:'week', xmonth:'month'}[v];
     if (unit){ draft.cad = 'day'; const old = draft.rep && draft.rep.unit === unit ? draft.rep : null; draft.rep = {unit, every: old ? old.every : 2, ...(unit === 'month' ? {dom: old ? old.dom : parseKey(D.today).getDate()} : {})}; if (unit === 'week' && !old && (!draft.days || draft.days.length >= 7)) draft.days = [parseKey(D.today).getDay()]; }
-    else { draft.cad = v; draft.rep = null; } }
+    else { if (draft.rep && draft.rep.unit === 'week') draft.days = [0,1,2,3,4,5,6]; draft.cad = v; draft.rep = null; } }
   const ev = document.getElementById('tEvery'); if (ev && draft.rep) draft.rep.every = clamp(parseInt(ev.value) || 1, 1, REP_MAX[draft.rep.unit]);
   const st = document.getElementById('tStart'); if (st && draft.rep){ const v = st.value; if (/^\d{4}-\d{2}-\d{2}$/.test(v)) draft.rep.first = v; }
   const dm = document.getElementById('tDom'); if (dm && draft.rep && draft.rep.unit === 'month') draft.rep.dom = dm.value === 'last' ? 'last' : clamp(parseInt(dm.value) || 1, 1, 31);
@@ -3253,9 +3303,15 @@ function onClick(e){
     const i = S.tasks.findIndex(t => t.id === out.id), old = i >= 0 ? S.tasks[i] : null;
     let relock = [];
     const entry = {from: old ? addDays(D.today,1) : D.today, cad: out.cad, days: out.days || null};
-    if (out.rep){ const first = out.rep.first && out.rep.first > entry.from ? out.rep.first : entry.from; if (first > entry.from) out.rep.first = first; else delete out.rep.first; entry.rep = {...out.rep, start: repStart(out.rep, first), first}; }
+    // a repeating schedule edited to start today can begin today, as long as that can't be used to skip something due today
+    if (old && out.rep && (!out.rep.first || out.rep.first <= D.today)){
+      const trial = {...out.rep, start: repStart(out.rep, D.today, out.days), first: D.today};
+      if (!isDue(old, D.today) || done(D.today, old.id) || repDue(trial, D.today, out.days)) entry.from = D.today;
+    }
+    if (out.rep){ const first = out.rep.first && out.rep.first > entry.from ? out.rep.first : entry.from; if (first > entry.from) out.rep.first = first; else delete out.rep.first; entry.rep = {...out.rep, start: repStart(out.rep, first, out.days), first}; }
     if (old){
-      out.sched = (old.sched || []).slice(); if (old.off) out.off = old.off;
+      // schedule changes queued for days that haven't happened yet are replaced by this one
+      out.sched = (old.sched || []).filter(e => e.from <= entry.from); if (old.off) out.off = old.off;
       const last = out.sched[out.sched.length-1];
       const repKey = e => e && e.rep ? JSON.stringify([e.rep.unit, e.rep.every, e.rep.dom || null, e.rep.first && e.rep.first > entry.from ? e.rep.first : null]) : null;
       if (!last || last.cad !== entry.cad || JSON.stringify(last.days||null) !== JSON.stringify(entry.days) || repKey(last) !== repKey(entry)){ if (last && last.from === entry.from) out.sched[out.sched.length-1] = entry; else out.sched.push(entry); }
@@ -3336,6 +3392,7 @@ render();
 // Pages: an app left open on a phone or Mac never reloads by itself, so check for a newer version whenever you come back, and switch to it
 async function checkForUpdate(){
   if (!PAGES || BUILD.startsWith('/*') || recoveryMode) return;
+  const sh = document.getElementById('sheet'); if (sh && !sh.hidden) return;   // never reload while you're editing something; it checks again next time
   try {
     const r = await fetch('version.json?t=' + Date.now(), {cache:'no-store'}); if (!r.ok) return;
     const v = (await r.json()).build;
