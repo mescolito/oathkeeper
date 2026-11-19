@@ -2207,7 +2207,8 @@ function assistMsg(){
 }
 function renderToday(){
   const k = vday === 'today' ? D.today : D.yest;
-  const shown = S.tasks.filter(t => !offOn(t,k) && (t.created || S.created) <= k);
+  // an archived task that's already done for this day has nothing left to do, so it leaves the list right away
+  const shown = S.tasks.filter(t => !offOn(t,k) && (t.created || S.created) <= k && !(t.archived && done(k, t.id)));
   const hide = S.settings.hideDone;
   const dailiesAll = shown.filter(t => schedAt(t,k).cad === 'day'), weekliesAll = shown.filter(t => schedAt(t,k).cad === 'week');
   const dailies = hide ? dailiesAll.filter(t => !done(k,t.id)) : dailiesAll, weeklies = (hide ? weekliesAll.filter(t => !done(k,t.id)) : weekliesAll).slice().sort((a,b) => (isDue(a,k) ? 0 : 1) - (isDue(b,k) ? 0 : 1));
@@ -2951,7 +2952,7 @@ function renderEditor(){
       <button class="btn" data-cladd ${(t.checklist || []).length >= CHECK_MAX ? 'disabled' : ''}>+ Add step</button></div>
     <div class="f" style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:600;color:var(--muted)">Days it shows up</span>
       <div class="chips">${DOW_ORDER.map(d => `<button class="chip ${t.days.includes(d)?'on':''}" data-day="${d}" style="${t.days.includes(d)?'background:var(--ink);color:var(--inv)':''}" aria-pressed="${t.days.includes(d)}">${DOW[d]}</button>`).join('')}</div></div>
-    ${!t.isNew ? '<p class="how small">Changes to days or how often start tomorrow, so today stays as it was.</p>' : ''}
+    ${!t.isNew ? '<p class="how small">Changes to days or how often start tomorrow, so today stays as it was. Archiving removes the task now if it’s done today; otherwise it stays until tonight, so it can’t be used to skip a daily.</p>' : ''}
     <p class="how small" id="edErr" role="alert"></p>
     <div class="row between">${t.isNew ? '<span></span>' : '<button class="btn danger" data-archive>Archive</button>'}<button class="btn primary" data-savetask>Save task</button></div>`;
 }
