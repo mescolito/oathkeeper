@@ -366,7 +366,11 @@ html[data-mode="dark"] .awardin .btn.primary{color:var(--inv)}
 .clitem.td{grid-template-columns:1fr auto}
 .steprow{gap:6px;flex-wrap:nowrap}
 .steprow input{flex:1;min-width:0}
-.btn.mv{padding:0;width:40px;min-width:40px;display:inline-flex;align-items:center;justify-content:center}
+.steplist{display:flex;flex-direction:column;gap:8px}
+.sgrip{display:grid;grid-template-columns:repeat(2,5px);gap:4px;padding:10px 6px;cursor:grab;touch-action:none;flex:none;color:var(--muted)}
+.sgrip i{display:block;width:5px;height:5px;border-radius:50%;background:currentColor}
+.sdragging{opacity:.85;box-shadow:0 8px 20px rgba(0,0,0,.18);border-radius:14px;background:var(--card);position:relative;z-index:2}
+.clitem.td.grab{grid-template-columns:auto 1fr auto;padding-left:34px}
 .xbtn.sm[disabled]{opacity:.25}
 .clitem.td .clcheck{margin:0 13px 0 4px}
 .tditem .cl{grid-column:1/-1}
@@ -543,7 +547,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'c02276dcd4';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'c7d3648e7a';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -2517,7 +2521,7 @@ function todoSteps(L, it){
   if (!st.length && !(open && todoEdit)) return '';
   const got = st.filter(x => x.done).length;
   return `<div class="cl ${open ? 'open' : ''}">
-    ${open ? `<div class="cllist">${st.map((x, xi) => `<div class="clitem td ${x.done ? 'on' : ''}"><span class="cltext">${esc(x.text)}</span><span class="row" style="gap:2px;flex-wrap:nowrap">${!isD && todoEdit ? `<button class="xbtn sm" data-tdstepmvid="${key}|${esc(x.id)}" data-tdstepmv="-1" ${xi === 0 ? 'disabled' : ''} aria-label="Move ${esc(x.text)} up">${svg('up',14,2.4)}</button><button class="xbtn sm" data-tdstepmvid="${key}|${esc(x.id)}" data-tdstepmv="1" ${xi === st.length - 1 ? 'disabled' : ''} aria-label="Move ${esc(x.text)} down">${svg('down',14,2.4)}</button><button class="xbtn sm" data-tdstepdel="${key}|${esc(x.id)}" aria-label="Remove step ${esc(x.text)}">${svg('x',14,2.4)}</button>` : ''}<button class="clcheck" data-tdstep="${key}|${esc(x.id)}" aria-pressed="${!!x.done}" aria-label="${x.done ? 'Untick' : 'Tick'} ${esc(x.text)}" ${isD ? 'disabled' : ''}>${svg('check',14,3)}</button></span></div>`).join('')}
+    ${open ? `<div class="cllist" data-sdlist="td|${key}">${st.map((x, xi) => `<div class="clitem td ${x.done ? 'on' : ''} ${todoEdit && !isD ? 'grab' : ''}" data-sid="${esc(x.id)}">${todoEdit && !isD ? '<span class="sgrip" data-sdrag aria-hidden="true"><i></i><i></i><i></i><i></i></span>' : ''}<span class="cltext">${esc(x.text)}</span><span class="row" style="gap:2px;flex-wrap:nowrap">${!isD && todoEdit ? `<button class="xbtn sm" data-tdstepdel="${key}|${esc(x.id)}" aria-label="Remove step ${esc(x.text)}">${svg('x',14,2.4)}</button>` : ''}<button class="clcheck" data-tdstep="${key}|${esc(x.id)}" aria-pressed="${!!x.done}" aria-label="${x.done ? 'Untick' : 'Tick'} ${esc(x.text)}" ${isD ? 'disabled' : ''}>${svg('check',14,3)}</button></span></div>`).join('')}
       ${todoEdit && !isD && st.length < CHECK_MAX ? `<form class="addrow stepadd" data-addstep="${key}"><input type="text" id="step-${esc(it.id)}" maxlength="60" placeholder="Add a step" aria-label="Add a step to ${esc(it.text)}"><button class="btn" type="submit">Add</button></form>` : ''}</div>` : ''}
     <button class="clhead" data-clopen="td:${esc(it.id)}" aria-expanded="${open}" aria-label="${open ? 'Hide' : 'Show'} steps, ${got} of ${st.length} done">${st.length ? `${bar(100*got/st.length, null, 'clbar')}<span class="cln">${got}/${st.length}</span>` : '<span class="cln">Steps</span>'}<span class="clchev">${svg(open ? 'up' : 'down',16,2.4)}</span></button>
   </div>`;
@@ -3128,7 +3132,7 @@ function renderEditor(){
       <p class="how small">${t.rep.unit === 'month' ? 'Months without that date use their last day. ' : ''}It first comes up on the start date or the next matching day after it. On the days it comes up it works like a daily: same reward, and missing it lets the boss hit you that night. It only shows on Today when it's due.</p>` : ''}
     ${t.cad==='week' ? `<div class="row"><label class="f" for="tTarget" style="flex:1">Target per week<input type="number" id="tTarget" min="1" max="7" value="${t.target||1}"></label><label class="f" for="tBonus" style="flex:1">Bonus goal (optional)<input type="number" id="tBonus" min="0" max="7" value="${t.bonus||''}"></label></div>` : ''}
     <div class="f" style="display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;font-weight:600;color:var(--muted)">Checklist (optional): steps you tick off; finishing them all completes the task</span>
-      ${(t.checklist || []).map((c,i,a) => `<div class="row steprow"><input type="text" id="clText${i}" maxlength="60" value="${esc(c.text)}" placeholder="Step ${i+1}" aria-label="Step ${i+1}"><button class="btn mv" data-clmove="${i}:-1" ${i === 0 ? 'disabled' : ''} aria-label="Move step ${i+1} up">${svg('up',16,2.4)}</button><button class="btn mv" data-clmove="${i}:1" ${i === a.length - 1 ? 'disabled' : ''} aria-label="Move step ${i+1} down">${svg('down',16,2.4)}</button><button class="btn danger" data-cldel="${i}" aria-label="Remove step ${i+1}">✕</button></div>`).join('')}
+      <div class="steplist" data-sdlist="editor">${(t.checklist || []).map((c,i) => `<div class="row steprow" data-sid="${esc(c.id)}"><span class="sgrip" data-sdrag aria-hidden="true"><i></i><i></i><i></i><i></i></span><input type="text" id="clText${i}" maxlength="60" value="${esc(c.text)}" placeholder="Step ${i+1}" aria-label="Step ${i+1}"><button class="btn danger" data-cldel="${i}" aria-label="Remove step ${i+1}">✕</button></div>`).join('')}</div>
       <button class="btn" data-cladd ${(t.checklist || []).length >= CHECK_MAX ? 'disabled' : ''}>+ Add step</button></div>
     ${t.rep && t.rep.unit !== 'week' ? '' : `<div class="f" style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:600;color:var(--muted)">${t.rep ? 'Which day of the week' : 'Days it shows up'}</span>
       <div class="chips">${DOW_ORDER.map(d => `<button class="chip ${t.days.includes(d)?'on':''}" data-day="${d}" style="${t.days.includes(d)?'background:var(--ink);color:var(--inv)':''}" aria-pressed="${t.days.includes(d)}">${DOW[d]}</button>`).join('')}</div></div>`}
@@ -3251,10 +3255,9 @@ function onClick(e){
   if (el.dataset.vday){ vday = el.dataset.vday; render(); return; }
   if (el.dataset.toggle){ toggle(el.dataset.toggle, el); return; }
   if ('todoedit' in el.dataset){ todoEdit = !todoEdit; todoMenu = false; todoRename = false; render(); return; }
-  if (el.dataset.tdstep || el.dataset.tdstepdel || el.dataset.tdstepmvid){
-    const [lid, iid, sid] = (el.dataset.tdstep || el.dataset.tdstepdel || el.dataset.tdstepmvid).split('|'); const L = S.todos.lists.find(x => x.id === lid); const it = L && L.items.find(x => x.id === iid); if (!it || it.doneOn || !it.steps) return;
+  if (el.dataset.tdstep || el.dataset.tdstepdel){
+    const [lid, iid, sid] = (el.dataset.tdstep || el.dataset.tdstepdel).split('|'); const L = S.todos.lists.find(x => x.id === lid); const it = L && L.items.find(x => x.id === iid); if (!it || it.doneOn || !it.steps) return;
     const x = it.steps.find(y => y.id === sid); if (!x) return;
-    if (el.dataset.tdstepmv){ if (!todoEdit) return; const i = it.steps.indexOf(x), j = i + Number(el.dataset.tdstepmv); if (it.steps[j]){ [it.steps[i], it.steps[j]] = [it.steps[j], it.steps[i]]; save(); render(); } return; }
     if (el.dataset.tdstepdel){ if (!todoEdit) return; it.steps = it.steps.filter(y => y.id !== sid); if (!it.steps.length) delete it.steps; save(); render(); return; }
     if (x.done) delete x.done; else x.done = true;
     save();
@@ -3320,7 +3323,6 @@ function onClick(e){
     renderEditor(); return; }
   if (el.dataset.ticon !== undefined && draft){ readEditorFields(); const v = el.dataset.ticon; draft.icon = TASK_ICONS.includes(v) ? v : undefined; const em = document.getElementById('tEmoji'); if (em) em.value = ''; renderEditor(); return; }
   if ('cladd' in el.dataset && draft){ readEditorFields(); const cl = draft.checklist || (draft.checklist = []); if (cl.length < CHECK_MAX){ cl.push({id: 'c' + Date.now().toString(36) + cl.length, text: ''}); renderEditor(); const n = document.getElementById('clText' + (cl.length - 1)); if (n) n.focus(); } return; }
-  if (el.dataset.clmove && draft && draft.checklist){ readEditorFields(); const [i, d] = el.dataset.clmove.split(':').map(Number), j = i + d, cl = draft.checklist; if (cl[i] && cl[j]){ [cl[i], cl[j]] = [cl[j], cl[i]]; renderEditor(); const b = document.querySelector(`[data-clmove="${j}:${d}"]`) || document.querySelector(`[data-clmove="${j}:${-d}"]`); if (b) b.focus(); } return; }
   if (el.dataset.cldel !== undefined && draft && draft.checklist){ readEditorFields(); draft.checklist.splice(+el.dataset.cldel, 1); renderEditor(); return; }
   if ('oadd' in el.dataset && draft && draft.pool){ readEditorFields(); draft.pool.push({name:'', stats:['MOB']}); renderEditor(); const n = document.getElementById('oName'+(draft.pool.length-1)); if (n) n.focus(); return; }
   if (el.dataset.odel !== undefined && draft && draft.pool){ readEditorFields(); if (draft.pool.length > 2) draft.pool.splice(+el.dataset.odel, 1); renderEditor(); return; }
@@ -3524,6 +3526,37 @@ function dragEnd(cancel){
 }
 document.addEventListener('pointerup', e => { if (drag && e.pointerId === drag.pid) dragEnd(false); });
 document.addEventListener('pointercancel', e => { if (drag && e.pointerId === drag.pid) dragEnd(true); });
+
+/* ---------- drag to reorder checklist steps (task editor and to-do edit mode) ---------- */
+let sdrag = null;
+document.addEventListener('pointerdown', e => {
+  const h = e.target.closest('[data-sdrag]'); if (!h || recoveryMode || sdrag || drag) return;
+  const row = h.closest('[data-sid]'), list = h.closest('[data-sdlist]'); if (!row || !list) return;
+  e.preventDefault(); try { h.setPointerCapture(e.pointerId); } catch(err){}
+  row.classList.add('sdragging'); document.body.classList.add('dragmode');
+  sdrag = {row, list, pid: e.pointerId};
+}, {passive:false});
+document.addEventListener('pointermove', e => {
+  if (!sdrag || e.pointerId !== sdrag.pid) return; e.preventDefault();
+  const {row, list} = sdrag, y = e.clientY;
+  const rows = [...list.querySelectorAll(':scope > [data-sid]')].filter(x => x !== row);
+  const before = rows.find(x => { const b = x.getBoundingClientRect(); return y < b.top + b.height / 2; });
+  if (before){ if (row.nextElementSibling !== before) list.insertBefore(row, before); }
+  else if (rows.length && rows[rows.length - 1].nextElementSibling !== row) rows[rows.length - 1].after(row);
+}, {passive:false});
+function sdragEnd(){
+  const d = sdrag; if (!d) return; sdrag = null; document.body.classList.remove('dragmode'); d.row.classList.remove('sdragging');
+  const order = [...d.list.querySelectorAll(':scope > [data-sid]')].map(x => x.dataset.sid), kind = d.list.dataset.sdlist;
+  const sortBy = arr => arr.slice().sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+  if (kind === 'editor' && draft && draft.checklist){ readEditorFields(); const byId = Object.fromEntries(draft.checklist.map(c => [c.id, c]));
+    // inputs moved with their rows, so read each one's text by its row before re-rendering
+    d.list.querySelectorAll(':scope > [data-sid]').forEach(r => { const inp = r.querySelector('input'); if (inp && byId[r.dataset.sid]) byId[r.dataset.sid].text = inp.value; });
+    draft.checklist = sortBy(draft.checklist); renderEditor(); return; }
+  if (kind.startsWith('td|')){ const [, lid, iid] = kind.split('|'); const L = S.todos.lists.find(x => x.id === lid); const it = L && L.items.find(x => x.id === iid);
+    if (it && it.steps && !it.doneOn && todoEdit){ const next = sortBy(it.steps); if (next.some((x, i) => x !== it.steps[i])){ it.steps = next; save(); } } render(); }
+}
+document.addEventListener('pointerup', e => { if (sdrag && e.pointerId === sdrag.pid) sdragEnd(); });
+document.addEventListener('pointercancel', e => { if (sdrag && e.pointerId === sdrag.pid) sdragEnd(); });
 
 /* ---------- focus timer clock: finishes sessions even if you were on another tab or away ---------- */
 function pomoTick(){
