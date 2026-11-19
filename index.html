@@ -532,7 +532,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '575ef2d53e';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '35bb609ce1';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1408,7 +1408,7 @@ async function flush(){
 function setSync(m){ cloud.mode = m; const el = document.getElementById('syncline'); if (el) el.outerHTML = syncHtml(); }
 function syncHtml(){
   if (PAGES){ const tp = {cloud:'Synced to your GitHub gist, so it follows you across devices.', loading:'Connecting to GitHub…', nogist:'Saved on this device only. Connect GitHub below to sync.', token:'GitHub didn’t accept the token. Progress is kept on this device; reconnect below.', error:'Could not reach GitHub. Progress is kept on this device for now.', full:'GitHub refused the save. Progress is kept on this device.', local:'Saved on this device only.'}[cloud.mode] || '';
-    return `<span id="syncline" class="sync ${cloud.mode==='cloud'?'ok':''}"><i></i>${tp}</span>`; }
+    return `<span id="syncline" class="sync ${cloud.mode==='cloud'?'ok':''}"><i></i>${tp}${BUILD.startsWith('/*') ? '' : ` <span class="small muted">· Version ${BUILD.slice(0,6)}</span>`}</span>`; }
   const t = {cloud:'Saved to your Claude account, so it follows you across devices.', local:'Saved on this device only. Sign in to claude.ai to sync.', error:'Could not reach your account. Progress is kept on this device for now.', full:'Account storage is full. Progress is kept on this device.', loading:'Connecting to your account…'}[cloud.mode] || '';
   return `<span id="syncline" class="sync ${cloud.mode==='cloud'?'ok':''}"><i></i>${t}</span>`;
 }
