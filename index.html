@@ -272,6 +272,8 @@ html[data-mode="dark"] .trow.done .check{color:var(--inv)}
 .sheet .panel > .row.between:first-child{position:sticky;top:-20px;z-index:2;background:var(--bg);margin:-20px -18px 0;padding:20px 18px 10px}
 /* nav */
 .nav{position:fixed;left:0;right:0;bottom:14px;display:flex;justify-content:center;z-index:5;pointer-events:none}
+/* fades the page out behind the tab bar, in the background colour of the current mode */
+.nav::before{content:'';position:absolute;left:0;right:0;bottom:-14px;height:132px;background:linear-gradient(to bottom, transparent, var(--bg) 62%);z-index:-1;pointer-events:none}
 .navin{pointer-events:auto;width:min(420px,calc(100% - 28px));background:var(--ink);border-radius:30px;display:grid;grid-template-columns:repeat(5,1fr);align-items:center;padding:8px 6px;box-shadow:0 12px 30px rgba(23,22,20,.25)}
 .navin button{background:none;border:0;color:#a8a194;height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;font-size:10.5px;font-weight:600}
 .navin button[aria-current="page"]{color:#fff}
