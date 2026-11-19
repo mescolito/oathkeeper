@@ -334,8 +334,8 @@ html[data-mode="dark"] .trow.done .check{color:var(--inv)}
 .awardin canvas{width:120px;height:120px;border-radius:20px;background:#141312;image-rendering:pixelated}
 .awardin canvas.wide{width:200px;height:auto;aspect-ratio:64/44}
 .chestcard{align-items:center}
-.chesticon{width:40px;height:40px;image-rendering:pixelated;flex:none}
-.awardin canvas.chestbig{width:150px;height:150px;background:transparent;image-rendering:pixelated}
+.chesticon{width:40px;height:40px;border-radius:10px;image-rendering:pixelated;flex:none}
+.awardin canvas.chestbig{width:150px;height:150px;border-radius:24px;image-rendering:pixelated}
 .legk{color:#a87b10 !important}
 html[data-mode="dark"] .legk{color:var(--gold) !important}
 .chestprize{display:flex;flex-direction:column;align-items:center;gap:8px}
@@ -573,7 +573,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'b08caaab70';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '24db855955';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -2791,24 +2791,31 @@ function chestCard(){
   const n = D.pomo.chests.length; if (!n) return '';
   return `<div class="mystery chestcard"><canvas class="chesticon" width="32" height="32" aria-hidden="true"></canvas><span class="ntext"><b>${n} Focus chest${n === 1 ? '' : 's'}</b> to open</span><button class="btn gold sm" data-openchest>Open</button></div>`;
 }
-// draws the pixel chest: closed, or open with its lid tipped back
+// draws the pixel chest in the app's black-and-white pixel style: closed, or open with light spilling out
 function drawChest(cv, open, shake, glow){
-  const g = cv.getContext('2d'); g.clearRect(0, 0, 32, 32);
-  const R = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x + shake, y, w, h); };
-  if (glow){ g.globalAlpha = 0.35; R(4, 6, 24, 22, '#f2d982'); g.globalAlpha = 1; }
-  const dk = '#4a2e14', wd = '#8b5a2b', lt = '#a8723c', au = '#f2d982', au2 = '#c9a23f';
-  // base
-  R(5, 16, 22, 12, dk); R(6, 17, 20, 10, wd); R(6, 17, 20, 2, lt); R(6, 22, 20, 1, dk);
-  R(14, 16, 4, 12, au2); R(15, 16, 2, 12, au);
+  const g = cv.getContext('2d'); g.fillStyle = PB; g.fillRect(0, 0, 32, 32); g.fillStyle = PW;
+  const P = (x, y) => g.fillRect(x + shake, y, 1, 1), H = (y, a, b) => { for (let x = a; x <= b; x++) P(x, y); }, V = (x, a, b) => { for (let y = a; y <= b; y++) P(x, y); };
+  if (glow) for (let y = 1; y < 31; y++) for (let x = 1; x < 31; x++) if ((x + y) % 4 === 0 && (x < 4 || x > 27 || y < 3 || y > 28)) P(x, y);
+  // the box: outline, two metal straps, a plank line
+  V(4, 17, 27); V(27, 17, 27); H(27, 4, 27); H(17, 4, 27);
+  for (const x of [8, 9, 22, 23]) V(x, 17, 27);
+  H(22, 10, 21);
   if (open){
-    // light spilling out, the lid standing open behind, and treasure glinting inside
-    g.globalAlpha = 0.5; R(9, 2, 2, 11, au); R(15, 0, 2, 13, au); R(21, 2, 2, 11, au); g.globalAlpha = 1;
-    R(6, 7, 20, 7, dk); R(7, 8, 18, 5, '#5a3a1a'); R(7, 12, 18, 1, lt);
-    R(5, 13, 22, 4, dk); R(6, 13, 20, 3, '#2a1a0c');
-    R(8, 13, 3, 2, au); R(12, 12, 3, 3, au); R(17, 13, 3, 2, au); R(21, 12, 3, 3, au2); R(13, 12, 1, 1, '#fff6d5'); R(22, 12, 1, 1, '#fff6d5');
+    // the lid tipped back, seen from inside, with the straps
+    H(5, 6, 25); V(5, 6, 15); V(26, 6, 15); H(6, 5, 5); H(6, 26, 26);
+    for (const x of [8, 9, 22, 23]) V(x, 6, 15);
+    // treasure heaped inside
+    H(16, 6, 25); H(15, 7, 11); H(15, 14, 18); H(15, 20, 24); H(14, 9, 10); H(14, 15, 17); H(14, 21, 22); P(16, 13);
+    // light and sparkles
+    for (const [x, y] of [[13, 1], [15, 0], [18, 1], [11, 3], [20, 3], [16, 2]]) P(x, y);
+    V(1, 8, 10); H(9, 0, 2); V(30, 11, 13); H(12, 29, 31);
   } else {
-    R(6, 9, 20, 1, dk); R(5, 10, 22, 7, dk); R(6, 10, 20, 6, wd); R(7, 10, 18, 2, lt); R(14, 9, 4, 8, au2); R(15, 9, 2, 8, au);
-    R(14, 15, 4, 4, au); R(15, 16, 2, 2, dk);                      // lock with a keyhole
+    // a rounded lid with the straps running over it
+    H(9, 7, 24); P(5, 10); P(6, 10); P(25, 10); P(26, 10); V(4, 11, 16); V(27, 11, 16);
+    for (const x of [8, 9, 22, 23]) V(x, 10, 16);
+    // the lock plate and keyhole
+    for (let y = 14; y <= 20; y++) H(y, 14, 17);
+    g.fillStyle = PB; g.fillRect(15 + shake, 16, 2, 2); g.fillRect(15 + shake, 18, 1, 1);
   }
 }
 function drawChestIcons(root){ (root || document).querySelectorAll('canvas.chesticon').forEach(cv => drawChest(cv, false, 0, false)); }
