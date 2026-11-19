@@ -575,7 +575,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '168ada6f40';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'e5b86605a8';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -2412,7 +2412,7 @@ function taskRow(t, k){
   }
   // a change to how often waits for tomorrow; say where the task is headed so it doesn't look stuck
   const nextCad = schedAt(t, addDays(k,1)).cad;
-  if (nextCad !== cad) meta += nextCad === 'week' ? ' · moves to This week tomorrow' : ' · moves to Dailies tomorrow';
+  if (nextCad !== cad) meta += nextCad === 'week' ? ' · moves to Weekly Challenges tomorrow' : ' · moves to Dailies tomorrow';
   const closed = !isD && !rested && !isDue(t,k);
   const name = isPool ? pick.name : t.name;
   let rr = '';
@@ -2452,7 +2452,7 @@ function assistMsg(){
   const weakTxt = f.boss.weak.length >= 5 ? 'Every stat hits it hard.' : `${f.boss.weak.map(s => STATS[s].name).join(' and ')} tasks hit twice as hard.`;
   return {k:`${f.boss.name} · ${daysLeft} day${daysLeft===1?'':'s'} left`, p:`${f.rem} HP to go. ${weakTxt}`, cta:"Let's fight"};
 }
-// Dailies and This week are two tabs, like the lists on To-dos; each device remembers which one was open
+// Dailies and Weekly Challenges are two tabs, like the lists on To-dos; each device remembers which one was open
 const TODAY_TAB_KEY = 'oathkeeper-todaytab';
 var todayTab = (() => { try { return localStorage.getItem(TODAY_TAB_KEY) === 'week' ? 'week' : 'day'; } catch(e){ return 'day'; } })();
 // a tab's tasks split into Anytime / Morning / Afternoon / Evening, each a group you can fold away (like To-do priorities)
@@ -2505,7 +2505,7 @@ function renderToday(){
     <span><span class="k">${esc(a.k)}</span><p>${esc(a.p)}</p><span class="pillbtn">${esc(a.cta)}</span></span>
     <canvas id="bossMiniCv" width="64" height="52" aria-hidden="true"></canvas>
   </button><button class="cardtog" data-collapse="boss" aria-expanded="true" aria-label="Collapse the boss card">${svg('back',16,2.6)}</button></div>`}
-  <div class="tdtabs" role="tablist" aria-label="Which tasks"><button role="tab" class="tdtab ${todayTab === 'day' ? 'on' : ''}" data-todaytab="day" aria-selected="${todayTab === 'day'}">Dailies</button><button role="tab" class="tdtab ${todayTab === 'week' ? 'on' : ''}" data-todaytab="week" aria-selected="${todayTab === 'week'}">This week</button></div>
+  <div class="tdtabs" role="tablist" aria-label="Which tasks"><button role="tab" class="tdtab ${todayTab === 'day' ? 'on' : ''}" data-todaytab="day" aria-selected="${todayTab === 'day'}">Dailies</button><button role="tab" class="tdtab ${todayTab === 'week' ? 'on' : ''}" data-todaytab="week" aria-selected="${todayTab === 'week'}">Weekly Challenges</button></div>
   <div class="row between"><span class="muted small" style="white-space:nowrap">${todayTab === 'day' ? `${doneD} of ${dueD.length} done` : `${weekLeft} left · ${wkRange}`}</span>
     <div class="seg" role="group" aria-label="Which day to log"><button data-vday="today" class="${vday==='today'?'on':''}">Today</button><button data-vday="yest" class="${vday==='yest'?'on':''}">Yesterday</button></div></div>
   ${todayTab === 'day'
@@ -3762,7 +3762,7 @@ function onClick(e){
     if (out.pool) for (const dk of relock){ if (S.picks[dk]) delete S.picks[dk][out.id]; const p = pickFor(out, dk); (S.picks[dk] || (S.picks[dk] = {}))[out.id] = {n:p.name, s:p.stats.slice()}; }
     const nowCad = schedAt(out, D.today).cad, nextCad = schedAt(out, addDays(D.today,1)).cad;
     save(); closeEditor(); render();
-    if (old && nowCad !== nextCad) toast(nowCad === 'day' ? 'Saved. It’s still a daily today (so it can’t dodge tonight), then moves to This week tomorrow.' : 'Saved. It moves to Dailies tomorrow.');
+    if (old && nowCad !== nextCad) toast(nowCad === 'day' ? 'Saved. It’s still a daily today (so it can’t dodge tonight), then moves to Weekly Challenges tomorrow.' : 'Saved. It moves to Dailies tomorrow.');
     return;
   }
   if ('copy' in el.dataset){ const msg = document.getElementById('copyMsg');
