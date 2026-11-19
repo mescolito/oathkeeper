@@ -552,7 +552,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '46bc500871';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '295190e647';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1503,6 +1503,14 @@ async function gh(path, token, opt = {}){
   return r.status === 204 ? null : r.json();
 }
 // finds your Oathkeeper gist, or makes one the first time
+let gistChoice = null;
+// a game nobody has played yet (a fresh install): connecting just loads the synced one, no question
+const gamePristine = g => !Object.keys(g.log || {}).length && !(g.buys || []).length && !(g.sells || []).length && !(g.todos && g.todos.lists || []).some(l => l.items.some(i => i.doneOn)) && !Object.keys(g.checks || {}).length;
+// a one-line description of a game, to tell two apart when connecting
+function gameSummary(g, lv){
+  const days = Object.keys(g.log || {}).length, when = g.updated ? new Date(g.updated).toLocaleString([], {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'}) : 'never';
+  return `${g.petName || 'Pip'}${lv ? ' · Lv ' + lv : ''} · started ${fmt(g.created)} · ${days} day${days === 1 ? '' : 's'} logged · last saved ${when}`;
+}
 async function gistConnect(token){
   for (let page = 1; page <= 10; page++){
     const list = await gh(`/gists?per_page=100&page=${page}`, token);
@@ -2838,6 +2846,12 @@ function renderSettings(){
       ? `<div class="row"><button class="btn" data-gistsync>Sync now</button><button class="btn" data-gistoff>${gistOffArmed ? 'Tap again to disconnect' : 'Disconnect GitHub'}</button></div>
         <div class="row"><button class="btn" data-gisthist ${gistHistBusy ? 'disabled' : ''}>${gistHistBusy ? 'Looking…' : 'Earlier synced saves'}</button></div>
         ${gistHist ? (gistHist.length ? `<div class="list" style="gap:8px">${gistHist.map((h, i) => `<div class="erow" style="grid-template-columns:1fr auto"><span class="tbody"><span class="tname" style="font-size:14px">${esc(new Date(h.at).toLocaleString([], {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'}))}</span><span class="small muted">${h.tasks} tasks · ${h.checks} check-ins over ${h.days} day${h.days === 1 ? '' : 's'}</span></span><button class="btn" data-gistuse="${i}">${gistHistArm === i ? 'Tap again to use' : 'Use this'}</button></div>`).join('')}</div><p class="how small">Using one keeps your current save in Undo last restore.</p>` : '<p class="how small">No earlier saves found.</p>') : ''}`
+      : gistChoice ? `<p class="how"><b>Your GitHub save is a different game.</b> Pick the one you want on every device. The other isn’t lost: this device’s goes to Undo last restore, GitHub’s stays in Earlier synced saves.</p>
+        <div class="list" style="gap:8px">
+          <button class="btn" data-gistpick="here" style="text-align:left;justify-content:flex-start;border-radius:18px;padding:12px 16px"><span><b>Keep this device’s</b><br><span class="small muted">${esc(gistChoice.here)}</span></span></button>
+          <button class="btn" data-gistpick="there" style="text-align:left;justify-content:flex-start;border-radius:18px;padding:12px 16px"><span><b>Use the one on GitHub</b><br><span class="small muted">${esc(gistChoice.there)}</span></span></button>
+          <button class="btn ghost" data-gistpick="cancel">Cancel</button>
+        </div>`
       : `<label class="f" for="ghToken">GitHub token (gist access)<input type="password" id="ghToken" autocomplete="off" placeholder="github_pat_…"></label><div class="row"><button class="btn primary" data-giston>Connect GitHub</button><span class="small muted" id="gistMsg"></span></div><p class="how">Make a token at github.com → Settings → Developer settings with only <b>Gists: read and write</b>. It stays on this device.</p>`) : ''}
     <div class="row"><button class="btn" data-download>Download backup</button><button class="btn" data-copy>Copy backup</button><span class="small muted" id="copyMsg"></span></div>
     <label class="f" for="restoreTxt">Restore from a backup<textarea id="restoreTxt" placeholder="Paste a backup here, or choose a backup file"></textarea></label>
@@ -3530,8 +3544,20 @@ function onClick(e){
   if (PAGES && 'giston' in el.dataset){ const msg = document.getElementById('gistMsg'), token = (document.getElementById('ghToken').value || '').trim();
     if (!token){ msg.textContent = 'Paste a token first.'; return; }
     msg.textContent = 'Connecting…';
-    gistConnect(token).then(gistId => { try { localStorage.setItem(GIST_CFG, JSON.stringify({token, gistId})); } catch(e){} return initGist(true); })
-      .then(() => { render(); if (cloud.mode === 'cloud') toast('Connected. Your save now syncs through GitHub.'); else { const m = document.getElementById('gistMsg'); if (m) m.textContent = 'Saved the token, but GitHub didn’t answer. It will retry.'; } }, err => { msg.textContent = err && err.code === 'bad_token' ? 'GitHub didn’t accept that token.' : 'Could not reach GitHub. Try again.'; });
+    gistConnect(token).then(async gistId => {
+        // the gist already holds a different game: ask which one to keep instead of quietly replacing this device's
+        const snap = await gistRef({token, gistId}).get();
+        if (snap.exists){ const remote = normalize(clone(snap.data())); if (remote.createdTs !== S.createdTs && !gamePristine(S)){ gistChoice = {token, gistId, here: gameSummary(S), there: gameSummary(remote)}; return 'ask'; } }
+        try { localStorage.setItem(GIST_CFG, JSON.stringify({token, gistId})); } catch(e){} return initGist(true); })
+      .then(r => { render(); if (r === 'ask') return; if (cloud.mode === 'cloud') toast('Connected. Your save now syncs through GitHub.'); else { const m = document.getElementById('gistMsg'); if (m) m.textContent = 'Saved the token, but GitHub didn’t answer. It will retry.'; } }, err => { msg.textContent = err && err.code === 'bad_token' ? 'GitHub didn’t accept that token.' : 'Could not reach GitHub. Try again.'; });
+    return; }
+  if (PAGES && el.dataset.gistpick && gistChoice){ const pick = el.dataset.gistpick, c = gistChoice; gistChoice = null;
+    if (pick === 'cancel'){ render(); return; }
+    try { localStorage.setItem(GIST_CFG, JSON.stringify({token: c.token, gistId: c.gistId})); localStorage.removeItem(SYNC_META); } catch(e){}
+    if (pick === 'there'){ initGist(true).then(() => { render(); if (cloud.mode === 'cloud') toast('Loaded your GitHub save. This device’s game is in Undo last restore.'); }); return; }
+    // keep this device's: it goes up to GitHub, and the gist's old game stays in Earlier synced saves
+    cloud.ref = gistRef(gistCfg()); setSync('loading');
+    pushNow().then(() => { setSync('cloud'); render(); toast('This device’s game is now your synced save.'); }, err => { cloud.ref = null; setSync(err && err.code === 'bad_token' ? 'token' : 'error'); render(); });
     return; }
   if (PAGES && 'gisthist' in el.dataset){ gistHistBusy = true; gistHistArm = null; render(); gistHistory().then(h => { gistHist = h; }, () => { gistHist = []; toast('Could not reach GitHub.'); }).finally(() => { gistHistBusy = false; render(); }); return; }
   if (PAGES && el.dataset.gistuse !== undefined && gistHist){ const i = +el.dataset.gistuse, h = gistHist[i]; if (!h) return;
