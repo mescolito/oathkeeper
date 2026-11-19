@@ -532,7 +532,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '6d93ce68af';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'cbf2fd516b';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -899,6 +899,8 @@ function cleanRep(r, withStart){
   const o = {unit: r.unit, every: int(r.every, 1, REP_MAX[r.unit], 1)};
   if (r.unit === 'month') o.dom = r.dom === 'last' ? 'last' : int(r.dom, 1, 31, 1);
   if (withStart && typeof r.start === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(r.start)) o.start = r.start;
+  // first day it can come up (lets you plan a schedule that begins later)
+  if (typeof r.first === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(r.first)) o.first = r.first;
   return o;
 }
 const dayList = a => Array.isArray(a) ? Array.from(new Set(a.map(x => int(x,0,6,null)).filter(x => x !== null))).sort() : null;
@@ -1158,7 +1160,7 @@ const reqText = it => [it.lvl ? `Lv ${it.lvl}` : '', ...(it.req ? Object.entries
 function schedAt(t, k){ const h = t.sched; if (!h || !h.length) return {cad:t.cad, days:t.days}; let cur = h[0]; for (const e of h) if (e.from <= k) cur = e; return cur; }
 const lastDom = (y, m) => new Date(y, m + 1, 0).getDate();
 function repDue(rp, k, days){
-  const start = rp.start || k; if (k < start) return false;
+  const start = rp.start || k; if (k < start || (rp.first && k < rp.first)) return false;
   if (rp.unit === 'day') return (dayIdx(k) - dayIdx(start)) % rp.every === 0;
   if (rp.unit === 'week'){ if (days && days.length && !days.includes(parseKey(k).getDay())) return false; return Math.round((dayIdx(weekKey(k)) - dayIdx(weekKey(start))) / 7) % rp.every === 0; }
   const d = parseKey(k), s = parseKey(start), months = (d.getFullYear() - s.getFullYear()) * 12 + (d.getMonth() - s.getMonth());
@@ -2183,7 +2185,10 @@ function repText(rp, days){
   if (rp.unit === 'week') return (n === 1 ? 'Every week' : n === 2 ? 'Every other week' : `Every ${n} weeks`) + (days && days.length ? ' on ' + daysText(days) : '');
   return (n === 1 ? 'Every month' : `Every ${n} months`) + ' on the ' + (rp.dom === 'last' ? 'last day' : ordinal(rp.dom));
 }
-const cadBase = t => t.cad === 'day' && t.rep ? repText(t.rep, t.days) : t.cad === 'day' ? (t.days && t.days.length && t.days.length < 7 ? 'Daily on ' + daysText(t.days) : 'Every day') : `${t.target}× per week${t.bonus ? ` (${t.bonus} bonus)` : ''}${t.days && t.days.length && t.days.length < 7 ? ', ' + daysText(t.days) : ''}`;
+// the next day a repeating task comes up, today included
+function nextDue(t){ if (!D) return null; let d = D.today; for (let i = 0; i < 800; i++, d = addDays(d, 1)) if (!offOn(t, d) && isDue(t, d)) return d; return null; }
+const nextText = t => { const n = nextDue(t); return !n ? '' : n === D.today ? ' · due today' : ' · next ' + parseKey(n).toLocaleDateString('en-US', {month:'short', day:'numeric'}); };
+const cadBase = t => t.cad === 'day' && t.rep ? repText(t.rep, t.days) + nextText(t) : t.cad === 'day' ? (t.days && t.days.length && t.days.length < 7 ? 'Daily on ' + daysText(t.days) : 'Every day') : `${t.target}× per week${t.bonus ? ` (${t.bonus} bonus)` : ''}${t.days && t.days.length && t.days.length < 7 ? ', ' + daysText(t.days) : ''}`;
 function daysText(days){
   if (!Array.isArray(days) || !days.length) return 'every day';
   const s = DOW_ORDER.filter(d => days.includes(d));
@@ -3031,7 +3036,8 @@ function renderEditor(){
     <label class="f" for="tCad">How often<select id="tCad"><option value="day" ${t.cad==='day' && !t.rep?'selected':''}>Every day (daily)</option><option value="week" ${t.cad==='week'?'selected':''}>Times per week</option><option value="xday" ${t.rep && t.rep.unit==='day'?'selected':''}>Every few days</option><option value="xweek" ${t.rep && t.rep.unit==='week'?'selected':''}>Every few weeks</option><option value="xmonth" ${t.rep && t.rep.unit==='month'?'selected':''}>Every few months</option></select></label>
     ${t.rep ? `<div class="row"><label class="f" for="tEvery" style="flex:1">Every how many ${t.rep.unit === 'day' ? 'days' : t.rep.unit === 'week' ? 'weeks' : 'months'}<input type="number" id="tEvery" min="1" max="${REP_MAX[t.rep.unit]}" value="${t.rep.every}"></label>
       ${t.rep.unit === 'month' ? `<label class="f" for="tDom" style="flex:1.4">On the<select id="tDom">${[...Array(31)].map((_, i) => `<option value="${i+1}" ${t.rep.dom === i+1 ? 'selected' : ''}>${ordinal(i+1)}</option>`).join('')}<option value="last" ${t.rep.dom === 'last' ? 'selected' : ''}>Last day</option></select></label>` : ''}</div>
-      <p class="how small">${t.rep.unit === 'month' ? 'Months without that date use their last day. ' : ''}On the days it comes up it works like a daily: same reward, and missing it lets the boss hit you that night. It only shows on Today when it's due.</p>` : ''}
+      <label class="f" for="tStart">Starts on<input type="date" id="tStart" min="${t.isNew ? D.today : addDays(D.today,1)}" value="${t.rep.first && t.rep.first >= (t.isNew ? D.today : addDays(D.today,1)) ? t.rep.first : (t.isNew ? D.today : addDays(D.today,1))}"></label>
+      <p class="how small">${t.rep.unit === 'month' ? 'Months without that date use their last day. ' : ''}It first comes up on the start date or the next matching day after it. On the days it comes up it works like a daily: same reward, and missing it lets the boss hit you that night. It only shows on Today when it's due.</p>` : ''}
     ${t.cad==='week' ? `<div class="row"><label class="f" for="tTarget" style="flex:1">Target per week<input type="number" id="tTarget" min="1" max="7" value="${t.target||1}"></label><label class="f" for="tBonus" style="flex:1">Bonus goal (optional)<input type="number" id="tBonus" min="0" max="7" value="${t.bonus||''}"></label></div>` : ''}
     <div class="f" style="display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;font-weight:600;color:var(--muted)">Checklist (optional): steps you tick off; finishing them all completes the task</span>
       ${(t.checklist || []).map((c,i) => `<div class="row"><input type="text" id="clText${i}" maxlength="60" value="${esc(c.text)}" placeholder="Step ${i+1}" aria-label="Step ${i+1}"><button class="btn danger" data-cldel="${i}" aria-label="Remove step ${i+1}">✕</button></div>`).join('')}
@@ -3049,6 +3055,7 @@ function readEditorFields(){
     if (unit){ draft.cad = 'day'; const old = draft.rep && draft.rep.unit === unit ? draft.rep : null; draft.rep = {unit, every: old ? old.every : 2, ...(unit === 'month' ? {dom: old ? old.dom : parseKey(D.today).getDate()} : {})}; if (unit === 'week' && !old && (!draft.days || draft.days.length >= 7)) draft.days = [parseKey(D.today).getDay()]; }
     else { draft.cad = v; draft.rep = null; } }
   const ev = document.getElementById('tEvery'); if (ev && draft.rep) draft.rep.every = clamp(parseInt(ev.value) || 1, 1, REP_MAX[draft.rep.unit]);
+  const st = document.getElementById('tStart'); if (st && draft.rep){ const v = st.value; if (/^\d{4}-\d{2}-\d{2}$/.test(v)) draft.rep.first = v; }
   const dm = document.getElementById('tDom'); if (dm && draft.rep && draft.rep.unit === 'month') draft.rep.dom = dm.value === 'last' ? 'last' : clamp(parseInt(dm.value) || 1, 1, 31);
   const tg = document.getElementById('tTarget'); if (tg) draft.target = clamp(parseInt(tg.value)||1, 1, 7);
   const bn = document.getElementById('tBonus'); if (bn) { const v = parseInt(bn.value)||0; draft.bonus = v > draft.target ? clamp(v,1,7) : undefined; }
@@ -3246,11 +3253,11 @@ function onClick(e){
     const i = S.tasks.findIndex(t => t.id === out.id), old = i >= 0 ? S.tasks[i] : null;
     let relock = [];
     const entry = {from: old ? addDays(D.today,1) : D.today, cad: out.cad, days: out.days || null};
-    if (out.rep) entry.rep = {...out.rep, start: repStart(out.rep, entry.from)};
+    if (out.rep){ const first = out.rep.first && out.rep.first > entry.from ? out.rep.first : entry.from; if (first > entry.from) out.rep.first = first; else delete out.rep.first; entry.rep = {...out.rep, start: repStart(out.rep, first), first}; }
     if (old){
       out.sched = (old.sched || []).slice(); if (old.off) out.off = old.off;
       const last = out.sched[out.sched.length-1];
-      const repKey = e => e && e.rep ? JSON.stringify([e.rep.unit, e.rep.every, e.rep.dom || null]) : null;
+      const repKey = e => e && e.rep ? JSON.stringify([e.rep.unit, e.rep.every, e.rep.dom || null, e.rep.first && e.rep.first > entry.from ? e.rep.first : null]) : null;
       if (!last || last.cad !== entry.cad || JSON.stringify(last.days||null) !== JSON.stringify(entry.days) || repKey(last) !== repKey(entry)){ if (last && last.from === entry.from) out.sched[out.sched.length-1] = entry; else out.sched.push(entry); }
       const runs = dk => isDue(old, dk) && !offOn(old, dk) && (old.created || S.created) <= dk;
       if (old.pool && old.pool.length) for (const dk of [D.yest, D.today].filter(runs)){
