@@ -531,7 +531,8 @@ html[data-mode="dark"] .pill.rite{background:#f1eee4;color:#171614}
 const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; this key never changes so existing saves keep loading
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
-const PAGES = /*PAGES*/true;      // the GitHub Pages build: saves sync through your own GitHub gist
+const PAGES = /*PAGES*/true;
+const BUILD = '575ef2d53e';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -3277,7 +3278,19 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && draft) clo
 
 render();
 
-if (PAGES){ document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') gistPull(); }); window.addEventListener('online', () => gistPull()); if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {}); }
+// Pages: an app left open on a phone or Mac never reloads by itself, so check for a newer version whenever you come back, and switch to it
+async function checkForUpdate(){
+  if (!PAGES || BUILD.startsWith('/*') || recoveryMode) return;
+  try {
+    const r = await fetch('version.json?t=' + Date.now(), {cache:'no-store'}); if (!r.ok) return;
+    const v = (await r.json()).build;
+    // reload once per new version, so a slow-to-update server can't cause a reload loop
+    let tried = null; try { tried = sessionStorage.getItem('oathkeeper-reloaded'); } catch(e){}
+    if (v && v !== BUILD && tried !== v){ try { sessionStorage.setItem('oathkeeper-reloaded', v); } catch(e){} for (let i = 0; i < 20 && cloud.writing; i++) await new Promise(res => setTimeout(res, 250)); location.reload(); }
+  } catch(e){}
+}
+if (PAGES){ setInterval(checkForUpdate, 30 * 60 * 1000); setTimeout(checkForUpdate, 3000); }
+if (PAGES){ document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { checkForUpdate(); gistPull(); } }); window.addEventListener('online', () => gistPull()); if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {}); }
 initCloud().finally(() => { if (migratedNow){ migratedNow = false; save(); render(); } });
 
 document.addEventListener('submit', e => {
