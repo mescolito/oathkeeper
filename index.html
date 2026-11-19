@@ -296,6 +296,7 @@ html[data-mode="dark"] .trow.done .check{color:var(--inv)}
 .toast{opacity:0;pointer-events:none;transition:opacity .2s}
 .toast.show{opacity:1}
 .toast:empty{padding:0}
+.starburst{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:70;image-rendering:pixelated;image-rendering:crisp-edges}
 .confetti{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:25;image-rendering:pixelated;image-rendering:crisp-edges}
 .shake{animation:shake .3s}
 @keyframes shake{0%,100%{transform:translate(0)}25%{transform:translate(-4px,1px)}75%{transform:translate(4px,-1px)}}
@@ -574,7 +575,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '636e8ca00d';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '1c452b8bd3';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -2834,7 +2835,7 @@ function openChestUI(ts, outcome){
   el.hidden = false; drawIcons(el);
   document.querySelectorAll('.app, .nav').forEach(n => n.inert = true);
   const cv = el.querySelector('.chestbig'), box = el.querySelector('.chestprize');
-  const reveal = () => { drawChest(cv, true, 0, leg); box.hidden = false; if (leg && typeof confetti === 'function') confetti(cv.getBoundingClientRect()); const b = box.querySelector('button.primary, button'); if (b) b.focus(); };
+  const reveal = () => { drawChest(cv, true, 0, leg); box.hidden = false; starburst(cv.getBoundingClientRect(), leg); if (leg && typeof confetti === 'function') confetti(cv.getBoundingClientRect()); const b = box.querySelector('button.primary, button'); if (b) b.focus(); };
   if (!motionOK){ reveal(); return; }
   const t0 = performance.now();
   const step = now => {
@@ -3245,6 +3246,47 @@ function confStep(now){
   ctx.globalAlpha = 1;
   if (c.parts.length) c.raf = requestAnimationFrame(confStep);
   else { c.raf = 0; c.cv.remove(); conf = null; }
+}
+// pixel stars bursting out of an opened chest: they shoot outward, twinkle between a plus and an x, then fizzle out
+let stars = null;
+function starburst(rect, big){
+  if (!motionOK || !rect) return;
+  if (!stars){
+    const cv = document.createElement('canvas'); cv.className = 'starburst'; cv.setAttribute('aria-hidden', 'true'); document.body.appendChild(cv);
+    stars = {cv, ctx: cv.getContext('2d'), parts: [], last: 0, raf: 0, spawn: 0, sx: 0, sy: 0, big: false};
+  }
+  const W = Math.ceil(innerWidth / CONF_PX), H = Math.ceil(innerHeight / CONF_PX);
+  if (stars.cv.width !== W || stars.cv.height !== H){ stars.cv.width = W; stars.cv.height = H; }
+  stars.sx = (rect.left + rect.width / 2) / CONF_PX; stars.sy = (rect.top + rect.height * 0.45) / CONF_PX; stars.big = big;
+  stars.color = document.documentElement.getAttribute('data-mode') === 'dark' ? PW : PB; stars.rim = false;   // cream stars in dark mode, ink-black in light
+  const n = big ? 46 : 30; for (let i = 0; i < n; i++) starAdd(1);
+  stars.spawn = big ? 0.9 : 0.5;   // a trickle of smaller sparkles keeps coming out for a moment
+  if (!stars.raf){ stars.last = performance.now(); stars.raf = requestAnimationFrame(starStep); }
+}
+function starAdd(power){
+  const S2 = stars, a = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 1.7, v = (55 + Math.random() * 95) * power;
+  S2.parts.push({x: S2.sx + (Math.random() - 0.5) * 6, y: S2.sy + (Math.random() - 0.5) * 3, vx: Math.cos(a) * v, vy: Math.sin(a) * v,
+    size: Math.random() < (S2.big ? 0.45 : 0.3) ? 2 : 1, tw: Math.random() * 6, twSp: 10 + Math.random() * 14, life: 0, ttl: 0.8 + Math.random() * 0.9});
+}
+function starStep(now){
+  const S2 = stars, dt = Math.min(0.05, (now - S2.last) / 1000); S2.last = now;
+  const g = S2.ctx; g.clearRect(0, 0, S2.cv.width, S2.cv.height); g.fillStyle = S2.color;
+  if (S2.spawn > 0){ S2.spawn -= dt; if (Math.random() < 0.7) starAdd(0.6); }
+  S2.parts = S2.parts.filter(p => p.life < p.ttl);
+  for (const p of S2.parts){
+    p.life += dt; p.vx *= 1 - 2.6 * dt; p.vy = p.vy * (1 - 2.6 * dt) + 14 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.tw += p.twSp * dt;
+    const k = p.life / p.ttl, x = Math.round(p.x), y = Math.round(p.y);
+    if (k > 0.65 && Math.random() < (k - 0.65) * 2.2) continue;           // fizzling: it flickers more and more
+    const arm = k > 0.75 ? 0 : p.size, cross = Math.floor(p.tw) % 3 !== 2;   // twinkle: mostly a plus, now and then an x
+    const px = [[x, y]];
+    for (let i = 1; i <= arm; i++){
+      if (cross) px.push([x + i, y], [x - i, y], [x, y + i], [x, y - i]);
+      else if (i === 1) px.push([x + 1, y + 1], [x - 1, y - 1], [x + 1, y - 1], [x - 1, y + 1]);
+    }
+    for (const [a2, b2] of px) g.fillRect(a2, b2, 1, 1);
+  }
+  if (S2.parts.length || S2.spawn > 0) S2.raf = requestAnimationFrame(starStep);
+  else { S2.raf = 0; S2.cv.remove(); stars = null; }
 }
 let toastT;
 function toast(msg){ const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => { t.classList.remove('show'); t.textContent = ''; }, 2600); }
