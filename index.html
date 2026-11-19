@@ -560,7 +560,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'd8119a0e58';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '4b66d9d289';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -2808,7 +2808,7 @@ function renderFocus(){
   <section class="pbelow">
     <h3>Timer</h3>
     <div class="psteps">${step('focus','Focus',5,90,5)}${step('short','Short break',1,30,1)}${step('long','Long break',5,60,5)}${step('every','Sessions per set',2,8,1)}
-      <div class="pstep"><span>Lo-fi music during focus</span><button class="ptog ${c.music ? 'on' : ''}" data-ptog="music" aria-pressed="${c.music}">${c.music ? 'On' : 'Off'}</button></div>
+      <div class="pstep"><span>Lo-fi music (focus &amp; breaks)</span><button class="ptog ${c.music ? 'on' : ''}" data-ptog="music" aria-pressed="${c.music}">${c.music ? 'On' : 'Off'}</button></div>
       <div class="pstep"><span>Timer chimes</span><button class="ptog ${c.sound ? 'on' : ''}" data-ptog="sound" aria-pressed="${c.sound}">${c.sound ? 'On' : 'Off'}</button></div>
       <div class="pstep"><span>Vibration</span><button class="ptog ${c.haptic ? 'on' : ''}" data-ptog="haptic" aria-pressed="${c.haptic}">${c.haptic ? 'On' : 'Off'}</button></div></div>
     <p class="phow">Vibration works on Android phones; iPhones don't let web pages vibrate, so you'll get the sounds there.</p>
@@ -3825,63 +3825,103 @@ function sfx(name){
 }
 function buzz(pattern){ try { if (S.pomo.cfg.haptic && navigator.vibrate) navigator.vibrate(pattern); } catch(e){} }
 
-/* ---------- lo-fi music while a focus session runs: made live with Web Audio (no files, no streaming) ----------
-   72 bpm, swung: soft electric-piano 7th chords, a round bass, a dusty kick/snare/hat beat, a few lazy melody
-   notes and a little vinyl crackle, all through a warm low-pass. It fades in when focus starts and out on
-   pause, breaks or stop. */
-const LOFI_BPM = 72, LOFI_PROGS = [
-  [[50,53,57,60,64],[43,53,55,59,62],[48,52,55,59,62],[45,48,52,55,59]],   // Dm9  G13  Cmaj9  Am9
-  [[41,52,55,57,60],[40,50,55,59,62],[38,53,57,60,64],[43,53,57,59,64]],   // Fmaj7 Em7 Dm9 G7
-  [[45,55,60,64,67],[50,57,60,64,65],[43,53,57,59,62],[48,55,59,62,64]]    // Am7 Dm7 G9 Cmaj7
-];
+/* ---------- lo-fi music while the timer runs: made live with Web Audio (no files, no streaming) ----------
+   Focus: 72 bpm, swung, soft electric-piano 7th chords, a round bass, a dusty kick/snare/hat beat, a few lazy
+   melody notes and vinyl crackle, through a warm low-pass.
+   Breaks: the same band eases down without stopping: the tempo drifts to 62, the beat thins to a soft kick and
+   rim, brighter dreamy major chords roll in as slow arpeggios, and a light rain fades up. Back to focus, it all
+   eases back. It fades out on pause or stop. */
+const LOFI_PROGS = {
+  focus: [
+    [[50,53,57,60,64],[43,53,55,59,62],[48,52,55,59,62],[45,48,52,55,59]],   // Dm9  G13  Cmaj9  Am9
+    [[41,52,55,57,60],[40,50,55,59,62],[38,53,57,60,64],[43,53,57,59,64]],   // Fmaj7 Em7 Dm9 G7
+    [[45,55,60,64,67],[50,57,60,64,65],[43,53,57,59,62],[48,55,59,62,64]]    // Am7 Dm7 G9 Cmaj7
+  ],
+  break: [
+    [[41,57,60,64,67],[43,55,59,62,69],[40,55,59,62,64],[45,57,60,64,71]],   // Fmaj9 G6/9 Em7 Am9
+    [[36,55,59,62,64],[41,57,60,64,69],[36,55,59,62,64],[41,57,60,64,67]],   // Cmaj9 Fmaj9, floating
+    [[39,55,58,62,65],[44,56,60,63,67],[39,55,58,62,65],[37,56,60,63,65]]    // Ebmaj9 Abmaj9 Ebmaj9 Dbmaj9
+  ]
+};
+const LOFI_BPM = {focus: 72, break: 62};
 let lofi = null;
 const midiHz = m => 440 * Math.pow(2, (m - 69) / 12);
-function lofiWanted(){ const r = S.pomo && S.pomo.run; return !!(S.pomo && S.pomo.cfg.music && r && !r.idle && !r.pauseAt && r.phase === 'focus' && !recoveryMode); }
+const lofiPick = mode => LOFI_PROGS[mode][Math.floor(Math.random() * LOFI_PROGS[mode].length)];
+function lofiWanted(){
+  const r = S.pomo && S.pomo.run;
+  if (!S.pomo || !S.pomo.cfg.music || !r || r.idle || r.pauseAt || recoveryMode) return null;
+  return r.phase === 'focus' ? 'focus' : 'break';
+}
 function musicSync(){
   try {
     const want = lofiWanted();
-    if (want && !lofi) lofiStart();
+    if (want && !lofi) lofiStart(want);
+    else if (want && lofi.mode !== want) lofiMode(want);
     else if (!want && lofi) lofiStop();
   } catch(e){}
 }
 // a timer restored after a reload can't start sound until you touch the page; the first tap wakes it
 document.addEventListener('pointerdown', () => { try { if (lofi && actx && actx.state === 'suspended') actx.resume(); } catch(e){} }, {passive: true});
-function lofiStart(){
+function lofiStart(mode){
   sfxInit(); if (!actx) return;
   try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch(e){}   // play even with the iPhone's silent switch on
-  const now = actx.currentTime;
+  const now = actx.currentTime, brk = mode === 'break';
   const master = actx.createGain(); master.gain.setValueAtTime(0.0001, now); master.gain.exponentialRampToValueAtTime(0.85, now + 2.5);
-  const warm = actx.createBiquadFilter(); warm.type = 'lowpass'; warm.frequency.value = 2400; warm.Q.value = 0.4;
+  const warm = actx.createBiquadFilter(); warm.type = 'lowpass'; warm.frequency.value = brk ? 1800 : 2400; warm.Q.value = 0.4;
   master.connect(warm); warm.connect(actx.destination);
-  // one second of white noise, reused for drums and crackle
+  const bus = v => { const g = actx.createGain(); g.gain.value = v; g.connect(master); return g; };
+  const drums = bus(brk ? 0.45 : 1), keys = bus(1), rain = bus(brk ? 0.16 : 0.0001);
+  // one second of white noise, reused for drums
   const nb = actx.createBuffer(1, actx.sampleRate, actx.sampleRate), nd = nb.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
   // vinyl: a quiet hiss plus sparse pops, looping
   const vb = actx.createBuffer(1, actx.sampleRate * 3, actx.sampleRate), vd = vb.getChannelData(0);
   for (let i = 0; i < vd.length; i++) vd[i] = (Math.random() * 2 - 1) * 0.012 + (Math.random() < 0.00035 ? (Math.random() * 2 - 1) * 0.5 : 0);
   const vin = actx.createBufferSource(); vin.buffer = vb; vin.loop = true; const vf = actx.createBiquadFilter(); vf.type = 'bandpass'; vf.frequency.value = 3000; vf.Q.value = 0.6;
   const vg = actx.createGain(); vg.gain.value = 0.5; vin.connect(vf); vf.connect(vg); vg.connect(master); vin.start(now);
-  lofi = {master, noise: nb, vin, next: now + 0.15, step: 0, bar: 0, prog: LOFI_PROGS[Math.floor(Math.random() * LOFI_PROGS.length)], timer: 0};
+  // rain for breaks: soft brown-ish noise with a few drops, looping
+  const rb = actx.createBuffer(1, actx.sampleRate * 4, actx.sampleRate), rd = rb.getChannelData(0); let last = 0;
+  for (let i = 0; i < rd.length; i++){ last = (last + 0.04 * (Math.random() * 2 - 1)) / 1.04; rd[i] = last * 2.2 + (Math.random() < 0.0006 ? (Math.random() * 2 - 1) * 0.12 : 0); }
+  const rs = actx.createBufferSource(); rs.buffer = rb; rs.loop = true; const rf = actx.createBiquadFilter(); rf.type = 'lowpass'; rf.frequency.value = 1400;
+  rs.connect(rf); rf.connect(rain); rs.start(now);
+  lofi = {mode, master, warm, drums, keys, rain, noise: nb, srcs: [vin, rs], next: now + 0.15, step: 0, bar: 0, bpm: LOFI_BPM[mode], prog: lofiPick(mode), swap: false, timer: 0};
   lofi.timer = setInterval(lofiSchedule, 200); lofiSchedule();
+}
+// focus <-> break without stopping: buses and filter glide over a few seconds, new chords from the next bar
+function lofiMode(mode){
+  const L = lofi; if (!L) return; L.mode = mode; L.swap = true;
+  const t = actx.currentTime, brk = mode === 'break';
+  const glide = (p, v) => { p.cancelScheduledValues(t); p.setValueAtTime(Math.max(0.0001, p.value), t); p.exponentialRampToValueAtTime(v, t + 5); };
+  glide(L.drums.gain, brk ? 0.45 : 1); glide(L.rain.gain, brk ? 0.16 : 0.0001); glide(L.warm.frequency, brk ? 1800 : 2400);
 }
 function lofiStop(){
   const L = lofi; lofi = null; if (!L) return;
   clearInterval(L.timer);
   try { const t = actx.currentTime; L.master.gain.cancelScheduledValues(t); L.master.gain.setValueAtTime(Math.max(0.0001, L.master.gain.value), t); L.master.gain.exponentialRampToValueAtTime(0.0001, t + 1.2);
-    setTimeout(() => { try { L.vin.stop(); L.master.disconnect(); } catch(e){} }, 1400); } catch(e){}
+    setTimeout(() => { try { L.srcs.forEach(x => x.stop()); L.master.disconnect(); } catch(e){} }, 1400); } catch(e){}
 }
 // schedules ~1.5s ahead so a backgrounded tab (timers slowed to once a second) doesn't leave gaps
 function lofiSchedule(){
   const L = lofi; if (!L || !actx) return;
-  const eighth = 60 / LOFI_BPM / 2;
   while (L.next < actx.currentTime + 1.5){
-    const st = L.step % 8, t = L.next + (st % 2 ? eighth * 0.18 : 0);   // swing the off-beats
-    if (st === 0){ if (L.bar % 4 === 0 && L.bar && Math.random() < 0.35) L.prog = LOFI_PROGS[Math.floor(Math.random() * LOFI_PROGS.length)]; lofiChord(L, L.prog[L.bar % 4], t, eighth * 8); }
+    L.bpm += Math.max(-0.4, Math.min(0.4, LOFI_BPM[L.mode] - L.bpm));   // tempo drifts, it doesn't jump
+    const eighth = 60 / L.bpm / 2, st = L.step % 8, t = L.next + (st % 2 ? eighth * 0.18 : 0), brk = L.mode === 'break';
+    if (st === 0){
+      if (L.swap || (L.bar % 4 === 0 && L.bar && Math.random() < 0.35)){ if (L.swap ? L.bar % 2 === 0 : true){ L.prog = lofiPick(L.mode); L.swap = false; L.bar = 0; } }
+      lofiChord(L, L.prog[L.bar % 4], t, eighth * 8, brk);
+    }
     const root = L.prog[L.bar % 4][0];
-    if (st === 0 || st === 5) lofiBass(L, root - 12, t, eighth * (st === 0 ? 3.5 : 2.5));
-    if (st === 0 || st === 3 || (st === 6 && Math.random() < 0.4)) lofiKick(L, t);
-    if (st === 2 || st === 6) lofiSnare(L, t);
-    if (Math.random() < 0.85) lofiHat(L, t, st % 2 ? 0.05 : 0.08);
-    if (st % 2 === 0 && Math.random() < 0.22){ const ch = L.prog[L.bar % 4]; lofiKey(L, ch[1 + Math.floor(Math.random() * (ch.length - 1))] + 12, t, eighth * (1.5 + Math.random() * 2), 0.05); }
+    if (st === 0 || (!brk && st === 5) || (brk && st === 4 && Math.random() < 0.6)) lofiBass(L, root - 12 + (root < 40 ? 12 : 0), t, eighth * (st === 0 ? 3.5 : 2.5));
+    if (brk){
+      if (st === 0) lofiKick(L, t);
+      if (st === 4) lofiNoise(L, t, 0.06, 'bandpass', 2600, 0.08);   // rim click
+      if (st % 2 === 0 && Math.random() < 0.5) lofiHat(L, t, 0.05);
+      if (Math.random() < 0.16){ const ch = L.prog[L.bar % 4]; lofiKey(L, ch[1 + Math.floor(Math.random() * (ch.length - 1))] + 12, t, eighth * (3 + Math.random() * 3), 0.04); }
+    } else {
+      if (st === 0 || st === 3 || (st === 6 && Math.random() < 0.4)) lofiKick(L, t);
+      if (st === 2 || st === 6) lofiSnare(L, t);
+      if (Math.random() < 0.85) lofiHat(L, t, st % 2 ? 0.05 : 0.08);
+      if (st % 2 === 0 && Math.random() < 0.22){ const ch = L.prog[L.bar % 4]; lofiKey(L, ch[1 + Math.floor(Math.random() * (ch.length - 1))] + 12, t, eighth * (1.5 + Math.random() * 2), 0.05); }
+    }
     L.next += eighth; L.step++; if (L.step % 8 === 0) L.bar++;
   }
 }
@@ -3890,24 +3930,25 @@ function lofiKey(L, m, t, dur, vol){
   const f = midiHz(m), g = actx.createGain(), o = actx.createOscillator(), o2 = actx.createOscillator(), g2 = actx.createGain();
   o.type = 'sine'; o.frequency.value = f; o2.type = 'triangle'; o2.frequency.value = f; o2.detune.value = 7; g2.gain.value = 0.35;
   g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.04); g.gain.exponentialRampToValueAtTime(vol * 0.45, t + 0.6); g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.4);
-  o.connect(g); o2.connect(g2); g2.connect(g); g.connect(L.master); o.start(t); o2.start(t); o.stop(t + dur + 0.5); o2.stop(t + dur + 0.5);
+  o.connect(g); o2.connect(g2); g2.connect(g); g.connect(L.keys); o.start(t); o2.start(t); o.stop(t + dur + 0.5); o2.stop(t + dur + 0.5);
 }
-function lofiChord(L, notes, t, dur){ notes.slice(1).forEach((m, i) => lofiKey(L, m, t + i * 0.012, dur, 0.045)); }
+// focus strums the chord; breaks roll it slowly upward like an arpeggio
+function lofiChord(L, notes, t, dur, brk){ notes.slice(1).forEach((m, i) => lofiKey(L, m, t + i * (brk ? 0.11 : 0.012), dur, brk ? 0.04 : 0.045)); }
 function lofiBass(L, m, t, dur){
   const o = actx.createOscillator(), g = actx.createGain(); o.type = 'sine'; o.frequency.value = midiHz(m);
   g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.16, t + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  o.connect(g); g.connect(L.master); o.start(t); o.stop(t + dur + 0.05);
+  o.connect(g); g.connect(L.keys); o.start(t); o.stop(t + dur + 0.05);
 }
 function lofiKick(L, t){
   const o = actx.createOscillator(), g = actx.createGain(); o.type = 'sine';
   o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.18);
   g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.32, t + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
-  o.connect(g); g.connect(L.master); o.start(t); o.stop(t + 0.4);
+  o.connect(g); g.connect(L.drums); o.start(t); o.stop(t + 0.4);
 }
 function lofiNoise(L, t, dur, type, freq, vol){
   const n = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain(); n.buffer = L.noise;
   f.type = type; f.frequency.value = freq; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  n.connect(f); f.connect(g); g.connect(L.master); n.start(t, Math.random() * 0.5); n.stop(t + dur + 0.02);
+  n.connect(f); f.connect(g); g.connect(L.drums); n.start(t, Math.random() * 0.5); n.stop(t + dur + 0.02);
 }
 function lofiSnare(L, t){ lofiNoise(L, t, 0.22, 'bandpass', 1700, 0.12); }
 function lofiHat(L, t, vol){ lofiNoise(L, t, 0.045, 'highpass', 7000, vol * 0.6); }
