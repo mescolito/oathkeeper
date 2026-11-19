@@ -88,6 +88,10 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block;width
 .trow{display:grid;grid-template-columns:46px 1fr 44px;gap:12px;align-items:center;background:var(--card);border-radius:22px;padding:12px 12px 12px 12px;box-shadow:0 1px 0 var(--line)}
 .ticon{width:46px;height:46px;min-width:46px;flex:none;aspect-ratio:1;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--ink)}
 .ticon svg{flex:none}
+.temoji{font-size:24px;line-height:1;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
+.iconpick .temoji{font-size:20px}
+.emojirow{display:flex;gap:8px;align-items:center}
+.emojirow input{flex:1;font-size:20px}
 .statlv{flex:none}
 .tbody{display:flex;flex-direction:column;gap:5px;min-width:0}
 .tkick{font-size:12px;font-weight:600;color:var(--muted)}
@@ -541,6 +545,17 @@ const STATS_BASE = JSON.parse(JSON.stringify(STATS));
 const ABBR = {MGT:'MGT', STA:'STA', MOB:'MOB', ARM:'DEF', HRT:'FOC'};   // internal keys stay; ARM shows as Defense, HRT as Focus
 SK.forEach(k => { STATS[k].abbr = ABBR[k]; STATS[k].icon = k; STATS_BASE[k].abbr = ABBR[k]; STATS_BASE[k].icon = k; });
 const STAT_ICONS = ['MGT','STA','MOB','ARM','HRT','wave','flame','leaf','star','book','moon','bolt'];
+// a task's own icon: one of the app's pixel-line icons, or any emoji ("e:" + the emoji)
+const TASK_ICONS = [...STAT_ICONS, 'sword', 'timer', 'bed', 'list', 'gift'];
+function cleanEmoji(v){
+  if (typeof v !== 'string') return '';
+  v = v.trim(); if (!v) return '';
+  let first = v;
+  try { if (typeof Intl !== 'undefined' && Intl.Segmenter) first = [...new Intl.Segmenter(undefined, {granularity:'grapheme'}).segment(v)][0].segment; } catch(e){}
+  first = first.slice(0, 16);
+  return /\p{Extended_Pictographic}|\p{Regional_Indicator}/u.test(first) ? first : '';
+}
+const taskIconOk = v => typeof v === 'string' && (TASK_ICONS.includes(v) || (v.startsWith('e:') && cleanEmoji(v.slice(2)) === v.slice(2)));
 const STAT_COLORS = ['#f2d982','#b8c9ef','#eeb7d8','#a9b97c','#f4bf92','#c9b8f0','#9fd8cf','#e9a3a3'];
 function applySettings(){ const st = (S && S.settings) || {}; ROLLOVER_H = st.rollover || 0; try { document.documentElement.setAttribute('data-mode', st.theme === 'dark' ? 'dark' : 'light'); } catch(e){} }
 function applyStatMeta(){ applySettings();
@@ -895,6 +910,7 @@ function sanitize(s, created){
     if (Array.isArray(t.pool)){ const pool = t.pool.filter(obj).map(p => ({name: str(p.name, 40).trim(), stats: statList(p.stats)})).filter(p => p.name).slice(0, 12); if (pool.length >= 2){ o.pool = pool; o.stats = pool[0].stats.slice(); } }
     if (Array.isArray(t.sched)) o.sched = t.sched.filter(e => obj(e) && isDate(e.from)).map(e => { const dl2 = dayList(e.days); return {from: e.from, cad: e.cad === 'week' ? 'week' : 'day', days: dl2 && dl2.length && dl2.length < 7 ? dl2 : null}; });
     if (Array.isArray(t.off)) o.off = t.off.filter(p => Array.isArray(p) && isDate(p[0])).map(p => [p[0], isDate(p[1]) ? p[1] : null]);
+    if (taskIconOk(t.icon)) o.icon = t.icon;
     // optional checklist of steps (like Tiimo subtasks); steps are just progress, the task itself gives the reward
     if (Array.isArray(t.checklist)){ const cl = t.checklist.filter(obj).map(c => ({id: str(c.id, 20, ''), text: str(c.text, 60, '').trim()})).filter(c => c.id && c.text).slice(0, CHECK_MAX); if (cl.length) o.checklist = cl; }
     return o;
@@ -2095,6 +2111,8 @@ let prevTab = 'today', shopCat = 'all', shopAfford = false, sheetMode = null, st
 const motionOK = !window.matchMedia || !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const svg = (k, s=20, sw=2) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[k] || ICON.star}</svg>`;
 const sIcon = (k, s=20) => svg(STATS[k].icon || k, s, 2);
+// a task's icon: its own emoji or app icon if it has one, otherwise its main stat's icon
+const tIcon = (t, prim, s=20) => t && t.icon ? (t.icon.startsWith('e:') ? `<span class="temoji" aria-hidden="true">${esc(t.icon.slice(2))}</span>` : svg(t.icon, s, 2)) : sIcon(prim, s);
 const chipS = s => `<span class="chip-s" style="background:${STATS[s].c}">${esc(STATS[s].abbr)}</span>`;
 const bar = (pct, color, cls='') => `<span class="pbar ${cls}"><i style="width:${clamp(pct,0,100)}%;${color ? `background:${color}` : ''}"></i></span>`;
 const pctTxt = x => `${Math.round(x*100)}%`;
@@ -2177,7 +2195,7 @@ function taskRow(t, k){
     rr = `<div class="rr"><button class="rrbtn" data-reroll="${esc(t.id)}" ${canRoll ? '' : 'disabled'} aria-label="Reroll for ${price} gold">${svg('reroll',14,2.4)} Reroll · ${price} G</button><button class="rrmore" data-clopen="rr:${esc(t.id)}" aria-expanded="${ro}">1 of ${t.pool.length} routines<span class="clchev">${svg(ro ? 'up' : 'down',14,2.4)}</span></button>${ro ? `<span class="rrlist">${t.pool.map(o => esc(o.name)).join(' · ')}</span>` : ''}</div>`;
   }
   return `<div class="trow ${isD?'done':''} ${rested?'rested':''} ${closed?'closed':''}">
-    <span class="ticon" style="background:${STATS[prim].c}">${sIcon(prim)}</span>
+    <span class="ticon" style="background:${STATS[prim].c}">${tIcon(t, prim)}</span>
     <div class="tbody">${isPool || t.archived ? `<span class="tkick">${isPool ? esc(t.name) : ''}${t.archived ? (isPool ? ' · ' : '') + (k === D.today ? 'Archived · last day today' : 'Archived') : ''}</span>` : ''}<span class="tname">${esc(name)}</span>${isD ? '' : wk}
       <span class="tmeta">${isD ? `<span>Done${cad === 'week' ? ` · ${weekCount(t.id,k)} of ${effTarget(t,k)} this week` : ''}</span>` : `${stats.map(chipS).join('')}${weak ? '<span class="chip-weak">2× dmg</span>' : ''}<span>${esc(meta)}</span>`}</span>${rr}</div>
     <button class="check" data-toggle="${esc(t.id)}" aria-pressed="${isD}" aria-label="${isD ? 'Undo' : 'Complete'} ${esc(name)}" ${disabled?'disabled':''}>${svg('check',18,2.8)}</button>
@@ -2613,7 +2631,7 @@ function renderSettings(){
     <div class="catpills" role="group" aria-label="Task type">${TASK_FILTERS.map(([v,l]) => `<button class="catpill ${taskFilter===v?'on':''}" data-tfilter="${v}" aria-pressed="${taskFilter===v}">${l}</button>`).join('')}</div>
     <div class="list">${list.map(t => { const st = t.pool && t.pool.length ? Array.from(new Set(t.pool.flatMap(o => o.stats))) : t.stats;
       return t.archived ? `<div class="erow" style="grid-template-columns:1fr auto"><span class="muted">${esc(t.name)}</span><button class="btn" data-restore="${esc(t.id)}">Restore</button></div>`
-      : `<div class="erow"><span class="ticon" style="background:${STATS[st[0]].c}">${sIcon(st[0])}</span><span class="tbody"><span class="tname">${esc(t.name)}</span><span class="tmeta">${st.map(chipS).join('')}<span>${esc(cadText(t))}</span></span>${t.pool && t.pool.length ? `<span class="small muted">${t.pool.map(o => esc(o.name)).join(' · ')}</span>` : ''}</span><button class="btn" data-edit="${esc(t.id)}">Edit</button></div>`; }).join('') || '<p class="how">No tasks of this type.</p>'}</div>`;
+      : `<div class="erow"><span class="ticon" style="background:${STATS[st[0]].c}">${tIcon(t, st[0])}</span><span class="tbody"><span class="tname">${esc(t.name)}</span><span class="tmeta">${st.map(chipS).join('')}<span>${esc(cadText(t))}</span></span>${t.pool && t.pool.length ? `<span class="small muted">${t.pool.map(o => esc(o.name)).join(' · ')}</span>` : ''}</span><button class="btn" data-edit="${esc(t.id)}">Edit</button></div>`; }).join('') || '<p class="how">No tasks of this type.</p>'}</div>`;
   }
   const ro = S.settings.rollover;
   return `${segHtml}
@@ -2945,6 +2963,10 @@ function renderEditor(){
       <button class="btn" data-oadd ${t.pool.length>=8?'disabled':''}>+ Add routine</button></div>`
     : `<div class="f" style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:600;color:var(--muted)">Trains (pick 1–2; ★ is main)</span>
       <div class="chips">${SK.map(k => { const i = t.stats.indexOf(k); return `<button class="chip ${i>=0?'on':''}" data-stat="${k}" style="${i>=0?`background:${STATS[k].c};border-color:${STATS[k].c};color:#171614`:''}" aria-pressed="${i>=0}">${i===0?'★ ':''}${esc(STATS[k].name)}</button>`; }).join('')}</div></div>`}
+    <div class="f" style="display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;font-weight:600;color:var(--muted)">Icon</span>
+      <div class="swatches"><button class="iconpick ${!t.icon ? 'on' : ''}" data-ticon="" aria-pressed="${!t.icon}" aria-label="Use the main stat's icon" style="font-size:12px;font-weight:700">Auto</button>${TASK_ICONS.map(ic => `<button class="iconpick ${t.icon === ic ? 'on' : ''}" data-ticon="${ic}" aria-pressed="${t.icon === ic}" aria-label="Icon ${ic}">${svg(ic,18,2)}</button>`).join('')}</div>
+      <div class="emojirow"><input type="text" id="tEmoji" maxlength="16" inputmode="text" autocomplete="off" value="${t.icon && t.icon.startsWith('e:') ? esc(t.icon.slice(2)) : ''}" placeholder="Or type an emoji 🙂" aria-label="Emoji icon"></div>
+      <p class="how small">On iPhone, tap the box and switch to the emoji keyboard (🌐 or 🙂). On a Mac, press Control‑Command‑Space.</p></div>
     <label class="f" for="tCad">How often<select id="tCad"><option value="day" ${t.cad==='day'?'selected':''}>Every day (daily)</option><option value="week" ${t.cad==='week'?'selected':''}>Times per week</option></select></label>
     ${t.cad==='week' ? `<div class="row"><label class="f" for="tTarget" style="flex:1">Target per week<input type="number" id="tTarget" min="1" max="7" value="${t.target||1}"></label><label class="f" for="tBonus" style="flex:1">Bonus goal (optional)<input type="number" id="tBonus" min="0" max="7" value="${t.bonus||''}"></label></div>` : ''}
     <div class="f" style="display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;font-weight:600;color:var(--muted)">Checklist (optional): steps you tick off; finishing them all completes the task</span>
@@ -2963,6 +2985,8 @@ function readEditorFields(){
   const bn = document.getElementById('tBonus'); if (bn) { const v = parseInt(bn.value)||0; draft.bonus = v > draft.target ? clamp(v,1,7) : undefined; }
   if (draft.pool) draft.pool.forEach((o,i) => { const el = document.getElementById('oName'+i); if (el) o.name = el.value; });
   if (draft.checklist) draft.checklist.forEach((c,i) => { const el = document.getElementById('clText'+i); if (el) c.text = el.value; });
+  const em = document.getElementById('tEmoji');
+  if (em){ const v = em.value.trim(); if (v){ const e = cleanEmoji(v); if (e) draft.icon = 'e:' + e; } else if (draft.icon && draft.icon.startsWith('e:')) draft.icon = undefined; }
 }
 function readStatFields(){ if (!statDraft) return; const n = document.getElementById('stName'), b = document.getElementById('stBlurb'); if (n) statDraft.name = n.value; if (b) statDraft.blurb = b.value; }
 function closeEditor(){ document.getElementById('sheet').hidden = true; draft = null; sheetMode = null; statEdit = null; statDraft = null; document.querySelectorAll('.app, .nav').forEach(n => n.inert = false); showAward(); }
@@ -3119,6 +3143,7 @@ function onClick(e){
   if (el.dataset.ostat && draft && draft.pool){ readEditorFields(); const [i, k] = el.dataset.ostat.split(':'); const o = draft.pool[+i]; const j = o.stats.indexOf(k);
     if (j >= 0){ if (o.stats.length > 1) o.stats.splice(j,1); } else { o.stats.push(k); if (o.stats.length > 2) o.stats.shift(); }
     renderEditor(); return; }
+  if (el.dataset.ticon !== undefined && draft){ readEditorFields(); const v = el.dataset.ticon; draft.icon = TASK_ICONS.includes(v) ? v : undefined; const em = document.getElementById('tEmoji'); if (em) em.value = ''; renderEditor(); return; }
   if ('cladd' in el.dataset && draft){ readEditorFields(); const cl = draft.checklist || (draft.checklist = []); if (cl.length < CHECK_MAX){ cl.push({id: 'c' + Date.now().toString(36) + cl.length, text: ''}); renderEditor(); const n = document.getElementById('clText' + (cl.length - 1)); if (n) n.focus(); } return; }
   if (el.dataset.cldel !== undefined && draft && draft.checklist){ readEditorFields(); draft.checklist.splice(+el.dataset.cldel, 1); renderEditor(); return; }
   if ('oadd' in el.dataset && draft && draft.pool){ readEditorFields(); draft.pool.push({name:'', stats:['MOB']}); renderEditor(); const n = document.getElementById('oName'+(draft.pool.length-1)); if (n) n.focus(); return; }
@@ -3145,6 +3170,7 @@ function onClick(e){
     if (draft.days.length && draft.days.length < 7) out.days = draft.days.slice().sort();
     const cl = (draft.checklist || []).map(c => ({id: c.id, text: c.text.trim().slice(0, 60)})).filter(c => c.text).slice(0, CHECK_MAX);
     if (cl.length) out.checklist = cl;
+    if (taskIconOk(draft.icon)) out.icon = draft.icon;
     const i = S.tasks.findIndex(t => t.id === out.id), old = i >= 0 ? S.tasks[i] : null;
     let relock = [];
     const entry = {from: old ? addDays(D.today,1) : D.today, cad: out.cad, days: out.days || null};

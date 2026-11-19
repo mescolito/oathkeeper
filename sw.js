@@ -1,6 +1,6 @@
 // Offline support: the app opens without a connection. It always tries the network first,
 // skipping the browser's own cache, so a new version shows up as soon as you're online; the cached copy is only a fallback.
-const CACHE = 'oathkeeper-86a316c633';
+const CACHE = 'oathkeeper-0e09acd77d';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192-v2.png', './icon-512-v2.png', './apple-touch-icon-v2.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
