@@ -358,9 +358,6 @@ html[data-mode="dark"] .awardin .btn.primary{color:var(--inv)}
 .tdpill.pri-high{background:#e7b9bd;box-shadow:none;color:#171614}
 .tdpill.pri-med{background:#e3dba0;box-shadow:none;color:#171614}
 .tdpill.pri-low{background:#bccbd6;box-shadow:none;color:#171614}
-.tdpill.grp-day{background:#d3e2b0;box-shadow:none;color:#171614}
-.tdpill.grp-week{background:#c9c4ec;box-shadow:none;color:#171614}
-.taskgrp .tdhead{gap:8px}
 .tdgroup.empty .tdpill{opacity:.55}
 .tdplus{width:36px;height:36px;border-radius:50%;border:0;background:#ece5d6;color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer}
 .tdlist{display:flex;flex-direction:column;gap:10px;min-height:6px}
@@ -555,7 +552,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '5b4f6f8fe2';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'e8fa371b77';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -2374,16 +2371,9 @@ function assistMsg(){
   const weakTxt = f.boss.weak.length >= 5 ? 'Every stat hits it hard.' : `${f.boss.weak.map(s => STATS[s].name).join(' and ')} tasks hit twice as hard.`;
   return {k:`${f.boss.name} · ${daysLeft} day${daysLeft===1?'':'s'} left`, p:`${f.rem} HP to go. ${weakTxt}`, cta:"Let's fight"};
 }
-// Dailies and Weeklies as collapsible groups, like the priority groups on To-dos
-function taskGroup(cad, label, list, all, k, hide, note){
-  const shut = clOpen.has('shut:' + cad);
-  const open = cad === 'day' ? all.filter(t => isDue(t,k) && !done(k,t.id)).length : all.filter(t => weekCount(t.id,k) < effTarget(t,k)).length;
-  const empty = hide && all.length ? 'All done here.' : cad === 'day' ? 'No dailies yet. Tap + to add one.' : 'No weekly goals yet. Tap + to add one.';
-  return `<div class="tdgroup taskgrp" data-group="${cad}">
-    <div class="tdhead"><span class="row" style="gap:10px;min-width:0"><button class="tdpill grp-${cad}" data-clopen="shut:${cad}" aria-expanded="${!shut}">${label.toUpperCase()} (${open})<span class="chev ${shut ? 'up' : ''}">${svg('back',14,2.6)}</span></button>${note ? `<span class="muted small">${note}</span>` : ''}</span><button class="tdplus" data-newtask="${cad}" aria-label="Add a ${cad === 'day' ? 'daily' : 'weekly goal'}">${svg('plus',16,2.4)}</button></div>
-    ${shut ? '' : `<div class="list">${list.map(t => taskRow(t,k)).join('') || `<p class="how">${empty}</p>`}</div>`}
-  </div>`;
-}
+// Dailies and This week are two tabs, like the lists on To-dos; each device remembers which one was open
+const TODAY_TAB_KEY = 'oathkeeper-todaytab';
+var todayTab = (() => { try { return localStorage.getItem(TODAY_TAB_KEY) === 'week' ? 'week' : 'day'; } catch(e){ return 'day'; } })();
 function renderToday(){
   const k = vday === 'today' ? D.today : D.yest;
   // an archived task that's already done for this day has nothing left to do, so it leaves the list right away
@@ -2394,6 +2384,8 @@ function renderToday(){
   const wkk = weekKey(k), lv = D.lv, st = stage(lv.level);
   const dueD = dailiesAll.filter(t => isDue(t,k));
   const doneD = dueD.filter(t => done(k,t.id)).length;
+  const weekLeft = weekliesAll.filter(t => weekCount(t.id,k) < effTarget(t,k)).length;
+  const wkEnd = addDays(wkk,6), wkRange = wkEnd.slice(0,7) === wkk.slice(0,7) ? `${fmt(wkk)}–${parseKey(wkEnd).getDate()}` : `${fmt(wkk)} – ${fmt(wkEnd)}`;
   const a = assistMsg();
   const myst = D.mystery[D.today];
   return `
@@ -2412,10 +2404,12 @@ function renderToday(){
     <span><span class="k">${esc(a.k)}</span><p>${esc(a.p)}</p><span class="pillbtn">${esc(a.cta)}</span></span>
     <canvas id="bossMiniCv" width="64" height="52" aria-hidden="true"></canvas>
   </button><button class="cardtog" data-collapse="boss" aria-expanded="true" aria-label="Collapse the boss card">${svg('back',16,2.6)}</button></div>`}
-  <div class="sec-h"><div><h2>Tasks</h2><span class="muted small">${doneD} of ${dueD.length} dailies done</span></div>
+  <div class="tdtabs" role="tablist" aria-label="Which tasks"><button role="tab" class="tdtab ${todayTab === 'day' ? 'on' : ''}" data-todaytab="day" aria-selected="${todayTab === 'day'}">Dailies</button><button role="tab" class="tdtab ${todayTab === 'week' ? 'on' : ''}" data-todaytab="week" aria-selected="${todayTab === 'week'}">This week</button></div>
+  <div class="row between"><span class="muted small" style="white-space:nowrap">${todayTab === 'day' ? `${doneD} of ${dueD.length} done` : `${weekLeft} left · ${wkRange}`}</span>
     <div class="seg" role="group" aria-label="Which day to log"><button data-vday="today" class="${vday==='today'?'on':''}">Today</button><button data-vday="yest" class="${vday==='yest'?'on':''}">Yesterday</button></div></div>
-  ${taskGroup('day', 'Dailies', dailies, dailiesAll, k, hide, '')}
-  ${taskGroup('week', 'Weeklies', weeklies, weekliesAll, k, hide, `${fmt(wkk)} – ${fmt(addDays(wkk,6))}`)}
+  ${todayTab === 'day'
+    ? `<div class="list">${dailies.map(t => taskRow(t,k)).join('') || `<p class="how">${hide && dailiesAll.length ? 'All done here.' : 'No dailies yet. Tap + to add one.'}</p>`}</div>`
+    : `<div class="list">${weeklies.map(t => taskRow(t,k)).join('') || `<p class="how">${hide && weekliesAll.length ? 'All done here.' : 'No weekly goals yet. Tap + to add one.'}</p>`}</div>`}
   <p class="how">Each missed daily lets the boss hit you that night, so defense and dodge matter. Checking in every day keeps your streak and gives a mystery bonus. A perfect week earns a free rune.</p>`;
 }
 function skillTargets(id){
@@ -3377,6 +3371,7 @@ function onClick(e){
     render(); return; }
   if (el.dataset.buy){ const it = ITEM[el.dataset.buy]; if (it && !it.boss && it.price > 0 && inSeason(it, D.today) && D.balance >= it.price && !S.owned.includes(it.id) && meetsReq(it, D.statLv)){ S.owned.push(it.id); if (it.kind === 'hat') setHat(it.id); else S.equip[it.kind] = it.id; save(); render(); toast(`Bought ${it.name}. It's in your inventory.`); } return; }
   if (el.dataset.equip){ const it = ITEM[el.dataset.equip]; if (!it || !((it.boss || it.legendary) ? D.drops.has(it.id) : (S.owned.includes(it.id) || it.price === 0))) return; const slot = it.kind; if (slot === 'hat'){ if (it.lvl && D.lv.level < it.lvl && S.equip.hat !== it.id) return; setHat(S.equip.hat === it.id ? null : it.id); } else S.equip[slot] = it.id; save(); render(); return; }
+  if (el.dataset.todaytab){ todayTab = el.dataset.todaytab === 'week' ? 'week' : 'day'; try { localStorage.setItem(TODAY_TAB_KEY, todayTab); } catch(e){} render(); return; }
   if ('newtask' in el.dataset){ openEditor(null); if (el.dataset.newtask === 'week'){ draft.cad = 'week'; renderEditor(); } return; }
   if (el.dataset.invtab){ invTab = el.dataset.invtab; if (sheetMode === 'inv' && !document.getElementById('sheet').hidden){ renderSheet(); return; } }
   if (el.dataset.plus){ if ('gopts' in el.dataset) statsSec = 'skills'; openPlus(el.dataset.plus); return; }
