@@ -1433,16 +1433,19 @@ async function gistConnect(token){
 function gistRef(c){
   return {
     async get(){
-      const g = await gh('/gists/' + c.gistId, c.token, {cache:'no-store'}); const f = g.files && g.files[GIST_FILE];
-      if (!f) return {exists:false};                       // the gist is fine but has no save yet
+      // the extra query value stops GitHub's cache from answering with an older copy
+      const g = await gh('/gists/' + c.gistId + '?fresh=' + Date.now(), c.token, {cache:'no-store'}); const f = g.files && g.files[GIST_FILE];
+      const at = Date.parse(g.updated_at) || 0;
+      if (!f) return {exists:false, at};                       // the gist is fine but has no save yet
       let txt = f.content;
       if (f.truncated){ const r = await fetch(f.raw_url, {cache:'no-store'}); if (!r.ok) throw Object.assign(new Error('raw'), {code:'unavailable'}); txt = await r.text(); }
       // a save that can't be read is an error, never "empty": an empty answer would let this device overwrite it
       let data; try { data = JSON.parse(txt); } catch(e){ throw Object.assign(new Error('unreadable'), {code:'unavailable'}); }
       if (!data || typeof data !== 'object' || !Array.isArray(data.tasks)) throw Object.assign(new Error('unreadable'), {code:'unavailable'});
-      return {exists: true, data: () => data};
+      return {exists: true, data: () => data, at};
     },
-    async set(obj){ await gh('/gists/' + c.gistId, c.token, {method:'PATCH', body: JSON.stringify({files:{[GIST_FILE]:{content: JSON.stringify(obj)}}})}); }
+    // GitHub's own time for the save, so a phone and a Mac with slightly different clocks still agree on which copy is newer
+    async set(obj){ const g = await gh('/gists/' + c.gistId, c.token, {method:'PATCH', body: JSON.stringify({files:{[GIST_FILE]:{content: JSON.stringify(obj)}}})}); return Date.parse(g && g.updated_at) || 0; }
   };
 }
 // what this device last agreed with the gist on, kept outside the save: the save's "updated" at that moment, and whether you've changed anything since
@@ -1490,12 +1493,12 @@ function mergeSaves(a, b){
   return normalize(out);
 }
 // local is kept in "Undo last restore" whenever it holds changes the gist doesn't have
-function adoptRemote(remote, why){
+function adoptRemote(remote, why, at){
   const changed = !!syncMeta().dirty && saveDiffers(S, remote);
   if (changed) backup();
   S = remote; applyStatMeta(); hadLocal = true;
   try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch(e){}
-  syncMeta({synced: remote.updated || 0, dirty: false});
+  syncMeta({synced: remote.updated || 0, dirty: false, ...(at ? {syncedAt: at} : {})});
   render();
   if (changed && why) toast(why);
 }
@@ -1513,22 +1516,23 @@ async function gistSync(opts = {}){
     if (!snap.exists){ await pushNow(); }
     else {
       const remote = normalize(clone(snap.data()));
-      const remoteChanged = (remote.updated || 0) !== (m.synced || 0);
+      // only a copy GitHub saved after the one this device last agreed on counts as a change; an older copy is a stale read and is ignored
+      const remoteChanged = (remote.updated || 0) !== (m.synced || 0) && (snap.at && m.syncedAt ? snap.at > m.syncedAt : (remote.updated || 0) > (m.synced || 0));
       if (opts.preferRemote){
         // reconnecting the same game: combine; a different game on this device: the synced one wins and this one is kept in "Undo last restore"
-        if (m.dirty && S.createdTs === remote.createdTs && saveDiffers(S, remote)){ adoptRemote(mergeSaves(S, remote), 'Combined this device’s changes with your synced save.'); syncMeta({dirty: true}); await pushNow(); }
-        else adoptRemote(remote, 'Loaded your synced save. This device’s old save is in Undo last restore.');
+        if (m.dirty && S.createdTs === remote.createdTs && saveDiffers(S, remote)){ adoptRemote(mergeSaves(S, remote), 'Combined this device’s changes with your synced save.', snap.at); syncMeta({dirty: true}); await pushNow(); }
+        else adoptRemote(remote, 'Loaded your synced save. This device’s old save is in Undo last restore.', snap.at);
       }
-      else if (remoteChanged && !m.dirty) adoptRemote(remote, null);
+      else if (remoteChanged && !m.dirty) adoptRemote(remote, null, snap.at);
       else if (remoteChanged && m.dirty && S.createdTs !== remote.createdTs){
         // a different game (e.g. "Start over" on one device): never mix them; the newer one wins and the other is kept in "Undo last restore"
-        if ((remote.updated || 0) > (S.updated || 0)) adoptRemote(remote, 'Your other device has a different game now, so it was loaded. This device’s game is in Undo last restore.');
+        if ((remote.updated || 0) > (S.updated || 0)) adoptRemote(remote, 'Your other device has a different game now, so it was loaded. This device’s game is in Undo last restore.', snap.at);
         else await pushNow();
       }
       else if (remoteChanged && m.dirty){
         // both changed: combine them, keep this device's version in "Undo last restore", and share the combined save
         const merged = mergeSaves(S, remote);
-        adoptRemote(merged, 'Both devices had changes, so they were combined. This device’s version before combining is in Undo last restore.');
+        adoptRemote(merged, 'Both devices had changes, so they were combined. This device’s version before combining is in Undo last restore.', snap.at);
         syncMeta({dirty: true}); await pushNow();
       }
       else if (m.dirty) await pushNow();
@@ -1540,8 +1544,27 @@ async function gistSync(opts = {}){
 }
 async function pushNow(){
   const sent = clone(S);
-  await cloud.ref.set(sent);
-  syncMeta({synced: sent.updated || 0, dirty: (S.updated || 0) !== (sent.updated || 0)});
+  const at = await cloud.ref.set(sent);
+  syncMeta({synced: sent.updated || 0, dirty: (S.updated || 0) !== (sent.updated || 0), ...(at ? {syncedAt: at} : {})});
+}
+// every save GitHub ever stored for this gist, newest first, so an earlier one can be brought back
+async function gistHistory(){
+  const c = gistCfg(); if (!c || !c.gistId) return [];
+  const list = await gh('/gists/' + c.gistId + '/commits?per_page=40&fresh=' + Date.now(), c.token, {cache:'no-store'});
+  const out = [];
+  for (const h of list.slice(0, 40)){
+    try {
+      const g = await gh('/gists/' + c.gistId + '/' + h.version, c.token);
+      const f = g.files && g.files[GIST_FILE]; if (!f) continue;
+      let txt = f.content; if (f.truncated){ const r = await fetch(f.raw_url); if (!r.ok) continue; txt = await r.text(); }
+      const d = JSON.parse(txt); if (!d || !Array.isArray(d.tasks)) continue;
+      out.push({version: h.version, at: Date.parse(h.committed_at) || 0, data: d,
+        tasks: d.tasks.filter(t => t && !t.archived).length, days: Object.keys(d.log || {}).length,
+        checks: Object.values(d.log || {}).reduce((a, m) => a + Object.keys(m || {}).length, 0)});
+    } catch(e){}
+    if (out.length >= 20) break;
+  }
+  return out;
 }
 const gistPull = () => { if (!cloud.ref) return initGist(); return gistSync(); };
 async function initGist(preferRemote){
@@ -2649,7 +2672,9 @@ function renderSettings(){
   <div class="card" style="display:flex;flex-direction:column;gap:12px">
     ${syncHtml()}
     ${PAGES ? (gistCfg() && gistCfg().gistId
-      ? `<div class="row"><button class="btn" data-gistsync>Sync now</button><button class="btn" data-gistoff>${gistOffArmed ? 'Tap again to disconnect' : 'Disconnect GitHub'}</button></div>`
+      ? `<div class="row"><button class="btn" data-gistsync>Sync now</button><button class="btn" data-gistoff>${gistOffArmed ? 'Tap again to disconnect' : 'Disconnect GitHub'}</button></div>
+        <div class="row"><button class="btn" data-gisthist ${gistHistBusy ? 'disabled' : ''}>${gistHistBusy ? 'Looking…' : 'Earlier synced saves'}</button></div>
+        ${gistHist ? (gistHist.length ? `<div class="list" style="gap:8px">${gistHist.map((h, i) => `<div class="erow" style="grid-template-columns:1fr auto"><span class="tbody"><span class="tname" style="font-size:14px">${esc(new Date(h.at).toLocaleString([], {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'}))}</span><span class="small muted">${h.tasks} tasks · ${h.checks} check-ins over ${h.days} day${h.days === 1 ? '' : 's'}</span></span><button class="btn" data-gistuse="${i}">${gistHistArm === i ? 'Tap again to use' : 'Use this'}</button></div>`).join('')}</div><p class="how small">Using one keeps your current save in Undo last restore.</p>` : '<p class="how small">No earlier saves found.</p>') : ''}`
       : `<label class="f" for="ghToken">GitHub token (gist access)<input type="password" id="ghToken" autocomplete="off" placeholder="github_pat_…"></label><div class="row"><button class="btn primary" data-giston>Connect GitHub</button><span class="small muted" id="gistMsg"></span></div><p class="how">Make a token at github.com → Settings → Developer settings with only <b>Gists: read and write</b>. It stays on this device.</p>`) : ''}
     <div class="row"><button class="btn" data-download>Download backup</button><button class="btn" data-copy>Copy backup</button><span class="small muted" id="copyMsg"></span></div>
     <label class="f" for="restoreTxt">Restore from a backup<textarea id="restoreTxt" placeholder="Paste a backup here, or choose a backup file"></textarea></label>
@@ -2731,7 +2756,7 @@ const BAK_KEY = LS_KEY + '.bak';
 // which task checklists are open: a view setting for this device only, so it never touches the save
 const CL_OPEN_KEY = 'oathkeeper-clopen';
 var clOpen = (() => { try { return new Set(JSON.parse(localStorage.getItem(CL_OPEN_KEY) || '[]').filter(x => typeof x === 'string').slice(0, 200)); } catch(e){ return new Set(); } })();
-var gistOffArmed = false;
+var gistOffArmed = false, gistHist = null, gistHistArm = null, gistHistBusy = false;
 const hasBak = () => { try { return !!localStorage.getItem(BAK_KEY); } catch(e){ return false; } };
 const backup = () => { if (recoveryMode) return; try { localStorage.setItem(BAK_KEY, JSON.stringify(S)); } catch(e){} };
 let recoverArm = null;
@@ -3219,6 +3244,10 @@ function onClick(e){
     gistConnect(token).then(gistId => { try { localStorage.setItem(GIST_CFG, JSON.stringify({token, gistId})); } catch(e){} return initGist(true); })
       .then(() => { render(); if (cloud.mode === 'cloud') toast('Connected. Your save now syncs through GitHub.'); else { const m = document.getElementById('gistMsg'); if (m) m.textContent = 'Saved the token, but GitHub didn’t answer. It will retry.'; } }, err => { msg.textContent = err && err.code === 'bad_token' ? 'GitHub didn’t accept that token.' : 'Could not reach GitHub. Try again.'; });
     return; }
+  if (PAGES && 'gisthist' in el.dataset){ gistHistBusy = true; gistHistArm = null; render(); gistHistory().then(h => { gistHist = h; }, () => { gistHist = []; toast('Could not reach GitHub.'); }).finally(() => { gistHistBusy = false; render(); }); return; }
+  if (PAGES && el.dataset.gistuse !== undefined && gistHist){ const i = +el.dataset.gistuse, h = gistHist[i]; if (!h) return;
+    if (gistHistArm !== i){ gistHistArm = i; render(); return; }
+    gistHistArm = null; backup(); S = normalize(clone(h.data)); applyStatMeta(); hadLocal = true; save(); gistHist = null; render(); toast('Earlier save brought back. Your previous one is in Undo last restore.'); return; }
   if (PAGES && 'gistsync' in el.dataset){ gistPull(); toast('Syncing…'); return; }
   if (PAGES && 'gistoff' in el.dataset){ if (!gistOffArmed){ gistOffArmed = true; render(); return; } gistOffArmed = false; try { localStorage.removeItem(GIST_CFG); localStorage.removeItem(SYNC_META); } catch(e){} cloud.ref = null; setSync('nogist'); render(); toast('Disconnected. Your save stays on this device and in the gist.'); return; }
   if ('reload' in el.dataset){ location.reload(); return; }
