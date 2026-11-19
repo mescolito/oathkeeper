@@ -552,7 +552,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '8d259cc00c';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '098dcc974d';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -2849,6 +2849,7 @@ function renderSettings(){
   <div class="sec-h"><h2>Save data</h2></div>
   <div class="card" style="display:flex;flex-direction:column;gap:12px">
     ${syncHtml()}
+    ${PAGES ? `<div class="row"><button class="btn" data-checkupdate>Check for update</button></div>` : ''}
     ${PAGES ? (gistCfg() && gistCfg().gistId
       ? `<div class="row"><button class="btn" data-gistsync>Sync now</button><button class="btn" data-gistoff>${gistOffArmed ? 'Tap again to disconnect' : 'Disconnect GitHub'}</button></div>
         <div class="row"><button class="btn" data-gisthist ${gistHistBusy ? 'disabled' : ''}>${gistHistBusy ? 'Looking…' : 'Earlier synced saves'}</button></div>
@@ -3573,6 +3574,7 @@ function onClick(e){
     cloud.ref = gistRef(gistCfg()); setSync('loading');
     pushNow().then(() => { setSync('cloud'); render(); toast('This device’s game is now your synced save.'); }, err => { cloud.ref = null; setSync(err && err.code === 'bad_token' ? 'token' : 'error'); render(); });
     return; }
+  if (PAGES && 'checkupdate' in el.dataset){ toast('Checking for an update…'); checkForUpdate({manual: true}); return; }
   if (PAGES && 'gisthist' in el.dataset){ gistHistBusy = true; gistHistArm = null; render(); gistHistory().then(h => { gistHist = h; }, () => { gistHist = []; toast('Could not reach GitHub.'); }).finally(() => { gistHistBusy = false; render(); }); return; }
   if (PAGES && el.dataset.gistuse !== undefined && gistHist){ const i = +el.dataset.gistuse, h = gistHist[i]; if (!h) return;
     if (gistHistArm !== i){ gistHistArm = i; render(); return; }
@@ -3607,15 +3609,23 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && draft) clo
 render();
 
 // Pages: an app left open on a phone or Mac never reloads by itself, so check for a newer version whenever you come back, and switch to it
-async function checkForUpdate(){
+async function goUpdate(v, manual){
+  let t = {}; try { t = JSON.parse(sessionStorage.getItem('oathkeeper-reloaded') || '{}') || {}; } catch(e){}
+  if (!manual && t.v === v && (t.n >= 3 || Date.now() - t.at < 60000)) return;
+  try { sessionStorage.setItem('oathkeeper-reloaded', JSON.stringify({v, n: (t.v === v ? t.n || 0 : 0) + 1, at: Date.now()})); } catch(e){}
+  for (let i = 0; i < 20 && cloud.writing; i++) await new Promise(res => setTimeout(res, 250));
+  location.replace(location.pathname + '?v=' + encodeURIComponent(v));
+}
+async function checkForUpdate(opts = {}){
   if (!PAGES || BUILD.startsWith('/*') || recoveryMode) return;
-  const sh = document.getElementById('sheet'); if (sh && !sh.hidden) return;   // never reload while you're editing something; it checks again next time
+  const sh = document.getElementById('sheet'); if (!opts.manual && sh && !sh.hidden) return;   // never reload while you're editing something; it checks again next time
   try {
     const r = await fetch('version.json?t=' + Date.now(), {cache:'no-store'}); if (!r.ok) return;
     const v = (await r.json()).build;
-    // reload once per new version, so a slow-to-update server can't cause a reload loop
-    let tried = null; try { tried = sessionStorage.getItem('oathkeeper-reloaded'); } catch(e){}
-    if (v && v !== BUILD && tried !== v){ try { sessionStorage.setItem('oathkeeper-reloaded', v); } catch(e){} for (let i = 0; i < 20 && cloud.writing; i++) await new Promise(res => setTimeout(res, 250)); location.reload(); }
+    // load the new version at an address GitHub's cache hasn't seen, so it can't hand back the old page;
+    // at most 3 tries a version, a minute apart, so a slow server can't cause a reload loop
+    if (v && v !== BUILD) goUpdate(v, opts.manual);
+    else if (opts.manual) toast('You’re on the newest version.');
   } catch(e){}
 }
 if (PAGES){ setInterval(checkForUpdate, 30 * 60 * 1000); setTimeout(checkForUpdate, 3000); }
