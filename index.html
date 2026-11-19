@@ -364,6 +364,10 @@ html[data-mode="dark"] .awardin .btn.primary{color:var(--inv)}
 .stepadd{padding:4px 0 8px 58px}
 .clitem .xbtn.sm{width:32px;height:32px}
 .clitem.td{grid-template-columns:1fr auto}
+.steprow{gap:6px;flex-wrap:nowrap}
+.steprow input{flex:1;min-width:0}
+.btn.mv{padding:0;width:40px;min-width:40px;display:inline-flex;align-items:center;justify-content:center}
+.xbtn.sm[disabled]{opacity:.25}
 .clitem.td .clcheck{margin:0 13px 0 4px}
 .tditem .cl{grid-column:1/-1}
 .tditem{display:grid;grid-template-columns:44px 1fr auto 44px;gap:12px;align-items:center;background:var(--card);border-radius:22px;padding:12px;box-shadow:0 1px 0 var(--line)}
@@ -539,7 +543,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '05dbeb693b';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'c02276dcd4';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -2513,7 +2517,7 @@ function todoSteps(L, it){
   if (!st.length && !(open && todoEdit)) return '';
   const got = st.filter(x => x.done).length;
   return `<div class="cl ${open ? 'open' : ''}">
-    ${open ? `<div class="cllist">${st.map(x => `<div class="clitem td ${x.done ? 'on' : ''}"><span class="cltext">${esc(x.text)}</span><span class="row" style="gap:2px;flex-wrap:nowrap">${!isD && todoEdit ? `<button class="xbtn sm" data-tdstepdel="${key}|${esc(x.id)}" aria-label="Remove step ${esc(x.text)}">${svg('x',14,2.4)}</button>` : ''}<button class="clcheck" data-tdstep="${key}|${esc(x.id)}" aria-pressed="${!!x.done}" aria-label="${x.done ? 'Untick' : 'Tick'} ${esc(x.text)}" ${isD ? 'disabled' : ''}>${svg('check',14,3)}</button></span></div>`).join('')}
+    ${open ? `<div class="cllist">${st.map((x, xi) => `<div class="clitem td ${x.done ? 'on' : ''}"><span class="cltext">${esc(x.text)}</span><span class="row" style="gap:2px;flex-wrap:nowrap">${!isD && todoEdit ? `<button class="xbtn sm" data-tdstepmvid="${key}|${esc(x.id)}" data-tdstepmv="-1" ${xi === 0 ? 'disabled' : ''} aria-label="Move ${esc(x.text)} up">${svg('up',14,2.4)}</button><button class="xbtn sm" data-tdstepmvid="${key}|${esc(x.id)}" data-tdstepmv="1" ${xi === st.length - 1 ? 'disabled' : ''} aria-label="Move ${esc(x.text)} down">${svg('down',14,2.4)}</button><button class="xbtn sm" data-tdstepdel="${key}|${esc(x.id)}" aria-label="Remove step ${esc(x.text)}">${svg('x',14,2.4)}</button>` : ''}<button class="clcheck" data-tdstep="${key}|${esc(x.id)}" aria-pressed="${!!x.done}" aria-label="${x.done ? 'Untick' : 'Tick'} ${esc(x.text)}" ${isD ? 'disabled' : ''}>${svg('check',14,3)}</button></span></div>`).join('')}
       ${todoEdit && !isD && st.length < CHECK_MAX ? `<form class="addrow stepadd" data-addstep="${key}"><input type="text" id="step-${esc(it.id)}" maxlength="60" placeholder="Add a step" aria-label="Add a step to ${esc(it.text)}"><button class="btn" type="submit">Add</button></form>` : ''}</div>` : ''}
     <button class="clhead" data-clopen="td:${esc(it.id)}" aria-expanded="${open}" aria-label="${open ? 'Hide' : 'Show'} steps, ${got} of ${st.length} done">${st.length ? `${bar(100*got/st.length, null, 'clbar')}<span class="cln">${got}/${st.length}</span>` : '<span class="cln">Steps</span>'}<span class="clchev">${svg(open ? 'up' : 'down',16,2.4)}</span></button>
   </div>`;
@@ -3124,7 +3128,7 @@ function renderEditor(){
       <p class="how small">${t.rep.unit === 'month' ? 'Months without that date use their last day. ' : ''}It first comes up on the start date or the next matching day after it. On the days it comes up it works like a daily: same reward, and missing it lets the boss hit you that night. It only shows on Today when it's due.</p>` : ''}
     ${t.cad==='week' ? `<div class="row"><label class="f" for="tTarget" style="flex:1">Target per week<input type="number" id="tTarget" min="1" max="7" value="${t.target||1}"></label><label class="f" for="tBonus" style="flex:1">Bonus goal (optional)<input type="number" id="tBonus" min="0" max="7" value="${t.bonus||''}"></label></div>` : ''}
     <div class="f" style="display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;font-weight:600;color:var(--muted)">Checklist (optional): steps you tick off; finishing them all completes the task</span>
-      ${(t.checklist || []).map((c,i) => `<div class="row"><input type="text" id="clText${i}" maxlength="60" value="${esc(c.text)}" placeholder="Step ${i+1}" aria-label="Step ${i+1}"><button class="btn danger" data-cldel="${i}" aria-label="Remove step ${i+1}">✕</button></div>`).join('')}
+      ${(t.checklist || []).map((c,i,a) => `<div class="row steprow"><input type="text" id="clText${i}" maxlength="60" value="${esc(c.text)}" placeholder="Step ${i+1}" aria-label="Step ${i+1}"><button class="btn mv" data-clmove="${i}:-1" ${i === 0 ? 'disabled' : ''} aria-label="Move step ${i+1} up">${svg('up',16,2.4)}</button><button class="btn mv" data-clmove="${i}:1" ${i === a.length - 1 ? 'disabled' : ''} aria-label="Move step ${i+1} down">${svg('down',16,2.4)}</button><button class="btn danger" data-cldel="${i}" aria-label="Remove step ${i+1}">✕</button></div>`).join('')}
       <button class="btn" data-cladd ${(t.checklist || []).length >= CHECK_MAX ? 'disabled' : ''}>+ Add step</button></div>
     ${t.rep && t.rep.unit !== 'week' ? '' : `<div class="f" style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:600;color:var(--muted)">${t.rep ? 'Which day of the week' : 'Days it shows up'}</span>
       <div class="chips">${DOW_ORDER.map(d => `<button class="chip ${t.days.includes(d)?'on':''}" data-day="${d}" style="${t.days.includes(d)?'background:var(--ink);color:var(--inv)':''}" aria-pressed="${t.days.includes(d)}">${DOW[d]}</button>`).join('')}</div></div>`}
@@ -3247,9 +3251,10 @@ function onClick(e){
   if (el.dataset.vday){ vday = el.dataset.vday; render(); return; }
   if (el.dataset.toggle){ toggle(el.dataset.toggle, el); return; }
   if ('todoedit' in el.dataset){ todoEdit = !todoEdit; todoMenu = false; todoRename = false; render(); return; }
-  if (el.dataset.tdstep || el.dataset.tdstepdel){
-    const [lid, iid, sid] = (el.dataset.tdstep || el.dataset.tdstepdel).split('|'); const L = S.todos.lists.find(x => x.id === lid); const it = L && L.items.find(x => x.id === iid); if (!it || it.doneOn || !it.steps) return;
+  if (el.dataset.tdstep || el.dataset.tdstepdel || el.dataset.tdstepmvid){
+    const [lid, iid, sid] = (el.dataset.tdstep || el.dataset.tdstepdel || el.dataset.tdstepmvid).split('|'); const L = S.todos.lists.find(x => x.id === lid); const it = L && L.items.find(x => x.id === iid); if (!it || it.doneOn || !it.steps) return;
     const x = it.steps.find(y => y.id === sid); if (!x) return;
+    if (el.dataset.tdstepmv){ if (!todoEdit) return; const i = it.steps.indexOf(x), j = i + Number(el.dataset.tdstepmv); if (it.steps[j]){ [it.steps[i], it.steps[j]] = [it.steps[j], it.steps[i]]; save(); render(); } return; }
     if (el.dataset.tdstepdel){ if (!todoEdit) return; it.steps = it.steps.filter(y => y.id !== sid); if (!it.steps.length) delete it.steps; save(); render(); return; }
     if (x.done) delete x.done; else x.done = true;
     save();
@@ -3315,6 +3320,7 @@ function onClick(e){
     renderEditor(); return; }
   if (el.dataset.ticon !== undefined && draft){ readEditorFields(); const v = el.dataset.ticon; draft.icon = TASK_ICONS.includes(v) ? v : undefined; const em = document.getElementById('tEmoji'); if (em) em.value = ''; renderEditor(); return; }
   if ('cladd' in el.dataset && draft){ readEditorFields(); const cl = draft.checklist || (draft.checklist = []); if (cl.length < CHECK_MAX){ cl.push({id: 'c' + Date.now().toString(36) + cl.length, text: ''}); renderEditor(); const n = document.getElementById('clText' + (cl.length - 1)); if (n) n.focus(); } return; }
+  if (el.dataset.clmove && draft && draft.checklist){ readEditorFields(); const [i, d] = el.dataset.clmove.split(':').map(Number), j = i + d, cl = draft.checklist; if (cl[i] && cl[j]){ [cl[i], cl[j]] = [cl[j], cl[i]]; renderEditor(); const b = document.querySelector(`[data-clmove="${j}:${d}"]`) || document.querySelector(`[data-clmove="${j}:${-d}"]`); if (b) b.focus(); } return; }
   if (el.dataset.cldel !== undefined && draft && draft.checklist){ readEditorFields(); draft.checklist.splice(+el.dataset.cldel, 1); renderEditor(); return; }
   if ('oadd' in el.dataset && draft && draft.pool){ readEditorFields(); draft.pool.push({name:'', stats:['MOB']}); renderEditor(); const n = document.getElementById('oName'+(draft.pool.length-1)); if (n) n.focus(); return; }
   if (el.dataset.odel !== undefined && draft && draft.pool){ readEditorFields(); if (draft.pool.length > 2) draft.pool.splice(+el.dataset.odel, 1); renderEditor(); return; }
