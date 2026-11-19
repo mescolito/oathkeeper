@@ -552,7 +552,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '9d4b0b2257';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '8ef8a84abe';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -712,7 +712,8 @@ function innOn(d){ return (S.inn || []).some(st => st.from <= d && (!st.to || d 
 const innNow = () => (S.inn || []).find(st => !st.to) || null;
 function prevActive(d){ let p = addDays(d,-1), g = 0; while (innOn(p) && g++ < 400) p = addDays(p,-1); return p; }
 const CHECK_MAX = 12;
-// ticking a step gives a little gold (1 or 2, set when it's ticked and kept), up to STEP_CAP a day from steps
+// partial progress: steps ticked on a task or to-do you didn't finish that day pay 1-2 G each when the day ends,
+// up to STEP_CAP a day (finishing it pays the normal reward instead, so nothing pays twice)
 const STEP_CAP = 12;
 const MP_PER_TASK = 10, SKILL_MAX = 5, TODO_CAP = 5, TODO_LISTS = 50, TODO_OPEN = 300;
 const SKILLS = [
@@ -1001,6 +1002,7 @@ function sanitize(s, created){
   out.pomoLog = (Array.isArray(s.pomoLog) ? s.pomoLog : []).filter(x => obj(x)).map(x => ({ts: num(x.ts, 0), mins: int(x.mins, 1, 90, 25)})).filter(x => x.ts > 0);
   out.testGold = PREVIEW && Array.isArray(s.testGold) ? s.testGold.filter(x => obj(x)).map(x => ({ts: num(x.ts, 0), g: int(x.g, 0, 100000, 0)})) : [];
   // which checklist steps are ticked, per day and task
+  if (isDate(s.stepFrom)) out.stepFrom = s.stepFrom; else delete out.stepFrom;
   out.stepLog = {}; if (obj(s.stepLog)) for (const [d, m] of Object.entries(s.stepLog)) if (isDate(d) && obj(m)){ const mm = {}; let n = 0; for (const [key, v] of Object.entries(m)) if (n < 200 && typeof key === 'string' && key.length <= 90 && /^(tk|td):/.test(key) && obj(v) && Number.isFinite(v.ts)){ mm[key] = {ts: v.ts, g: v.g === 2 ? 2 : 1}; n++; } if (n) out.stepLog[d] = mm; }
   out.checks = {}; if (obj(s.checks)) for (const [d, m] of Object.entries(s.checks)) if (isDate(d) && obj(m)){ const mm = {}; for (const [tid, ids] of Object.entries(m)) if (typeof tid === 'string' && tid.length <= 40 && !PROTO_KEYS.has(tid) && Array.isArray(ids)){ const v = Array.from(new Set(ids.filter(x => typeof x === 'string' && x.length <= 20))).slice(0, CHECK_MAX); if (v.length) mm[tid] = v; } if (Object.keys(mm).length) out.checks[d] = mm; }
   // legendary drops are written down the moment they're won, so they can never disappear later
@@ -1247,7 +1249,6 @@ function derive(){
   const ev = Object.create(null); const add = (d, e) => { if (!d || d > today) return; (ev[d] || (ev[d] = [])).push(e); };
   for (const [d, ents] of Object.entries(S.log)) for (const [tid, ts] of Object.entries(ents)) add(d, {k:'task', ts, tid});
   for (const L of S.todos.lists) for (const it of L.items) if (it.doneOn) add(it.doneOn, {k:'todo', ts: it.doneTs || 0, it});
-  for (const [d, m] of Object.entries(S.stepLog || {})) for (const v of Object.values(m)) add(d, {k:'step', ts:v.ts, g:v.g});
   for (const u of S.skillLog) add(u.date, {k:'cast', ts:u.ts, u});
   for (const p of S.potions) add(p.date, {k:'pot', ts:p.ts, p});
   for (const r of S.runeBuys) add(r.date, {k:'rune', ts:r.ts, r});
@@ -1263,6 +1264,7 @@ function derive(){
   const pomoInfo = pomoDrops(); pomoInfo.got.forEach(id => drops.add(id));
   let streak = 0, lastCheck = null, curLv = 1, innSpent = 0;
   const todoPaid = new Set();
+  const partial = {}, todoDone = Object.create(null); for (const L of S.todos.lists) for (const it of L.items) if (it.doneOn) todoDone[it.id] = it.doneOn;
   const freezeBefore = cycleOf(yest), newResults = {}, newFaints = {};
   // weekly-goal XP lands the moment a goal is hit, so the level here matches the level you see
   let chestXp = 0; const chestGot = Object.create(null);
@@ -1304,7 +1306,7 @@ function derive(){
     if (inn){ const fee = innFee(lvlNow()); dyn += fee; const open = innNowD(); if (open && d >= open.from) innSpent += fee; }
     if (live && !inn && statusOn('poison', d)){ hp -= Math.ceil(C.maxHP * 0.06); if (hp <= 0) faint(d, C); }
     const mood = moodOf(d), boost = live ? MOOD_BOOST[mood] : 1;
-    let checked = false, rewardedTodos = 0, stepGold = 0;
+    let checked = false, rewardedTodos = 0;
     const lvUp = (fx) => { const L = lvlNow(); if (L > curLv){ curLv = L; C = combatOf(statLvNow(), L, fx); hp = C.maxHP; mp = C.maxMP; } };
     // the daily check-in bonus lands with your first check-in of the day
     const checkIn = (fx, ts) => {
@@ -1337,10 +1339,6 @@ function derive(){
         checkIn(fx, e.ts);
         if (sn ? sn.w : t.cad === 'week'){ const wc = weeks[weekKey(d)] || (weeks[weekKey(d)] = {}); if (!wc[e.tid]) wc[e.tid] = {n:0, tg:0, bn:0, bns:[]}; const w = wc[e.tid]; w.n++; w.bns.push(sn ? (sn.bn||0) : (t.bonus||0)); w.tg = Math.max(w.tg, sn ? (sn.tg||1) : (t.target||1)); w.bn = Math.max(w.bn, sn ? (sn.bn||0) : (t.bonus||0)); }
         if (sn ? sn.w : t.cad === 'week'){ const wk = weekKey(d), w = weeks[wk][e.tid], key = wk + '|' + e.tid; if (!chestGot[key] && w.n >= effOf(wk, e.tid, w)){ chestGot[key] = true; chestXp += 20; lvUp(fx); } }
-      } else if (e.k === 'step'){
-        // a ticked step: a little gold, no XP, and it doesn't count as checking in
-        if (stepGold >= STEP_CAP) continue;
-        const g = Math.min(e.g, STEP_CAP - stepGold); stepGold += g; gold += g;
       } else if (e.k === 'todo'){
         // only to-dos added on an earlier day pay out, and at most TODO_CAP a day
         if ((e.it.createdOn && e.it.createdOn >= d) || rewardedTodos >= TODO_CAP) continue;
@@ -1365,6 +1363,14 @@ function derive(){
       } else if (e.k === 'rune'){ dyn += e.r.g || 0; }
       else if (e.k === 'buy'){ dyn += e.b.g || 0; }
       else if (e.k === 'sell'){ dyn += e.x.cost; gold += e.x.g; }
+    }
+    // end of day: steps ticked on things you didn't finish today pay out (see STEP_CAP)
+    if (d < today && S.stepFrom && d >= S.stepFrom){
+      let g = 0, n = 0;
+      for (const [tid, ids] of Object.entries(S.checks[d] || {})){ if ((S.log[d] || {})[tid]) continue; for (const sid of ids){ n++; g += roll('step|' + d + '|' + tid + '|' + sid) < 0.5 ? 1 : 2; } }
+      for (const key of Object.keys(S.stepLog[d] || {})){ const [, iid, sid] = key.split(':'); if (!iid || !sid || key.slice(0,3) !== 'td:' || todoDone[iid] === d) continue; n++; g += roll('step|' + d + '|' + iid + '|' + sid) < 0.5 ? 1 : 2; }
+      g = Math.min(g, STEP_CAP);
+      if (g){ gold += g; partial[d] = {g, n}; }
     }
     // end of day: the boss strikes back for each missed daily (and heals a little from each)
     if (d < today && d >= S.created && bossAlive() && !inn){
@@ -1452,7 +1458,7 @@ function derive(){
   const spent = staticSpent + dyn;
   const newDrops = [...drops].filter(id => isDrop(id) && !S.seenDrops.includes(id));
   const nextRite = riteForL(levelInfo(xp).level, ritesWon);
-  return {nextRite, ritesWon, pomo: pomoInfo, inn: innNowD(), newInnEnds, innPaid: (() => { const o = innNowD(); return o && (o.paid || o.from) < today ? o : null; })(), innSpent, innFee: innFee(levelInfo(xp).level), statBonus: fxNow.st, bag, newDrops, newResults, newFaints, newLegends: pomoInfo.rolls.filter(r => !r.kept), todoPaid, freezeBefore, points, skills, readyCount, weakLv, today, yest, xp, lv, gold, spent, lost, balance: gold - spent - lost, stat, statLv, fx: fxNow, C, hp, mp, status: statusNow, attacks, lastAttack: attacks[yest] || null, faints, lastFaint: faints.length ? faints[faints.length-1] : null, mood: face, moodKey: moodToday, statusText, streak: lastCheck && lastCheck >= prevActiveD(today) ? streak : 0, checkedToday: lastCheck === today, mystery, tokens, perfectWeeks, castDeficit, fights, cur, drops, weeks, T, activeRunes: runesAt(nowMs, today), activeBuffs: buffsAt(nowMs, today)};
+  return {nextRite, ritesWon, pomo: pomoInfo, inn: innNowD(), newInnEnds, innPaid: (() => { const o = innNowD(); return o && (o.paid || o.from) < today ? o : null; })(), innSpent, innFee: innFee(levelInfo(xp).level), statBonus: fxNow.st, bag, newDrops, newResults, newFaints, newLegends: pomoInfo.rolls.filter(r => !r.kept), todoPaid, partial, freezeBefore, points, skills, readyCount, weakLv, today, yest, xp, lv, gold, spent, lost, balance: gold - spent - lost, stat, statLv, fx: fxNow, C, hp, mp, status: statusNow, attacks, lastAttack: attacks[yest] || null, faints, lastFaint: faints.length ? faints[faints.length-1] : null, mood: face, moodKey: moodToday, statusText, streak: lastCheck && lastCheck >= prevActiveD(today) ? streak : 0, checkedToday: lastCheck === today, mystery, tokens, perfectWeeks, castDeficit, fights, cur, drops, weeks, T, activeRunes: runesAt(nowMs, today), activeBuffs: buffsAt(nowMs, today)};
 }
 
 /* ---------- persistence ---------- */
@@ -2406,6 +2412,7 @@ function renderToday(){
   </section>
   ${vitals()}
   ${myst && !dismissed('myst') ? notice('myst', `Daily check-in bonus: <b>+${myst.xp ? myst.xp + ' XP' : myst.gold + ' G'}</b>`) : ''}
+  ${D.partial[D.yest] && !dismissed('partial') ? notice('partial', `Partial progress yesterday: <b>+${D.partial[D.yest].g} G</b> for ${D.partial[D.yest].n} step${D.partial[D.yest].n === 1 ? '' : 's'} on unfinished tasks`) : ''}
   ${D.tokens && !dismissed('tokens') ? notice('tokens', `${D.tokens} free rune${D.tokens===1?'':'s'} waiting in your inventory`) : ''}
   ${S.settings.collapse.boss ? `<div class="mini assistmini"><button class="minimain" data-tab="battle"><canvas id="bossMiniCv" width="64" height="52" aria-hidden="true"></canvas><span><b>${esc(D.cur.boss.name)}</b><span class="small">${D.cur.status === 'now' ? `${D.cur.rem}/${D.cur.hp} HP` : esc(a.k)}</span></span></button><button class="minitog" data-collapse="boss" aria-expanded="false" aria-label="Show the boss card">${svg('back',16,2.6)}</button></div>`
   : `<div class="assistwrap"><button class="assist" id="bossmini" data-tab="battle">
@@ -2949,6 +2956,7 @@ function renderInner(){
   if (S.equip.hat && ITEM[S.equip.hat] && ITEM[S.equip.hat].boss && !D.drops.has(S.equip.hat)){ setHat(null); save(true); D = derive(); }
   // prize gear you no longer own (the win was undone) comes off too
   for (const sl of Object.keys(S.gear)){ const g = GEAR_BY[S.gear[sl]]; if (g && g.boss && !D.drops.has(g.id)){ S.gear[sl] = null; S.gearLog.push({ts: Date.now(), slot: sl, id: null}); save(true); D = derive(); } }
+  if (!S.stepFrom && !recoveryMode){ S.stepFrom = D.today; save(true); D = derive(); }   // partial-progress pay starts the day this build first ran, never earlier
   if (S.seenInit === false){ S.seenDrops = Array.from(new Set([...S.seenDrops, ...[...D.drops].filter(id => ITEM[id] && ITEM[id].boss)])); S.seenInit = true; save(true); D = derive(); }
   for (const c of Object.keys(S.results)) if (+c >= D.freezeBefore) delete S.results[c];
   const nr = Object.keys(D.newResults || {}).filter(c => !S.results[c]);
@@ -3090,26 +3098,11 @@ function undoLock(chk, before){
   if (tokensUsed > chk.perfectWeeks) return 'Locked in: your free rune came from this perfect week.';
   return null;
 }
-// step gold: ticking writes {ts, g} once; unticking on the same day takes it back (unless it's already spent);
-// a step that's been paid never pays again, so ticking on and off can't farm it
-function stepPay(k, key, on, el){
-  const before = D;
-  if (on){
-    const paid = key.startsWith('td:') ? Object.values(S.stepLog).some(m => m[key]) : !!(S.stepLog[k] || {})[key];
-    if (paid) return;
-    (S.stepLog[k] || (S.stepLog[k] = {}))[key] = {ts: vday === 'today' || key.startsWith('td:') ? Date.now() : parseKey(k).setHours(20,0,0,0), g: Math.random() < 0.5 ? 1 : 2};
-  } else {
-    const m = S.stepLog[k]; if (!m || !m[key]) return;
-    const keep = m[key]; delete m[key]; if (!Object.keys(m).length) delete S.stepLog[k];
-    if (undoLock(derive(), before)){ (S.stepLog[k] || (S.stepLog[k] = {}))[key] = keep; return; }
-  }
-  return before;
-}
-function stepFloat(before, el){
-  if (!before || recoveryMode) return;
-  const dg = D.balance - before.balance; if (dg <= 0) return;
-  const r = el && el.getBoundingClientRect ? el.getBoundingClientRect() : null;
-  floatAt(r ? r.left + r.width/2 : 0, r ? r.top : 0, `<span style="color:var(--gold)">+${dg} G</span>`);
+// to-do steps remember the day they were ticked, so that day's partial progress can pay out when it ends
+// (once per step: a step that's been logged on any day is never logged again)
+function tdStepLog(key, on){
+  if (on){ if (Object.values(S.stepLog).some(m => m[key])) return; (S.stepLog[D.today] || (S.stepLog[D.today] = {}))[key] = {ts: Date.now(), g: 1}; }
+  else { const m = S.stepLog[D.today]; if (m && m[key]){ delete m[key]; if (!Object.keys(m).length) delete S.stepLog[D.today]; } }
 }
 function toggle(id, el){
   const k = vday === 'today' ? D.today : D.yest;
@@ -3251,7 +3244,7 @@ function renderEditor(){
       <label class="f" for="tStart">Starts on<input type="date" id="tStart" min="${D.today}" value="${t.rep.first && t.rep.first >= D.today ? t.rep.first : D.today}"></label>
       <p class="how small">${t.rep.unit === 'month' ? 'Months without that date use their last day. ' : ''}It first comes up on the start date or the next matching day after it. On the days it comes up it works like a daily: same reward, and missing it lets the boss hit you that night. It only shows on Today when it's due.</p>` : ''}
     ${t.cad==='week' ? `<div class="row"><label class="f" for="tTarget" style="flex:1">Target per week<input type="number" id="tTarget" min="1" max="7" value="${t.target||1}"></label><label class="f" for="tBonus" style="flex:1">Bonus goal (optional)<input type="number" id="tBonus" min="0" max="7" value="${t.bonus||''}"></label></div>` : ''}
-    <div class="f" style="display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;font-weight:600;color:var(--muted)">Checklist (optional): each step you tick gives 1–2 G (up to ${STEP_CAP} G a day from steps); finishing them all completes the task</span>
+    <div class="f" style="display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;font-weight:600;color:var(--muted)">Checklist (optional): finishing every step completes the task. If you only get partway, each ticked step pays 1–2 G at the end of the day (up to ${STEP_CAP} G)</span>
       <div class="steplist" data-sdlist="editor">${(t.checklist || []).map((c,i) => `<div class="row steprow" data-sid="${esc(c.id)}"><span class="sgrip" data-sdrag aria-hidden="true"><i></i><i></i><i></i><i></i></span><input type="text" id="clText${i}" maxlength="60" value="${esc(c.text)}" placeholder="Step ${i+1}" aria-label="Step ${i+1}"><button class="btn danger" data-cldel="${i}" aria-label="Remove step ${i+1}">✕</button></div>`).join('')}</div>
       <button class="btn" data-cladd ${(t.checklist || []).length >= CHECK_MAX ? 'disabled' : ''}>+ Add step</button></div>
     ${t.rep && t.rep.unit !== 'week' ? '' : `<div class="f" style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:600;color:var(--muted)">${t.rep ? 'Which day of the week' : 'Days it shows up'}</span>
@@ -3381,11 +3374,11 @@ function onClick(e){
     const x = it.steps.find(y => y.id === sid); if (!x) return;
     if (el.dataset.tdstepdel){ if (!todoEdit) return; it.steps = it.steps.filter(y => y.id !== sid); if (!it.steps.length) delete it.steps; save(); render(); return; }
     const on = !x.done; if (on) x.done = true; else delete x.done;
-    const before = stepPay(D.today, 'td:' + iid + ':' + sid, on);
+    tdStepLog('td:' + iid + ':' + sid, on);
     save();
     // ticking the last step finishes the to-do (normal to-do bonus rules); unticking never undoes it
     if (it.steps.every(y => y.done)){ const b = document.createElement('button'); b.dataset.todo = lid + '|' + iid; onClick({target: b}); return; }
-    const r = el.getBoundingClientRect(); render(); stepFloat(before, {getBoundingClientRect: () => r}); return; }
+    render(); return; }
   if (el.dataset.clopen){ const id = el.dataset.clopen; if (clOpen.has(id)) clOpen.delete(id); else clOpen.add(id); try { localStorage.setItem(CL_OPEN_KEY, JSON.stringify([...clOpen])); } catch(e){} render(); return; }
   if (el.dataset.clitem){
     const [tid, cid] = el.dataset.clitem.split('|'), k = vday === 'today' ? D.today : D.yest;
@@ -3396,11 +3389,12 @@ function onClick(e){
     day[tid] = on ? [...cur, cid] : cur.filter(x => x !== cid);
     if (!day[tid].length) delete day[tid]; if (!Object.keys(day).length) delete S.checks[k];
     const allDone = t.checklist.every(c => ((S.checks[k] || {})[tid] || []).includes(c.id));
-    const before = stepPay(k, 'tk:' + tid + ':' + cid, on);
+    // yesterday's partial progress has already paid out, so taking a step back can't spend gold you've used
+    if (!on && k < D.today){ const lock = undoLock(derive(), D); if (lock){ (S.checks[k] || (S.checks[k] = {}))[tid] = cur; toast(lock); return; } }
     save();
     // ticking the last step finishes the task (and gives its usual reward); unticking a step never undoes it
     if (allDone && !done(k, tid)){ toggle(tid, el); toast(`All steps done: ${t.name} complete`); return; }
-    const r = el.getBoundingClientRect(); render(); stepFloat(before, {getBoundingClientRect: () => r}); return; }
+    render(); return; }
   if (el.dataset.buy){ const it = ITEM[el.dataset.buy]; if (it && !it.boss && it.price > 0 && inSeason(it, D.today) && D.balance >= it.price && !S.owned.includes(it.id) && meetsReq(it, D.statLv)){ S.owned.push(it.id); if (it.kind === 'hat') setHat(it.id); else S.equip[it.kind] = it.id; save(); render(); toast(`Bought ${it.name}. It's in your inventory.`); } return; }
   if (el.dataset.equip){ const it = ITEM[el.dataset.equip]; if (!it || !((it.boss || it.legendary) ? D.drops.has(it.id) : (S.owned.includes(it.id) || it.price === 0))) return; const slot = it.kind; if (slot === 'hat'){ if (it.lvl && D.lv.level < it.lvl && S.equip.hat !== it.id) return; setHat(S.equip.hat === it.id ? null : it.id); } else S.equip[slot] = it.id; save(); render(); return; }
   if (el.dataset.todaytab){ todayTab = el.dataset.todaytab === 'week' ? 'week' : 'day'; try { localStorage.setItem(TODAY_TAB_KEY, todayTab); } catch(e){} render(); return; }
