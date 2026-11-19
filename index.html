@@ -548,7 +548,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '17a2e31951';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '752b4ed9a5';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -2985,7 +2985,11 @@ const CONF_DARK = ['#eeb7d8','#b8c9ef','#f2d982','#a9b97c','#f4bf92','#c9b5ef','
 const CONF_LIGHT = ['#e08bbd','#8ea7e4','#e5bf4f','#8a9f55','#ec9a5c','#a68ce4','#9fc06a'];
 const CONF_RIBBONS = [[[0,0],[1,1],[1,2],[0,3],[0,4],[1,5]], [[0,0],[0,1],[1,2],[2,2],[3,1]], [[1,0],[0,1],[0,2],[1,3]], [[0,0],[1,0],[2,1],[2,2]]];
 let conf = null;
-function confetti(){
+// a burst: bits shoot up from the finished task in a V, then drift down slowly and evenly
+const CONF_K = 4.2, CONF_G = 240;   // air drag and gravity, in canvas pixels; falling speed settles at G/K
+function confRise(v, k){ return v / k - CONF_G / (k * k) * Math.log(1 + k * v / CONF_G); }   // how high a launch speed carries
+function confLaunch(h, k){ let lo = 0, hi = 5000; for (let i = 0; i < 24; i++){ const m = (lo + hi) / 2; if (confRise(m, k) < h) lo = m; else hi = m; } return lo; }
+function confetti(rect){
   if (!motionOK) return;
   if (!conf){
     const cv = document.createElement('canvas'); cv.className = 'confetti'; cv.setAttribute('aria-hidden', 'true');
@@ -2994,19 +2998,29 @@ function confetti(){
   }
   const W = Math.ceil(innerWidth / CONF_PX), H = Math.ceil(innerHeight / CONF_PX);
   if (conf.cv.width !== W || conf.cv.height !== H){ conf.cv.width = W; conf.cv.height = H; }
-  const n = Math.min(110, 260 - conf.parts.length);
+  // start at the task you ticked, pulled toward the middle so the V opens evenly to both sides
+  const bx = rect && (rect.width || rect.height) ? (rect.left + rect.width / 2) / CONF_PX : W / 2;
+  const by = rect && (rect.width || rect.height) ? (rect.top + rect.height / 2) / CONF_PX : H * 0.6;
+  const ox = W / 2 + (bx - W / 2) * 0.2, oy = Math.max(H * 0.3, Math.min(H * 0.92, by));
+  const n = Math.min(130, 300 - conf.parts.length);
   const pal = document.documentElement.getAttribute('data-mode') === 'dark' ? CONF_DARK : CONF_LIGHT;
   for (let i = 0; i < n; i++){
     const ribbon = Math.random() < 0.35;
+    // a fan of bits: each one heads for a spot spread evenly across the width and flies up toward the top (a few past it),
+    // so the burst opens into a V and then rains back down over the whole screen
+    let tx = W * (-0.05 + Math.random() * 1.1); if (Math.abs(tx - ox) < W * 0.06) tx += (tx < ox ? -1 : 1) * W * 0.06;
+    const h = Math.min(oy + H * 0.12, oy * (0.45 + Math.random() * 0.7) + Math.abs(tx - ox) * 0.25);
+    const k = CONF_K * (0.65 + Math.random() * 0.85);   // some bits catch more air and fall slower, so they spread out on the way down
     conf.parts.push({
-      x: Math.random() * W, y: -Math.random() * H * 0.45 - 4,
-      vx: (Math.random() - 0.5) * 16, vy: 60 + Math.random() * 50,
-      sway: Math.random() * 6.28, swaySp: 2 + Math.random() * 3, swayAmp: 4 + Math.random() * 8,
-      spin: Math.random() * 6.28, spinSp: 5 + Math.random() * 8,
+      x: ox + (Math.random() - 0.5) * 6, y: oy + (Math.random() - 0.5) * 3,
+      vx: (tx - ox) * k, vy: -confLaunch(h, k), k, glide: (Math.random() - 0.5) * 12,
+      delay: Math.random() * 0.12,
+      sway: Math.random() * 6.28, swaySp: 1.6 + Math.random() * 2.2, swayAmp: 5 + Math.random() * 9,
+      spin: Math.random() * 6.28, spinSp: 4 + Math.random() * 7,
       w: 2 + (Math.random() < 0.5 ? 1 : 0), h: 2 + (Math.random() < 0.6 ? 1 : 0),
       shape: ribbon ? CONF_RIBBONS[Math.floor(Math.random() * CONF_RIBBONS.length)] : null,
       color: pal[Math.floor(Math.random() * pal.length)],
-      life: 0, ttl: 3 + Math.random() * 1.4,
+      life: 0, ttl: 5.5 + Math.random() * 1.5,
     });
   }
   if (!conf.raf){ conf.last = performance.now(); conf.raf = requestAnimationFrame(confStep); }
@@ -3017,10 +3031,14 @@ function confStep(now){
   ctx.clearRect(0, 0, W, H);
   c.parts = c.parts.filter(p => p.life < p.ttl && p.y < H + 8);
   for (const p of c.parts){
-    p.life += dt; p.vy = Math.max(p.vy - 30 * dt, 52 + p.swayAmp); p.vx *= 1 - 0.8 * dt;
-    p.sway += p.swaySp * dt; p.spin += p.spinSp * dt;
-    p.x += (p.vx + Math.cos(p.sway) * p.swayAmp) * dt; p.y += p.vy * dt;
-    ctx.globalAlpha = Math.max(0, Math.min(1, (p.ttl - p.life) / 0.6));
+    if (p.delay > 0){ p.delay -= dt; continue; }
+    p.life += dt;
+    p.vx -= p.k * p.vx * dt; p.vy += (CONF_G - p.k * p.vy) * dt;
+    p.sway += p.swaySp * dt; p.spin += p.spinSp * dt * (p.vy < 0 ? 2 : 1);
+    // the side-to-side flutter only kicks in once it's floating down
+    const fall = Math.max(0, Math.min(1, p.vy * p.k / CONF_G)), drift = fall * Math.cos(p.sway) * p.swayAmp, glide = fall * p.glide;
+    p.x += (p.vx + drift + glide) * dt; p.y += p.vy * dt;
+    ctx.globalAlpha = Math.max(0, Math.min(1, (p.ttl - p.life) / 0.8));
     ctx.fillStyle = p.color;
     const sy = Math.cos(p.spin), flip = Math.sin(p.spin * 0.7) < 0 ? -1 : 1, x = Math.round(p.x), y = Math.round(p.y);
     if (p.shape){
@@ -3091,7 +3109,7 @@ function toggle(id, el){
   const r = el.getBoundingClientRect();
   render();
   if (recoveryMode) return;
-  if (completing) confetti();
+  if (completing) confetti(r);
   if (dx > 0){
     floatAt(r.left + r.width/2, r.top, `<span style="color:var(--accent)">+${dx} XP</span>  <span style="color:var(--gold)">+${dg} G</span>${dd>0 && before.cur.status==='now' ? `<br><span style="color:var(--hp)">-${dd} HP</span>` : ''}`);
     jumpUntil = Date.now() + 700; if (dd > 0) hurtUntil = Date.now() + 500;
@@ -3274,7 +3292,7 @@ function onClick(e){
     }
     const r = el.getBoundingClientRect();
     const before = D; it.doneOn = D.today; it.doneTs = Date.now(); save(); render(); if (recoveryMode) return;
-    confetti();
+    confetti(r);
     const dx = D.xp - before.xp, dg = D.balance - before.balance;
     floatAt(r.left + r.width/2, r.top, dx > 0 || dg > 0 ? `<span style="color:var(--accent)">+${dx} XP</span>  <span style="color:var(--gold)">+${dg} G</span>` : 'Done');
     if (D.lv.level > before.lv.level) toast(`Level ${D.lv.level}!`); return; }
