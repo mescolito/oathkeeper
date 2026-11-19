@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Oathkeeper">
 
-<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABAAQMAAACQp+OdAAAABlBMVEX28eYXFhT/x/CdAAABDElEQVR42pWRMUoEQRBFX9eObAfCzA222QvoBYS+gdcwNDRY3Ak39AgeRGEw8giGY6SZI4j0LD3zDXYWFFzQih5VVNWv+k7swvgduj087eEOkCTNJQOQn0pjNUEOYDCSIiAltZIMUv0MGNE3DwwwLvJirrS2EXvz0Bi4zwqwDKsArRGIjxS7ydtJWFzXYLQD3GYMMtyA0SW4SBinHXwcY27TwvalLo7OMgz3bbEtMswuS8MDw9V0l1ZYUQGqg1kA3HU0IqA1CEmqhRqAmYywDLYsQB1AKafRpte5Cvp48KuH4L3q/bdMAeHE2V/bHcDPpZN90ua895KBal4BqSmTk5C6Mu2s9ODB6R+avwAdhnANDOd6CwAAAABJRU5ErkJggg==">
+<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAABIAQMAAABvIyEEAAAABlBMVEX28eYXFhT/x/CdAAAAjklEQVR42sWSMQrDMAxFn2OPBQd6jkAPEGiuXnIEnyPggEcbZWgLtpUhW7RIPL6+QJIRfjFwQ7UvFTPyT72unPSmExZWlN9IrJgDKJNVuh2v/EJA6UYijV95bpPtdW7D9+xjmRuGSPReRKRhmXfLjIDLan+l6J2muNDPWLOa8SU1G0gX7/Z49czc+0NNdQDQXz2KAlR5lAAAAABJRU5ErkJggg==">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500&family=Outfit:wght@400;500;600;700;800&family=Silkscreen&display=swap" rel="stylesheet">
@@ -108,6 +108,20 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block;width
 .check[disabled]{opacity:.3;cursor:default}
 .trow.rested{opacity:.7}
 .trow.rested .check{border-style:dashed}
+.cl{grid-column:1/-1;margin:2px -12px -12px;border-top:1px solid var(--line);border-radius:0 0 22px 22px;overflow:hidden}
+.clhead{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:8px 22px 8px 12px;border:0;background:transparent;cursor:pointer;color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+.clhead .pbar{flex:0 0 46px;height:7px}
+.clchev{display:inline-flex;color:var(--muted);margin-left:auto}
+.cllist{display:flex;flex-direction:column;padding:4px 12px 0}
+.clitem{display:grid;grid-template-columns:1fr 44px;gap:12px;align-items:center;min-height:52px;padding-left:58px}
+.cltext{font-size:15px;font-weight:600}
+.clitem.on .cltext{color:var(--muted);text-decoration:line-through}
+.clcheck{width:32px;height:32px;margin:0 6px;border-radius:50%;border:2px solid var(--ink);background:transparent;color:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;justify-self:center}
+.clitem.on .clcheck{background:var(--ink);color:var(--inv)}
+.clcheck[disabled]{opacity:.3;cursor:default}
+.rrmore{display:inline-flex;align-items:center;gap:4px;min-height:44px;border:0;background:transparent;color:var(--muted);font-size:12.5px;cursor:pointer;padding:0 4px}
+.rrmore .clchev{margin-left:0}
+.rrlist{flex-basis:100%;line-height:1.4}
 .rr{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
 .rrbtn{display:inline-flex;align-items:center;gap:5px;border:0;background:#efe7d6;border-radius:999px;padding:5px 12px;min-height:44px;font-size:12.5px;font-weight:600;cursor:pointer}
 .rrbtn[disabled]{opacity:.45;cursor:default}
@@ -659,6 +673,7 @@ const innFee = lv => Math.min(50, 5 * (1 + Math.floor(Math.max(0, lv - 1) / 5)))
 function innOn(d){ return (S.inn || []).some(st => st.from <= d && (!st.to || d <= st.to)); }
 const innNow = () => (S.inn || []).find(st => !st.to) || null;
 function prevActive(d){ let p = addDays(d,-1), g = 0; while (innOn(p) && g++ < 400) p = addDays(p,-1); return p; }
+const CHECK_MAX = 12;
 const MP_PER_TASK = 10, SKILL_MAX = 5, TODO_CAP = 5, TODO_LISTS = 50, TODO_OPEN = 300;
 const SKILLS = [
   {id:'strike',  branch:'core', name:'Power Strike',     kind:'dmg',    unlock:1,  cost:l => 25 - 2*(l-1),   power:l => 30 + 12*(l-1),
@@ -850,7 +865,7 @@ function defaults(){
     log:{}, pickLog:{}, rerolls:{}, owned:['dawn','axo'], equip:{hat:null, bg:'dawn', color:'axo'},
     gear:{weapon:null, offhand:null, armor:null}, gearLog:[], bag:[], seenDrops:[],
     skills:{}, skillUnlock:{}, skillLog:[], waives:{}, lightens:{}, buys:[], snap:{}, firstTs:{}, picks:{}, results:{}, statMeta:{}, wkTg:{}, wkBn:{},
-    todos:{lists:[{id:'l_home', name:'House repairs', items:[]}]}, potions:[], runeBuys:[], faintLog:{}, legends:{}, inn:[], pomo:{cfg:{focus:25, short:5, long:15, every:4, sound:true, haptic:true}, run:null}, pomoLog:[], settings:{theme:'light', rollover:0, hideDone:false, collapse:{vitals:false, boss:false}, dismissed:{}}, sells:[], mig:7, updated:0};
+    todos:{lists:[{id:'l_home', name:'House repairs', items:[]}]}, potions:[], runeBuys:[], faintLog:{}, legends:{}, checks:{}, inn:[], pomo:{cfg:{focus:25, short:5, long:15, every:4, sound:true, haptic:true}, run:null}, pomoLog:[], settings:{theme:'light', rollover:0, hideDone:false, collapse:{vitals:false, boss:false}, dismissed:{}}, sells:[], mig:7, updated:0};
 }
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const isDate = v => typeof v === 'string' && DATE_RE.test(v);
@@ -878,6 +893,8 @@ function sanitize(s, created){
     if (Array.isArray(t.pool)){ const pool = t.pool.filter(obj).map(p => ({name: str(p.name, 40).trim(), stats: statList(p.stats)})).filter(p => p.name).slice(0, 12); if (pool.length >= 2){ o.pool = pool; o.stats = pool[0].stats.slice(); } }
     if (Array.isArray(t.sched)) o.sched = t.sched.filter(e => obj(e) && isDate(e.from)).map(e => { const dl2 = dayList(e.days); return {from: e.from, cad: e.cad === 'week' ? 'week' : 'day', days: dl2 && dl2.length && dl2.length < 7 ? dl2 : null}; });
     if (Array.isArray(t.off)) o.off = t.off.filter(p => Array.isArray(p) && isDate(p[0])).map(p => [p[0], isDate(p[1]) ? p[1] : null]);
+    // optional checklist of steps (like Tiimo subtasks); steps are just progress, the task itself gives the reward
+    if (Array.isArray(t.checklist)){ const cl = t.checklist.filter(obj).map(c => ({id: str(c.id, 20, ''), text: str(c.text, 60, '').trim()})).filter(c => c.id && c.text).slice(0, CHECK_MAX); if (cl.length) o.checklist = cl; }
     return o;
   });
   out.log = byDate(s.log, v => byId(v, x => { const n = num(x, NaN); return Number.isFinite(n) ? n : undefined; }));
@@ -927,6 +944,8 @@ function sanitize(s, created){
       run: obj(r) && ['focus','short','long'].includes(r.phase) ? {phase: r.phase, startTs: num(r.startTs, 0), pausedMs: num(r.pausedMs, 0), pauseAt: r.pauseAt ? num(r.pauseAt, 0) : null, n: int(r.n, 0, 999, 0), idle: !!r.idle, ...(r.mins ? {mins: int(r.mins, 5, 90, 25)} : {}), ...(r.extra ? {extra: int(r.extra, 0, 3600000, 0)} : {})} : null}; }
   out.pomoLog = (Array.isArray(s.pomoLog) ? s.pomoLog : []).filter(x => obj(x)).map(x => ({ts: num(x.ts, 0), mins: int(x.mins, 1, 90, 25)})).filter(x => x.ts > 0);
   out.testGold = PREVIEW && Array.isArray(s.testGold) ? s.testGold.filter(x => obj(x)).map(x => ({ts: num(x.ts, 0), g: int(x.g, 0, 100000, 0)})) : [];
+  // which checklist steps are ticked, per day and task
+  out.checks = {}; if (obj(s.checks)) for (const [d, m] of Object.entries(s.checks)) if (isDate(d) && obj(m)){ const mm = {}; for (const [tid, ids] of Object.entries(m)) if (typeof tid === 'string' && tid.length <= 40 && !PROTO_KEYS.has(tid) && Array.isArray(ids)){ const v = Array.from(new Set(ids.filter(x => typeof x === 'string' && x.length <= 20))).slice(0, CHECK_MAX); if (v.length) mm[tid] = v; } if (Object.keys(mm).length) out.checks[d] = mm; }
   // legendary drops are written down the moment they're won, so they can never disappear later
   out.legends = {}; if (obj(s.legends)) for (const [id, ts] of Object.entries(s.legends)) if ((LEGENDARY_GEAR.includes(id) || id === LEGENDARY_PET) && Number.isFinite(Number(ts))) out.legends[id] = Number(ts);
   out.faintLog = {}; if (obj(s.faintLog)) for (const [d, f] of Object.entries(s.faintLog)) if (isDate(d) && obj(f)) out.faintLog[d] = {loss: int(f.loss, 0, 1e9, 0)};
@@ -1418,7 +1437,7 @@ function mergeSaves(a, b){
   const [nw, od] = (a.updated || 0) >= (b.updated || 0) ? [a, b] : [b, a];
   const out = clone(nw), o = clone(od);
   const isObj = v => v && typeof v === 'object' && !Array.isArray(v);
-  for (const k of ['log','pickLog','snap','firstTs','picks','waives','rerolls','lightens','wkTg','wkBn']){
+  for (const k of ['log','pickLog','snap','firstTs','picks','waives','rerolls','lightens','wkTg','wkBn','checks']){
     if (!isObj(o[k])) continue; if (!isObj(out[k])) out[k] = {};
     for (const [d, m] of Object.entries(o[k])){ if (!isObj(m)) continue; if (!isObj(out[k][d])) out[k][d] = {}; for (const [id, v] of Object.entries(m)) if (!(id in out[k][d])) out[k][d][id] = v; }
   }
@@ -2059,6 +2078,7 @@ const ICON = {
   plus:'<path d="M12 5v14M5 12h14"/>',
   gear:'<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
   back:'<path d="M15 18l-6-6 6-6"/>',
+  down:'<path d="M6 9l6 6 6-6"/>', up:'<path d="M6 15l6-6 6 6"/>',
   gift:'<rect x="3" y="8" width="18" height="5" rx="1"/><path d="M5 13v8h14v-8M12 8v13M12 8c-1-3-5-4-5-1.5S10 8 12 8zM12 8c1-3 5-4 5-1.5S14 8 12 8z"/>',
   x:'<path d="M6 6l12 12M18 6L6 18"/>',
   list:'<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/>',
@@ -2151,13 +2171,26 @@ function taskRow(t, k){
     const used = (S.rerolls[k] && S.rerolls[k][t.id]) || 0, price = rerollPrice(used);
     const logged = !!(S.pickLog[k] && S.pickLog[k][t.id]);
     const canRoll = !logged && !disabled && t.pool.length > 1 && D.balance >= price;
-    rr = `<div class="rr"><button class="rrbtn" data-reroll="${esc(t.id)}" ${canRoll ? '' : 'disabled'} aria-label="Reroll for ${price} gold">${svg('reroll',14,2.4)} Reroll · ${price} G</button><span>1 of ${t.pool.length}: ${t.pool.map(o => esc(o.name)).join(', ')}</span></div>`;
+    const ro = clOpen.has('rr:' + t.id);
+    rr = `<div class="rr"><button class="rrbtn" data-reroll="${esc(t.id)}" ${canRoll ? '' : 'disabled'} aria-label="Reroll for ${price} gold">${svg('reroll',14,2.4)} Reroll · ${price} G</button><button class="rrmore" data-clopen="rr:${esc(t.id)}" aria-expanded="${ro}">1 of ${t.pool.length} routines<span class="clchev">${svg(ro ? 'up' : 'down',14,2.4)}</span></button>${ro ? `<span class="rrlist">${t.pool.map(o => esc(o.name)).join(' · ')}</span>` : ''}</div>`;
   }
   return `<div class="trow ${isD?'done':''} ${rested?'rested':''} ${closed?'closed':''}">
     <span class="ticon" style="background:${STATS[prim].c}">${sIcon(prim)}</span>
     <div class="tbody">${isPool || t.archived ? `<span class="tkick">${isPool ? esc(t.name) : ''}${t.archived ? (isPool ? ' · ' : '') + (k === D.today ? 'Archived · last day today' : 'Archived') : ''}</span>` : ''}<span class="tname">${esc(name)}</span>${isD ? '' : wk}
       <span class="tmeta">${isD ? `<span>Done${cad === 'week' ? ` · ${weekCount(t.id,k)} of ${effTarget(t,k)} this week` : ''}</span>` : `${stats.map(chipS).join('')}${weak ? '<span class="chip-weak">2× dmg</span>' : ''}<span>${esc(meta)}</span>`}</span>${rr}</div>
     <button class="check" data-toggle="${esc(t.id)}" aria-pressed="${isD}" aria-label="${isD ? 'Undo' : 'Complete'} ${esc(name)}" ${disabled?'disabled':''}>${svg('check',18,2.8)}</button>
+    ${checklistBlock(t, k, disabled || closed)}
+  </div>`;
+}
+// Tiimo-style checklist under a task: a progress bar you can open into the list of steps
+const clTicked = (k, tid) => ((S.checks[k] || {})[tid]) || [];
+function checklistBlock(t, k, locked){
+  const cl = t.checklist; if (!cl || !cl.length) return '';
+  const got = clTicked(k, t.id).filter(id => cl.some(c => c.id === id)).length, open = clOpen.has(t.id);
+  return `<div class="cl ${open ? 'open' : ''}">
+    ${open ? `<div class="cllist">${cl.map(c => { const on = clTicked(k, t.id).includes(c.id);
+      return `<div class="clitem ${on ? 'on' : ''}"><span class="cltext">${esc(c.text)}</span><button class="clcheck" data-clitem="${esc(t.id)}|${esc(c.id)}" aria-pressed="${on}" aria-label="${on ? 'Untick' : 'Tick'} ${esc(c.text)}" ${locked ? 'disabled' : ''}>${svg('check',14,3)}</button></div>`; }).join('')}</div>` : ''}
+    <button class="clhead" data-clopen="${esc(t.id)}" aria-expanded="${open}" aria-label="${open ? 'Hide' : 'Show'} checklist, ${got} of ${cl.length} done">${bar(100*got/cl.length, null, 'clbar')}<span class="cln">${got}/${cl.length}</span><span class="clchev">${svg(open ? 'up' : 'down',16,2.4)}</span></button>
   </div>`;
 }
 function assistMsg(){
@@ -2674,6 +2707,9 @@ function renderStatsPanel(){
 
 let resetArmed = false, restoreArmed = false;
 const BAK_KEY = LS_KEY + '.bak';
+// which task checklists are open: a view setting for this device only, so it never touches the save
+const CL_OPEN_KEY = 'oathkeeper-clopen';
+var clOpen = (() => { try { return new Set(JSON.parse(localStorage.getItem(CL_OPEN_KEY) || '[]').filter(x => typeof x === 'string').slice(0, 200)); } catch(e){ return new Set(); } })();
 var gistOffArmed = false;
 const hasBak = () => { try { return !!localStorage.getItem(BAK_KEY); } catch(e){ return false; } };
 const backup = () => { if (recoveryMode) return; try { localStorage.setItem(BAK_KEY, JSON.stringify(S)); } catch(e){} };
@@ -2908,6 +2944,9 @@ function renderEditor(){
       <div class="chips">${SK.map(k => { const i = t.stats.indexOf(k); return `<button class="chip ${i>=0?'on':''}" data-stat="${k}" style="${i>=0?`background:${STATS[k].c};border-color:${STATS[k].c};color:#171614`:''}" aria-pressed="${i>=0}">${i===0?'★ ':''}${esc(STATS[k].name)}</button>`; }).join('')}</div></div>`}
     <label class="f" for="tCad">How often<select id="tCad"><option value="day" ${t.cad==='day'?'selected':''}>Every day (daily)</option><option value="week" ${t.cad==='week'?'selected':''}>Times per week</option></select></label>
     ${t.cad==='week' ? `<div class="row"><label class="f" for="tTarget" style="flex:1">Target per week<input type="number" id="tTarget" min="1" max="7" value="${t.target||1}"></label><label class="f" for="tBonus" style="flex:1">Bonus goal (optional)<input type="number" id="tBonus" min="0" max="7" value="${t.bonus||''}"></label></div>` : ''}
+    <div class="f" style="display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;font-weight:600;color:var(--muted)">Checklist (optional): steps you tick off; finishing them all completes the task</span>
+      ${(t.checklist || []).map((c,i) => `<div class="row"><input type="text" id="clText${i}" maxlength="60" value="${esc(c.text)}" placeholder="Step ${i+1}" aria-label="Step ${i+1}"><button class="btn danger" data-cldel="${i}" aria-label="Remove step ${i+1}">✕</button></div>`).join('')}
+      <button class="btn" data-cladd ${(t.checklist || []).length >= CHECK_MAX ? 'disabled' : ''}>+ Add step</button></div>
     <div class="f" style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:600;color:var(--muted)">Days it shows up</span>
       <div class="chips">${DOW_ORDER.map(d => `<button class="chip ${t.days.includes(d)?'on':''}" data-day="${d}" style="${t.days.includes(d)?'background:var(--ink);color:var(--inv)':''}" aria-pressed="${t.days.includes(d)}">${DOW[d]}</button>`).join('')}</div></div>
     ${!t.isNew ? '<p class="how small">Changes to days or how often start tomorrow, so today stays as it was.</p>' : ''}
@@ -2920,6 +2959,7 @@ function readEditorFields(){
   const tg = document.getElementById('tTarget'); if (tg) draft.target = clamp(parseInt(tg.value)||1, 1, 7);
   const bn = document.getElementById('tBonus'); if (bn) { const v = parseInt(bn.value)||0; draft.bonus = v > draft.target ? clamp(v,1,7) : undefined; }
   if (draft.pool) draft.pool.forEach((o,i) => { const el = document.getElementById('oName'+i); if (el) o.name = el.value; });
+  if (draft.checklist) draft.checklist.forEach((c,i) => { const el = document.getElementById('clText'+i); if (el) c.text = el.value; });
 }
 function readStatFields(){ if (!statDraft) return; const n = document.getElementById('stName'), b = document.getElementById('stBlurb'); if (n) statDraft.name = n.value; if (b) statDraft.blurb = b.value; }
 function closeEditor(){ document.getElementById('sheet').hidden = true; draft = null; sheetMode = null; statEdit = null; statDraft = null; document.querySelectorAll('.app, .nav').forEach(n => n.inert = false); showAward(); }
@@ -3019,6 +3059,19 @@ function onClick(e){
   if (el.dataset.tab){ if ((el.dataset.tab === 'settings' || el.dataset.tab === 'focus') && tab !== 'settings' && tab !== 'focus') prevTab = tab; tab = el.dataset.tab; resetArmed = false; restoreArmed = false; render(); window.scrollTo(0,0); return; }
   if (el.dataset.vday){ vday = el.dataset.vday; render(); return; }
   if (el.dataset.toggle){ toggle(el.dataset.toggle, el); return; }
+  if (el.dataset.clopen){ const id = el.dataset.clopen; if (clOpen.has(id)) clOpen.delete(id); else clOpen.add(id); try { localStorage.setItem(CL_OPEN_KEY, JSON.stringify([...clOpen])); } catch(e){} render(); return; }
+  if (el.dataset.clitem){
+    const [tid, cid] = el.dataset.clitem.split('|'), k = vday === 'today' ? D.today : D.yest;
+    const t = S.tasks.find(x => x.id === tid); if (!t || !t.checklist || !t.checklist.some(c => c.id === cid)) return;
+    if (offOn(t, k) || !isDue(t, k) || waived(k, tid)) return;
+    const day = S.checks[k] || (S.checks[k] = {}), cur = day[tid] || [];
+    day[tid] = cur.includes(cid) ? cur.filter(x => x !== cid) : [...cur, cid];
+    if (!day[tid].length) delete day[tid]; if (!Object.keys(day).length) delete S.checks[k];
+    const allDone = t.checklist.every(c => ((S.checks[k] || {})[tid] || []).includes(c.id));
+    save();
+    // ticking the last step finishes the task (and gives its usual reward); unticking a step never undoes it
+    if (allDone && !done(k, tid)){ toggle(tid, el); toast(`All steps done: ${t.name} complete`); return; }
+    render(); return; }
   if (el.dataset.buy){ const it = ITEM[el.dataset.buy]; if (it && !it.boss && it.price > 0 && inSeason(it, D.today) && D.balance >= it.price && !S.owned.includes(it.id) && meetsReq(it, D.statLv)){ S.owned.push(it.id); if (it.kind === 'hat') setHat(it.id); else S.equip[it.kind] = it.id; save(); render(); toast(`Bought ${it.name}. It's in your inventory.`); } return; }
   if (el.dataset.equip){ const it = ITEM[el.dataset.equip]; if (!it || !((it.boss || it.legendary) ? D.drops.has(it.id) : (S.owned.includes(it.id) || it.price === 0))) return; const slot = it.kind; if (slot === 'hat'){ if (it.lvl && D.lv.level < it.lvl && S.equip.hat !== it.id) return; setHat(S.equip.hat === it.id ? null : it.id); } else S.equip[slot] = it.id; save(); render(); return; }
   if ('newtask' in el.dataset){ openEditor(null); return; }
@@ -3063,6 +3116,8 @@ function onClick(e){
   if (el.dataset.ostat && draft && draft.pool){ readEditorFields(); const [i, k] = el.dataset.ostat.split(':'); const o = draft.pool[+i]; const j = o.stats.indexOf(k);
     if (j >= 0){ if (o.stats.length > 1) o.stats.splice(j,1); } else { o.stats.push(k); if (o.stats.length > 2) o.stats.shift(); }
     renderEditor(); return; }
+  if ('cladd' in el.dataset && draft){ readEditorFields(); const cl = draft.checklist || (draft.checklist = []); if (cl.length < CHECK_MAX){ cl.push({id: 'c' + Date.now().toString(36) + cl.length, text: ''}); renderEditor(); const n = document.getElementById('clText' + (cl.length - 1)); if (n) n.focus(); } return; }
+  if (el.dataset.cldel !== undefined && draft && draft.checklist){ readEditorFields(); draft.checklist.splice(+el.dataset.cldel, 1); renderEditor(); return; }
   if ('oadd' in el.dataset && draft && draft.pool){ readEditorFields(); draft.pool.push({name:'', stats:['MOB']}); renderEditor(); const n = document.getElementById('oName'+(draft.pool.length-1)); if (n) n.focus(); return; }
   if (el.dataset.odel !== undefined && draft && draft.pool){ readEditorFields(); if (draft.pool.length > 2) draft.pool.splice(+el.dataset.odel, 1); renderEditor(); return; }
   if (el.dataset.edit){ openEditor(S.tasks.find(t => t.id === el.dataset.edit)); return; }
@@ -3085,6 +3140,8 @@ function onClick(e){
     }
     if (draft.cad === 'week'){ out.target = draft.target || 1; if (draft.bonus) out.bonus = draft.bonus; }
     if (draft.days.length && draft.days.length < 7) out.days = draft.days.slice().sort();
+    const cl = (draft.checklist || []).map(c => ({id: c.id, text: c.text.trim().slice(0, 60)})).filter(c => c.text).slice(0, CHECK_MAX);
+    if (cl.length) out.checklist = cl;
     const i = S.tasks.findIndex(t => t.id === out.id), old = i >= 0 ? S.tasks[i] : null;
     let relock = [];
     const entry = {from: old ? addDays(D.today,1) : D.today, cad: out.cad, days: out.days || null};
