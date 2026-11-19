@@ -575,7 +575,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '1c452b8bd3';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '168ada6f40';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -2798,7 +2798,7 @@ function drawChest(cv, open, shake, glow){
   // the tile behind the chest comes from CSS, so in dark mode the big chest can sit straight on the card with no square
   const g = cv.getContext('2d'); g.clearRect(0, 0, 32, 32); g.fillStyle = PW;
   const P = (x, y) => g.fillRect(x + shake, y, 1, 1), H = (y, a, b) => { for (let x = a; x <= b; x++) P(x, y); }, V = (x, a, b) => { for (let y = a; y <= b; y++) P(x, y); };
-  if (glow) for (let y = 1; y < 31; y++) for (let x = 1; x < 31; x++) if ((x + y) % 4 === 0 && (x < 4 || x > 27 || y < 3 || y > 28)) P(x, y);
+  if (glow){ g.fillStyle = STAR_PINK; for (let y = 1; y < 31; y++) for (let x = 1; x < 31; x++) if ((x + y) % 4 === 0 && (x < 4 || x > 27 || y < 3 || y > 28)) P(x, y); g.fillStyle = PW; }
   // the box: outline, two metal straps, a plank line
   V(4, 17, 27); V(27, 17, 27); H(27, 4, 27); H(17, 4, 27);
   for (const x of [8, 9, 22, 23]) V(x, 17, 27);
@@ -2837,10 +2837,11 @@ function openChestUI(ts, outcome){
   const cv = el.querySelector('.chestbig'), box = el.querySelector('.chestprize');
   const reveal = () => { drawChest(cv, true, 0, leg); box.hidden = false; starburst(cv.getBoundingClientRect(), leg); if (leg && typeof confetti === 'function') confetti(cv.getBoundingClientRect()); const b = box.querySelector('button.primary, button'); if (b) b.focus(); };
   if (!motionOK){ reveal(); return; }
-  const t0 = performance.now();
+  // a legendary takes longer to burst: the shaking builds and a halo flickers on before the lid flies open
+  const t0 = performance.now(), wait = leg ? 1.7 : 0.9;
   const step = now => {
     const t = (now - t0) / 1000; if (!cv.isConnected) return;
-    if (t < 0.9){ drawChest(cv, false, Math.round(Math.sin(t * 40) * (t < 0.3 ? 0.6 : 1.2)), false); requestAnimationFrame(step); }
+    if (t < wait){ const amp = leg ? 0.5 + t * 1.1 : (t < 0.3 ? 0.6 : 1.2); drawChest(cv, false, Math.round(Math.sin(t * (leg ? 30 + t * 30 : 40)) * amp), leg && t > 0.7 && Math.sin(t * 25) > -0.2); requestAnimationFrame(step); }
     else reveal();
   };
   requestAnimationFrame(step);
@@ -3247,45 +3248,73 @@ function confStep(now){
   if (c.parts.length) c.raf = requestAnimationFrame(confStep);
   else { c.raf = 0; c.cv.remove(); conf = null; }
 }
-// pixel stars bursting out of an opened chest: they shoot outward, twinkle between a plus and an x, then fizzle out
+// pixel stars bursting out of an opened chest: they shoot outward, twinkle between a plus and an x, then fizzle out.
+// A legendary goes big: a flash, two pixel shockwave rings, twice the stars with pink ones shimmering among them,
+// and pink embers drifting up afterward.
+const STAR_PINK = '#eeb7d8';
 let stars = null;
 function starburst(rect, big){
   if (!motionOK || !rect) return;
   if (!stars){
     const cv = document.createElement('canvas'); cv.className = 'starburst'; cv.setAttribute('aria-hidden', 'true'); document.body.appendChild(cv);
-    stars = {cv, ctx: cv.getContext('2d'), parts: [], last: 0, raf: 0, spawn: 0, sx: 0, sy: 0, big: false};
+    stars = {cv, ctx: cv.getContext('2d'), parts: [], rings: [], last: 0, raf: 0, spawn: 0, embers: 0, flash: 0, sx: 0, sy: 0, big: false};
   }
-  const W = Math.ceil(innerWidth / CONF_PX), H = Math.ceil(innerHeight / CONF_PX);
-  if (stars.cv.width !== W || stars.cv.height !== H){ stars.cv.width = W; stars.cv.height = H; }
-  stars.sx = (rect.left + rect.width / 2) / CONF_PX; stars.sy = (rect.top + rect.height * 0.45) / CONF_PX; stars.big = big;
-  stars.color = document.documentElement.getAttribute('data-mode') === 'dark' ? PW : PB; stars.rim = false;   // cream stars in dark mode, ink-black in light
-  const n = big ? 46 : 30; for (let i = 0; i < n; i++) starAdd(1);
-  stars.spawn = big ? 0.9 : 0.5;   // a trickle of smaller sparkles keeps coming out for a moment
-  if (!stars.raf){ stars.last = performance.now(); stars.raf = requestAnimationFrame(starStep); }
+  const S2 = stars, W = Math.ceil(innerWidth / CONF_PX), H = Math.ceil(innerHeight / CONF_PX);
+  if (S2.cv.width !== W || S2.cv.height !== H){ S2.cv.width = W; S2.cv.height = H; }
+  S2.sx = (rect.left + rect.width / 2) / CONF_PX; S2.sy = (rect.top + rect.height * 0.45) / CONF_PX; S2.big = big;
+  S2.dark = document.documentElement.getAttribute('data-mode') === 'dark'; S2.color = S2.dark ? PW : PB;
+  const n = big ? 80 : 30; for (let i = 0; i < n; i++) starAdd(big ? 1.35 : 1);
+  S2.spawn = big ? 1.4 : 0.5;   // a trickle of smaller sparkles keeps coming out for a moment
+  if (big){ S2.flash = 0.35; S2.rings.push({r: 2, sp: 95, life: 0, ttl: 0.75}, {r: 0, sp: 70, life: -0.18, ttl: 0.85}); S2.embers = 2.4; }
+  if (!S2.raf){ S2.last = performance.now(); S2.raf = requestAnimationFrame(starStep); }
 }
-function starAdd(power){
-  const S2 = stars, a = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 1.7, v = (55 + Math.random() * 95) * power;
+function starAdd(power, ember){
+  const S2 = stars;
+  if (ember){   // a slow pink spark floating up from around the chest
+    S2.parts.push({x: S2.sx + (Math.random() - 0.5) * 40, y: S2.sy + (Math.random() - 0.3) * 20, vx: (Math.random() - 0.5) * 8, vy: -(8 + Math.random() * 14), float: true,
+      size: Math.random() < 0.3 ? 1 : 0, tw: Math.random() * 6, twSp: 6 + Math.random() * 8, pink: true, life: 0, ttl: 1 + Math.random() * 1.2});
+    return;
+  }
+  const a = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * (S2.big ? 2 : 1.7), v = (55 + Math.random() * 95) * power;
   S2.parts.push({x: S2.sx + (Math.random() - 0.5) * 6, y: S2.sy + (Math.random() - 0.5) * 3, vx: Math.cos(a) * v, vy: Math.sin(a) * v,
-    size: Math.random() < (S2.big ? 0.45 : 0.3) ? 2 : 1, tw: Math.random() * 6, twSp: 10 + Math.random() * 14, life: 0, ttl: 0.8 + Math.random() * 0.9});
+    size: S2.big ? (Math.random() < 0.25 ? 3 : Math.random() < 0.6 ? 2 : 1) : (Math.random() < 0.3 ? 2 : 1),
+    tw: Math.random() * 6, twSp: 10 + Math.random() * 14, pink: S2.big && Math.random() < 0.55, life: 0, ttl: (S2.big ? 1.1 : 0.8) + Math.random() * (S2.big ? 1.3 : 0.9)});
 }
 function starStep(now){
   const S2 = stars, dt = Math.min(0.05, (now - S2.last) / 1000); S2.last = now;
-  const g = S2.ctx; g.clearRect(0, 0, S2.cv.width, S2.cv.height); g.fillStyle = S2.color;
-  if (S2.spawn > 0){ S2.spawn -= dt; if (Math.random() < 0.7) starAdd(0.6); }
+  const g = S2.ctx, W = S2.cv.width, H = S2.cv.height; g.clearRect(0, 0, W, H);
+  // the flash: a quick pale-pink wash over everything
+  if (S2.flash > 0){ g.globalAlpha = Math.min(1, S2.flash / 0.35) * 0.55; g.fillStyle = '#fff3fa'; g.fillRect(0, 0, W, H); g.globalAlpha = 1; S2.flash -= dt; }
+  // shockwave rings: dotted pixel circles racing outward and breaking up
+  for (const rg of S2.rings){
+    rg.life += dt; if (rg.life < 0 || rg.life > rg.ttl) continue;
+    rg.r += rg.sp * dt * (1 - rg.life / rg.ttl * 0.6); const k = rg.life / rg.ttl, steps = Math.max(24, Math.round(rg.r * 4));
+    g.fillStyle = STAR_PINK;
+    for (let i = 0; i < steps; i++){ if (i % 2 || Math.random() < k * 0.9) continue; const a = i / steps * Math.PI * 2; g.fillRect(Math.round(S2.sx + Math.cos(a) * rg.r), Math.round(S2.sy + Math.sin(a) * rg.r * 0.9), 1, 1); }
+  }
+  S2.rings = S2.rings.filter(rg => rg.life <= rg.ttl);
+  if (S2.spawn > 0){ S2.spawn -= dt; if (Math.random() < (S2.big ? 0.95 : 0.7)) starAdd(S2.big ? 0.8 : 0.6); }
+  if (S2.embers > 0){ S2.embers -= dt; if (Math.random() < 0.5) starAdd(0, true); }
   S2.parts = S2.parts.filter(p => p.life < p.ttl);
   for (const p of S2.parts){
-    p.life += dt; p.vx *= 1 - 2.6 * dt; p.vy = p.vy * (1 - 2.6 * dt) + 14 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.tw += p.twSp * dt;
+    p.life += dt;
+    if (p.float){ p.x += (p.vx + Math.sin(p.tw) * 4) * dt; p.y += p.vy * dt; }
+    else { p.vx *= 1 - 2.6 * dt; p.vy = p.vy * (1 - 2.6 * dt) + 14 * dt; p.x += p.vx * dt; p.y += p.vy * dt; }
+    p.tw += p.twSp * dt;
     const k = p.life / p.ttl, x = Math.round(p.x), y = Math.round(p.y);
     if (k > 0.65 && Math.random() < (k - 0.65) * 2.2) continue;           // fizzling: it flickers more and more
-    const arm = k > 0.75 ? 0 : p.size, cross = Math.floor(p.tw) % 3 !== 2;   // twinkle: mostly a plus, now and then an x
+    const arm = k > 0.75 ? Math.min(p.size, 0) : p.size, ph = Math.floor(p.tw) % 3, cross = ph !== 2;   // twinkle: mostly a plus, now and then an x
+    // pink stars shimmer: they flash white (or ink, in light mode) on every third twinkle
+    g.fillStyle = p.pink ? (ph === 1 ? S2.color : STAR_PINK) : S2.color;
     const px = [[x, y]];
     for (let i = 1; i <= arm; i++){
       if (cross) px.push([x + i, y], [x - i, y], [x, y + i], [x, y - i]);
       else if (i === 1) px.push([x + 1, y + 1], [x - 1, y - 1], [x + 1, y - 1], [x - 1, y + 1]);
     }
+    if (arm >= 3 && cross) px.push([x + 1, y + 1], [x - 1, y - 1], [x + 1, y - 1], [x - 1, y + 1]);   // the biggest stars get little diagonal points
     for (const [a2, b2] of px) g.fillRect(a2, b2, 1, 1);
   }
-  if (S2.parts.length || S2.spawn > 0) S2.raf = requestAnimationFrame(starStep);
+  if (S2.parts.length || S2.spawn > 0 || S2.embers > 0 || S2.rings.length || S2.flash > 0) S2.raf = requestAnimationFrame(starStep);
   else { S2.raf = 0; S2.cv.remove(); stars = null; }
 }
 let toastT;
