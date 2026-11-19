@@ -558,7 +558,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'b1b967b6c1';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '00190b6513';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -2420,7 +2420,14 @@ function assistMsg(){
 const TODAY_TAB_KEY = 'oathkeeper-todaytab';
 var todayTab = (() => { try { return localStorage.getItem(TODAY_TAB_KEY) === 'week' ? 'week' : 'day'; } catch(e){ return 'day'; } })();
 // a tab's tasks split into Anytime / Morning / Afternoon / Evening, each a group you can fold away (like To-do priorities)
-function todGroups(list, cad, k){
+function todGroups(all, cad, k){
+  // tasks that aren't scheduled for this day (rest days, closed days) leave the groups and wait in a folded "Not today" group
+  const list = all.filter(t => isDue(t,k) || done(k,t.id)), off = all.filter(t => !isDue(t,k) && !done(k,t.id));
+  const restKey = 'show:rest-' + cad, restOpen = clOpen.has(restKey);
+  const rest = off.length ? `<div class="tdgroup todgrp" data-tod="rest">
+      <div class="tdhead"><button class="tdpill tod-rest" data-clopen="${restKey}" aria-expanded="${restOpen}">NOT TODAY (${off.length})<span class="chev ${restOpen ? '' : 'up'}">${svg('back',14,2.6)}</span></button></div>
+      ${restOpen ? `<div class="list">${off.map(t => taskRow(t,k)).join('')}</div>` : ''}
+    </div>` : '';
   return TODS.map(g => {
     const rows = list.filter(t => (t.tod || 'any') === g.k), key = 'shut:' + cad + '-' + g.k, shut = clOpen.has(key);
     const open = rows.filter(t => cad === 'day' ? isDue(t,k) && !done(k,t.id) : weekCount(t.id,k) < effTarget(t,k)).length;
@@ -2428,7 +2435,7 @@ function todGroups(list, cad, k){
       <div class="tdhead"><button class="tdpill tod-${g.k}" data-clopen="${key}" aria-expanded="${!shut}">${svg(g.icon,16,2.2)} ${g.label.toUpperCase()} (${open})<span class="chev ${shut ? 'up' : ''}">${svg('back',14,2.6)}</span></button><button class="tdplus" data-newtask="${cad}|${g.k}" aria-label="Add a ${g.label.toLowerCase()} ${cad === 'day' ? 'daily' : 'weekly goal'}">${svg('plus',16,2.4)}</button></div>
       ${shut || !rows.length ? '' : `<div class="list">${rows.map(t => taskRow(t,k)).join('')}</div>`}
     </div>`;
-  }).join('');
+  }).join('') + rest;
 }
 function renderToday(){
   const k = vday === 'today' ? D.today : D.yest;
