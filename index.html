@@ -358,6 +358,12 @@ html[data-mode="dark"] .awardin .btn.primary{color:var(--inv)}
 .tdpill.pri-high{background:#e7b9bd;box-shadow:none;color:#171614}
 .tdpill.pri-med{background:#e3dba0;box-shadow:none;color:#171614}
 .tdpill.pri-low{background:#bccbd6;box-shadow:none;color:#171614}
+.tdpill svg{flex:none}
+.tdpill.tod-morning{background:#f2d982;box-shadow:none;color:#171614}
+.tdpill.tod-afternoon{background:#f4bf92;box-shadow:none;color:#171614}
+.tdpill.tod-evening{background:#c9c4ec;box-shadow:none;color:#171614}
+.todgrp{margin-top:4px}
+.todpick button{padding:9px 6px;font-size:13px}
 .tdgroup.empty .tdpill{opacity:.55}
 .tdplus{width:36px;height:36px;border-radius:50%;border:0;background:#ece5d6;color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer}
 .tdlist{display:flex;flex-direction:column;gap:10px;min-height:6px}
@@ -552,7 +558,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '098dcc974d';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'b1b967b6c1';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -711,6 +717,9 @@ const innFee = lv => Math.min(50, 5 * (1 + Math.floor(Math.max(0, lv - 1) / 5)))
 function innOn(d){ return (S.inn || []).some(st => st.from <= d && (!st.to || d <= st.to)); }
 const innNow = () => (S.inn || []).find(st => !st.to) || null;
 function prevActive(d){ let p = addDays(d,-1), g = 0; while (innOn(p) && g++ < 400) p = addDays(p,-1); return p; }
+// time-of-day groups on Today (just for sorting your list; they don't change when a task can be done)
+const TOD_KEYS = ['morning', 'afternoon', 'evening'];
+const TODS = [{k:'any', label:'Anytime', icon:'clock'}, {k:'morning', label:'Morning', icon:'sunrise'}, {k:'afternoon', label:'Afternoon', icon:'sun'}, {k:'evening', label:'Evening', icon:'moon'}];
 const CHECK_MAX = 12;
 // partial progress: steps ticked on a task or to-do you didn't finish that day pay 1-2 G each when the day ends,
 // up to STEP_CAP a day (finishing it pays the normal reward instead, so nothing pays twice)
@@ -947,6 +956,7 @@ function sanitize(s, created){
     if (Array.isArray(t.sched)) o.sched = t.sched.filter(e => obj(e) && isDate(e.from)).map(e => { const dl2 = dayList(e.days); const en = {from: e.from, cad: e.cad === 'week' ? 'week' : 'day', days: dl2 && dl2.length && dl2.length < 7 ? dl2 : null}; const rp = en.cad === 'day' ? cleanRep(e.rep, true) : null; if (rp){ if (!rp.start) rp.start = e.from; en.rep = rp; } return en; });
     if (Array.isArray(t.off)) o.off = t.off.filter(p => Array.isArray(p) && isDate(p[0])).map(p => [p[0], isDate(p[1]) ? p[1] : null]);
     if (taskIconOk(t.icon)) o.icon = t.icon;
+    if (TOD_KEYS.includes(t.tod)) o.tod = t.tod;   // time of day it's grouped under on Today; no value means Anytime
     // optional checklist of steps (like Tiimo subtasks); steps are just progress, the task itself gives the reward
     if (Array.isArray(t.checklist)){ const cl = t.checklist.filter(obj).map(c => ({id: str(c.id, 20, ''), text: str(c.text, 60, '').trim()})).filter((c, i, a) => c.id && c.text && a.findIndex(x => x.id === c.id) === i).slice(0, CHECK_MAX); if (cl.length) o.checklist = cl; }
     return o;
@@ -1028,7 +1038,7 @@ const isStripped = raw => !!raw && typeof raw === 'object' && !(Number(raw.schem
 // what the build that wrote an unstamped save already knew, so a deliberate removal there isn't undone
 const knewOf = raw => ({rep: !!(raw && Array.isArray(raw.tasks) && raw.tasks.some(t => t && (t.rep || (Array.isArray(t.sched) && t.sched.some(e => e && e.rep))))),
   checklist: !!(raw && raw.checks && typeof raw.checks === 'object'), icon: !!(raw && Array.isArray(raw.tasks) && raw.tasks.some(t => t && t.icon))});
-const TASK_KNOWN = new Set(['id','name','stats','cad','created','target','bonus','days','archived','rep','pool','sched','off','checklist','icon']);
+const TASK_KNOWN = new Set(['id','name','stats','cad','created','target','bonus','days','archived','rep','pool','sched','off','checklist','icon','tod']);
 function normalize(s){
   const d = defaults();
   const raw = (s && typeof s === 'object') ? s : null;
@@ -2269,6 +2279,9 @@ const ICON = {
   list:'<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/>',
   sword:'<path d="M20 4l-9.5 9.5M15 4h5v5M6.5 13.5l4 4M4 20l3.5-3.5"/>',
   timer:'<path d="M10 2h4M12 14l3-3"/><circle cx="12" cy="14" r="8"/>',
+  clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  sunrise:'<path d="M3 18h18M7.5 18a4.5 4.5 0 019 0M12 5v3M4.6 10.6l2 2M19.4 10.6l-2 2M2.5 14.5h2M19.5 14.5h2"/>',
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>',
   bed:'<path d="M3 18v-8M3 14h18v4M21 14v-2a3 3 0 00-3-3h-7v5"/><circle cx="7" cy="11" r="2"/>'
 };
 
@@ -2406,6 +2419,17 @@ function assistMsg(){
 // Dailies and This week are two tabs, like the lists on To-dos; each device remembers which one was open
 const TODAY_TAB_KEY = 'oathkeeper-todaytab';
 var todayTab = (() => { try { return localStorage.getItem(TODAY_TAB_KEY) === 'week' ? 'week' : 'day'; } catch(e){ return 'day'; } })();
+// a tab's tasks split into Anytime / Morning / Afternoon / Evening, each a group you can fold away (like To-do priorities)
+function todGroups(list, cad, k){
+  return TODS.map(g => {
+    const rows = list.filter(t => (t.tod || 'any') === g.k), key = 'shut:' + cad + '-' + g.k, shut = clOpen.has(key);
+    const open = rows.filter(t => cad === 'day' ? isDue(t,k) && !done(k,t.id) : weekCount(t.id,k) < effTarget(t,k)).length;
+    return `<div class="tdgroup todgrp" data-tod="${g.k}">
+      <div class="tdhead"><button class="tdpill tod-${g.k}" data-clopen="${key}" aria-expanded="${!shut}">${svg(g.icon,16,2.2)} ${g.label.toUpperCase()} (${open})<span class="chev ${shut ? 'up' : ''}">${svg('back',14,2.6)}</span></button><button class="tdplus" data-newtask="${cad}|${g.k}" aria-label="Add a ${g.label.toLowerCase()} ${cad === 'day' ? 'daily' : 'weekly goal'}">${svg('plus',16,2.4)}</button></div>
+      ${shut || !rows.length ? '' : `<div class="list">${rows.map(t => taskRow(t,k)).join('')}</div>`}
+    </div>`;
+  }).join('');
+}
 function renderToday(){
   const k = vday === 'today' ? D.today : D.yest;
   // an archived task that's already done for this day has nothing left to do, so it leaves the list right away
@@ -2441,8 +2465,8 @@ function renderToday(){
   <div class="row between"><span class="muted small" style="white-space:nowrap">${todayTab === 'day' ? `${doneD} of ${dueD.length} done` : `${weekLeft} left · ${wkRange}`}</span>
     <div class="seg" role="group" aria-label="Which day to log"><button data-vday="today" class="${vday==='today'?'on':''}">Today</button><button data-vday="yest" class="${vday==='yest'?'on':''}">Yesterday</button></div></div>
   ${todayTab === 'day'
-    ? `<div class="list">${dailies.map(t => taskRow(t,k)).join('') || `<p class="how">${hide && dailiesAll.length ? 'All done here.' : 'No dailies yet. Tap + to add one.'}</p>`}</div>`
-    : `<div class="list">${weeklies.map(t => taskRow(t,k)).join('') || `<p class="how">${hide && weekliesAll.length ? 'All done here.' : 'No weekly goals yet. Tap + to add one.'}</p>`}</div>`}
+    ? `${hide && dailiesAll.length && !dailies.length ? '<p class="how">All done here.</p>' : ''}${todGroups(dailies, 'day', k)}`
+    : `${hide && weekliesAll.length && !weeklies.length ? '<p class="how">All done here.</p>' : ''}${todGroups(weeklies, 'week', k)}`}
   <p class="how">Each missed daily lets the boss hit you that night, so defense and dodge matter. Checking in every day keeps your streak and gives a mystery bonus. A perfect week earns a free rune.</p>`;
 }
 function skillTargets(id){
@@ -3263,6 +3287,8 @@ function renderEditor(){
       <div class="swatches"><button class="iconpick ${!t.icon ? 'on' : ''}" data-ticon="" aria-pressed="${!t.icon}" aria-label="Use the main stat's icon" style="font-size:12px;font-weight:700">Auto</button>${TASK_ICONS.map(ic => `<button class="iconpick ${t.icon === ic ? 'on' : ''}" data-ticon="${ic}" aria-pressed="${t.icon === ic}" aria-label="Icon ${ic}">${svg(ic,18,2)}</button>`).join('')}</div>
       <div class="emojirow"><input type="text" id="tEmoji" maxlength="16" inputmode="text" autocomplete="off" value="${t.icon && t.icon.startsWith('e:') ? esc(t.icon.slice(2)) : ''}" placeholder="Or type an emoji 🙂" aria-label="Emoji icon"></div>
       <p class="how small">On iPhone, tap the box and switch to the emoji keyboard (🌐 or 🙂). On a Mac, press Control‑Command‑Space.</p></div>
+    <div class="f" style="display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;font-weight:600;color:var(--muted)">Time of day</span>
+      <div class="seg wide todpick" role="group" aria-label="Time of day">${TODS.map(g => `<button type="button" class="${(t.tod || 'any') === g.k ? 'on' : ''}" data-ttod="${g.k}" aria-pressed="${(t.tod || 'any') === g.k}">${g.label}</button>`).join('')}</div></div>
     <label class="f" for="tCad">How often<select id="tCad"><option value="day" ${t.cad==='day' && !t.rep?'selected':''}>Every day (daily)</option><option value="week" ${t.cad==='week'?'selected':''}>Times per week</option><option value="xday" ${t.rep && t.rep.unit==='day'?'selected':''}>Every few days</option><option value="xweek" ${t.rep && t.rep.unit==='week'?'selected':''}>Every few weeks</option><option value="xmonth" ${t.rep && t.rep.unit==='month'?'selected':''}>Every few months</option></select></label>
     ${t.rep ? `<div class="row"><label class="f" for="tEvery" style="flex:1">Every how many ${t.rep.unit === 'day' ? 'days' : t.rep.unit === 'week' ? 'weeks' : 'months'}<input type="number" id="tEvery" min="1" max="${REP_MAX[t.rep.unit]}" value="${t.rep.every}"></label>
       ${t.rep.unit === 'month' ? `<label class="f" for="tDom" style="flex:1.4">On the<select id="tDom">${[...Array(31)].map((_, i) => `<option value="${i+1}" ${t.rep.dom === i+1 ? 'selected' : ''}>${ordinal(i+1)}</option>`).join('')}<option value="last" ${t.rep.dom === 'last' ? 'selected' : ''}>Last day</option></select></label>` : ''}</div>
@@ -3423,7 +3449,7 @@ function onClick(e){
   if (el.dataset.buy){ const it = ITEM[el.dataset.buy]; if (it && !it.boss && it.price > 0 && inSeason(it, D.today) && D.balance >= it.price && !S.owned.includes(it.id) && meetsReq(it, D.statLv)){ S.owned.push(it.id); if (it.kind === 'hat') setHat(it.id); else S.equip[it.kind] = it.id; save(); render(); toast(`Bought ${it.name}. It's in your inventory.`); } return; }
   if (el.dataset.equip){ const it = ITEM[el.dataset.equip]; if (!it || !((it.boss || it.legendary) ? D.drops.has(it.id) : (S.owned.includes(it.id) || it.price === 0))) return; const slot = it.kind; if (slot === 'hat'){ if (it.lvl && D.lv.level < it.lvl && S.equip.hat !== it.id) return; setHat(S.equip.hat === it.id ? null : it.id); } else S.equip[slot] = it.id; save(); render(); return; }
   if (el.dataset.todaytab){ todayTab = el.dataset.todaytab === 'week' ? 'week' : 'day'; try { localStorage.setItem(TODAY_TAB_KEY, todayTab); } catch(e){} render(); return; }
-  if ('newtask' in el.dataset){ openEditor(null); if (el.dataset.newtask === 'week'){ draft.cad = 'week'; renderEditor(); } return; }
+  if ('newtask' in el.dataset){ openEditor(null); const [nc, nt] = (el.dataset.newtask || '').split('|'); if (nc === 'week') draft.cad = 'week'; if (TOD_KEYS.includes(nt)) draft.tod = nt; if (nc === 'week' || nt) renderEditor(); return; }
   if (el.dataset.invtab){ invTab = el.dataset.invtab; if (sheetMode === 'inv' && !document.getElementById('sheet').hidden){ renderSheet(); return; } }
   if (el.dataset.plus){ if ('gopts' in el.dataset) statsSec = 'skills'; openPlus(el.dataset.plus); return; }
   if (el.dataset.sheetmode){ if (sheetMode === 'task') readEditorFields(); sheetMode = el.dataset.sheetmode; statEdit = null; statDraft = null; if (sheetMode === 'task' && !draft) { openEditor(null, false, true); return; } renderSheet(); return; }
@@ -3465,6 +3491,7 @@ function onClick(e){
   if (el.dataset.ostat && draft && draft.pool){ readEditorFields(); const [i, k] = el.dataset.ostat.split(':'); const o = draft.pool[+i]; const j = o.stats.indexOf(k);
     if (j >= 0){ if (o.stats.length > 1) o.stats.splice(j,1); } else { o.stats.push(k); if (o.stats.length > 2) o.stats.shift(); }
     renderEditor(); return; }
+  if (el.dataset.ttod && draft){ readEditorFields(); draft.tod = TOD_KEYS.includes(el.dataset.ttod) ? el.dataset.ttod : undefined; renderEditor(); return; }
   if (el.dataset.ticon !== undefined && draft){ readEditorFields(); const v = el.dataset.ticon; draft.icon = TASK_ICONS.includes(v) ? v : undefined; const em = document.getElementById('tEmoji'); if (em) em.value = ''; renderEditor(); return; }
   if ('cladd' in el.dataset && draft){ readEditorFields(); const cl = draft.checklist || (draft.checklist = []); if (cl.length < CHECK_MAX){ cl.push({id: 'c' + Date.now().toString(36) + cl.length, text: ''}); renderEditor(); const n = document.getElementById('clText' + (cl.length - 1)); if (n) n.focus(); } return; }
   if (el.dataset.cldel !== undefined && draft && draft.checklist){ readEditorFields(); draft.checklist.splice(+el.dataset.cldel, 1); renderEditor(); return; }
@@ -3496,6 +3523,7 @@ function onClick(e){
     const cl = (draft.checklist || []).map(c => ({id: c.id, text: c.text.trim().slice(0, 60)})).filter(c => c.text).slice(0, CHECK_MAX);
     if (cl.length) out.checklist = cl;
     if (taskIconOk(draft.icon)) out.icon = draft.icon;
+    if (TOD_KEYS.includes(draft.tod)) out.tod = draft.tod;
     const i = S.tasks.findIndex(t => t.id === out.id), old = i >= 0 ? S.tasks[i] : null;
     let relock = [];
     const entry = {from: old ? addDays(D.today,1) : D.today, cad: out.cad, days: out.days || null};
