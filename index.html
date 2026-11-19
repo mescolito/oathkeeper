@@ -333,6 +333,15 @@ html[data-mode="dark"] .trow.done .check{color:var(--inv)}
 .awardin{background:var(--card);color:var(--ink);border-radius:28px;padding:22px 20px;max-width:320px;width:100%;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.25)}
 .awardin canvas{width:120px;height:120px;border-radius:20px;background:#141312;image-rendering:pixelated}
 .awardin canvas.wide{width:200px;height:auto;aspect-ratio:64/44}
+.chestcard{align-items:center}
+.chesticon{width:40px;height:40px;image-rendering:pixelated;flex:none}
+.awardin canvas.chestbig{width:150px;height:150px;background:transparent;image-rendering:pixelated}
+.legk{color:#a87b10 !important}
+html[data-mode="dark"] .legk{color:var(--gold) !important}
+.chestprize{display:flex;flex-direction:column;align-items:center;gap:8px}
+.chestprize[hidden]{display:none}
+.chestgain{font-size:34px;display:inline-flex;align-items:center;gap:8px}
+.chestgain .gdot{width:16px;height:16px;border-radius:50%;background:var(--gold);display:inline-block}
 .awardin .kick{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
 .awn{font-size:20px}
 html[data-mode="dark"] .awardin .btn.primary{color:var(--inv)}
@@ -564,7 +573,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '924ce05955';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'b08caaab70';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -857,16 +866,26 @@ const LEGENDARY_GEAR = ['tidebreaker','aegis','leviathan','starcrown'], LEGENDAR
 const u32 = key => hash(key) / 4294967296;
 function pomoDrops(){
   // anything already won stays won, and the session that won it doesn't roll again
-  const L = S.legends || {}, keptTs = new Set(Object.values(L)), got = Object.keys(L), perDay = Object.create(null), rolls = [];
+  const L = S.legends || {}, keptTs = new Set(Object.values(L)), got = Object.keys(L), perDay = Object.create(null), rolls = [], chests = [];
   for (const p of [...S.pomoLog].sort((a,b) => a.ts - b.ts)){
     if (p.mins < POMO_MIN || p.ts > Date.now()) continue;
     const d = todayKeyAt(p.ts); perDay[d] = (perDay[d] || 0) + 1; if (perDay[d] > POMO_ROLLS) continue;
+    // from chestFrom on, each session drops a Focus chest instead, and its roll happens when you open it
+    if (S.chestFrom && p.ts >= S.chestFrom && !(S.fchests || {})[p.ts]){ chests.push(p.ts); continue; }
     if (keptTs.has(p.ts)) continue;
     const left = LEGENDARY_GEAR.filter(id => !got.includes(id));
     if (left.length && u32('leg|' + p.ts) < 1 / LEG_GEAR_ODDS){ const id = left[hash('legpick|' + p.ts) % left.length]; got.push(id); rolls.push({ts:p.ts, id}); }
     if (!got.includes(LEGENDARY_PET) && u32('pet|' + p.ts) < 1 / LEG_PET_ODDS){ got.push(LEGENDARY_PET); rolls.push({ts:p.ts, id:LEGENDARY_PET}); }
   }
-  return {got, rolls: [...Object.entries(L).map(([id, ts]) => ({ts, id, kept: true})), ...rolls], counted: Object.values(perDay).reduce((a,n) => a + Math.min(n, POMO_ROLLS), 0)};
+  return {got, chests, rolls: [...Object.entries(L).map(([id, ts]) => ({ts, id, kept: true})), ...rolls], counted: Object.values(perDay).reduce((a,n) => a + Math.min(n, POMO_ROLLS), 0)};
+}
+/* Focus chests: the consolation prize when a chest isn't a legendary (almost always). Fixed by the session, so it
+   never changes: mostly 5-15 G, sometimes 8-12 XP, about 1 in 25 a Health or Mana Potion. */
+function chestPrize(ts){
+  const u = u32('fchest|' + ts);
+  if (u < 0.04) return {kind: 'potion', id: u32('fpot|' + ts) < 0.5 ? 'pot_hp' : 'pot_mp'};
+  if (u < 0.3) return {kind: 'xp', n: 8 + hash('fxp|' + ts) % 5};
+  return {kind: 'gold', n: 5 + hash('fgold|' + ts) % 11};
 }
 const PALS = {
   axo:   {b:'#ff9ec7', d:'#a8486f', l:'#ffd3e6', g:'#ff5d9e'},
@@ -921,7 +940,7 @@ function defaults(){
     log:{}, pickLog:{}, rerolls:{}, owned:['dawn','axo'], equip:{hat:null, bg:'dawn', color:'axo'},
     gear:{weapon:null, offhand:null, armor:null}, gearLog:[], bag:[], seenDrops:[],
     skills:{}, skillUnlock:{}, skillLog:[], waives:{}, lightens:{}, buys:[], snap:{}, firstTs:{}, picks:{}, results:{}, statMeta:{}, wkTg:{}, wkBn:{},
-    todos:{lists:[{id:'l_home', name:'House repairs', items:[]}]}, potions:[], runeBuys:[], faintLog:{}, legends:{}, checks:{}, stepLog:{}, schema:SCHEMA, inn:[], pomo:{cfg:{focus:25, short:5, long:15, every:4, sound:true, music:true, lofi:'chill', haptic:true}, run:null}, pomoLog:[], settings:{theme:'light', rollover:0, hideDone:false, collapse:{vitals:false, boss:false}, dismissed:{}}, sells:[], mig:7, updated:0};
+    todos:{lists:[{id:'l_home', name:'House repairs', items:[]}]}, potions:[], runeBuys:[], faintLog:{}, legends:{}, fchests:{}, checks:{}, stepLog:{}, schema:SCHEMA, inn:[], pomo:{cfg:{focus:25, short:5, long:15, every:4, sound:true, music:true, lofi:'chill', haptic:true}, run:null}, pomoLog:[], settings:{theme:'light', rollover:0, hideDone:false, collapse:{vitals:false, boss:false}, dismissed:{}}, sells:[], mig:7, updated:0};
 }
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const isDate = v => typeof v === 'string' && DATE_RE.test(v);
@@ -1022,6 +1041,8 @@ function sanitize(s, created){
   out.stepLog = {}; if (obj(s.stepLog)) for (const [d, m] of Object.entries(s.stepLog)) if (isDate(d) && obj(m)){ const mm = {}; let n = 0; for (const [key, v] of Object.entries(m)) if (n < 200 && typeof key === 'string' && key.length <= 90 && /^(tk|td):/.test(key) && obj(v) && Number.isFinite(v.ts)){ mm[key] = {ts: v.ts, g: v.g === 2 ? 2 : 1}; n++; } if (n) out.stepLog[d] = mm; }
   out.checks = {}; if (obj(s.checks)) for (const [d, m] of Object.entries(s.checks)) if (isDate(d) && obj(m)){ const mm = {}; for (const [tid, ids] of Object.entries(m)) if (typeof tid === 'string' && tid.length <= 40 && !PROTO_KEYS.has(tid) && Array.isArray(ids)){ const v = Array.from(new Set(ids.filter(x => typeof x === 'string' && x.length <= 20))).slice(0, CHECK_MAX); if (v.length) mm[tid] = v; } if (Object.keys(mm).length) out.checks[d] = mm; }
   // legendary drops are written down the moment they're won, so they can never disappear later
+  out.fchests = {}; if (obj(s.fchests)) for (const [ts, at] of Object.entries(s.fchests)) if (/^\d{10,14}$/.test(ts) && Number.isFinite(Number(at))) out.fchests[ts] = Number(at);
+  if (Number.isFinite(Number(s.chestFrom)) && Number(s.chestFrom) > 0) out.chestFrom = Number(s.chestFrom); else delete out.chestFrom;
   out.legends = {}; if (obj(s.legends)) for (const [id, ts] of Object.entries(s.legends)) if ((LEGENDARY_GEAR.includes(id) || id === LEGENDARY_PET) && Number.isFinite(Number(ts))) out.legends[id] = Number(ts);
   out.faintLog = {}; if (obj(s.faintLog)) for (const [d, f] of Object.entries(s.faintLog)) if (isDate(d) && obj(f)) out.faintLog[d] = {loss: int(f.loss, 0, 1e9, 0)};
   if (obj(s.settings)){ const st = s.settings, col = obj(st.collapse) ? st.collapse : {}, dis = obj(st.dismissed) ? st.dismissed : {};
@@ -1278,6 +1299,9 @@ function derive(){
   const status = {poison:null, para:null};           // each: {from, until}
   const cyc = {}, weeks = {}, attacks = {}, faints = [], mystery = {}, drops = new Set();
   const pomoInfo = pomoDrops(); pomoInfo.got.forEach(id => drops.add(id));
+  // opened Focus chests that weren't legendary pay their small prize the moment they're opened
+  const legTs = new Set(pomoInfo.rolls.map(r => r.ts));
+  for (const [ts, at] of Object.entries(S.fchests || {})){ if (legTs.has(+ts)) continue; const pz = chestPrize(+ts); if (pz.kind !== 'potion' && at <= Date.now()) add(todayKeyAt(at), {k:'fchest', ts: at, pz}); }
   let streak = 0, lastCheck = null, curLv = 1, innSpent = 0;
   const todoPaid = new Set();
   const partial = {}, todoDone = Object.create(null); for (const L of S.todos.lists) for (const it of L.items) if (it.doneOn) todoDone[it.id] = it.doneOn;
@@ -1355,6 +1379,8 @@ function derive(){
         checkIn(fx, e.ts);
         if (sn ? sn.w : t.cad === 'week'){ const wc = weeks[weekKey(d)] || (weeks[weekKey(d)] = {}); if (!wc[e.tid]) wc[e.tid] = {n:0, tg:0, bn:0, bns:[]}; const w = wc[e.tid]; w.n++; w.bns.push(sn ? (sn.bn||0) : (t.bonus||0)); w.tg = Math.max(w.tg, sn ? (sn.tg||1) : (t.target||1)); w.bn = Math.max(w.bn, sn ? (sn.bn||0) : (t.bonus||0)); }
         if (sn ? sn.w : t.cad === 'week'){ const wk = weekKey(d), w = weeks[wk][e.tid], key = wk + '|' + e.tid; if (!chestGot[key] && w.n >= effOf(wk, e.tid, w)){ chestGot[key] = true; chestXp += 20; lvUp(fx); } }
+      } else if (e.k === 'fchest'){
+        if (e.pz.kind === 'gold') gold += e.pz.n; else { xp += e.pz.n; lvUp(fx); }
       } else if (e.k === 'todo'){
         // only to-dos added on an earlier day pay out, and at most TODO_CAP a day
         if ((e.it.createdOn && e.it.createdOn >= d) || rewardedTodos >= TODO_CAP) continue;
@@ -1433,6 +1459,7 @@ function derive(){
   // the bag: what you bought minus what you used
   const bag = Object.create(null);
   for (const b of S.bag) bag[b.id] = (bag[b.id] || 0) + 1;
+  for (const ts of Object.keys(S.fchests || {})){ if (legTs.has(+ts)) continue; const pz = chestPrize(+ts); if (pz.kind === 'potion') bag[pz.id] = (bag[pz.id] || 0) + 1; }   // potions from Focus chests
   for (const p of S.potions) if (p.bag) bag[p.id] = (bag[p.id] || 0) - 1;
   for (const r of S.runeBuys) if (r.bag) bag[r.id] = (bag[r.id] || 0) - 1;
   for (const k of Object.keys(bag)) if (bag[k] <= 0) delete bag[k];
@@ -1582,8 +1609,9 @@ function mergeSaves(a, b){
     if (!isObj(o[k])) continue; if (!isObj(out[k])) out[k] = {};
     for (const [d, m] of Object.entries(o[k])){ if (!isObj(m)) continue; if (!isObj(out[k][d])) out[k][d] = {}; for (const [id, v] of Object.entries(m)) if (!(id in out[k][d])) out[k][d][id] = v; }
   }
-  for (const k of ['faintLog','results','skillUnlock']){ if (!isObj(o[k])) continue; if (!isObj(out[k])) out[k] = {}; for (const [id, v] of Object.entries(o[k])) if (!(id in out[k])) out[k][id] = v; }
+  for (const k of ['faintLog','results','skillUnlock','fchests']){ if (!isObj(o[k])) continue; if (!isObj(out[k])) out[k] = {}; for (const [id, v] of Object.entries(o[k])) if (!(id in out[k])) out[k][id] = v; }
   out.legends = {...(o.legends || {}), ...(out.legends || {})};
+  if (o.chestFrom && (!out.chestFrom || o.chestFrom < out.chestFrom)) out.chestFrom = o.chestFrom;
   for (const k of ['potions','runeBuys','bag','buys','skillLog','gearLog','pomoLog','sells','inn','testGold']){
     if (!Array.isArray(o[k])) continue; if (!Array.isArray(out[k])) out[k] = [];
     const seen = new Set(out[k].map(x => JSON.stringify(x)));
@@ -2467,6 +2495,7 @@ function renderToday(){
   </section>
   ${vitals()}
   ${myst && !dismissed('myst') ? notice('myst', `Daily check-in bonus: <b>+${myst.xp ? myst.xp + ' XP' : myst.gold + ' G'}</b>`) : ''}
+  ${chestCard()}
   ${D.partial[D.yest] && !dismissed('partial') ? notice('partial', `Partial progress yesterday: <b>+${D.partial[D.yest].g} G</b> for ${D.partial[D.yest].n} step${D.partial[D.yest].n === 1 ? '' : 's'} on unfinished tasks`) : ''}
   ${D.tokens && !dismissed('tokens') ? notice('tokens', `${D.tokens} free rune${D.tokens===1?'':'s'} waiting in your inventory`) : ''}
   ${S.settings.collapse.boss ? `<div class="mini assistmini"><button class="minimain" data-tab="battle"><canvas id="bossMiniCv" width="64" height="52" aria-hidden="true"></canvas><span><b>${esc(D.cur.boss.name)}</b><span class="small">${D.cur.status === 'now' ? `${D.cur.rem}/${D.cur.hp} HP` : esc(a.k)}</span></span></button><button class="minitog" data-collapse="boss" aria-expanded="false" aria-label="Show the boss card">${svg('back',16,2.6)}</button></div>`
@@ -2752,11 +2781,60 @@ function renderInventory(){
       return row(i, `${what}${i.style ? ' · ' + STYLES[i.style].name : ''}${i.fx ? ' · ' + esc(fxText(i.fx)) : ''}${i.boss ? ' · prize' : i.season ? ` · ${esc(i.when)}` : ''}`, i.kind === 'hat' ? `<button class="btn ${eq ? 'ghost' : 'primary'} sm" data-equip="${i.id}">${eq ? 'Take off' : 'Wear'}</button>` : `<button class="btn ${eq ? 'ghost' : 'primary'} sm" data-equip="${i.id}" ${eq ? 'disabled' : ''}>${eq ? 'In use' : 'Use'}</button>`); }).join('');
     if (!mine.length) list = `<p class="how">${invTab === 'hat' ? 'No hats yet. Buy them in the shop or win them from bosses.' : 'Nothing here yet.'}</p>`;
   }
-  return `<div class="sec-h"><h2>Equipped</h2></div>${eqHtml}
+  return `${chestCard()}<div class="sec-h"><h2>Equipped</h2></div>${eqHtml}
   <div class="catpills" role="group" aria-label="Inventory type">${INV_TABS.map(([v,l]) => `<button class="catpill ${invTab===v?'on':''}" data-invtab="${v}" aria-pressed="${invTab===v}">${l}${v==='potion' || v==='rune' ? ` <span class="small">${(v==='potion' ? POTIONS : RUNES).reduce((a,x) => a + (D.bag[x.id]||0), 0) || ''}</span>` : ''}</button>`).join('')}</div>
   <div class="list">${list}</div>`;
 }
 
+/* ---------- Focus chests ---------- */
+function chestCard(){
+  const n = D.pomo.chests.length; if (!n) return '';
+  return `<div class="mystery chestcard"><canvas class="chesticon" width="32" height="32" aria-hidden="true"></canvas><span class="ntext"><b>${n} Focus chest${n === 1 ? '' : 's'}</b> to open</span><button class="btn gold sm" data-openchest>Open</button></div>`;
+}
+// draws the pixel chest: closed, or open with its lid tipped back
+function drawChest(cv, open, shake, glow){
+  const g = cv.getContext('2d'); g.clearRect(0, 0, 32, 32);
+  const R = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x + shake, y, w, h); };
+  if (glow){ g.globalAlpha = 0.35; R(4, 6, 24, 22, '#f2d982'); g.globalAlpha = 1; }
+  const dk = '#4a2e14', wd = '#8b5a2b', lt = '#a8723c', au = '#f2d982', au2 = '#c9a23f';
+  // base
+  R(5, 16, 22, 12, dk); R(6, 17, 20, 10, wd); R(6, 17, 20, 2, lt); R(6, 22, 20, 1, dk);
+  R(14, 16, 4, 12, au2); R(15, 16, 2, 12, au);
+  if (open){
+    // light spilling out, the lid standing open behind, and treasure glinting inside
+    g.globalAlpha = 0.5; R(9, 2, 2, 11, au); R(15, 0, 2, 13, au); R(21, 2, 2, 11, au); g.globalAlpha = 1;
+    R(6, 7, 20, 7, dk); R(7, 8, 18, 5, '#5a3a1a'); R(7, 12, 18, 1, lt);
+    R(5, 13, 22, 4, dk); R(6, 13, 20, 3, '#2a1a0c');
+    R(8, 13, 3, 2, au); R(12, 12, 3, 3, au); R(17, 13, 3, 2, au); R(21, 12, 3, 3, au2); R(13, 12, 1, 1, '#fff6d5'); R(22, 12, 1, 1, '#fff6d5');
+  } else {
+    R(6, 9, 20, 1, dk); R(5, 10, 22, 7, dk); R(6, 10, 20, 6, wd); R(7, 10, 18, 2, lt); R(14, 9, 4, 8, au2); R(15, 9, 2, 8, au);
+    R(14, 15, 4, 4, au); R(15, 16, 2, 2, dk);                      // lock with a keyhole
+  }
+}
+function drawChestIcons(root){ (root || document).querySelectorAll('canvas.chesticon').forEach(cv => drawChest(cv, false, 0, false)); }
+function openChestUI(ts, outcome){
+  const el = document.getElementById('award'); if (!el) return;
+  const leg = outcome.kind === 'legendary', left = D.pomo.chests.length;
+  const prize = leg ? `<span class="kick legk">Legendary!</span><b class="awn">${esc((ITEM[outcome.id] || GEAR_BY[outcome.id] || {}).name || 'A legendary')}</b>`
+    : outcome.kind === 'potion' ? `<span class="kick">You found</span>${itemArt({...POTION_BY[outcome.id], kind:'potion'})}<b class="awn">${esc(POTION_BY[outcome.id].name)}</b><p class="how">It’s in your bag.</p>`
+    : `<span class="kick">You found</span><b class="awn chestgain">${outcome.kind === 'gold' ? '<i class="gdot"></i>' : ''}+${outcome.n} ${outcome.kind === 'gold' ? 'G' : 'XP'}</b>`;
+  el.innerHTML = `<div class="awardin chestbox" role="dialog" aria-modal="true" aria-label="Focus chest">
+    <span class="kick">Focus chest</span><canvas class="chestbig" width="32" height="32" aria-hidden="true"></canvas>
+    <div class="chestprize" hidden>${prize}
+      <div class="row" style="gap:8px;justify-content:center;margin-top:6px">${leg ? `<button class="btn primary" data-chestdone="leg">See it</button>` : `<button class="btn" data-chestdone>Nice</button>${left ? `<button class="btn primary" data-openchest>Open next (${left})</button>` : ''}`}</div></div></div>`;
+  el.hidden = false; drawIcons(el);
+  document.querySelectorAll('.app, .nav').forEach(n => n.inert = true);
+  const cv = el.querySelector('.chestbig'), box = el.querySelector('.chestprize');
+  const reveal = () => { drawChest(cv, true, 0, leg); box.hidden = false; if (leg && typeof confetti === 'function') confetti(cv.getBoundingClientRect()); const b = box.querySelector('button.primary, button'); if (b) b.focus(); };
+  if (!motionOK){ reveal(); return; }
+  const t0 = performance.now();
+  const step = now => {
+    const t = (now - t0) / 1000; if (!cv.isConnected) return;
+    if (t < 0.9){ drawChest(cv, false, Math.round(Math.sin(t * 40) * (t < 0.3 ? 0.6 : 1.2)), false); requestAnimationFrame(step); }
+    else reveal();
+  };
+  requestAnimationFrame(step);
+}
 /* ---------- prize pop-up ---------- */
 function showAward(){
   if (recoveryMode || !D || !D.newDrops || !D.newDrops.length) return;
@@ -2814,7 +2892,8 @@ function renderFocus(){
       <button class="pmain" ${main}>${playIc}</button>
       <button class="ptext" ${running ? `data-pomo="${phase === 'focus' ? 'stop' : 'skip'}"` : 'disabled'}>${running && phase !== 'focus' ? 'Skip' : 'Stop'}</button>
     </div>
-    <div class="pstats"><span><b>${today}</b> today</span><span><b>${S.pomoLog.length}</b> all time</span><span><b>${D.pomo.counted}</b> lucky rolls</span></div>
+    <div class="pstats"><span><b>${today}</b> today</span><span><b>${S.pomoLog.length}</b> all time</span><span><b>${D.pomo.chests.length}</b> chest${D.pomo.chests.length === 1 ? '' : 's'} to open</span></div>
+    ${D.pomo.chests.length ? `<button class="btn gold" data-openchest style="margin:14px auto 0">Open a Focus chest</button>` : ''}
   </section>
   <section class="pbelow">
     <h3>Timer</h3>
@@ -3031,7 +3110,8 @@ function renderInner(){
   if (S.equip.hat && ITEM[S.equip.hat] && ITEM[S.equip.hat].boss && !D.drops.has(S.equip.hat)){ setHat(null); save(true); D = derive(); }
   // prize gear you no longer own (the win was undone) comes off too
   for (const sl of Object.keys(S.gear)){ const g = GEAR_BY[S.gear[sl]]; if (g && g.boss && !D.drops.has(g.id)){ S.gear[sl] = null; S.gearLog.push({ts: Date.now(), slot: sl, id: null}); save(true); D = derive(); } }
-  if (!S.stepFrom && !recoveryMode){ S.stepFrom = D.today; save(true); D = derive(); }   // partial-progress pay starts the day this build first ran, never earlier
+  if (!S.stepFrom && !recoveryMode){ S.stepFrom = D.today; save(true); D = derive(); }
+  if (!S.chestFrom && !recoveryMode){ S.chestFrom = Date.now(); save(true); D = derive(); }   // Focus chests start with sessions finished from now on   // partial-progress pay starts the day this build first ran, never earlier
   if (S.seenInit === false){ S.seenDrops = Array.from(new Set([...S.seenDrops, ...[...D.drops].filter(id => ITEM[id] && ITEM[id].boss)])); S.seenInit = true; save(true); D = derive(); }
   for (const c of Object.keys(S.results)) if (+c >= D.freezeBefore) delete S.results[c];
   const nr = Object.keys(D.newResults || {}).filter(c => !S.results[c]);
@@ -3054,6 +3134,7 @@ function renderInner(){
 }
 function drawIcons(root){
   const st = Math.max(1, stage(D.lv.level));
+  drawChestIcons(root);
   root.querySelectorAll('canvas[data-icon]').forEach(cv => {
     const [kind, id] = cv.dataset.icon.split(':');
     if (kind === 'bg') drawScene(cv, {bg:id, f:0, motion:false, noPet:true});
@@ -3385,6 +3466,15 @@ function onClick(e){
     S.runeBuys.push({id:r.id, ts:Date.now(), date:D.today, g:0, bag:true}); save(); render(); toast(`${runeName(r)} is active for ${r.days} days`); return; }
   if (el.dataset.runetoken){ const r = RUNE_BY[el.dataset.runetoken]; if (!r || D.tokens < 1 || !meetsReq(r, D.statLv)) return;
     S.bag.push({id:r.id, ts:Date.now(), date:D.today, g:0, token:true}); save(); render(); toast(`Free ${runeName(r)} added to your bag`); return; }
+  if ('openchest' in el.dataset){
+    if (recoveryMode) return; const ts = D.pomo.chests[0]; if (!ts) return;
+    if (!document.getElementById('sheet').hidden) closeEditor();
+    S.fchests[ts] = Date.now(); save(); D = derive();
+    const won = D.pomo.rolls.find(r => r.ts === ts);
+    const outcome = won ? {kind: 'legendary', id: won.id} : chestPrize(ts);
+    openChestUI(ts, outcome); sfxInit(); sfx(won ? 'focusDone' : 'start');
+    render(); return; }
+  if ('chestdone' in el.dataset){ const aw = document.getElementById('award'); aw.hidden = true; aw.innerHTML = ''; document.querySelectorAll('.app, .nav').forEach(n => n.inert = false); render(); showAward(); return; }
   if (el.dataset.awardok || el.dataset.awardequip){ const id = el.dataset.awardok || el.dataset.awardequip; if (!isDrop(id)) return;
     if (!S.seenDrops.includes(id)) S.seenDrops.push(id);
     if (el.dataset.awardequip && D.drops.has(id)){ const g = GEAR_BY[id]; if (g){ if (meetsReq(g, D.statLv)){ S.gear[g.slot] = id; S.gearLog.push({ts:Date.now(), slot:g.slot, id}); } else toast(`Needs ${reqText(g)} to equip`); } else if (ITEM[id]){ if (ITEM[id].kind === 'hat') setHat(id); else S.equip[ITEM[id].kind] = id; } }
@@ -3802,7 +3892,7 @@ function pomoTick(){
       S.pomoLog.push({ts: end, mins: r.mins || S.pomo.cfg.focus});
       const n = r.n + 1;
       S.pomo.run = {phase: n % S.pomo.cfg.every === 0 ? 'long' : 'short', startTs: end, pausedMs: 0, pauseAt: null, n};
-      toast('Focus session done! Break time.'); sfx('focusDone'); buzz([200, 100, 200, 100, 400]);
+      toast((r.mins || S.pomo.cfg.focus) >= POMO_MIN ? 'Focus session done! You earned a Focus chest.' : 'Focus session done! Break time.'); sfx('focusDone'); buzz([200, 100, 200, 100, 400]);
     } else {
       // breaks end in a ready state: the next focus block never starts on its own
       S.pomo.run = {phase:'focus', startTs:0, pausedMs:0, pauseAt:null, n: r.phase === 'long' ? 0 : r.n, idle:true};
