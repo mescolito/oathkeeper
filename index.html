@@ -296,6 +296,7 @@ html[data-mode="dark"] .trow.done .check{color:var(--inv)}
 .toast{opacity:0;pointer-events:none;transition:opacity .2s}
 .toast.show{opacity:1}
 .toast:empty{padding:0}
+.confetti{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:25;image-rendering:pixelated;image-rendering:crisp-edges}
 .shake{animation:shake .3s}
 @keyframes shake{0%,100%{transform:translate(0)}25%{transform:translate(-4px,1px)}75%{transform:translate(4px,-1px)}}
 @media (prefers-reduced-motion: reduce){.float,.shake{animation:none}.check{transition:none}}
@@ -547,7 +548,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'c7d3648e7a';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '17a2e31951';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -2977,6 +2978,64 @@ function floatAt(x, y, html){
   const el = document.createElement('div'); el.className = 'float'; el.style.left = x+'px'; el.style.top = y+'px'; el.innerHTML = html;
   document.body.appendChild(el); setTimeout(() => el.remove(), 1200);
 }
+// pixel confetti: a low-res canvas scaled up, so every bit is a chunky pixel
+const CONF_PX = 4;
+// the app's pastels on dark; deeper versions on the light background so they don't wash out
+const CONF_DARK = ['#eeb7d8','#b8c9ef','#f2d982','#a9b97c','#f4bf92','#c9b5ef','#d6eab0'];
+const CONF_LIGHT = ['#e08bbd','#8ea7e4','#e5bf4f','#8a9f55','#ec9a5c','#a68ce4','#9fc06a'];
+const CONF_RIBBONS = [[[0,0],[1,1],[1,2],[0,3],[0,4],[1,5]], [[0,0],[0,1],[1,2],[2,2],[3,1]], [[1,0],[0,1],[0,2],[1,3]], [[0,0],[1,0],[2,1],[2,2]]];
+let conf = null;
+function confetti(){
+  if (!motionOK) return;
+  if (!conf){
+    const cv = document.createElement('canvas'); cv.className = 'confetti'; cv.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(cv);
+    conf = {cv, ctx: cv.getContext('2d'), parts: [], last: 0, raf: 0};
+  }
+  const W = Math.ceil(innerWidth / CONF_PX), H = Math.ceil(innerHeight / CONF_PX);
+  if (conf.cv.width !== W || conf.cv.height !== H){ conf.cv.width = W; conf.cv.height = H; }
+  const n = Math.min(110, 260 - conf.parts.length);
+  const pal = document.documentElement.getAttribute('data-mode') === 'dark' ? CONF_DARK : CONF_LIGHT;
+  for (let i = 0; i < n; i++){
+    const ribbon = Math.random() < 0.35;
+    conf.parts.push({
+      x: Math.random() * W, y: -Math.random() * H * 0.45 - 4,
+      vx: (Math.random() - 0.5) * 16, vy: 60 + Math.random() * 50,
+      sway: Math.random() * 6.28, swaySp: 2 + Math.random() * 3, swayAmp: 4 + Math.random() * 8,
+      spin: Math.random() * 6.28, spinSp: 5 + Math.random() * 8,
+      w: 2 + (Math.random() < 0.5 ? 1 : 0), h: 2 + (Math.random() < 0.6 ? 1 : 0),
+      shape: ribbon ? CONF_RIBBONS[Math.floor(Math.random() * CONF_RIBBONS.length)] : null,
+      color: pal[Math.floor(Math.random() * pal.length)],
+      life: 0, ttl: 3 + Math.random() * 1.4,
+    });
+  }
+  if (!conf.raf){ conf.last = performance.now(); conf.raf = requestAnimationFrame(confStep); }
+}
+function confStep(now){
+  const c = conf, dt = Math.min(0.05, (now - c.last) / 1000); c.last = now;
+  const ctx = c.ctx, W = c.cv.width, H = c.cv.height;
+  ctx.clearRect(0, 0, W, H);
+  c.parts = c.parts.filter(p => p.life < p.ttl && p.y < H + 8);
+  for (const p of c.parts){
+    p.life += dt; p.vy = Math.max(p.vy - 30 * dt, 52 + p.swayAmp); p.vx *= 1 - 0.8 * dt;
+    p.sway += p.swaySp * dt; p.spin += p.spinSp * dt;
+    p.x += (p.vx + Math.cos(p.sway) * p.swayAmp) * dt; p.y += p.vy * dt;
+    ctx.globalAlpha = Math.max(0, Math.min(1, (p.ttl - p.life) / 0.6));
+    ctx.fillStyle = p.color;
+    const sy = Math.cos(p.spin), flip = Math.sin(p.spin * 0.7) < 0 ? -1 : 1, x = Math.round(p.x), y = Math.round(p.y);
+    if (p.shape){
+      // the ribbon tumbles: squash it vertically and mirror it, a pixel at a time
+      for (const [dx, dy] of p.shape) ctx.fillRect(x + dx * flip, y + Math.round(dy * sy), 1, 1);
+    } else {
+      // a flat bit seen edge-on is one pixel thin, then opens back up
+      const hh = Math.max(1, Math.round(p.h * Math.abs(sy)));
+      ctx.fillRect(x, y + Math.round((p.h - hh) / 2), p.w, hh);
+    }
+  }
+  ctx.globalAlpha = 1;
+  if (c.parts.length) c.raf = requestAnimationFrame(confStep);
+  else { c.raf = 0; c.cv.remove(); conf = null; }
+}
 let toastT;
 function toast(msg){ const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => { t.classList.remove('show'); t.textContent = ''; }, 2600); }
 
@@ -2998,6 +3057,7 @@ function toggle(id, el){
   const k = vday === 'today' ? D.today : D.yest;
   const before = D;
   const task = S.tasks.find(x => x.id === id);
+  let completing = false;
   if (done(k,id)){
     const saved = JSON.stringify({log:S.log[k], pl:S.pickLog[k], sn:S.snap[k], pk:S.picks[k]});
     delete S.log[k][id]; if (!Object.keys(S.log[k]).length) delete S.log[k];
@@ -3013,6 +3073,7 @@ function toggle(id, el){
     }
   } else {
     if (!task || offOn(task, k) || !isDue(task, k) || waived(k, id)) return;   // closed, rested or retired today
+    completing = true;
     const first = (S.firstTs[k] || {})[id];
     // a yesterday task on the day you checked in lands after check-in, so it can't skip past the Inn
     const innSt = (S.inn || []).find(st => st.from === k && st.ts);
@@ -3030,6 +3091,7 @@ function toggle(id, el){
   const r = el.getBoundingClientRect();
   render();
   if (recoveryMode) return;
+  if (completing) confetti();
   if (dx > 0){
     floatAt(r.left + r.width/2, r.top, `<span style="color:var(--accent)">+${dx} XP</span>  <span style="color:var(--gold)">+${dg} G</span>${dd>0 && before.cur.status==='now' ? `<br><span style="color:var(--hp)">-${dd} HP</span>` : ''}`);
     jumpUntil = Date.now() + 700; if (dd > 0) hurtUntil = Date.now() + 500;
@@ -3212,6 +3274,7 @@ function onClick(e){
     }
     const r = el.getBoundingClientRect();
     const before = D; it.doneOn = D.today; it.doneTs = Date.now(); save(); render(); if (recoveryMode) return;
+    confetti();
     const dx = D.xp - before.xp, dg = D.balance - before.balance;
     floatAt(r.left + r.width/2, r.top, dx > 0 || dg > 0 ? `<span style="color:var(--accent)">+${dx} XP</span>  <span style="color:var(--gold)">+${dg} G</span>` : 'Done');
     if (D.lv.level > before.lv.level) toast(`Level ${D.lv.level}!`); return; }
