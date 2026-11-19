@@ -118,7 +118,7 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block;width
 .clchev{display:inline-flex;color:var(--muted);margin-left:auto}
 .cllist{display:flex;flex-direction:column;padding:4px 12px 0}
 .clitem{display:grid;grid-template-columns:1fr 44px;gap:12px;align-items:center;min-height:52px;padding-left:58px}
-.cltext{font-size:15px;font-weight:600}
+.cltext{font-size:15px;font-weight:600;min-width:0;overflow-wrap:anywhere}
 .clitem.on .cltext{color:var(--muted);text-decoration:line-through}
 .clcheck{width:30px;height:30px;margin:0 7px;border-radius:8px;border:2px solid var(--ink);background:transparent;color:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;justify-self:center}
 .clitem.on .clcheck{background:var(--pink);border-color:var(--pink);color:#171614}
@@ -265,6 +265,7 @@ html[data-mode="dark"] .trow.done .check{color:var(--inv)}
 .iconbtn.sm{width:44px;height:44px;background:var(--card);color:var(--ink)}
 .iconbtn.sm.on{background:var(--ink);color:var(--inv)}
 .btn.sm{padding:8px 12px;font-size:13px}
+.tdbar .count,.tdbar .btn.sm,.tdbar .checkrow{white-space:nowrap}
 .item canvas.hat{width:72%;margin:4px auto;aspect-ratio:40/34;image-rendering:pixelated}
 .trow.done{opacity:.5;background:transparent;box-shadow:inset 0 0 0 1.5px var(--line)}
 .trow.done .ticon{filter:grayscale(1)}
@@ -538,7 +539,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '686064a33d';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '05dbeb693b';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1006,6 +1007,9 @@ function sanitize(s, created){
    newer things (repeating schedules, checklists, icons); sync puts them back from the other copy. */
 const SCHEMA = 2;
 const isStripped = raw => !!raw && typeof raw === 'object' && !(Number(raw.schema) >= SCHEMA);
+// what the build that wrote an unstamped save already knew, so a deliberate removal there isn't undone
+const knewOf = raw => ({rep: !!(raw && Array.isArray(raw.tasks) && raw.tasks.some(t => t && (t.rep || (Array.isArray(t.sched) && t.sched.some(e => e && e.rep))))),
+  checklist: !!(raw && raw.checks && typeof raw.checks === 'object'), icon: !!(raw && Array.isArray(raw.tasks) && raw.tasks.some(t => t && t.icon))});
 const TASK_KNOWN = new Set(['id','name','stats','cad','created','target','bonus','days','archived','rep','pool','sched','off','checklist','icon']);
 function normalize(s){
   const d = defaults();
@@ -1085,13 +1089,13 @@ function normalize(s){
   return out;
 }
 var migratedNow = false, recoveryMode = false, recoveryReason = '';
-let hadLocal = false, localStripped = false;
+let hadLocal = false, localStripped = false, localKnew = null;
 let S = (() => {
   let raw = null;
   try { raw = localStorage.getItem(LS_KEY); } catch(e){ return defaults(); }
   if (!raw) return defaults();
   hadLocal = true;
-  try { const parsed = JSON.parse(raw); localStripped = isStripped(parsed); return normalize(parsed); }
+  try { const parsed = JSON.parse(raw); localStripped = isStripped(parsed); localKnew = knewOf(parsed); return normalize(parsed); }
   catch(e){
     try { if (!localStorage.getItem(LS_KEY + '.failed')) localStorage.setItem(LS_KEY + '.failed', raw); } catch(e2){}
     recoveryMode = true; recoveryReason = 'Your save could not be read.';
@@ -1551,15 +1555,22 @@ function mergeSaves(a, b){
   return normalize(out);
 }
 // put back what an older build dropped (it can't remove these on purpose, it simply doesn't know them)
-function restoreLost(target, source){
+function restoreLost(target, source, knew){
   if (!target || !source || !Array.isArray(target.tasks) || !Array.isArray(source.tasks)) return target;
+  knew = knew || {};
   const out = clone(target);
   for (const t of out.tasks){
     const st = source.tasks.find(x => x && x.id === t.id); if (!st) continue;
-    if (!t.rep && st.rep && t.cad === st.cad) t.rep = clone(st.rep);
-    if (!t.checklist && st.checklist) t.checklist = clone(st.checklist);
-    if (!t.icon && st.icon) t.icon = st.icon;
-    if (Array.isArray(t.sched) && Array.isArray(st.sched)) for (const e of t.sched){ if (e.rep) continue; const se = st.sched.find(x => x.from === e.from && x.rep); if (se && se.cad === e.cad) e.rep = clone(se.rep); }
+    if (!knew.checklist && !t.checklist && st.checklist) t.checklist = clone(st.checklist);
+    if (!knew.icon && !t.icon && st.icon) t.icon = st.icon;
+    if (Array.isArray(t.sched) && Array.isArray(st.sched)) for (const e of t.sched){
+      const se = st.sched.find(x => x.from === e.from && x.rep); if (!se || se.cad !== e.cad) continue;
+      if (!e.rep && !knew.rep) e.rep = clone(se.rep);
+      else if (e.rep && !e.rep.first && se.rep.first) e.rep.first = se.rep.first;   // a build that knew repeats but not start dates
+    }
+    // the task's own repeat always follows its newest schedule entry
+    const last = Array.isArray(t.sched) && t.sched.length ? t.sched.reduce((a, e) => e.from >= a.from ? e : a) : null;
+    if (last && last.rep && t.cad === 'day'){ const { start, ...r } = last.rep; t.rep = r; } else if (last && !last.rep) delete t.rep;
   }
   for (const k of ['checks', 'legends']){ const a = out[k] || {}, b = source[k] || {}; out[k] = {...b, ...a}; }
   return out;
@@ -1590,8 +1601,8 @@ async function gistSync(opts = {}){
       const rawRemote = snap.data(), remoteStripped = isStripped(rawRemote);
       let remote = normalize(clone(rawRemote)), repairPush = false;
       // an older build rewrote one of the two copies and dropped newer fields: put them back from the other copy
-      if (remoteStripped && !localStripped){ remote = normalize(restoreLost(remote, S)); repairPush = true; }
-      if (localStripped && !remoteStripped){ S = normalize(restoreLost(S, remote)); applyStatMeta(); try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch(e){} render(); }
+      if (remoteStripped && !localStripped){ remote = normalize(restoreLost(remote, S, knewOf(rawRemote))); repairPush = true; }
+      if (localStripped && !remoteStripped){ S = normalize(restoreLost(S, remote, localKnew || {})); applyStatMeta(); try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch(e){} render(); }
       localStripped = false;
       // a copy GitHub saved before the one this device last agreed on is a stale read and is ignored.
       // GitHub's times are to the second, so the same second still counts as a possible change.
@@ -1618,7 +1629,8 @@ async function gistSync(opts = {}){
       }
       else if (m.dirty) await pushNow();
       if (!stale && snap.version && !cloud.pushed && remoteChanged) syncMeta({syncedVersion: snap.version});
-      if (repairPush && !cloud.pushed){ syncMeta({dirty: true}); await pushNow(); }
+      // the repaired copy gets a fresh time, so devices that already took the stripped one take this one too
+      if (repairPush && !cloud.pushed){ save(); await pushNow(); }
     }
     setSync('cloud');
   } catch(e){ setSync(e && e.code === 'bad_token' ? 'token' : 'error'); }
@@ -2498,18 +2510,18 @@ function renderBattle(){
 // a to-do's own checklist of steps: collapsible like the task checklists, with an add row while it's open
 function todoSteps(L, it){
   const st = it.steps || [], open = clOpen.has('td:' + it.id), isD = !!it.doneOn, key = `${esc(L.id)}|${esc(it.id)}`;
-  if (!st.length && !open) return '';
+  if (!st.length && !(open && todoEdit)) return '';
   const got = st.filter(x => x.done).length;
   return `<div class="cl ${open ? 'open' : ''}">
-    ${open ? `<div class="cllist">${st.map(x => `<div class="clitem td ${x.done ? 'on' : ''}"><span class="cltext">${esc(x.text)}</span><span class="row" style="gap:2px;flex-wrap:nowrap">${!isD ? `<button class="xbtn sm" data-tdstepdel="${key}|${esc(x.id)}" aria-label="Remove step ${esc(x.text)}">${svg('x',14,2.4)}</button>` : ''}<button class="clcheck" data-tdstep="${key}|${esc(x.id)}" aria-pressed="${!!x.done}" aria-label="${x.done ? 'Untick' : 'Tick'} ${esc(x.text)}" ${isD ? 'disabled' : ''}>${svg('check',14,3)}</button></span></div>`).join('')}
-      ${!isD && st.length < CHECK_MAX ? `<form class="addrow stepadd" data-addstep="${key}"><input type="text" id="step-${esc(it.id)}" maxlength="60" placeholder="Add a step" aria-label="Add a step to ${esc(it.text)}"><button class="btn" type="submit">Add</button></form>` : ''}</div>` : ''}
+    ${open ? `<div class="cllist">${st.map(x => `<div class="clitem td ${x.done ? 'on' : ''}"><span class="cltext">${esc(x.text)}</span><span class="row" style="gap:2px;flex-wrap:nowrap">${!isD && todoEdit ? `<button class="xbtn sm" data-tdstepdel="${key}|${esc(x.id)}" aria-label="Remove step ${esc(x.text)}">${svg('x',14,2.4)}</button>` : ''}<button class="clcheck" data-tdstep="${key}|${esc(x.id)}" aria-pressed="${!!x.done}" aria-label="${x.done ? 'Untick' : 'Tick'} ${esc(x.text)}" ${isD ? 'disabled' : ''}>${svg('check',14,3)}</button></span></div>`).join('')}
+      ${todoEdit && !isD && st.length < CHECK_MAX ? `<form class="addrow stepadd" data-addstep="${key}"><input type="text" id="step-${esc(it.id)}" maxlength="60" placeholder="Add a step" aria-label="Add a step to ${esc(it.text)}"><button class="btn" type="submit">Add</button></form>` : ''}</div>` : ''}
     <button class="clhead" data-clopen="td:${esc(it.id)}" aria-expanded="${open}" aria-label="${open ? 'Hide' : 'Show'} steps, ${got} of ${st.length} done">${st.length ? `${bar(100*got/st.length, null, 'clbar')}<span class="cln">${got}/${st.length}</span>` : '<span class="cln">Steps</span>'}<span class="clchev">${svg(open ? 'up' : 'down',16,2.4)}</span></button>
   </div>`;
 }
 /* To-dos: lists are tabs; inside a list, items sit in priority groups you can drag between. */
 const PRI = [['high','High','▲'],['med','Medium','●'],['low','Low','▼'],['none','To-do','']];
 const priOf = it => it.pri === 'high' || it.pri === 'med' || it.pri === 'low' ? it.pri : 'none';
-let todoList = null, todoCollapsed = new Set(), todoMenu = false, todoRename = false;
+let todoList = null, todoCollapsed = new Set(), todoMenu = false, todoRename = false, todoEdit = false;
 function curTodoList(){
   const vis = S.todos.lists.filter(L => !L.hidden);
   if (!vis.some(L => L.id === todoList)) todoList = vis.length ? vis[0].id : null;
@@ -2526,7 +2538,7 @@ function renderTodo(){
     const meta = isD ? `Done ${it.doneOn === D.today ? 'today' : fmt(it.doneOn)}${D.todoPaid.has(it.id) ? '' : ' · no bonus'}` : it.createdOn === D.today ? 'Bonus starts tomorrow' : todoLeft > 0 ? '+8 XP, +6 G' : 'Daily to-do bonus used up';
     return `<div class="tditem ${isD ? 'done' : ''}" data-item="${esc(it.id)}">
       <span class="tdgrip pri-${g}" ${isD ? '' : `data-drag="${esc(it.id)}"`} aria-hidden="true">${isD ? svg('check',16,2.6) : '<i></i><i></i><i></i>'}</span>
-      <span class="tbody"><span class="tname">${esc(it.text)}</span><span class="tmeta">${meta}${!isD && !(it.steps && it.steps.length) && !clOpen.has('td:' + it.id) ? `<button class="addsteps" data-clopen="td:${esc(it.id)}">+ Steps</button>` : ''}</span></span>
+      <span class="tbody"><span class="tname">${esc(it.text)}</span><span class="tmeta">${meta}${todoEdit && !isD && !(it.steps && it.steps.length) && !clOpen.has('td:' + it.id) ? `<button class="addsteps" data-clopen="td:${esc(it.id)}">+ Steps</button>` : ''}</span></span>
       ${!isD ? `<button class="xbtn" data-delitem="${esc(L.id)}|${esc(it.id)}" aria-label="Delete ${esc(it.text)}">${svg('x',16,2.4)}</button>` : ''}
       <button class="check round" data-todo="${esc(L.id)}|${esc(it.id)}" aria-pressed="${isD}" aria-label="${isD ? 'Undo' : 'Complete'} ${esc(it.text)}" ${isD && !canUndo ? 'disabled' : ''}>${svg('check',18,2.8)}</button>
       ${todoSteps(L, it)}
@@ -2543,12 +2555,13 @@ function renderTodo(){
   }).join('');
   const left = L.items.filter(it => !it.doneOn).length;
   const menu = todoMenu ? `<div class="card tdmenu">
+      <button class="btn" data-todoedit>${todoEdit ? 'Done editing' : 'Edit to-dos (add or remove steps)'}</button>
       ${todoRename ? `<form class="addrow" data-renamelist="${esc(L.id)}"><input type="text" id="renameList" maxlength="40" value="${esc(L.name)}" aria-label="List name"><button class="btn primary" type="submit">Save</button></form>` : `<button class="btn" data-todorename>Rename list</button>`}
       <div class="row" style="gap:8px"><button class="btn" data-todomove="-1" ${vis[0] === L ? 'disabled' : ''}>Move left</button><button class="btn" data-todomove="1" ${vis[vis.length-1] === L ? 'disabled' : ''}>Move right</button></div>
       <button class="btn danger" data-dellist="${esc(L.id)}">${todoDelArm === L.id ? 'Tap again to delete this list' : 'Delete list'}</button>
     </div>` : '';
   return `${tabs}${newList}
-  <div class="row between tdbar"><span class="count">${left} left</span><span class="row" style="gap:8px"><label class="checkrow sm" for="hideDone"><input type="checkbox" id="hideDone" ${hide ? 'checked' : ''}> Hide finished</label><button class="iconbtn" data-todomenu aria-label="List options" aria-expanded="${todoMenu}">•••</button></span></div>
+  <div class="row between tdbar"><span class="row" style="gap:8px"><span class="count">${left} left</span>${todoEdit ? '<button class="btn primary sm" data-todoedit>Done editing</button>' : ''}</span><span class="row" style="gap:8px"><label class="checkrow sm" for="hideDone"><input type="checkbox" id="hideDone" ${hide ? 'checked' : ''}> Hide finished</label><button class="iconbtn" data-todomenu aria-label="List options" aria-expanded="${todoMenu}">•••</button></span></div>
   ${menu}
   <div class="tdgroups">${groups}</div>
   <p class="how">One-off things you don't want to forget. Drag the dots to change priority. Finished to-dos give a bonus (up to ${TODO_CAP} a day, for items added before today).</p>`;
@@ -3233,10 +3246,11 @@ function onClick(e){
   if (el.dataset.tab){ if ((el.dataset.tab === 'settings' || el.dataset.tab === 'focus') && tab !== 'settings' && tab !== 'focus') prevTab = tab; tab = el.dataset.tab; resetArmed = false; restoreArmed = false; render(); window.scrollTo(0,0); return; }
   if (el.dataset.vday){ vday = el.dataset.vday; render(); return; }
   if (el.dataset.toggle){ toggle(el.dataset.toggle, el); return; }
+  if ('todoedit' in el.dataset){ todoEdit = !todoEdit; todoMenu = false; todoRename = false; render(); return; }
   if (el.dataset.tdstep || el.dataset.tdstepdel){
     const [lid, iid, sid] = (el.dataset.tdstep || el.dataset.tdstepdel).split('|'); const L = S.todos.lists.find(x => x.id === lid); const it = L && L.items.find(x => x.id === iid); if (!it || it.doneOn || !it.steps) return;
     const x = it.steps.find(y => y.id === sid); if (!x) return;
-    if (el.dataset.tdstepdel){ it.steps = it.steps.filter(y => y.id !== sid); if (!it.steps.length) delete it.steps; save(); render(); return; }
+    if (el.dataset.tdstepdel){ if (!todoEdit) return; it.steps = it.steps.filter(y => y.id !== sid); if (!it.steps.length) delete it.steps; save(); render(); return; }
     if (x.done) delete x.done; else x.done = true;
     save();
     // ticking the last step finishes the to-do (normal to-do bonus rules); unticking never undoes it
@@ -3334,7 +3348,7 @@ function onClick(e){
     let relock = [];
     const entry = {from: old ? addDays(D.today,1) : D.today, cad: out.cad, days: out.days || null};
     // a repeating schedule edited to start today can begin today, as long as that can't be used to skip something due today
-    if (old && out.rep && (!out.rep.first || out.rep.first <= D.today)){
+    if (old && out.rep && schedAt(old, D.today).cad === 'day' && (!out.rep.first || out.rep.first <= D.today)){
       const trial = {...out.rep, start: repStart(out.rep, D.today, out.days), first: D.today};
       if (!isDue(old, D.today) || done(D.today, old.id) || repDue(trial, D.today, out.days)) entry.from = D.today;
     }
