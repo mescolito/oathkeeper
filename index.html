@@ -556,6 +556,11 @@ html[data-mode="dark"] .sneed{color:#f0a3ab}
 .sktile.ready{box-shadow:inset 0 0 0 2px var(--ink)}
 .sktile.empty{box-shadow:inset 0 0 0 2px var(--line);background:transparent;justify-content:center;align-items:flex-start;min-height:104px;border:0;outline:2px dashed var(--line);outline-offset:-2px}
 .sktile .btn{width:100%;padding-left:6px;padding-right:6px;font-size:13px}
+.skfoot{margin-top:auto;display:flex;flex-direction:column;gap:8px;width:100%}
+button.sktile{font:inherit;color:inherit;text-align:left;cursor:pointer}
+.sktile.empty{justify-content:flex-start}
+.sktile.empty .btn{pointer-events:none}
+.ptsdot{display:inline-grid;place-items:center;min-width:22px;height:22px;border-radius:999px;background:var(--pink);color:#171614;font-size:12px;font-weight:700;margin-right:8px;padding:0 6px}
 .sktile select{font-size:13px;padding:6px 8px;min-width:0;width:100%}
 .skhead{display:flex;align-items:center;gap:6px;min-width:0}
 .skhead .sname{font-size:15px;line-height:1.15;flex:1;min-width:0}
@@ -611,7 +616,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'b5cd465f06';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'b85ba097b0';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -2916,7 +2921,12 @@ function skillCards(){
   const tiles = [];
   for (let i = 0; i < SKILL_SLOTS; i++){
     const id = eq[i];
-    if (!id){ tiles.push(`<div class="sktile empty"><span class="small muted">Empty slot</span><span class="small muted">${skillSwap ? `<button class="btn sm" data-skeq="${esc(skillSwap)}">Put ${esc(SKILL_BY[skillSwap].name)} here · ${SKILL_EQ_FEE} G</button>` : 'Equip a skill below'}</span></div>`); continue; }
+    if (!id){
+      // an empty slot points to where its next skill comes from: your other learned skills, or the skill tree
+      const spare = SKILLS.some(sk => D.skills[sk.id].l > 0 && !eq.includes(sk.id));
+      tiles.push(skillSwap ? `<div class="sktile empty"><span class="small muted">Empty slot</span><div class="skfoot"><button class="btn sm gold" data-skeq="${esc(skillSwap)}">Put ${esc(SKILL_BY[skillSwap].name)} here · ${SKILL_EQ_FEE} G</button></div></div>`
+        : spare ? `<button class="sktile empty" data-skmoreopen><span class="small muted">Empty slot</span><span class="skfoot"><span class="btn sm">Equip a skill · ${SKILL_EQ_FEE} G</span></span></button>`
+        : `<button class="sktile empty" data-plus="stats" data-gopts><span class="small muted">Empty slot</span><span class="skfoot"><span class="btn sm">Learn a skill ›</span></span></button>`); continue; }
     const sk = SKILL_BY[id], st = D.skills[id], why = skillWhy(sk), targets = skillTargets(id);
     const ok = st.ready && !why;
     const pick = targets && targets.length && !why ? `<select id="sel-${sk.id}" aria-label="Choose a task for ${esc(sk.name)}">${targets.map(t => `<option value="${esc(t.id)}">${esc(t.name)}</option>`).join('')}</select>` : '';
@@ -2925,7 +2935,7 @@ function skillCards(){
     tiles.push(`<div class="sktile ${ok ? 'ready' : ''}" title="${esc(skText(sk, st.l))}">
       <span class="skhead"><span class="kdot ${sk.kind}" aria-label="${KIND_TXT[sk.kind]}"></span><b class="sname">${esc(sk.name)}</b><button class="skoff" data-skoff="${sk.id}" aria-label="Take ${esc(sk.name)} off (free)">✕</button></span>
       <span class="skmeta">${pipsOf(st.l)}${sk.power ? `<span class="small muted">${st.power} dmg</span>` : ''}</span>
-      ${pick}${btn}
+      <div class="skfoot">${pick}${btn}</div>
     </div>`);
   }
   const rest = SKILLS.filter(sk => D.skills[sk.id].l > 0 && !eq.includes(sk.id));
@@ -2934,9 +2944,9 @@ function skillCards(){
     const btn = skillSwap === sk.id ? `<button class="btn sm" data-skswapcancel>Cancel</button>`
       : `<button class="btn sm gold" ${full ? `data-skarm="${sk.id}"` : `data-skeq="${sk.id}"`} ${D.balance >= SKILL_EQ_FEE ? '' : 'disabled'}>${full ? 'Swap in' : 'Equip'} · ${SKILL_EQ_FEE} G</button>`;
     return `<div class="sprow"><span class="tbody"><span class="tname">${esc(sk.name)} <span class="kind ${sk.kind}">${KIND_TXT[sk.kind]}</span></span><span class="tmeta">${pipsOf(st.l)} ${esc(skText(sk, st.l))} · ${st.cost} MP</span>${!skillGearOk(sk) ? `<span class="sneed">Needs a ${STYLES[sk.branch].name} build to use</span>` : ''}</span>${btn}</div>`; }).join('');
-  return `<div class="skgrid">${tiles.join('')}</div>
+  return `<div class="skgrid" id="skgrid">${tiles.join('')}</div>
     ${skillSwap ? `<p class="how small">Pick a slot above for <b>${esc(SKILL_BY[skillSwap].name)}</b>, or <button class="linkbtn" data-skswapcancel>cancel</button>.</p>` : ''}
-    ${rest.length ? `<div class="skmore ${open ? 'open' : ''}"><button class="skmorehead" data-clopen="skmore" aria-expanded="${open}"><b>Other skills (${rest.length})</b><span class="small muted">Equip costs ${SKILL_EQ_FEE} G · taking one off is free</span><span class="clchev">${svg(open ? 'up' : 'down',16,2.4)}</span></button>${open ? `<div class="sprows">${restRows}</div>` : ''}</div>` : ''}`;
+    ${rest.length ? `<div class="skmore ${open ? 'open' : ''}" id="skmore"><button class="skmorehead" data-clopen="skmore" aria-expanded="${open}"><b>Other skills (${rest.length})</b><span class="small muted">Equip costs ${SKILL_EQ_FEE} G · taking one off is free</span><span class="clchev">${svg(open ? 'up' : 'down',16,2.4)}</span></button>${open ? `<div class="sprows">${restRows}</div>` : ''}</div>` : ''}`;
 }
 let battleSec = 'skills';
 function innCard(){
@@ -3030,7 +3040,7 @@ function renderBattle(){
   <p class="how">Titans can poison or paralyze you if you miss two dailies in a day; potions cure it. If your HP hits 0 you faint, lose 10% of your gold and wake up at half HP. Your mood quietly helps too: a good streak makes tasks hit harder, and a bad one makes boss hits sting more.</p>` : `
   <details class="howto"><summary>How skills work</summary><p class="how">You can have ${SKILL_SLOTS} skills equipped at a time, and only equipped skills can be used or leveled up. A newly learned skill drops into an empty slot for free; after that, equipping a skill costs ${SKILL_EQ_FEE} G and taking one off is free. Skills spend MP: every finished task adds ${MP_PER_TASK} MP, up to your max. Core skills always work; branch skills work when your build leans that way (2+ equipped items of one style). You never lose a skill you've learned.</p></details>
   ${(() => { const L = buildLean(); return `<div class="leanline">${L ? `<span class="bdot" style="--bc:${STYLES[L.style].c}"></span> Build: <b>${STYLES[L.style].name}</b>` : 'Build: <b>none yet</b> · equip 2+ items of one style'}</div>`; })()}
-  ${D.points ? `<button class="card bagrow" data-plus="stats" data-gopts><span><b>${D.points} skill point${D.points===1?'':'s'} to spend</b><span class="muted small" style="display:block">Learn and level skills in Stats</span></span><span class="bagopen">Stats ›</span></button>` : ''}
+  <button class="card bagrow" data-plus="stats" data-gopts><span><b>Skill tree</b><span class="muted small" style="display:block">${D.points ? `${D.points} skill point${D.points===1?'':'s'} to spend` : 'Learn new skills and level up equipped ones'}</span></span><span class="bagopen">${D.points ? `<span class="ptsdot">${D.points}</span>` : ''}Open ›</span></button>
   ${SKILLS.some(sk => D.skills[sk.id].l) ? skillCards() : `<p class="how">You haven’t learned any skills yet. Spend skill points in Stats to learn your first one.</p>`}`}`;
 }
 
@@ -3543,10 +3553,10 @@ function renderStatsPanel(){
     return `<section class="branch ${lean && lean.style === b ? 'lean' : ''} ${shut ? 'shut' : ''}" style="--bc:${col}"><button class="bhead" data-clopen="brshut:${b}" aria-expanded="${!shut}"><span class="bdot"></span><b>${name}</b><span class="small muted">${sub} · ${nL}/${list.length} learned</span>${lean && lean.style === b ? '<span class="leantag">Your build</span>' : ''}<span class="clchev">${svg(shut ? 'down' : 'up',16,2.4)}</span></button>${shut ? '' : `<div class="bnodes">${list.map(row).join('')}</div>`}</section>`; }).join('');
   return `<div class="card statsum"><div class="bignum"><b>${lv.level}</b><span>level · ${lv.into}/${lv.need} xp</span></div>${bar(100*lv.into/lv.need, 'var(--ink)')}
     ${pts && statsSec !== 'skills' ? `<button class="btn gold" data-gopoints>You have ${pts} skill point${pts===1?'':'s'} · spend them</button>` : statsSec !== 'skills' ? `<span class="small muted">You get 1 skill point each level.</span>` : ''}</div>
-  <div class="seg wide" role="tablist" aria-label="Stats or skills"><button role="tab" data-ssec="stats" class="${statsSec==='stats'?'on':''}" aria-selected="${statsSec==='stats'}">Stats</button><button role="tab" data-ssec="skills" class="${statsSec==='skills'?'on':''}" aria-selected="${statsSec==='skills'}">Skill building${pts ? ` · ${pts}` : ''}</button></div>
+  <div class="seg wide" role="tablist" aria-label="Stats or skills"><button role="tab" data-ssec="stats" class="${statsSec==='stats'?'on':''}" aria-selected="${statsSec==='stats'}">Stats</button><button role="tab" data-ssec="skills" class="${statsSec==='skills'?'on':''}" aria-selected="${statsSec==='skills'}">Skill tree${pts ? ` · ${pts}` : ''}</button></div>
   ${statsSec === 'skills' ? `
   <div class="sec-h" id="ptsH"><h2>Skill points</h2><span class="count">${pts} to spend</span></div>
-  <details class="howto"><summary>How skill building works</summary><p class="how">You earn 1 point every level. Spend a point to learn a new skill or make one stronger, then use your skills in Battle (they cost MP). You can only learn or raise a skill if your max MP covers its cost, and only equipped skills (${SKILL_SLOTS} at a time) can be leveled up. Some skills need stat levels to learn or certain gear equipped to use, so your build shapes what you can do.</p></details>
+  <details class="howto"><summary>How the skill tree works</summary><p class="how">You earn 1 point every level. Spend a point to learn a new skill or make one stronger, then use your skills in Battle (they cost MP). You can only learn or raise a skill if your max MP covers its cost, and only equipped skills (${SKILL_SLOTS} at a time) can be leveled up. Some skills need stat levels to learn or certain gear equipped to use, so your build shapes what you can do.</p></details>
   ${lean ? `<div class="card leancard" style="--bc:${STYLES[lean.style].c}"><span class="bdot"></span><span><b>Your build leans ${STYLES[lean.style].name}</b><span class="small muted" style="display:block">${lean.n} of your equipped items are ${STYLES[lean.style].name} gear, so that branch's skills work in battle. Keep learning every branch: switch gear later and those skills are ready.</span></span></div>` : `<p class="how">Equip two or more items of one style and your build will lean that way, so that branch's skills work in battle.</p>`}
   <div class="tree">${skillRows}</div>
   <button class="btn" data-gobattle>Use skills in Battle ›</button>` : `
@@ -4201,6 +4211,7 @@ function onClick(e){
     if (D.balance < SKILL_EQ_FEE){ toast(`Equipping costs ${SKILL_EQ_FEE} G`); return; }
     eq.push(id); S.skillEq = eq; S.buys.push({kind:'skilleq', id, ts: Date.now(), g: SKILL_EQ_FEE, date: D.today}); skillSwap = null; save(); render(); toast(`Equipped ${sk.name} for ${SKILL_EQ_FEE} G`); return; }
   if (el.dataset.skoff){ const id = el.dataset.skoff; S.skillEq = (S.skillEq || []).filter(x => x !== id); save(); render(); toast(`${SKILL_BY[id].name} taken off. It stays learned.`); return; }
+  if ('skmoreopen' in el.dataset){ if (!clOpen.has('skmore')){ clOpen.add('skmore'); try { localStorage.setItem(CL_OPEN_KEY, JSON.stringify([...clOpen])); } catch(e){} } render(); const m = document.getElementById('skmore'); if (m) m.scrollIntoView({block:'start', behavior:'smooth'}); return; }
   if (el.dataset.skarm){ skillSwap = SKILL_BY[el.dataset.skarm] ? el.dataset.skarm : null; render(); return; }
   if ('skswapcancel' in el.dataset){ skillSwap = null; render(); return; }
   if (el.dataset.skswap){ const [nw, old] = el.dataset.skswap.split('|'); const eq = (S.skillEq || []).slice(), i = eq.indexOf(old);
