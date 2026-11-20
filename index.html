@@ -637,7 +637,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '2d54f5ead4';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'ded3dc34d0';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -2770,10 +2770,11 @@ function drawBoss(canvas, boss, f, motion, hurt, dead){
     m.set(m2); details.length = 0;
     let top = BH; for (let i=0;i<m.length;i++) if (m[i]){ top = (i/BW)|0; break; }
     details.push(() => {
-      for (const [x,y,s] of eyePts){ const yy = sy(y + s/2) - 1, c = x + Math.floor(s/2); W_(c-1,yy-1,1,1); W_(c+1,yy-1,1,1); W_(c,yy,1,1); W_(c-1,yy+1,1,1); W_(c+1,yy+1,1,1); }
+      const K = (x, y) => px(x, y, 1, 1, '#eeb7d8');   // the X eyes and dizzy stars are pink
+      for (const [x,y,s] of eyePts){ const yy = sy(y + s/2) - 1, c = x + Math.floor(s/2); K(c-1,yy-1); K(c+1,yy-1); K(c,yy); K(c-1,yy+1); K(c+1,yy+1); }
       const n = 3, cx = 32, cy = Math.max(4, top - 4);
       for (let i=0;i<n;i++){ const a = fm * 0.12 + i * Math.PI * 2 / n, x = Math.round(cx + Math.cos(a) * 11), y = Math.round(cy + Math.sin(a) * 2.5);
-        W_(x,y,1,1); if (Math.sin(fm * 0.3 + i * 2) > -0.3){ W_(x-1,y,1,1); W_(x+1,y,1,1); W_(x,y-1,1,1); W_(x,y+1,1,1); } }
+        K(x,y); if (Math.sin(fm * 0.3 + i * 2) > -0.3){ K(x-1,y); K(x+1,y); K(x,y-1); K(x,y+1); } }
     });
   }
   ctx.fillStyle = PW;
