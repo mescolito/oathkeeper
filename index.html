@@ -56,7 +56,8 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block;width
 .dlg{border:2px solid #f1eee4;padding:2px;border-radius:4px}
 .dlg-in{border:1px solid #f1eee4;padding:9px 11px;color:#f1eee4;font-family:var(--pixel);font-size:11px;line-height:1.5;display:flex;flex-direction:column;gap:6px}
 .dlg-h{display:flex;justify-content:space-between;gap:10px;text-transform:uppercase;font-size:12px}
-.dlg-name{color:#fff;font-weight:700;text-shadow:0 0 6px rgba(255,255,255,.35)}
+.dlg-name{color:#fff;font-weight:700}
+.dlg p{color:#9b968c}
 .dlg-won{color:#eeb7d8;font-weight:700}
 .dlg p{margin:0}
 .dlg-bars{display:grid;grid-template-columns:auto 1fr auto 1fr;gap:6px 8px;align-items:center;font-size:10px}
@@ -636,7 +637,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '2123b03741';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '2d54f5ead4';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
