@@ -614,7 +614,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '7447a9b553';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '54b1f4106c';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -2935,7 +2935,7 @@ function skillCards(){
       const btn = skillSwap ? `<button class="btn sm gold" data-skeq="${esc(skillSwap)}">Put ${esc(SKILL_BY[skillSwap].name)} here · ${SKILL_EQ_FEE} G</button>`
         : spare ? (D.balance >= SKILL_EQ_FEE ? `<button class="btn sm" data-skmoreopen>Equip a skill · ${SKILL_EQ_FEE} G</button>` : `<button class="btn sm" disabled>Equipping costs ${SKILL_EQ_FEE} G</button>`)
         : learnable && D.points ? `<button class="btn sm" data-plus="stats" data-gopts>Learn a skill ›</button>`
-        : `<button class="btn sm" disabled>${learnable ? 'No skill points yet' : 'No skills to learn yet'}</button>`;
+        : `<button class="btn sm" disabled>No skills available</button>`;
       tiles.push(`<div class="sktile empty"><span class="small muted">Empty slot</span><div class="skfoot">${btn}</div></div>`); continue; }
     const sk = SKILL_BY[id], st = D.skills[id], why = skillWhy(sk), targets = skillTargets(id);
     const ok = st.ready && !why;
