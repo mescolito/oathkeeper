@@ -630,7 +630,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '2c2585f55b';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '910d92886b';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1130,7 +1130,7 @@ function defaults(){
     log:{}, pickLog:{}, rerolls:{}, owned:['dawn','axo'], equip:{hat:null, bg:'dawn', color:'axo'},
     gear:{weapon:null, offhand:null, armor:null}, gearLog:[], bag:[], seenDrops:[],
     skills:{}, skillUnlock:{}, skillLog:[], waives:{}, lightens:{}, buys:[], snap:{}, firstTs:{}, picks:{}, results:{}, statMeta:{}, wkTg:{}, wkBn:{},
-    todos:{lists:[{id:'l_home', name:'House repairs', items:[]}]}, potions:[], runeBuys:[], faintLog:{}, legends:{}, fchests:{}, altarUsed:{}, lrunes:{}, checks:{}, stepLog:{}, schema:SCHEMA, inn:[], pomo:{cfg:{focus:25, short:5, long:15, every:4, sound:true, music:true, lofi:'chill', haptic:true}, run:null}, pomoLog:[], settings:{theme:'light', rollover:0, hideDone:false, collapse:{vitals:false, boss:false}, dismissed:{}}, sells:[], mig:7, updated:0};
+    todos:{lists:[{id:'l_home', name:'House repairs', items:[]}]}, potions:[], runeBuys:[], faintLog:{}, legends:{}, fchests:{}, altarUsed:{}, lrunes:{}, checks:{}, stepLog:{}, schema:SCHEMA, inn:[], pomo:{cfg:{focus:25, short:5, long:15, every:4, sound:true, music:true, lofi:'chill', haptic:true}, run:null}, pomoLog:[], settings:{theme:'light', rollover:0, hideDone:false, hideRest:false, collapse:{vitals:false, boss:false}, dismissed:{}}, sells:[], mig:7, updated:0};
 }
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const isDate = v => typeof v === 'string' && DATE_RE.test(v);
@@ -1247,7 +1247,7 @@ function sanitize(s, created){
   out.legends = {}; if (obj(s.legends)) for (const [id, ts] of Object.entries(s.legends)) if ((LEGENDARY_GEAR.includes(id) || id === LEGENDARY_PET) && Number.isFinite(Number(ts))) out.legends[id] = Number(ts);
   out.faintLog = {}; if (obj(s.faintLog)) for (const [d, f] of Object.entries(s.faintLog)) if (isDate(d) && obj(f)) out.faintLog[d] = {loss: int(f.loss, 0, 1e9, 0)};
   if (obj(s.settings)){ const st = s.settings, col = obj(st.collapse) ? st.collapse : {}, dis = obj(st.dismissed) ? st.dismissed : {};
-    out.settings = {theme: st.theme === 'dark' ? 'dark' : 'light', rollover: int(st.rollover, 0, 5, 0), hideDone: !!st.hideDone,
+    out.settings = {theme: st.theme === 'dark' ? 'dark' : 'light', rollover: int(st.rollover, 0, 5, 0), hideDone: !!st.hideDone, hideRest: !!st.hideRest,
       collapse: {vitals: !!col.vitals, boss: !!col.boss}, dismissed: {}};
     for (const [k, v] of Object.entries(dis)) if (/^[a-z]{2,12}$/.test(k) && isDate(v)) out.settings.dismissed[k] = v; }
   // gear and looks sold back to the shop: you keep half the price; the purchase still counts as spent
@@ -2949,7 +2949,7 @@ function todGroups(all, cad, k){
   // tasks that aren't scheduled for this day (rest days, closed days) leave the groups and wait in a folded "Not today" group
   const list = all.filter(t => isDue(t,k) || done(k,t.id)), off = all.filter(t => !isDue(t,k) && !done(k,t.id));
   const restKey = 'show:rest-' + cad, restOpen = clOpen.has(restKey);
-  const rest = off.length ? `<div class="tdgroup todgrp" data-tod="rest">
+  const rest = off.length && !S.settings.hideRest ? `<div class="tdgroup todgrp" data-tod="rest">
       <div class="tdhead"><button class="tdpill tod-rest" data-clopen="${restKey}" aria-expanded="${restOpen}">NOT TODAY (${off.length})<span class="chev ${restOpen ? '' : 'up'}">${svg('back',14,2.6)}</span></button></div>
       ${restOpen ? `<div class="list">${off.map(t => taskRow(t,k)).join('')}</div>` : ''}
     </div>` : '';
@@ -3597,7 +3597,8 @@ function renderSettings(){
   <div class="sec-h"><h2>Appearance</h2></div>
   <div class="card"><div class="seg wide" role="group" aria-label="Theme"><button data-theme="light" class="${S.settings.theme!=='dark'?'on':''}">Light</button><button data-theme="dark" class="${S.settings.theme==='dark'?'on':''}">Dark</button></div></div>
   <div class="sec-h"><h2>Lists</h2></div>
-  <div class="card"><label class="checkrow" for="hideDone"><input type="checkbox" id="hideDone" ${S.settings.hideDone ? 'checked' : ''}> Hide finished tasks and to-dos</label></div>
+  <div class="card"><label class="checkrow" for="hideDone"><input type="checkbox" id="hideDone" ${S.settings.hideDone ? 'checked' : ''}> Hide finished tasks and to-dos</label>
+    <label class="checkrow" for="hideRest"><input type="checkbox" id="hideRest" ${S.settings.hideRest ? 'checked' : ''}> Hide the "Not today" groups on Dailies and Habits</label></div>
   <div class="sec-h"><h2>New day starts at</h2></div>
   <div class="card" style="display:flex;flex-direction:column;gap:10px">
     <div class="chips">${[0,1,2,3,4,5].map(h => `<button class="chip ${ro===h?'on':''}" data-rollover="${h}" style="${ro===h?'background:var(--ink);color:var(--inv)':''}" aria-pressed="${ro===h}" ${rolloverLocked() && ro!==h ? 'disabled' : ''}>${h===0 ? 'Midnight' : h + ' AM'}</button>`).join('')}</div>
@@ -4522,6 +4523,7 @@ document.addEventListener('change', e => {
   if (e.target.id === 'fStyle'){ shopStyle = STYLES[e.target.value] ? e.target.value : 'all'; render(); }
   if (e.target.id === 'fTier'){ shopTier = TIER_BY[e.target.value] ? e.target.value : 'all'; render(); }
   if (e.target.id === 'hideDone'){ S.settings.hideDone = e.target.checked; save(); render(); }
+  if (e.target.id === 'hideRest'){ S.settings.hideRest = e.target.checked; save(); render(); }
   if (e.target.id === 'tRandom' && draft){ readEditorFields();
     draft.pool = e.target.checked ? (draft.pool || [{name:'', stats:draft.stats.slice()}, {name:'', stats:['MOB']}]) : null;
     if (!draft.pool) delete draft.pool; renderEditor(); }
