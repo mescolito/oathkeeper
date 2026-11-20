@@ -454,8 +454,8 @@ body.focusmode .top{align-items:center}
 .ptitle{font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:36px;line-height:1.05;margin:2px 0 0;text-align:center;letter-spacing:-.01em}
 .psub{font-size:17px;color:#bdb6c8;font-variant-numeric:tabular-nums}
 /* the ring shrinks on shorter screens so the whole timer, its controls and the settings button fit on one screen */
-.ringwrap{position:relative;width:clamp(170px, calc(100vh - 520px), min(76vw, 300px));width:clamp(170px, calc(100dvh - 520px), min(76vw, 300px));aspect-ratio:1;margin:6px 0 2px}
-.ringwrap.haschest{width:clamp(160px, calc(100vh - 570px), min(76vw, 300px));width:clamp(160px, calc(100dvh - 570px), min(76vw, 300px))}
+.ringwrap{position:relative;width:clamp(130px, calc(100vh - 530px), min(76vw, 300px));width:clamp(130px, calc(100dvh - 530px), min(76vw, 300px));aspect-ratio:1;margin:6px 0 2px}
+.ringwrap.haschest{width:clamp(120px, calc(100vh - 580px), min(76vw, 300px));width:clamp(120px, calc(100dvh - 580px), min(76vw, 300px))}
 .ring{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
 .rtrack{fill:none;stroke:#5a5566;stroke-width:14}
 .rbar{fill:none;stroke:#a18aff;stroke-width:14;stroke-linecap:round;transition:stroke-dashoffset .9s linear}
@@ -472,7 +472,7 @@ body.focusmode .top{align-items:center}
 .ptext[disabled]{opacity:.3;cursor:default}
 .pmain{border:0;border-radius:999px;background:#f7f3ee;color:#141312;width:112px;height:62px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .pstats{display:flex;gap:18px;margin-top:2px;font-size:14px;color:#9d96a8}
-.psetbtn{display:inline-flex;align-items:center;gap:8px;margin-top:2px;background:rgba(241,238,228,.08);border:1.5px solid rgba(241,238,228,.18);color:#f1eee4;border-radius:999px;padding:8px 16px;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.psetbtn{display:inline-flex;align-items:center;gap:8px;margin-top:2px;background:rgba(241,238,228,.08);border:1.5px solid rgba(241,238,228,.18);color:#f1eee4;border-radius:999px;padding:8px 16px;font:inherit;font-size:14px;font-weight:600;cursor:pointer;margin-top:12px}
 .psetbtn .clchev{color:#9d96a8;margin-left:2px}
 .pstats b{color:#f1eee4;font-weight:700}
 .pbelow{display:flex;flex-direction:column;gap:12px;color:#f1eee4;margin-top:20px}
@@ -619,7 +619,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '810c59b6ae';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '619f7b9e81';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
