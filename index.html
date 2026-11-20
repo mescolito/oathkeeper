@@ -335,6 +335,12 @@ html[data-mode="dark"] .trow.done .check{color:var(--inv)}
 .awardin canvas{width:120px;height:120px;border-radius:20px;background:#141312;image-rendering:pixelated}
 .awardin canvas.wide{width:200px;height:auto;aspect-ratio:64/44}
 .chestcard{align-items:center}
+.slotgrid.four{grid-template-columns:repeat(4,1fr)}
+.slot.legend{box-shadow:inset 0 0 0 2px var(--pink);background:linear-gradient(160deg,rgba(238,183,216,.22),transparent 70%)}
+.slot.legend:disabled{opacity:.45;box-shadow:inset 0 0 0 2px var(--line);background:transparent}
+.altarpanel{display:flex;gap:14px;align-items:flex-start}
+.altarpanel .altarbig{width:72px;height:72px;border-radius:16px;background:#141312;image-rendering:pixelated;flex:none}
+.altarpanel b{font-size:17px}
 .chesticon{width:40px;height:40px;border-radius:10px;background:#141312;image-rendering:pixelated;flex:none}
 .awardin canvas.chestbig{width:150px;height:150px;border-radius:24px;background:#141312;image-rendering:pixelated}
 html[data-mode="dark"] .awardin canvas.chestbig{background:transparent}
@@ -575,7 +581,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '1851c24418';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'db6b6e9da5';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -865,6 +871,35 @@ const isDrop = id => !!((ITEM[id] && (ITEM[id].boss || ITEM[id].legendary)) || (
 /* Focus sessions: each finished focus block of POMO_MIN+ minutes rolls for a legendary drop (up to POMO_ROLLS a day). */
 const POMO_MIN = 20, POMO_ROLLS = 12, LEG_GEAR_ODDS = 20000, LEG_PET_ODDS = 100000;
 const LEGENDARY_GEAR = ['tidebreaker','aegis','leviathan','starcrown'], LEGENDARY_PET = 'cosmic';
+/* The Rune Altar: after you beat a boss early, until the next boss arrives, tasks and to-dos stop paying XP, gold and MP
+   and give a Keystone instead (KEY_CAP a day). Each Keystone buys one meditation at the altar: 1 in 2,000 for a legendary
+   rune you don't have yet, otherwise a small prize. Legendary runes are kept forever and one at a time can sit in the
+   special fourth rune slot. Only kills after altarFrom (stamped on first run) open the altar, so the past never changes. */
+const ALTAR_ODDS = 1 / 2000, KEY_CAP = 12;
+const LEGEND_RUNES = [
+  {id:'lrune_dawn', name:'Rune of the Dawn', text:'+10% XP from tasks', fx:{xp:0.1}},
+  {id:'lrune_hoard', name:'Rune of the Hoard', text:'+10% gold from tasks', fx:{gold:0.1}},
+  {id:'lrune_well', name:'Rune of the Wellspring', text:'+3 MP from every task', fx:{mpTask:3}}
+];
+const LRUNE_BY = Object.fromEntries(LEGEND_RUNES.map(r => [r.id, r]));
+// the small prize a Keystone gives when it isn't a legendary: fixed by the Keystone, so it never changes
+function altarPrize(key){
+  const u = u32('altarpz|' + key);
+  if (u < 1/3) return {kind: 'gold', n: 4 + hash('altarg|' + key) % 5};
+  if (u < 2/3) return {kind: 'xp', n: 5 + hash('altarx|' + key) % 6};
+  return {kind: 'mp', n: 5 + hash('altarm|' + key) % 6};
+}
+// which used Keystones won a legendary rune (in the order they were used, so you never get a rune twice)
+function altarDrops(){
+  const L = S.lrunes || {}, keptKeys = new Set(Object.values(L)), got = Object.keys(L).filter(id => LRUNE_BY[id]), wins = [];
+  for (const [key, at] of Object.entries(S.altarUsed || {}).sort((a, b) => a[1] - b[1])){
+    if (keptKeys.has(key) || at > Date.now()) continue;
+    const left = LEGEND_RUNES.map(r => r.id).filter(id => !got.includes(id));
+    if (left.length && u32('altar|' + key) < ALTAR_ODDS){ const id = left[hash('altarpick|' + key) % left.length]; got.push(id); wins.push({key, id}); }
+  }
+  const won = new Map([...Object.entries(L).map(([id, key]) => [key, id]), ...wins.map(w => [w.key, w.id])]);
+  return {got, wins, won};
+}
 const u32 = key => hash(key) / 4294967296;
 function pomoDrops(){
   // anything already won stays won, and the session that won it doesn't roll again
@@ -942,7 +977,7 @@ function defaults(){
     log:{}, pickLog:{}, rerolls:{}, owned:['dawn','axo'], equip:{hat:null, bg:'dawn', color:'axo'},
     gear:{weapon:null, offhand:null, armor:null}, gearLog:[], bag:[], seenDrops:[],
     skills:{}, skillUnlock:{}, skillLog:[], waives:{}, lightens:{}, buys:[], snap:{}, firstTs:{}, picks:{}, results:{}, statMeta:{}, wkTg:{}, wkBn:{},
-    todos:{lists:[{id:'l_home', name:'House repairs', items:[]}]}, potions:[], runeBuys:[], faintLog:{}, legends:{}, fchests:{}, checks:{}, stepLog:{}, schema:SCHEMA, inn:[], pomo:{cfg:{focus:25, short:5, long:15, every:4, sound:true, music:true, lofi:'chill', haptic:true}, run:null}, pomoLog:[], settings:{theme:'light', rollover:0, hideDone:false, collapse:{vitals:false, boss:false}, dismissed:{}}, sells:[], mig:7, updated:0};
+    todos:{lists:[{id:'l_home', name:'House repairs', items:[]}]}, potions:[], runeBuys:[], faintLog:{}, legends:{}, fchests:{}, altarUsed:{}, lrunes:{}, checks:{}, stepLog:{}, schema:SCHEMA, inn:[], pomo:{cfg:{focus:25, short:5, long:15, every:4, sound:true, music:true, lofi:'chill', haptic:true}, run:null}, pomoLog:[], settings:{theme:'light', rollover:0, hideDone:false, collapse:{vitals:false, boss:false}, dismissed:{}}, sells:[], mig:7, updated:0};
 }
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const isDate = v => typeof v === 'string' && DATE_RE.test(v);
@@ -1005,7 +1040,7 @@ function sanitize(s, created){
   out.gear = {weapon:null, offhand:null, armor:null};
   const legacyRune = obj(s.gear) && LEGACY_RUNES[s.gear.rune] ? s.gear.rune : null;
   for (const sl of Object.keys(out.gear)){ const v = obj(s.gear) ? s.gear[sl] : null; if (v != null && gearSlotOk(v, sl)) out.gear[sl] = v; }
-  out.gearLog = (Array.isArray(s.gearLog) ? s.gearLog : []).filter(e => obj(e) && (e.slot === 'rune' ? (e.id === null || LEGACY_RUNES[e.id]) : e.slot === 'hat' ? (e.id === null || (ITEM[e.id] && ITEM[e.id].kind === 'hat')) : (e.slot in out.gear && (e.id === null || gearSlotOk(e.id, e.slot))))).map(e => ({ts: num(e.ts, 0), slot: e.slot, id: e.id}));
+  out.gearLog = (Array.isArray(s.gearLog) ? s.gearLog : []).filter(e => obj(e) && (e.slot === 'rune' ? (e.id === null || LEGACY_RUNES[e.id]) : e.slot === 'lrune' ? (e.id === null || LRUNE_BY[e.id]) : e.slot === 'hat' ? (e.id === null || (ITEM[e.id] && ITEM[e.id].kind === 'hat')) : (e.slot in out.gear && (e.id === null || gearSlotOk(e.id, e.slot))))).map(e => ({ts: num(e.ts, 0), slot: e.slot, id: e.id}));
   if (legacyRune && !out.gearLog.some(e => e.slot === 'rune' && e.id === null && e.ts >= Date.now() - 1000)) out.gearLog.push({ts: Date.now(), slot: 'rune', id: null});
   out.skills = {}; if (obj(s.skills)) for (const k of Object.keys(s.skills)) if (SKILL_BY[k]){ const l = int(s.skills[k], 0, SKILL_MAX, 0); if (l) out.skills[k] = l; }
   out.skillUnlock = {}; if (obj(s.skillUnlock)) for (const k of Object.keys(s.skillUnlock)) if (SKILL_BY[k]) out.skillUnlock[k] = num(s.skillUnlock[k], 0);
@@ -1043,6 +1078,9 @@ function sanitize(s, created){
   out.stepLog = {}; if (obj(s.stepLog)) for (const [d, m] of Object.entries(s.stepLog)) if (isDate(d) && obj(m)){ const mm = {}; let n = 0; for (const [key, v] of Object.entries(m)) if (n < 200 && typeof key === 'string' && key.length <= 90 && /^(tk|td):/.test(key) && obj(v) && Number.isFinite(v.ts)){ mm[key] = {ts: v.ts, g: v.g === 2 ? 2 : 1}; n++; } if (n) out.stepLog[d] = mm; }
   out.checks = {}; if (obj(s.checks)) for (const [d, m] of Object.entries(s.checks)) if (isDate(d) && obj(m)){ const mm = {}; for (const [tid, ids] of Object.entries(m)) if (typeof tid === 'string' && tid.length <= 40 && !PROTO_KEYS.has(tid) && Array.isArray(ids)){ const v = Array.from(new Set(ids.filter(x => typeof x === 'string' && x.length <= 20))).slice(0, CHECK_MAX); if (v.length) mm[tid] = v; } if (Object.keys(mm).length) out.checks[d] = mm; }
   // legendary drops are written down the moment they're won, so they can never disappear later
+  out.altarUsed = {}; if (obj(s.altarUsed)) for (const [k, at] of Object.entries(s.altarUsed)) if (/^(\d{4}-\d\d-\d\d\|[\w-]{1,40}|td\|[\w-]{1,40})$/.test(k) && Number.isFinite(Number(at))) out.altarUsed[k] = Number(at);
+  out.lrunes = {}; if (obj(s.lrunes)) for (const [id, k] of Object.entries(s.lrunes)) if (LRUNE_BY[id] && typeof k === 'string' && k.length <= 60) out.lrunes[id] = k;
+  if (Number.isFinite(Number(s.altarFrom)) && Number(s.altarFrom) > 0) out.altarFrom = Number(s.altarFrom); else delete out.altarFrom;
   out.fchests = {}; if (obj(s.fchests)) for (const [ts, at] of Object.entries(s.fchests)) if (/^\d{10,14}$/.test(ts) && Number.isFinite(Number(at))) out.fchests[ts] = Number(at);
   if (Number.isFinite(Number(s.chestFrom)) && Number(s.chestFrom) > 0) out.chestFrom = Number(s.chestFrom); else delete out.chestFrom;
   out.legends = {}; if (obj(s.legends)) for (const [id, ts] of Object.entries(s.legends)) if ((LEGENDARY_GEAR.includes(id) || id === LEGENDARY_PET) && Number.isFinite(Number(ts))) out.legends[id] = Number(ts);
@@ -1055,7 +1093,7 @@ function sanitize(s, created){
   out.sells = (Array.isArray(s.sells) ? s.sells : []).filter(x => obj(x) && typeof x.id === 'string' && (GEAR_BY[x.id] || ITEM[x.id]) && isDate(x.date)).map(x => ({id: x.id, ts: num(x.ts, 0), date: x.date, cost: int(x.cost, 0, 100000, 0), g: int(x.g, 0, 50000, 0)}));
   out.results = {};
   if (obj(s.results)) for (const [c, r] of Object.entries(s.results)){ if (!/^-?\d+$/.test(c) || !obj(r) || !(ALL_BOSSES.some(b => b.id === r.boss))) continue;
-    out.results[c] = {boss: r.boss, hp: int(r.hp,1,100000,650), rem: int(r.rem,0,100000,0), heal: int(r.heal,0,100000,0), dmg: int(r.dmg,0,1000000,0), hits: byId(r.hits, x => int(x,0,1000000,0)), status: r.status === 'won' ? 'won' : 'lost', wonOn: isDate(r.wonOn) ? r.wonOn : null}; }
+    out.results[c] = {boss: r.boss, hp: int(r.hp,1,100000,650), rem: int(r.rem,0,100000,0), heal: int(r.heal,0,100000,0), dmg: int(r.dmg,0,1000000,0), hits: byId(r.hits, x => int(x,0,1000000,0)), status: r.status === 'won' ? 'won' : 'lost', wonOn: isDate(r.wonOn) ? r.wonOn : null, ...(Number.isFinite(Number(r.wonTs)) && Number(r.wonTs) > 0 ? {wonTs: Number(r.wonTs)} : {})}; }
   out.statMeta = s.statMeta;
   out.petName = s.petName;
   return out;
@@ -1187,7 +1225,7 @@ function statsFor(t, k){
   return snap ? snap.s : pickFor(t,k).stats;
 }
 function gearAt(ts){
-  const g = {weapon:null, offhand:null, armor:null, hat:null, rune:null};
+  const g = {weapon:null, offhand:null, armor:null, hat:null, rune:null, lrune:null};
   for (const ev of S.gearLog) if (ev.ts <= ts) g[ev.slot] = ev.id;
   return g;
 }
@@ -1199,7 +1237,7 @@ function addFx(fx, f){
 }
 function fxOf(g, runes, buffs){
   const fx = {flat:0, all:0, pct:{}, sxp:{}, st:{}, gold:0, xp:0, crit:0, def:0, dodge:0, mpMax:0, antiheal:0, spell:0, mpTask:0};
-  for (const id of Object.values(g)){ if (id == null) continue; const it = GEAR_BY[id] || LEGACY_RUNES[id] || (ITEM[id] && ITEM[id].kind === 'hat' && ITEM[id]); if (it && it.fx) addFx(fx, it.fx); }
+  for (const id of Object.values(g)){ if (id == null) continue; const it = GEAR_BY[id] || LEGACY_RUNES[id] || LRUNE_BY[id] || (ITEM[id] && ITEM[id].kind === 'hat' && ITEM[id]); if (it && it.fx) addFx(fx, it.fx); }
   for (const r of (runes || [])){ const rr = RUNE_BY[r.id]; if (rr) addFx(fx, rr.fx); }
   for (const u of (buffs || [])) addFx(fx, u.buff);
   return fx;
@@ -1301,6 +1339,8 @@ function derive(){
   const status = {poison:null, para:null};           // each: {from, until}
   const cyc = {}, weeks = {}, attacks = {}, faints = [], mystery = {}, drops = new Set();
   const pomoInfo = pomoDrops(); pomoInfo.got.forEach(id => drops.add(id));
+  const altarInfo = altarDrops();
+  for (const [key, at] of Object.entries(S.altarUsed || {})){ if (altarInfo.won.has(key) || at > Date.now()) continue; add(todayKeyAt(at), {k:'altar', ts: at, pz: altarPrize(key)}); }
   // opened Focus chests that weren't legendary pay their small prize the moment they're opened
   const legTs = new Set(pomoInfo.rolls.map(r => r.ts));
   for (const [ts, at] of Object.entries(S.fchests || {})){ if (legTs.has(+ts)) continue; const pz = chestPrize(+ts); if (pz.kind !== 'potion' && at <= Date.now()) add(todayKeyAt(at), {k:'fchest', ts: at, pz}); }
@@ -1318,11 +1358,15 @@ function derive(){
   const statLvNow = () => Object.fromEntries(SK.map(k => [k, statLevel(stat[k])]));
   const statusOn = (key, d) => status[key] && status[key].from < d && d <= status[key].until;
   const faint = (d, C) => { const fz = S.faintLog[d]; const bal = gold - staticSpent - dyn - lost; const loss = fz ? fz.loss : Math.max(0, Math.floor(bal * 0.1)); lost += loss; if (!fz) newFaints[d] = {loss}; hp = Math.round(C.maxHP / 2); faints.push({d, loss}); const F = cyc[cycleOf(d)]; if (F && !F.wonOn) F.rem = Math.min(F.hp, F.rem + Math.round(F.hp * 0.1)); };
-  const hitBoss = (F, d, key, dmg) => {
+  // between a boss beaten early (after altarFrom) and the next one, tasks give Keystones instead of XP, gold and MP
+  const lullAt = (F, ts) => !!(S.altarFrom && ts >= S.altarFrom && (F.frozen ? (F.frozen.status === 'won' && F.frozen.wonTs && ts > F.frozen.wonTs) : (F.wonTs && ts > F.wonTs)));
+  const keysAll = [], keysByDay = Object.create(null);
+  const giveKey = (d, key, ts) => { if ((keysByDay[d] || 0) >= KEY_CAP) return false; keysByDay[d] = (keysByDay[d] || 0) + 1; keysAll.push({key, ts, d}); return true; };
+  const hitBoss = (F, d, key, dmg, ts) => {
     F.dmg += dmg; F.hits[key] = (F.hits[key]||0) + dmg;
     if (F.frozen || F.wonOn) return;
     F.rem -= dmg;
-    if (F.rem <= 0){ F.rem = 0; F.wonOn = d; gold += BOSS_REWARD(F.boss); drops.add(F.boss.drop); if (F.boss.drop2) drops.add(F.boss.drop2); }
+    if (F.rem <= 0){ F.rem = 0; F.wonOn = d; F.wonTs = ts || 0; gold += BOSS_REWARD(F.boss); drops.add(F.boss.drop); if (F.boss.drop2) drops.add(F.boss.drop2); }
   };
   for (let d = start; d <= today; d = addDays(d,1)){
     const c = cycleOf(d);
@@ -1333,7 +1377,7 @@ function derive(){
       const lvl = lvlBase(); let bhp = bossHp(boss, lvl), rem0 = bhp;
       const prevF = cyc[c-1];
       if (!fr && boss.rite && prevF && prevF.boss.id === boss.id){ const pr = prevF.frozen ? prevF.frozen.rem : prevF.rem; if (pr > 0){ bhp = prevF.frozen ? prevF.frozen.hp : prevF.hp; rem0 = pr; } }
-      cyc[c] = {c, boss, lvl, hp: bhp, rem: rem0, heal: 0, dmg: 0, hits: {}, wonOn: null, frozen: fr || null, start: cycleStart(c), end: addDays(cycleStart(c), CYCLE-1)};
+      cyc[c] = {c, boss, lvl, hp: bhp, rem: rem0, heal: 0, dmg: 0, hits: {}, wonOn: null, wonTs: 0, frozen: fr || null, start: cycleStart(c), end: addDays(cycleStart(c), CYCLE-1)};
       if (fr && fr.status === 'won'){ gold += BOSS_REWARD(boss); drops.add(boss.drop); if (boss.drop2) drops.add(boss.drop2); }
     }
     const F = cyc[c];
@@ -1364,27 +1408,31 @@ function derive(){
         const t = T[e.tid]; if (!t) continue;
         const sn = (S.snap[d]||{})[e.tid];
         const stats = sn ? sn.s : statsFor(t, d), prim = stats[0];
-        const r = sn ? {xp:sn.xp, gold:sn.g} : rewardOf(t);
-        xp += Math.round(r.xp * (1 + fx.xp) * boost); gold += Math.round(r.gold * (1 + fx.gold) * boost);
+        const r = sn ? {xp:sn.xp, gold:sn.g} : rewardOf(t), lull = lullAt(F, e.ts);
+        if (lull) giveKey(d, d + '|' + e.tid, e.ts);
+        else { xp += Math.round(r.xp * (1 + fx.xp) * boost); gold += Math.round(r.gold * (1 + fx.gold) * boost); }
         const sl = statLvNow(); C = combatOf(sl, lvlNow(), fx);
         if (bossAlive() && !innAtD(d, e.ts)){
           const weak = stats.some(x => F.boss.weak.includes(x));
           let dmg = (10 + 2*(live ? sl[prim] + (fx.st[prim]||0) : sl[prim]) + (live ? C.atk : (fx.flat||0))) * (weak ? 2 : 1) * (1 + fx.all + (fx.pct[prim]||0)) * boost;
           if (live && roll('crit|' + d + '|' + e.tid) < C.crit) dmg *= 1.5;
           if (statusOn('para', d)) dmg *= 0.5;
-          hitBoss(F, d, e.tid, Math.round(dmg));
+          hitBoss(F, d, e.tid, Math.round(dmg), e.ts);
         }
         stats.forEach((x,i) => stat[x] += Math.round((i===0 ? 10 : 5) * (1 + (fx.sxp[x]||0))));
         C = combatOf(statLvNow(), lvlNow(), fx);
-        mp = Math.min(C.maxMP, mp + MP_PER_TASK + (live ? (fx.mpTask||0) : 0)); hp = Math.min(C.maxHP, hp + 2);
+        if (!lull) mp = Math.min(C.maxMP, mp + MP_PER_TASK + (live ? (fx.mpTask||0) : 0)); hp = Math.min(C.maxHP, hp + 2);
         lvUp(fx);
         checkIn(fx, e.ts);
         if (sn ? sn.w : t.cad === 'week'){ const wc = weeks[weekKey(d)] || (weeks[weekKey(d)] = {}); if (!wc[e.tid]) wc[e.tid] = {n:0, tg:0, bn:0, bns:[]}; const w = wc[e.tid]; w.n++; w.bns.push(sn ? (sn.bn||0) : (t.bonus||0)); w.tg = Math.max(w.tg, sn ? (sn.tg||1) : (t.target||1)); w.bn = Math.max(w.bn, sn ? (sn.bn||0) : (t.bonus||0)); }
         if (sn ? sn.w : t.cad === 'week'){ const wk = weekKey(d), w = weeks[wk][e.tid], key = wk + '|' + e.tid; if (!chestGot[key] && w.n >= effOf(wk, e.tid, w)){ chestGot[key] = true; chestXp += 20; lvUp(fx); } }
+      } else if (e.k === 'altar'){
+        if (e.pz.kind === 'gold') gold += e.pz.n; else if (e.pz.kind === 'xp'){ xp += e.pz.n; lvUp(fx); } else { C = combatOf(statLvNow(), lvlNow(), fx); mp = Math.min(C.maxMP, mp + e.pz.n); }
       } else if (e.k === 'fchest'){
         if (e.pz.kind === 'gold') gold += e.pz.n; else { xp += e.pz.n; lvUp(fx); }
       } else if (e.k === 'todo'){
         // only to-dos added on an earlier day pay out, and at most TODO_CAP a day
+        if (lullAt(F, e.ts)){ if (!(e.it.createdOn && e.it.createdOn >= d)) giveKey(d, 'td|' + e.it.id, e.ts); checkIn(fx, e.ts); continue; }
         if ((e.it.createdOn && e.it.createdOn >= d) || rewardedTodos >= TODO_CAP) continue;
         rewardedTodos++; todoPaid.add(e.it.id);
         xp += Math.round(8 * (1 + fx.xp) * boost); gold += Math.round(6 * (1 + fx.gold) * boost);
@@ -1395,7 +1443,7 @@ function derive(){
         const cost = e.u.cost != null ? e.u.cost : (SKILL_BY[e.u.id] ? SKILL_BY[e.u.id].cost(1) : 0);
         if (mp < cost) castDeficit++;
         mp = Math.max(0, mp - cost);
-        if (e.u.dmg && bossAlive() && !innAtD(d, e.ts)) hitBoss(F, d, 'skill:' + e.u.id, e.u.dmg);
+        if (e.u.dmg && bossAlive() && !innAtD(d, e.ts)) hitBoss(F, d, 'skill:' + e.u.id, e.u.dmg, e.ts);
       } else if (e.k === 'pot'){
         dyn += e.p.g || 0; C = combatOf(statLvNow(), lvlNow(), fx);
         const id = e.p.id;
@@ -1409,7 +1457,7 @@ function derive(){
       else if (e.k === 'sell'){ dyn += e.x.cost; gold += e.x.g; }
     }
     // end of day: steps ticked on things you didn't finish today pay out (see STEP_CAP)
-    if (d < today && S.stepFrom && d >= S.stepFrom){
+    if (d < today && S.stepFrom && d >= S.stepFrom && !lullAt(F, parseKey(d).getTime())){
       let g = 0, n = 0;
       for (const [tid, ids] of Object.entries(S.checks[d] || {})){ if ((S.log[d] || {})[tid]) continue; for (const sid of ids){ n++; g += roll('step|' + d + '|' + tid + '|' + sid) < 0.5 ? 1 : 2; } }
       for (const key of Object.keys(S.stepLog[d] || {})){ const [, iid, sid] = key.split(':'); if (!iid || !sid || key.slice(0,3) !== 'td:' || todoDone[iid] === d) continue; n++; g += roll('step|' + d + '|' + iid + '|' + sid) < 0.5 ? 1 : 2; }
@@ -1469,8 +1517,8 @@ function derive(){
   const fights = Object.values(cyc).sort((a,b) => a.c - b.c).map(F => {
     if (F.frozen) return {...F, ...F.frozen, boss: F.boss, c: F.c, start: F.start, end: F.end};
     const status2 = F.wonOn ? 'won' : (F.c < cycleOf(today) ? 'lost' : 'now');
-    const out = {c:F.c, boss:F.boss, start:F.start, end:F.end, hp:F.hp, rem:F.rem, heal:F.heal, dmg:F.dmg, hits:F.hits, status:status2, wonOn:F.wonOn};
-    if (F.c < freezeBefore) newResults[F.c] = {boss: F.boss.id, hp:F.hp, rem:F.rem, heal:F.heal, dmg:F.dmg, hits:F.hits, status:status2, wonOn:F.wonOn};
+    const out = {c:F.c, boss:F.boss, start:F.start, end:F.end, hp:F.hp, rem:F.rem, heal:F.heal, dmg:F.dmg, hits:F.hits, status:status2, wonOn:F.wonOn, wonTs: F.frozen ? F.frozen.wonTs || 0 : F.wonTs};
+    if (F.c < freezeBefore) newResults[F.c] = {boss: F.boss.id, hp:F.hp, rem:F.rem, heal:F.heal, dmg:F.dmg, hits:F.hits, status:status2, wonOn:F.wonOn, ...(F.wonTs ? {wonTs: F.wonTs} : {})};
     return out;
   });
   const ritesWon = new Set(fights.filter(x => x.boss.rite && x.status === 'won').map(x => x.boss.id));
@@ -1503,7 +1551,7 @@ function derive(){
   const spent = staticSpent + dyn;
   const newDrops = [...drops].filter(id => isDrop(id) && !S.seenDrops.includes(id));
   const nextRite = riteForL(levelInfo(xp).level, ritesWon);
-  return {nextRite, ritesWon, pomo: pomoInfo, inn: innNowD(), newInnEnds, innPaid: (() => { const o = innNowD(); return o && (o.paid || o.from) < today ? o : null; })(), innSpent, innFee: innFee(levelInfo(xp).level), statBonus: fxNow.st, bag, newDrops, newResults, newFaints, newLegends: pomoInfo.rolls.filter(r => !r.kept), todoPaid, partial, freezeBefore, points, skills, readyCount, weakLv, today, yest, xp, lv, gold, spent, lost, balance: gold - spent - lost, stat, statLv, fx: fxNow, C, hp, mp, status: statusNow, attacks, lastAttack: attacks[yest] || null, faints, lastFaint: faints.length ? faints[faints.length-1] : null, mood: face, moodKey: moodToday, statusText, streak: lastCheck && lastCheck >= prevActiveD(today) ? streak : 0, checkedToday: lastCheck === today, mystery, tokens, perfectWeeks, castDeficit, fights, cur, drops, weeks, T, activeRunes: runesAt(nowMs, today), activeBuffs: buffsAt(nowMs, today)};
+  return {nextRite, ritesWon, pomo: pomoInfo, inn: innNowD(), newInnEnds, innPaid: (() => { const o = innNowD(); return o && (o.paid || o.from) < today ? o : null; })(), innSpent, innFee: innFee(levelInfo(xp).level), statBonus: fxNow.st, bag, newDrops, newResults, newFaints, newLegends: pomoInfo.rolls.filter(r => !r.kept), todoPaid, partial, altar: {keys: keysAll.filter(k => !(S.altarUsed || {})[k.key]).map(k => k.key), all: new Set(keysAll.map(k => k.key)), got: altarInfo.got, wins: altarInfo.wins, won: altarInfo.won}, freezeBefore, points, skills, readyCount, weakLv, today, yest, xp, lv, gold, spent, lost, balance: gold - spent - lost, stat, statLv, fx: fxNow, C, hp, mp, status: statusNow, attacks, lastAttack: attacks[yest] || null, faints, lastFaint: faints.length ? faints[faints.length-1] : null, mood: face, moodKey: moodToday, statusText, streak: lastCheck && lastCheck >= prevActiveD(today) ? streak : 0, checkedToday: lastCheck === today, mystery, tokens, perfectWeeks, castDeficit, fights, cur, drops, weeks, T, activeRunes: runesAt(nowMs, today), activeBuffs: buffsAt(nowMs, today)};
 }
 
 /* ---------- persistence ---------- */
@@ -1611,9 +1659,10 @@ function mergeSaves(a, b){
     if (!isObj(o[k])) continue; if (!isObj(out[k])) out[k] = {};
     for (const [d, m] of Object.entries(o[k])){ if (!isObj(m)) continue; if (!isObj(out[k][d])) out[k][d] = {}; for (const [id, v] of Object.entries(m)) if (!(id in out[k][d])) out[k][d][id] = v; }
   }
-  for (const k of ['faintLog','results','skillUnlock','fchests']){ if (!isObj(o[k])) continue; if (!isObj(out[k])) out[k] = {}; for (const [id, v] of Object.entries(o[k])) if (!(id in out[k])) out[k][id] = v; }
+  for (const k of ['faintLog','results','skillUnlock','fchests','altarUsed','lrunes']){ if (!isObj(o[k])) continue; if (!isObj(out[k])) out[k] = {}; for (const [id, v] of Object.entries(o[k])) if (!(id in out[k])) out[k][id] = v; }
   out.legends = {...(o.legends || {}), ...(out.legends || {})};
   if (o.chestFrom && (!out.chestFrom || o.chestFrom < out.chestFrom)) out.chestFrom = o.chestFrom;
+  if (o.altarFrom && (!out.altarFrom || o.altarFrom < out.altarFrom)) out.altarFrom = o.altarFrom;
   for (const k of ['potions','runeBuys','bag','buys','skillLog','gearLog','pomoLog','sells','inn','testGold']){
     if (!Array.isArray(o[k])) continue; if (!Array.isArray(out[k])) out[k] = [];
     const seen = new Set(out[k].map(x => JSON.stringify(x)));
@@ -2148,6 +2197,17 @@ function drawIcon(canvas, kind, id){
         else { for (const [x,y] of [[12,7],[9,10],[15,10],[12,12]]) B_(x,y); B_(11,9,3,3); }
         return;
       }
+      if (id.startsWith('lrune_')){
+        // legendary rune: a round stone with a star-burst rim, a glyph, and sparkles at the corners
+        for (let y=-9;y<=9;y++) for (let x=-9;x<=9;x++) if (x*x + y*y <= 81) W_(12+x, 12+y);
+        for (const [x,y] of [[12,1],[12,23],[1,12],[23,12]]) W_(x,y);
+        for (const [x,y] of [[3,3],[20,3],[3,20],[20,20]]){ W_(x+1,y); W_(x,y+1); W_(x+1,y+1); W_(x+2,y+1); W_(x+1,y+2); }
+        const g = id.slice(6);
+        if (g === 'dawn'){ B_(7,14,11,1); for (let i=0;i<4;i++) B_(12 - i, 13 - i, 1 + i*2, 1); B_(12,6,1,2); B_(7,8,1,1); B_(17,8,1,1); }
+        else if (g === 'hoard'){ disc(12,13,4,PB); disc(12,13,2,PW); B_(12,11,1,5); B_(9,7,7,1); B_(10,6,5,1); }
+        else { B_(12,6,1,3); B_(11,9,3,1); B_(10,10,5,4); W_(11,11,1,1); B_(8,15,9,1); B_(9,16,7,1); }
+        return;
+      }
       if (id.startsWith('rune_')){
         for (let y=-9;y<=9;y++) for (let x=-9;x<=9;x++) if (Math.abs(x)*1.15 + Math.abs(y) <= 9.5) W_(12+x, 12+y);
         const g = id.slice(5);
@@ -2511,6 +2571,8 @@ function renderToday(){
   </section>
   ${vitals()}
   ${myst && !dismissed('myst') ? notice('myst', `Daily check-in bonus: <b>+${myst.xp ? myst.xp + ' XP' : myst.gold + ' G'}</b>`) : ''}
+  ${lullNote()}
+  ${altarCard()}
   ${chestCard()}
   ${D.partial[D.yest] && !dismissed('partial') ? notice('partial', `Partial progress yesterday: <b>+${D.partial[D.yest].g} G</b> for ${D.partial[D.yest].n} step${D.partial[D.yest].n === 1 ? '' : 's'} on unfinished tasks`) : ''}
   ${D.tokens && !dismissed('tokens') ? notice('tokens', `${D.tokens} free rune${D.tokens===1?'':'s'} waiting in your inventory`) : ''}
@@ -2606,6 +2668,7 @@ function renderBattle(){
     <div class="bignum"><b>${f.rem}</b><span>of ${f.hp} boss HP</span></div>
     <div style="margin-top:10px">${bar(100*f.rem/f.hp, 'var(--pink)', 'thick')}</div>
   </div>
+  ${inLull() ? altarPanel() : ''}
   <div class="chips">${(b.weak.length >= 5 ? ['ALL'] : b.weak).map(s => `<span class="chip-s" style="background:${s==='ALL' ? 'var(--yellow)' : STATS[s].c};font-size:13px;padding:5px 12px">Weak to ${s==='ALL' ? 'every stat' : esc(STATS[s].name)}</span>`).join('')}<span class="chip-s plain" style="background:var(--track);font-size:13px;padding:5px 12px">Hits ${b.atk + Math.floor((f.lvl || D.lv.level)/3)} per missed daily</span></div>
   ${a ? `<div class="card attack"><b>Last night</b><span>${esc(a.boss)} hit you for <b>${a.dmg} HP</b> · ${a.missed} missed${a.dodged ? `, ${a.dodged} dodged` : ''}${a.status ? ` · ${esc(STATUS[a.status].name)}` : ''}</span></div>` : ''}
   <div class="sec-h"><h2>You</h2><span class="muted small">Block ${pctTxt(C.def)} · Dodge ${pctTxt(C.dodge)} · Crit ${pctTxt(C.crit)}</span></div>
@@ -2772,8 +2835,9 @@ function renderInventory(){
     ${slot('Armor', g('armor'), g('armor') && `data-equipgear="${S.gear.armor}"`, '▣')}
     ${slot('Helmet', hat, hat && `data-equip="${hat.id}"`, '◠')}
   </div>
-  <div class="slotgrid three">${[0,1,2].map(i => runes[i] ? slot(`Rune ${i+1}`, runes[i], null, '', `${runes[i].left}d left`) : slot(`Rune ${i+1}`, null, null, '◇')).join('')}</div>
-  <p class="how">One item per hand, plus armor and a helmet. Up to ${RUNE_SLOTS} runes can be active at once, and each slot frees up when its rune runs out.</p>`;
+  <div class="slotgrid four">${[0,1,2].map(i => runes[i] ? slot(`Rune ${i+1}`, runes[i], null, '', `${runes[i].left}d left`) : slot(`Rune ${i+1}`, null, null, '◇')).join('')}${(() => { const lr = LRUNE_BY[gearAt(Date.now()).lrune];
+    return `<button class="slot legend ${lr ? 'full' : ''}" ${lr ? `data-lrune="${lr.id}"` : 'disabled'} aria-label="Legendary rune: ${lr ? esc(lr.name) + ', tap to take off' : 'empty'}"><span class="slotart">${lr ? itemArt({...lr, kind:'lrune'}, true) : '<span class="slotempty">✦</span>'}</span><span class="slotl">Legendary</span><span class="slotn">${lr ? esc(lr.name.replace('Rune of the ', '')) : D.altar.got.length ? 'Empty' : 'Locked'}</span></button>`; })()}</div>
+  <p class="how">One item per hand, plus armor and a helmet. Up to ${RUNE_SLOTS} runes can be active at once, and each slot frees up when its rune runs out. The ✦ slot holds one legendary rune from the Rune Altar; they never run out and you can swap them any time.</p>`;
   let list = '';
   const row = (it, sub, btn) => `<div class="invrow">${itemArt(it, true)}<span class="tbody"><span class="tname">${esc(it.name)}</span><span class="tmeta">${sub}</span></span>${btn}</div>`;
   if (invTab === 'gear'){
@@ -2786,8 +2850,9 @@ function renderInventory(){
     list = mine.map(p => { const ps = potionState(p); return row({...p, kind:'potion'}, `${D.bag[p.id]} in bag · ${esc(p.text)}`, `<button class="btn gold sm" data-usepot="${p.id}" ${ps.ok ? '' : 'disabled'}>${ps.ok ? 'Drink' : esc(ps.why)}</button>`); }).join('');
     if (!mine.length) list = `<p class="how">Your bag has no potions. Buy them in the shop, then drink them here when you need them.</p>`;
   } else if (invTab === 'rune'){
-    const mine = RUNES.filter(r => D.bag[r.id]);
-    list = (D.tokens ? `<div class="mystery">${svg('gift',18,2)} Perfect week! Pick a free rune for your bag:</div><div class="chips">${RUNES.filter(r => meetsReq(r, D.statLv)).map(r => `<button class="chip" data-runetoken="${r.id}">${esc(runeName(r))}</button>`).join('')}</div>` : '')
+    const mine = RUNES.filter(r => D.bag[r.id]), eqL = gearAt(Date.now()).lrune;
+    const legends = LEGEND_RUNES.filter(r => D.altar.got.includes(r.id)).map(r => row({...r, kind:'lrune'}, `Legendary · ${esc(r.text)} · never runs out`, `<button class="btn ${eqL === r.id ? 'ghost' : 'primary'} sm" data-lrune="${r.id}">${eqL === r.id ? 'Take off' : 'Equip'}</button>`)).join('');
+    list = legends + (D.tokens ? `<div class="mystery">${svg('gift',18,2)} Perfect week! Pick a free rune for your bag:</div><div class="chips">${RUNES.filter(r => meetsReq(r, D.statLv)).map(r => `<button class="chip" data-runetoken="${r.id}">${esc(runeName(r))}</button>`).join('')}</div>` : '')
       + mine.map(r => { const rs = runeState(r); return row({...r, name: runeName(r), kind:'rune'}, `${D.bag[r.id]} in bag · ${esc(runeText(r))}`, `<button class="btn gold sm" data-userune="${r.id}" ${rs.canUse ? '' : 'disabled'}>${rs.canUse ? 'Activate' : esc(rs.why)}</button>`); }).join('');
     if (!mine.length && !D.tokens) list = `<p class="how">Your bag has no runes. Buy them in the shop, then activate up to ${RUNE_SLOTS} at a time here.</p>`;
   } else {
@@ -2797,11 +2862,73 @@ function renderInventory(){
       return row(i, `${what}${i.style ? ' · ' + STYLES[i.style].name : ''}${i.fx ? ' · ' + esc(fxText(i.fx)) : ''}${i.boss ? ' · prize' : i.season ? ` · ${esc(i.when)}` : ''}`, i.kind === 'hat' ? `<button class="btn ${eq ? 'ghost' : 'primary'} sm" data-equip="${i.id}">${eq ? 'Take off' : 'Wear'}</button>` : `<button class="btn ${eq ? 'ghost' : 'primary'} sm" data-equip="${i.id}" ${eq ? 'disabled' : ''}>${eq ? 'In use' : 'Use'}</button>`); }).join('');
     if (!mine.length) list = `<p class="how">${invTab === 'hat' ? 'No hats yet. Buy them in the shop or win them from bosses.' : 'Nothing here yet.'}</p>`;
   }
-  return `${chestCard()}<div class="sec-h"><h2>Equipped</h2></div>${eqHtml}
+  return `${altarCard()}${chestCard()}<div class="sec-h"><h2>Equipped</h2></div>${eqHtml}
   <div class="catpills" role="group" aria-label="Inventory type">${INV_TABS.map(([v,l]) => `<button class="catpill ${invTab===v?'on':''}" data-invtab="${v}" aria-pressed="${invTab===v}">${l}${v==='potion' || v==='rune' ? ` <span class="small">${(v==='potion' ? POTIONS : RUNES).reduce((a,x) => a + (D.bag[x.id]||0), 0) || ''}</span>` : ''}</button>`).join('')}</div>
   <div class="list">${list}</div>`;
 }
 
+/* ---------- the Rune Altar ---------- */
+const inLull = () => D.cur.status === 'won' && D.cur.wonTs && S.altarFrom && D.cur.wonTs >= S.altarFrom;
+function lullNote(){
+  if (!inLull() || dismissed('lull')) return '';
+  return notice('lull', `<b>${esc(D.cur.boss.name)} is defeated!</b> Until the next boss arrives ${fmtDow(addDays(D.cur.end, 1))}, tasks and to-dos give a <b>Keystone</b> for the Rune Altar instead of XP, gold and MP.`);
+}
+function altarCard(){
+  const n = D.altar.keys.length; if (!n) return '';
+  return `<div class="mystery chestcard"><canvas class="chesticon altaricon" width="32" height="32" aria-hidden="true"></canvas><span class="ntext"><b>${n} Keystone${n === 1 ? '' : 's'}</b> for the Rune Altar</span><button class="btn gold sm" data-meditate>Meditate</button></div>`;
+}
+function altarPanel(){
+  const n = D.altar.keys.length;
+  return `<div class="card altarpanel"><canvas class="altarbig" width="32" height="32" aria-hidden="true"></canvas>
+    <div><b>The Rune Altar</b><p class="how">Until the next boss, every task and to-do you finish gives a Keystone (up to ${KEY_CAP} a day). Meditate with one for a 1 in 2,000 chance at a legendary rune, or a little gold, XP or MP.</p>
+    ${n ? `<button class="btn gold" data-meditate>Meditate · ${n} Keystone${n === 1 ? '' : 's'}</button>` : `<span class="muted small">No Keystones yet. Finish a task to earn one.</span>`}
+    ${D.altar.got.length ? `<p class="how">Legendary runes: ${D.altar.got.map(id => esc(LRUNE_BY[id].name)).join(', ')}</p>` : ''}</div></div>`;
+}
+// the altar in 1-bit pixels: a stepped stone plinth with a carved glyph, a keystone slot, and a rune stone floating above
+function drawAltar(cv, bob, glow, open){
+  const g = cv.getContext('2d'); g.clearRect(0, 0, 32, 32); g.fillStyle = PW;
+  const P = (x, y, w = 1, h = 1) => g.fillRect(x, y, w, h), H = (y, a, b) => P(a, y, b - a + 1, 1), V = (x, a, b) => P(x, a, 1, b - a + 1);
+  if (glow) { g.fillStyle = STAR_PINK; for (let y = 0; y < 14; y++) for (let x = 4; x < 28; x++) if ((x + y) % 4 === 0 && Math.hypot(x - 16, (y - 7) * 1.2) < 10 && Math.hypot(x - 16, (y - 7) * 1.2) > 5.5) P(x, y); g.fillStyle = PW; }
+  // a stepped base, a carved column with the keystone slot, and a top slab
+  H(29, 4, 27); V(4, 27, 29); V(27, 27, 29); H(27, 4, 27);
+  H(26, 7, 24); V(7, 24, 26); V(24, 24, 26); H(24, 7, 24);
+  V(11, 16, 23); V(20, 16, 23);
+  H(15, 8, 23); H(13, 8, 23); V(8, 13, 15); V(23, 13, 15);
+  P(14, 18, 4, 1); P(14, 18, 1, 4); P(17, 18, 1, 4); P(14, 21, 4, 1); if (open) P(15, 19, 2, 2);   // the keystone slot
+  P(13, 17, 1, 1); P(18, 17, 1, 1); P(13, 23, 1, 1); P(18, 23, 1, 1);
+  // the floating rune stone: a diamond with a glyph
+  const cy = 7 + bob;
+  for (let i = 0; i <= 4; i++){ H(cy - 4 + i, 16 - i, 15 + i); H(cy + 4 - i, 16 - i, 15 + i); }
+  g.clearRect(15, cy - 2, 2, 1); g.clearRect(14, cy, 4, 1); g.clearRect(15, cy + 2, 2, 1); g.clearRect(15, cy - 1, 1, 3);
+}
+function drawAltarIcons(root){ (root || document).querySelectorAll('canvas.altaricon, canvas.altarbig').forEach(cv => { if (!cv.closest('.altarbox')) drawAltar(cv, 0, false, false); }); }
+function openAltarUI(key, outcome){
+  const el = document.getElementById('award'); if (!el) return;
+  const leg = outcome.kind === 'legendary', left = D.altar.keys.length, lr = leg ? LRUNE_BY[outcome.id] : null;
+  const prize = leg ? `<span class="kick legk">Legendary rune!</span>${itemArt({...lr, kind:'lrune'})}<b class="awn">${esc(lr.name)}</b><p class="how">${esc(lr.text)}. It's yours for good: equip it in the ✦ slot in Inventory.</p>`
+    : `<span class="kick">The altar answers</span><b class="awn chestgain">${outcome.kind === 'gold' ? '<i class="gdot"></i>' : ''}+${outcome.n} ${outcome.kind === 'gold' ? 'G' : outcome.kind === 'xp' ? 'XP' : 'MP'}</b>`;
+  el.innerHTML = `<div class="awardin chestbox altarbox" role="dialog" aria-modal="true" aria-label="Rune Altar">
+    <span class="kick">Rune Altar</span><canvas class="chestbig" width="32" height="32" aria-hidden="true"></canvas><p class="how altarmsg">Meditating…</p>
+    <div class="chestprize" hidden>${prize}
+      <div class="row" style="gap:8px;justify-content:center;margin-top:6px">${leg ? `<button class="btn primary" data-altardone>Wonderful</button>` : `<button class="btn" data-altardone>Nice</button>${left ? `<button class="btn primary" data-meditate>Meditate again (${left})</button>` : ''}`}</div></div></div>`;
+  el.hidden = false; drawIcons(el);
+  document.querySelectorAll('.app, .nav').forEach(n => n.inert = true);
+  const cv = el.querySelector('.chestbig'), box = el.querySelector('.chestprize'), msg = el.querySelector('.altarmsg');
+  const reveal = () => { drawAltar(cv, 0, leg, true); if (msg) msg.hidden = true; box.hidden = false; starburst(cv.getBoundingClientRect(), leg); if (leg && typeof confetti === 'function') confetti(cv.getBoundingClientRect()); const b = box.querySelector('button.primary, button'); if (b) b.focus(); };
+  if (!motionOK){ reveal(); return; }
+  // the keystone settles into the plinth, the stone bobs and orbiting pixels gather, then it answers (longer for a legendary)
+  const t0 = performance.now(), wait = leg ? 2.2 : 1.3, g = cv.getContext('2d');
+  const step = now => {
+    const t = (now - t0) / 1000; if (!cv.isConnected) return;
+    if (t < wait){
+      drawAltar(cv, Math.round(Math.sin(t * 4) * 1), leg && t > 1 && Math.sin(t * 20) > -0.3, t > 0.3);
+      const n = 6, r = Math.max(3, 11 - t / wait * 7); g.fillStyle = PW;
+      for (let i = 0; i < n; i++){ const a = t * (3 + t) + i * Math.PI * 2 / n; g.fillRect(Math.round(16 + Math.cos(a) * r), Math.round(7 + Math.sin(a) * r * 0.7), 1, 1); }
+      requestAnimationFrame(step);
+    } else reveal();
+  };
+  requestAnimationFrame(step);
+}
 /* ---------- Focus chests ---------- */
 function chestCard(){
   const n = D.pomo.chests.length; if (!n) return '';
@@ -3136,7 +3263,9 @@ function renderInner(){
   // prize gear you no longer own (the win was undone) comes off too
   for (const sl of Object.keys(S.gear)){ const g = GEAR_BY[S.gear[sl]]; if (g && g.boss && !D.drops.has(g.id)){ S.gear[sl] = null; S.gearLog.push({ts: Date.now(), slot: sl, id: null}); save(true); D = derive(); } }
   if (!S.stepFrom && !recoveryMode){ S.stepFrom = D.today; save(true); D = derive(); }
-  if (!S.chestFrom && !recoveryMode){ S.chestFrom = Date.now(); save(true); D = derive(); }   // Focus chests start with sessions finished from now on   // partial-progress pay starts the day this build first ran, never earlier
+  if (!S.chestFrom && !recoveryMode){ S.chestFrom = Date.now(); save(true); D = derive(); }
+  if (!S.altarFrom && !recoveryMode){ S.altarFrom = Date.now(); save(true); D = derive(); }   // the Rune Altar opens only after bosses beaten from now on
+  if (D.altar.wins.length && !recoveryMode){ D.altar.wins.forEach(w => { if (!S.lrunes[w.id]) S.lrunes[w.id] = w.key; }); save(true); D = derive(); }   // legendary runes are kept for good   // Focus chests start with sessions finished from now on   // partial-progress pay starts the day this build first ran, never earlier
   if (S.seenInit === false){ S.seenDrops = Array.from(new Set([...S.seenDrops, ...[...D.drops].filter(id => ITEM[id] && ITEM[id].boss)])); S.seenInit = true; save(true); D = derive(); }
   for (const c of Object.keys(S.results)) if (+c >= D.freezeBefore) delete S.results[c];
   const nr = Object.keys(D.newResults || {}).filter(c => !S.results[c]);
@@ -3159,7 +3288,7 @@ function renderInner(){
 }
 function drawIcons(root){
   const st = Math.max(1, stage(D.lv.level));
-  drawChestIcons(root);
+  drawChestIcons(root); drawAltarIcons(root);
   root.querySelectorAll('canvas[data-icon]').forEach(cv => {
     const [kind, id] = cv.dataset.icon.split(':');
     if (kind === 'bg') drawScene(cv, {bg:id, f:0, motion:false, noPet:true});
@@ -3341,6 +3470,7 @@ function undoLock(chk, before){
   const spentPts = Object.values(S.skills).reduce((a,b) => a + b, 0);
   const skillBad = spentPts > chk.lv.level || Object.keys(S.skills).some(sid => SKILL_BY[sid].unlock > chk.lv.level || (S.skills[sid] && skillStatOk(SKILL_BY[sid], before.statLv) && !skillStatOk(SKILL_BY[sid], chk.statLv)));
   const tokensUsed = S.runeBuys.filter(r => r.token).length + S.bag.filter(b => b.token).length;
+  if (Object.keys(S.altarUsed || {}).some(k => before.altar.all.has(k) && !chk.altar.all.has(k))) return 'Locked in: its Keystone was already used at the Rune Altar.';
   if (chk.castDeficit > before.castDeficit) return 'Locked in: a skill already used the MP from this.';
   if (chk.balance < 0) return "Locked in: you've already spent the gold from this.";
   if (skillBad) return 'Locked in: your skill points came from this XP.';
@@ -3393,7 +3523,9 @@ function toggle(id, el){
   render();
   if (recoveryMode) return;
   if (completing) confetti(r);
-  if (dx > 0){
+  const keyGain = after.altar.keys.length > before.altar.keys.length;
+  if (keyGain){ floatAt(r.left + r.width/2, r.top, `<span style="color:var(--gold)">+1 Keystone</span>${dx > 0 ? `  <span style="color:var(--accent)">+${dx} XP</span>` : ''}`); jumpUntil = Date.now() + 700; }
+  else if (dx > 0){
     floatAt(r.left + r.width/2, r.top, `<span style="color:var(--accent)">+${dx} XP</span>  <span style="color:var(--gold)">+${dg} G</span>${dd>0 && before.cur.status==='now' ? `<br><span style="color:var(--hp)">-${dd} HP</span>` : ''}`);
     jumpUntil = Date.now() + 700; if (dd > 0) hurtUntil = Date.now() + 500;
   }
@@ -3560,6 +3692,17 @@ function onClick(e){
     S.runeBuys.push({id:r.id, ts:Date.now(), date:D.today, g:0, bag:true}); save(); render(); toast(`${runeName(r)} is active for ${r.days} days`); return; }
   if (el.dataset.runetoken){ const r = RUNE_BY[el.dataset.runetoken]; if (!r || D.tokens < 1 || !meetsReq(r, D.statLv)) return;
     S.bag.push({id:r.id, ts:Date.now(), date:D.today, g:0, token:true}); save(); render(); toast(`Free ${runeName(r)} added to your bag`); return; }
+  if ('meditate' in el.dataset){
+    if (recoveryMode) return; const key = D.altar.keys[0]; if (!key) return;
+    if (!document.getElementById('sheet').hidden) closeEditor();
+    S.altarUsed[key] = Date.now(); save(); D = derive();
+    const won = D.altar.won.get(key);
+    openAltarUI(key, won ? {kind: 'legendary', id: won} : altarPrize(key)); sfxInit(); sfx(won ? 'focusDone' : 'start');
+    render(); return; }
+  if ('altardone' in el.dataset){ const aw = document.getElementById('award'); aw.hidden = true; aw.innerHTML = ''; document.querySelectorAll('.app, .nav').forEach(n => n.inert = false); render(); showAward(); return; }
+  if (el.dataset.lrune){ const id = el.dataset.lrune; if (!LRUNE_BY[id] || !D.altar.got.includes(id)) return;
+    const cur = gearAt(Date.now()).lrune, next = cur === id ? null : id; S.gearLog.push({ts: Date.now(), slot: 'lrune', id: next}); save(); render();
+    toast(next ? `${LRUNE_BY[id].name} equipped.` : `${LRUNE_BY[id].name} taken off.`); return; }
   if ('openchest' in el.dataset){
     if (recoveryMode) return; const ts = D.pomo.chests[0]; if (!ts) return;
     if (!document.getElementById('sheet').hidden) closeEditor();
@@ -3588,7 +3731,7 @@ function onClick(e){
     const before = D; it.doneOn = D.today; it.doneTs = Date.now(); save(); render(); if (recoveryMode) return;
     confetti(r);
     const dx = D.xp - before.xp, dg = D.balance - before.balance;
-    floatAt(r.left + r.width/2, r.top, dx > 0 || dg > 0 ? `<span style="color:var(--accent)">+${dx} XP</span>  <span style="color:var(--gold)">+${dg} G</span>` : 'Done');
+    floatAt(r.left + r.width/2, r.top, dx > 0 || dg > 0 ? `<span style="color:var(--accent)">+${dx} XP</span>  <span style="color:var(--gold)">+${dg} G</span>` : D.altar.keys.length > before.altar.keys.length ? `<span style="color:var(--gold)">+1 Keystone</span>` : 'Done');
     if (D.lv.level > before.lv.level) toast(`Level ${D.lv.level}!`); return; }
   if (el.dataset.delitem){ const [lid, iid] = el.dataset.delitem.split('|'); const L = S.todos.lists.find(x => x.id === lid); if (!L) return; const it = L.items.find(x => x.id === iid); if (!it || it.doneOn) return; L.items = L.items.filter(x => x.id !== iid); save(); render(); return; }
   if (el.dataset.collapse){ const k = el.dataset.collapse; if (k !== 'vitals' && k !== 'boss') return; S.settings.collapse[k] = !S.settings.collapse[k]; save(); render(); return; }
