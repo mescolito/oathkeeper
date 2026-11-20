@@ -513,6 +513,8 @@ details.howto .how{padding-bottom:12px;margin:0}
 .item.owned canvas{filter:grayscale(1);opacity:.45}
 .item.owned > b, .item.owned > .small{opacity:.55}
 .item.locked canvas{filter:brightness(.42)}
+.invbtns{display:flex;flex-direction:column;gap:6px;align-items:stretch;flex:none}
+.invbtns .btn{white-space:nowrap}
 .item .tags{display:flex;flex-wrap:wrap;gap:4px;justify-content:center}
 .tagtier{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;background:var(--track);color:var(--ink);border-radius:999px;padding:2px 7px}
 .ownedtag{align-self:center;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
@@ -628,7 +630,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '5aeecc566c';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '2c2585f55b';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1434,6 +1436,8 @@ const MOOD_BOOST = {great:1.2, good:1.15, meh:1, bad:1, awful:1};
 const MOOD_HURT  = {great:1, good:1, meh:1, bad:1.15, awful:1.2};
 const BOSS_REWARD = b => b.final ? 3000 : b.rite ? 700 : b.titan ? 400 : b.seasonal ? 300 : 150;
 const meetsReq = (it, statLv) => (!it.lvl || (typeof D !== 'undefined' && D && D.lv.level >= it.lvl)) && (!it.req || Object.entries(it.req).every(([k,v]) => statLv[k] >= v));
+// gear you already own only needs its stats to wear: level limits only decide what the shop will sell you
+const canWear = (it, statLv) => !it.req || Object.entries(it.req).every(([k,v]) => statLv[k] >= v);
 const reqText = it => [it.lvl ? `Lv ${it.lvl}` : '', ...(it.req ? Object.entries(it.req).map(([k,v]) => `${STATS[k].abbr} ${v}`) : [])].filter(Boolean).join(' + ');
 function schedAt(t, k){ const h = t.sched; if (!h || !h.length) return {cad:t.cad, days:t.days}; let cur = h[0]; for (const e of h) if (e.from <= k) cur = e; return cur; }
 const lastDom = (y, m) => new Date(y, m + 1, 0).getDate();
@@ -3293,6 +3297,8 @@ function itemArt(it, small){
 const invTabOf = it => it.potion ? 'potion' : it.rune ? 'rune' : it.gear ? 'gear' : it.kind === 'hat' ? 'hat' : 'looks';
 
 /* ---------- inventory (third panel under the plus) ---------- */
+// anything you bought can be sold back for half, at any level (two taps, like in the shop)
+const sellBtn = (it, eq) => S.owned.includes(it.id) && it.price > 0 && !it.boss && !it.legendary ? `<button class="btn sm sellbtn ${sellArm === it.id ? 'armed' : ''}" data-sell="${it.id}">${sellArm === it.id ? `Sell${eq ? ' (takes it off)' : ''}?` : `Sell · ${Math.floor(it.price / 2)} G`}</button>` : '';
 let invTab = 'gear';
 const INV_TABS = [['gear','Gear'],['potion','Potions'],['rune','Runes'],['hat','Hats'],['looks','Looks']];
 function renderInventory(){
@@ -3311,11 +3317,11 @@ function renderInventory(){
     return `<button class="slot legend ${lr ? 'full' : ''}" ${lr ? `data-lrune="${lr.id}"` : 'disabled'} aria-label="Legendary rune: ${lr ? esc(lr.name) + ', tap to take off' : 'empty'}"><span class="slotart">${lr ? itemArt({...lr, kind:'lrune'}, true) : '<span class="slotempty">✦</span>'}</span><span class="slotl">Legendary</span><span class="slotn">${lr ? esc(lr.name.replace('Rune of the ', '')) : D.altar.got.length ? 'Empty' : 'Locked'}</span></button>`; })()}</div>
   <p class="how">One item per hand, plus armor and a helmet. Up to ${RUNE_SLOTS} runes can be active at once, and each slot frees up when its rune runs out. The ✦ slot holds one legendary rune from the Rune Altar; they never run out and you can swap them any time.</p>`;
   let list = '';
-  const row = (it, sub, btn) => `<div class="invrow">${itemArt(it, true)}<span class="tbody"><span class="tname">${esc(it.name)}</span><span class="tmeta">${sub}</span></span>${btn}</div>`;
+  const row = (it, sub, btn) => `<div class="invrow">${itemArt(it, true)}<span class="tbody"><span class="tname">${esc(it.name)}</span><span class="tmeta">${sub}</span></span><span class="invbtns">${btn}</span></div>`;
   if (invTab === 'gear'){
     const mine = GEAR.filter(x => owns(x.id));
-    list = mine.map(x => { const it = {...x, gear:true}, eq = S.gear[x.slot] === x.id, ok = meetsReq(x, D.statLv);
-      return row(it, `${esc(SLOTS[x.slot])}${x.style ? ' · ' + STYLES[x.style].name : ''} · ${esc(gearText(x))}${x.boss ? ' · prize' : ''}`, ok || eq ? `<button class="btn ${eq ? 'ghost' : 'primary'} sm" data-equipgear="${x.id}">${eq ? 'Take off' : 'Equip'}</button>` : `<button class="btn sm" disabled>Needs ${reqText(x)}</button>`); }).join('');
+    list = mine.map(x => { const it = {...x, gear:true}, eq = S.gear[x.slot] === x.id, ok = canWear(x, D.statLv);
+      return row(it, `${esc(SLOTS[x.slot])}${x.style ? ' · ' + STYLES[x.style].name : ''} · ${esc(gearText(x))}${x.boss ? ' · prize' : ''}`, (ok || eq ? `<button class="btn ${eq ? 'ghost' : 'primary'} sm" data-equipgear="${x.id}">${eq ? 'Take off' : 'Equip'}</button>` : `<button class="btn sm" disabled>Needs ${reqText({req: x.req})}</button>`) + sellBtn(x, eq)); }).join('');
     if (!mine.length) list = `<p class="how">No gear yet. Buy weapons, shields and armor in the shop, or win them from Titans.</p>`;
   } else if (invTab === 'potion'){
     const mine = POTIONS.filter(p => D.bag[p.id]);
@@ -3331,7 +3337,7 @@ function renderInventory(){
     const kinds = invTab === 'hat' ? ['hat'] : ['bg','color'];
     const mine = ITEMS.filter(i => kinds.includes(i.kind) && owns(i.id));
     list = mine.map(i => { const eq = S.equip[i.kind] === i.id; const what = i.kind === 'hat' ? 'Helmet' : i.kind === 'bg' ? 'Scene' : 'Pattern';
-      return row(i, `${what}${i.style ? ' · ' + STYLES[i.style].name : ''}${i.fx ? ' · ' + esc(fxText(i.fx)) : ''}${i.boss ? ' · prize' : i.season ? ` · ${esc(i.when)}` : ''}`, i.kind === 'hat' ? `<button class="btn ${eq ? 'ghost' : 'primary'} sm" data-equip="${i.id}">${eq ? 'Take off' : 'Wear'}</button>` : `<button class="btn ${eq ? 'ghost' : 'primary'} sm" data-equip="${i.id}" ${eq ? 'disabled' : ''}>${eq ? 'In use' : 'Use'}</button>`); }).join('');
+      return row(i, `${what}${i.style ? ' · ' + STYLES[i.style].name : ''}${i.fx ? ' · ' + esc(fxText(i.fx)) : ''}${i.boss ? ' · prize' : i.season ? ` · ${esc(i.when)}` : ''}`, (i.kind === 'hat' ? `<button class="btn ${eq ? 'ghost' : 'primary'} sm" data-equip="${i.id}">${eq ? 'Take off' : 'Wear'}</button>` : `<button class="btn ${eq ? 'ghost' : 'primary'} sm" data-equip="${i.id}" ${eq ? 'disabled' : ''}>${eq ? 'In use' : 'Use'}</button>`) + sellBtn(i, eq)); }).join('');
     if (!mine.length) list = `<p class="how">${invTab === 'hat' ? 'No hats yet. Buy them in the shop or win them from bosses.' : 'Nothing here yet.'}</p>`;
   }
   return `${altarCard()}${chestCard()}<div class="sec-h"><h2>Equipped</h2></div>${eqHtml}
@@ -4301,7 +4307,7 @@ function onClick(e){
     if (allDone && !done(k, tid)){ toggle(tid, el); toast(`All steps done: ${t.name} complete`); return; }
     render(); return; }
   if (el.dataset.buy){ const it = ITEM[el.dataset.buy]; if (it && !it.boss && it.price > 0 && inSeason(it, D.today) && D.balance >= it.price && !S.owned.includes(it.id) && meetsReq(it, D.statLv)){ S.owned.push(it.id); if (it.kind === 'hat') setHat(it.id); else S.equip[it.kind] = it.id; save(); render(); toast(`Bought ${it.name}. It's in your inventory.`); } return; }
-  if (el.dataset.equip){ const it = ITEM[el.dataset.equip]; if (!it || !((it.boss || it.legendary) ? D.drops.has(it.id) : (S.owned.includes(it.id) || it.price === 0))) return; const slot = it.kind; if (slot === 'hat'){ if (it.lvl && D.lv.level < it.lvl && S.equip.hat !== it.id) return; setHat(S.equip.hat === it.id ? null : it.id); } else S.equip[slot] = it.id; save(); render(); return; }
+  if (el.dataset.equip){ const it = ITEM[el.dataset.equip]; if (!it || !((it.boss || it.legendary) ? D.drops.has(it.id) : (S.owned.includes(it.id) || it.price === 0))) return; const slot = it.kind; if (slot === 'hat'){ setHat(S.equip.hat === it.id ? null : it.id); } else S.equip[slot] = it.id; save(); render(); return; }
   if (el.dataset.todaytab){ todayTab = el.dataset.todaytab === 'week' ? 'week' : 'day'; try { localStorage.setItem(TODAY_TAB_KEY, todayTab); } catch(e){} render(); return; }
   if ('newtask' in el.dataset){ openEditor(null); const [nc, nt] = (el.dataset.newtask || '').split('|'); if (nc === 'week') draft.cad = 'week'; if (TOD_KEYS.includes(nt)) draft.tod = nt; if (nc === 'week' || nt) renderEditor(); return; }
   if (el.dataset.invtab){ invTab = el.dataset.invtab; if (sheetMode === 'inv' && !document.getElementById('sheet').hidden){ renderSheet(); return; } }
@@ -4362,7 +4368,7 @@ function onClick(e){
   if (el.dataset.buygear){ const it = GEAR_BY[el.dataset.buygear];
     if (it && !it.boss && !it.legendary && it.price > 0 && D.balance >= it.price && !S.owned.includes(it.id) && meetsReq(it, D.statLv)){ S.owned.push(it.id); S.gear[it.slot] = it.id; S.gearLog.push({ts:Date.now(), slot:it.slot, id:it.id}); save(); render(); toast(`Equipped ${gearName(it)}`); } return; }
   if (el.dataset.equipgear){ const it = GEAR_BY[el.dataset.equipgear]; if (!it || !owns(it.id)) return; const next = S.gear[it.slot] === it.id ? null : it.id;
-    if (next && !meetsReq(it, D.statLv)) return;
+    if (next && !canWear(it, D.statLv)) return;
     S.gear[it.slot] = next; S.gearLog.push({ts:Date.now(), slot:it.slot, id:next}); save(); render(); return; }
   if (el.dataset.ostat && draft && draft.pool){ readEditorFields(); const [i, k] = el.dataset.ostat.split(':'); const o = draft.pool[+i]; const j = o.stats.indexOf(k);
     if (j >= 0){ if (o.stats.length > 1) o.stats.splice(j,1); } else { o.stats.push(k); if (o.stats.length > 2) o.stats.shift(); }
