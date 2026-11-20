@@ -379,6 +379,9 @@ html[data-mode="dark"] .awardin .btn.primary{color:var(--inv)}
 .tdpill.tod-morning{background:#f2d982;box-shadow:none;color:#171614}
 .tdpill.tod-afternoon{background:#f4bf92;box-shadow:none;color:#171614}
 .tdpill.tod-evening{background:#c9c4ec;box-shadow:none;color:#171614}
+.tdpill.hab-try{background:#bccbd6;box-shadow:none;color:#171614}
+.tdpill.hab-reg{background:#a9b97c;box-shadow:none;color:#171614}
+.tdpill.hab-mast{background:#eeb7d8;box-shadow:none;color:#171614}
 .todgrp{margin-top:4px}
 .todpick button{padding:9px 6px;font-size:13px}
 .tdgroup.empty .tdpill{opacity:.55}
@@ -495,6 +498,9 @@ details.howto .how{padding-bottom:12px;margin:0}
 
 .item.owned canvas{filter:grayscale(1);opacity:.45}
 .item.owned > b, .item.owned > .small{opacity:.55}
+.item.locked canvas{filter:brightness(.42)}
+.item .tags{display:flex;flex-wrap:wrap;gap:4px;justify-content:center}
+.tagtier{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;background:var(--track);color:var(--ink);border-radius:999px;padding:2px 7px}
 .ownedtag{align-self:center;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .sellbtn{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line);color:var(--ink)}
 .sellbtn.armed{background:var(--pink);box-shadow:none;color:#171614}
@@ -539,7 +545,31 @@ html[data-mode="dark"] .sneed{color:#f0a3ab}
 .tree{display:flex;flex-direction:column;gap:14px}
 .branch{background:var(--card);border-radius:22px;padding:12px 14px 4px;box-shadow:0 1px 0 var(--line)}
 .branch.lean{box-shadow:inset 0 0 0 2px var(--ink)}
-.bhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+.bhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;width:100%;background:none;border:0;padding:2px 0;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.bhead .clchev{margin-left:auto;display:inline-flex}
+.bhead .leantag + .clchev{margin-left:6px}
+.branch.shut{padding-bottom:10px}
+.branch.shut .bhead{margin-bottom:0}
+.eqtag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;background:var(--ink);color:var(--inv);border-radius:999px;padding:1px 7px;vertical-align:middle}
+.skgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sktile{background:var(--card);border-radius:20px;padding:12px;display:flex;flex-direction:column;gap:8px;box-shadow:0 1px 0 var(--line);min-width:0}
+.sktile.ready{box-shadow:inset 0 0 0 2px var(--ink)}
+.sktile.empty{box-shadow:inset 0 0 0 2px var(--line);background:transparent;justify-content:center;align-items:flex-start;min-height:104px;border:0;outline:2px dashed var(--line);outline-offset:-2px}
+.sktile .btn{width:100%;padding-left:6px;padding-right:6px;font-size:13px}
+.sktile select{font-size:13px;padding:6px 8px;min-width:0;width:100%}
+.skhead{display:flex;align-items:center;gap:6px;min-width:0}
+.skhead .sname{font-size:15px;line-height:1.15;flex:1;min-width:0}
+.kdot{width:10px;height:10px;border-radius:50%;flex:none}
+.kdot.dmg{background:var(--pink)} .kdot.relief{background:var(--sage)} .kdot.buff{background:var(--blue)}
+.skoff{flex:none;width:24px;height:24px;border-radius:50%;border:0;background:var(--track);color:var(--ink);font-size:11px;line-height:24px;padding:0;cursor:pointer}
+.skmeta{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.skmeta .lvpips{gap:3px}
+.skmeta .lvpips i{width:7px;height:7px}
+.skmore{background:var(--card);border-radius:22px;box-shadow:0 1px 0 var(--line);margin-top:12px}
+.skmorehead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;width:100%;background:none;border:0;padding:14px 16px;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.skmorehead .clchev{margin-left:auto;display:inline-flex}
+.skmore .sprows{padding-top:0}
+.linkbtn{background:none;border:0;padding:0;color:inherit;font:inherit;text-decoration:underline;cursor:pointer}
 .bhead b{font-size:16px}
 .bdot{width:14px;height:14px;border-radius:50%;background:var(--bc);flex:none;box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.12)}
 .leantag{margin-left:auto;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;background:var(--ink);color:var(--inv);border-radius:999px;padding:2px 8px}
@@ -581,7 +611,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'fa8d784ea3';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'b5cd465f06';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -656,24 +686,70 @@ const ROULETTES = [
 ];
 /* Gear: weapons add damage and crits; armor adds defense (less damage from boss attacks) and dodge. */
 /* Play styles: Warrior (Might, attack), Guardian (Defense, HP), Rogue (Mobility, dodge, crits), Caster (Focus, MP, skill damage). */
-const STYLES = {war:{name:'Warrior', c:'#f2d982'}, guard:{name:'Guardian', c:'#a9b97c'}, rogue:{name:'Rogue', c:'#eeb7d8'}, cast:{name:'Caster', c:'#c9b8f0'}};
+const STYLES = {war:{name:'Warrior', c:'#f2d982'}, guard:{name:'Guardian', c:'#a9b97c'}, rogue:{name:'Rogue', c:'#eeb7d8'}, cast:{name:'Caster', c:'#c9b8f0'}, novice:{name:'Novice', c:'#d9d3c3'}};
+/* Gear comes in tiers so any build can start early: a plain Novice set anyone can wear at level 1, then a set per build
+   at level 5 (Early), 15 (Mid) and 30 (End), each with a specialty piece or two for a different take on the build. */
+const TIERS = [{k:'novice', name:'Novice', lvl:1}, {k:'early', name:'Early', lvl:5}, {k:'mid', name:'Mid', lvl:15}, {k:'end', name:'End', lvl:30}];
+const TIER_BY = Object.fromEntries(TIERS.map((t, i) => [t.k, {...t, i}]));
 const GEAR = [
-  {id:'driftsword', style:'war',   slot:'weapon', name:'Driftwood Sword',   price:120,                 fx:{st:{MGT:2}, flat:2}},
-  {id:'mace', lvl:3, style:'war',  slot:'weapon', name:'Kettlebell Mace',   price:220, req:{MGT:3},    fx:{st:{MGT:2}, pct:{MGT:.4}}},
-  {id:'trident', lvl:3, style:'guard', slot:'weapon', name:'Riptide Trident', price:220, req:{STA:3},  fx:{st:{STA:2}, pct:{STA:.4}}},
-  {id:'whip', lvl:3, style:'rogue', slot:'weapon', name:'Stretch-Strap Whip',price:220, req:{MOB:3},   fx:{st:{MOB:2}, pct:{MOB:.4}, crit:.03}},
-  {id:'wand', lvl:4, style:'cast', slot:'weapon', name:'Tidecaller Wand',   price:200, req:{HRT:3},    fx:{st:{HRT:3}, spell:.15, mpTask:2}},
-  {id:'broom', lvl:3, style:'cast',slot:'weapon', name:'Broom of Order',    price:220, req:{HRT:3},    fx:{st:{HRT:1}, pct:{HRT:.4}}},
-  {id:'staff', lvl:8, style:'cast',slot:'weapon', name:'Coral Staff',       price:420, req:{HRT:5},    fx:{st:{HRT:5}, spell:.35, mpTask:3}},
-  {id:'cleaver', lvl:10, style:'war', slot:'weapon', name:'Titan Cleaver',  price:650, req:{MGT:6,STA:5}, fx:{st:{MGT:5}, all:.2, flat:4}},
-  {id:'buckler', style:'guard',    slot:'offhand',name:'Cork Buckler',      price:90,                  fx:{st:{ARM:1, MOB:1}}},
-  {id:'shield', lvl:3, style:'guard', slot:'offhand',name:'Tower Shield',   price:220, req:{ARM:3},    fx:{st:{ARM:3, MOB:1}, pct:{ARM:.4}}},
-  {id:'dirk', lvl:4, style:'rogue',slot:'offhand',name:'Shell Dirk',        price:160, req:{MOB:3},    fx:{st:{MOB:2}, crit:.05}},
-  {id:'tome', lvl:5, style:'cast', slot:'offhand',name:'Tide Tome',         price:180, req:{HRT:3},    fx:{st:{HRT:2}, spell:.2}},
-  {id:'vest', style:'guard',       slot:'armor',  name:'Neoprene Vest',     price:100,                 fx:{st:{ARM:2}}},
-  {id:'guards', lvl:4, style:'guard', slot:'armor', name:'Knee Guards',     price:250, req:{ARM:3},    fx:{st:{ARM:3, MOB:1}, sxp:{ARM:.1}}},
-  {id:'robe', lvl:4, style:'cast', slot:'armor',  name:'Sea-Silk Robe',     price:200, req:{HRT:3},    fx:{st:{HRT:3, ARM:1}, mpTask:2}},
-  {id:'plate', lvl:8, style:'war', slot:'armor',  name:'Iron Plate',        price:450, req:{ARM:5},    fx:{st:{ARM:6, MGT:1}, sxp:{MGT:.1}}},
+  // Novice: anyone, level 1
+  {id:'stick',     tier:'novice', style:'novice', slot:'weapon',  name:'Practice Stick',  price:40,  fx:{st:{MGT:1}}},
+  {id:'potlid',    tier:'novice', style:'novice', slot:'offhand', name:'Pot Lid',         price:40,  fx:{st:{ARM:1}}},
+  {id:'journal',   tier:'novice', style:'novice', slot:'offhand', name:'Pocket Journal',  price:45,  fx:{st:{HRT:1}, mpTask:1}, spec:true},
+  {id:'hoodie',    tier:'novice', style:'novice', slot:'armor',   name:'Comfy Hoodie',    price:50,  fx:{st:{STA:1}}},
+  // Warrior
+  {id:'driftsword', tier:'early', lvl:5,  style:'war', slot:'weapon',  name:'Driftwood Sword',  price:120,                    fx:{st:{MGT:2}, flat:2}},
+  {id:'mace',       tier:'early', lvl:5,  style:'war', slot:'weapon',  name:'Kettlebell Mace',  price:220, req:{MGT:3},       fx:{st:{MGT:2}, pct:{MGT:.4}}, spec:true},
+  {id:'wraps',      tier:'early', lvl:5,  style:'war', slot:'offhand', name:'Hand Wraps',       price:120,                    fx:{st:{MGT:1, ARM:1}}},
+  {id:'jerkin',     tier:'early', lvl:5,  style:'war', slot:'armor',   name:'Leather Jerkin',   price:160,                    fx:{st:{ARM:2, MGT:1}}},
+  {id:'cleaver',    tier:'mid',   lvl:15, style:'war', slot:'weapon',  name:'Titan Cleaver',    price:650, req:{MGT:8},       fx:{st:{MGT:5}, all:.2, flat:4}},
+  {id:'warhammer',  tier:'mid',   lvl:15, style:'war', slot:'weapon',  name:'War Hammer',       price:700, req:{MGT:8},       fx:{st:{MGT:4}, pct:{MGT:.4}, crit:.05}, spec:true},
+  {id:'bracer',     tier:'mid',   lvl:15, style:'war', slot:'offhand', name:'Spiked Bracer',    price:520, req:{MGT:7},       fx:{st:{MGT:3, ARM:2}}},
+  {id:'plate',      tier:'mid',   lvl:15, style:'war', slot:'armor',   name:'Iron Plate',       price:450, req:{ARM:6},       fx:{st:{ARM:6, MGT:1}, sxp:{MGT:.1}}},
+  {id:'stormsplit', tier:'end',   lvl:30, style:'war', slot:'weapon',  name:'Stormsplitter',    price:2000, req:{MGT:14},     fx:{st:{MGT:8}, all:.3, crit:.05, flat:6}},
+  {id:'maul',       tier:'end',   lvl:30, style:'war', slot:'weapon',  name:'Colossus Maul',    price:1900, req:{MGT:14, STA:10}, fx:{st:{MGT:9, STA:2}, pct:{MGT:.5}}, spec:true},
+  {id:'warbuckler', tier:'end',   lvl:30, style:'war', slot:'offhand', name:'Warlord’s Buckler',price:1400, req:{MGT:12},     fx:{st:{MGT:5, ARM:4}}},
+  {id:'dragonplate',tier:'end',   lvl:30, style:'war', slot:'armor',   name:'Dragonbone Plate', price:1800, req:{ARM:12},     fx:{st:{ARM:9, MGT:3}, sxp:{MGT:.15}}},
+  // Guardian
+  {id:'trident',    tier:'early', lvl:5,  style:'guard', slot:'weapon',  name:'Riptide Trident',  price:220, req:{STA:3},     fx:{st:{STA:2}, pct:{STA:.4}}},
+  {id:'shield',     tier:'early', lvl:5,  style:'guard', slot:'offhand', name:'Tower Shield',     price:220, req:{ARM:3},     fx:{st:{ARM:3, MOB:1}, pct:{ARM:.4}}},
+  {id:'buckler',    tier:'early', lvl:5,  style:'guard', slot:'offhand', name:'Cork Buckler',     price:90,                   fx:{st:{ARM:1, MOB:1}}, spec:true},
+  {id:'vest',       tier:'early', lvl:5,  style:'guard', slot:'armor',   name:'Neoprene Vest',    price:100,                  fx:{st:{ARM:2}}},
+  {id:'guards',     tier:'early', lvl:5,  style:'guard', slot:'armor',   name:'Knee Guards',      price:250, req:{ARM:3},     fx:{st:{ARM:3, MOB:1}, sxp:{ARM:.1}}, spec:true},
+  {id:'flail',      tier:'mid',   lvl:15, style:'guard', slot:'weapon',  name:'Anchor Flail',     price:680, req:{STA:8},     fx:{st:{STA:4, ARM:2}, pct:{STA:.4}}},
+  {id:'reefwall',   tier:'mid',   lvl:15, style:'guard', slot:'offhand', name:'Reef Bulwark',     price:620, req:{ARM:8},     fx:{st:{ARM:5, STA:2}}},
+  {id:'coralmail',  tier:'mid',   lvl:15, style:'guard', slot:'armor',   name:'Coral Mail',       price:650, req:{ARM:7},     fx:{st:{ARM:5, STA:3}}},
+  {id:'turtle',     tier:'mid',   lvl:15, style:'guard', slot:'armor',   name:'Turtle Shell',     price:640, req:{ARM:8},     fx:{st:{ARM:6}, sxp:{ARM:.15}, def:.03}, spec:true},
+  {id:'halberd',    tier:'end',   lvl:30, style:'guard', slot:'weapon',  name:'Tidewall Halberd', price:1900, req:{STA:14},   fx:{st:{STA:7, ARM:3}, pct:{STA:.5}}},
+  {id:'bastion',    tier:'end',   lvl:30, style:'guard', slot:'offhand', name:'Bastion of the Bay', price:1700, req:{ARM:14}, fx:{st:{ARM:8, STA:3}}},
+  {id:'mirror',     tier:'end',   lvl:30, style:'guard', slot:'offhand', name:'Mirror Shield',    price:1650, req:{ARM:12, HRT:8}, fx:{st:{ARM:6, HRT:2}, def:.05, antiheal:.25}, spec:true},
+  {id:'abyssplate', tier:'end',   lvl:30, style:'guard', slot:'armor',   name:'Abyssal Plate',    price:1800, req:{ARM:13},   fx:{st:{ARM:8, STA:5}}},
+  // Rogue
+  {id:'whip',       tier:'early', lvl:5,  style:'rogue', slot:'weapon',  name:'Stretch-Strap Whip', price:220, req:{MOB:3},   fx:{st:{MOB:2}, pct:{MOB:.4}, crit:.03}},
+  {id:'dirk',       tier:'early', lvl:5,  style:'rogue', slot:'offhand', name:'Shell Dirk',       price:160, req:{MOB:3},     fx:{st:{MOB:2}, crit:.05}},
+  {id:'hook',       tier:'early', lvl:5,  style:'rogue', slot:'offhand', name:'Fishhook Knife',   price:140,                  fx:{st:{MOB:1}, dodge:.03, crit:.02}, spec:true},
+  {id:'wetsuit',    tier:'early', lvl:5,  style:'rogue', slot:'armor',   name:'Wetsuit',          price:150,                  fx:{st:{MOB:2, ARM:1}}},
+  {id:'kris',       tier:'mid',   lvl:15, style:'rogue', slot:'weapon',  name:'Riptide Kris',     price:680, req:{MOB:8},     fx:{st:{MOB:4, MGT:2}, crit:.08}},
+  {id:'grapple',    tier:'mid',   lvl:15, style:'rogue', slot:'weapon',  name:'Grappling Line',   price:640, req:{MOB:8},     fx:{st:{MOB:5}, pct:{MOB:.4}}, spec:true},
+  {id:'shiv',       tier:'mid',   lvl:15, style:'rogue', slot:'offhand', name:'Barnacle Shiv',    price:500, req:{MOB:7},     fx:{st:{MOB:3}, crit:.06}},
+  {id:'kelpcloak',  tier:'mid',   lvl:15, style:'rogue', slot:'armor',   name:'Shadowkelp Cloak', price:620, req:{MOB:8},     fx:{st:{MOB:4, ARM:2}, dodge:.05}},
+  {id:'moonfang',   tier:'end',   lvl:30, style:'rogue', slot:'weapon',  name:'Moonfang Blades',  price:1900, req:{MOB:14},   fx:{st:{MOB:7, MGT:3}, crit:.12}},
+  {id:'stiletto',   tier:'end',   lvl:30, style:'rogue', slot:'offhand', name:'Eel Stiletto',     price:1400, req:{MOB:12},   fx:{st:{MOB:5}, crit:.1}},
+  {id:'phantom',    tier:'end',   lvl:30, style:'rogue', slot:'armor',   name:'Phantom Tide Cloak', price:1800, req:{MOB:13}, fx:{st:{MOB:7, ARM:3}, dodge:.08}},
+  {id:'silkwraps',  tier:'end',   lvl:30, style:'rogue', slot:'armor',   name:'Silkrunner Wraps', price:1700, req:{MOB:14},   fx:{st:{MOB:8}, dodge:.1}, spec:true},
+  // Caster
+  {id:'wand',       tier:'early', lvl:5,  style:'cast', slot:'weapon',  name:'Tidecaller Wand',   price:200, req:{HRT:3},     fx:{st:{HRT:3}, spell:.15, mpTask:2}},
+  {id:'broom',      tier:'early', lvl:5,  style:'cast', slot:'weapon',  name:'Broom of Order',    price:220, req:{HRT:3},     fx:{st:{HRT:1}, pct:{HRT:.4}}, spec:true},
+  {id:'tome',       tier:'early', lvl:5,  style:'cast', slot:'offhand', name:'Tide Tome',         price:180, req:{HRT:3},     fx:{st:{HRT:2}, spell:.2}},
+  {id:'robe',       tier:'early', lvl:5,  style:'cast', slot:'armor',   name:'Sea-Silk Robe',     price:200, req:{HRT:3},     fx:{st:{HRT:3, ARM:1}, mpTask:2}},
+  {id:'staff',      tier:'mid',   lvl:15, style:'cast', slot:'weapon',  name:'Coral Staff',       price:420, req:{HRT:8},     fx:{st:{HRT:5}, spell:.35, mpTask:3}},
+  {id:'conch',      tier:'mid',   lvl:15, style:'cast', slot:'offhand', name:'Conch of Echoes',   price:540, req:{HRT:8},     fx:{st:{HRT:4}, spell:.25}},
+  {id:'orb',        tier:'mid',   lvl:15, style:'cast', slot:'offhand', name:'Orb of Stillness',  price:520, req:{HRT:7},     fx:{st:{HRT:3}, mpMax:15}, spec:true},
+  {id:'tiderobe',   tier:'mid',   lvl:15, style:'cast', slot:'armor',   name:'Tidewoven Robe',    price:620, req:{HRT:8},     fx:{st:{HRT:5, ARM:2}, mpTask:3}},
+  {id:'maelstrom',  tier:'end',   lvl:30, style:'cast', slot:'weapon',  name:'Maelstrom Scepter', price:2000, req:{HRT:14},   fx:{st:{HRT:8}, spell:.5, mpTask:4}},
+  {id:'deeprod',    tier:'end',   lvl:30, style:'cast', slot:'weapon',  name:'Deepcurrent Rod',   price:1900, req:{HRT:13, MGT:8}, fx:{st:{HRT:6, MGT:3}, pct:{HRT:.4}, spell:.3}, spec:true},
+  {id:'grimoire',   tier:'end',   lvl:30, style:'cast', slot:'offhand', name:'Grimoire of Tides', price:1500, req:{HRT:13},   fx:{st:{HRT:6}, spell:.35}},
+  {id:'starrobe',   tier:'end',   lvl:30, style:'cast', slot:'armor',   name:'Starlight Vestments', price:1800, req:{HRT:13}, fx:{st:{HRT:8, ARM:3}, mpTask:4}},
   // legendary: only from focus sessions, one per slot
   {id:'tidebreaker', legendary:true, slot:'weapon',  name:'Tidebreaker',      fx:{st:{MGT:6, HRT:3}, crit:.1, spell:.2}},
   {id:'aegis',       legendary:true, slot:'offhand', name:'Aegis of the Deep', fx:{st:{ARM:6, MOB:3}}},
@@ -721,7 +797,7 @@ function fxText(f){
   if (f.mpTask) p.push(`+${f.mpTask} MP per task`);
   for (const k in (f.pct||{})) p.push(`+${Math.round(f.pct[k]*100)}% damage from ${STATS[k].name} tasks`);
   if (f.crit) p.push(`+${Math.round(f.crit*100)}% crit chance`);
-  if (f.def) p.push(`+${Math.round(f.def*100)}% defense`);
+  if (f.def) p.push(`+${Math.round(f.def*100)}% damage blocked`);
   if (f.dodge) p.push(`+${Math.round(f.dodge*100)}% dodge`);
   if (f.mpMax) p.push(`+${f.mpMax} max MP`);
   for (const k in (f.sxp||{})) p.push(`+${Math.round(f.sxp[k]*100)}% ${STATS[k].name} XP`);
@@ -748,6 +824,14 @@ const CHECK_MAX = 12;
 // up to STEP_CAP a day (finishing it pays the normal reward instead, so nothing pays twice)
 const STEP_CAP = 12;
 const MP_PER_TASK = 10, SKILL_MAX = 5, TODO_CAP = 5, TODO_LISTS = 50, TODO_OPEN = 300;
+// skills you can use in battle: up to SKILL_SLOTS equipped at once; equipping one costs SKILL_EQ_FEE gold (taking one off is free)
+const SKILL_SLOTS = 4, SKILL_EQ_FEE = 50;
+/* The Slump: 3 days in a row with nothing finished (Inn days don't count) and an amoeba glues itself to your pet.
+   It blocks boss hits, but every further day you're away it eats: gold first (10%, at least 25 G), then one thing you
+   bought (potions and runes, then gear and looks, cheapest first; prizes and legendaries are safe), then HP (15% a day).
+   Finishing anything stops the eating; finish something 2 days in a row and it lets go. */
+const SLUMP_DAYS = 3, SLUMP_BACK = 2, SLUMP_PCT = 0.1, SLUMP_MIN = 25, SLUMP_HP = 0.15;
+const skillEqd = id => (S.skillEq || []).includes(id);
 const SKILLS = [
   {id:'strike',  branch:'core', name:'Power Strike',     kind:'dmg',    unlock:1,  cost:l => 25 - 2*(l-1),   power:l => 30 + 12*(l-1),
     text:l => `Hit the boss for ${30 + 12*(l-1)} damage.`},
@@ -822,11 +906,19 @@ const riteForL = (lvl, won) => RITES.find(r => lvl >= r.levels[0] && !won.has(r.
 const SEASON_FROM = '2026-11-30';
 const COMBAT_FROM = '2026-11-18';   // boss attacks, HP, mood and check-in bonuses apply from this day on, never retroactively   // holiday bosses take over cycles that start on or after this date
 const ITEMS = [
-  {id:'cap',     kind:'hat', name:'Surf Cap',     price:80, style:'rogue', fx:{st:{MOB:1}}},
-  {id:'band',    kind:'hat', name:'Sweatband',    price:50, style:'war', fx:{st:{MGT:1}}},
-  {id:'beanie', lvl:2,  kind:'hat', name:'Beanie',       price:90, style:'guard', fx:{st:{STA:1, ARM:1}}},
-  {id:'wizard', lvl:6,  kind:'hat', name:'Wizard Hat',   price:250, style:'cast', fx:{st:{HRT:3}, spell:.15}},
-  {id:'crown', lvl:10,   kind:'hat', name:'Gold Crown',   price:450, style:'war', fx:{st:{MGT:3, HRT:1}}},
+  {id:'ballcap', tier:'novice', kind:'hat', name:'Ball Cap', price:40, style:'novice', fx:{st:{HRT:1}}},
+  {id:'cap', tier:'early', lvl:5, kind:'hat', name:'Surf Cap',     price:80, style:'rogue', fx:{st:{MOB:1}}},
+  {id:'band', tier:'early', lvl:5, kind:'hat', name:'Sweatband',    price:50, style:'war', fx:{st:{MGT:1}}},
+  {id:'beanie', tier:'early', lvl:5,  kind:'hat', name:'Beanie',       price:90, style:'guard', fx:{st:{STA:1, ARM:1}}},
+  {id:'wizard', tier:'early', lvl:5,  kind:'hat', name:'Wizard Hat',   price:250, style:'cast', fx:{st:{HRT:3}, spell:.15}},
+  {id:'crown', tier:'mid', lvl:15,   kind:'hat', name:'Gold Crown',   price:450, style:'war', fx:{st:{MGT:3, HRT:1}}},
+  {id:'sentinel', tier:'mid', lvl:15, kind:'hat', name:'Sentinel Helm', price:460, style:'guard', fx:{st:{ARM:3, STA:2}}},
+  {id:'gullmask', tier:'mid', lvl:15, kind:'hat', name:'Gull-Feather Cap', price:440, style:'rogue', fx:{st:{MOB:3}, crit:.03}},
+  {id:'circlet',  tier:'mid', lvl:15, kind:'hat', name:'Seer’s Circlet', price:460, style:'cast', fx:{st:{HRT:4}, spell:.15}},
+  {id:'warhelm',  tier:'end', lvl:30, kind:'hat', name:'Warlord Helm',  price:1300, style:'war', fx:{st:{MGT:5, STA:2}}},
+  {id:'greathelm',tier:'end', lvl:30, kind:'hat', name:'Warden’s Greathelm', price:1300, style:'guard', fx:{st:{ARM:5, STA:3}}},
+  {id:'nighthood',tier:'end', lvl:30, kind:'hat', name:'Nightdiver Hood', price:1300, style:'rogue', fx:{st:{MOB:5}, crit:.05}},
+  {id:'archcrown',tier:'end', lvl:30, kind:'hat', name:'Archmage Crown', price:1400, style:'cast', fx:{st:{HRT:6}, spell:.2}},
   {id:'hood',    kind:'hat', name:'Kraken Hood',  boss:'kraken', style:'guard', fx:{st:{STA:2}}},
   {id:'horns',   kind:'hat', name:'Gremlin Horns',boss:'gremlin', style:'war', fx:{st:{MGT:2}}},
   {id:'halo',    kind:'hat', name:'Posture Halo', boss:'hunch', style:'cast', fx:{st:{HRT:2}, mpTask:1}},
@@ -1043,11 +1135,12 @@ function sanitize(s, created){
   out.gearLog = (Array.isArray(s.gearLog) ? s.gearLog : []).filter(e => obj(e) && (e.slot === 'rune' ? (e.id === null || LEGACY_RUNES[e.id]) : e.slot === 'lrune' ? (e.id === null || LRUNE_BY[e.id]) : e.slot === 'hat' ? (e.id === null || (ITEM[e.id] && ITEM[e.id].kind === 'hat')) : (e.slot in out.gear && (e.id === null || gearSlotOk(e.id, e.slot))))).map(e => ({ts: num(e.ts, 0), slot: e.slot, id: e.id}));
   if (legacyRune && !out.gearLog.some(e => e.slot === 'rune' && e.id === null && e.ts >= Date.now() - 1000)) out.gearLog.push({ts: Date.now(), slot: 'rune', id: null});
   out.skills = {}; if (obj(s.skills)) for (const k of Object.keys(s.skills)) if (SKILL_BY[k]){ const l = int(s.skills[k], 0, SKILL_MAX, 0); if (l) out.skills[k] = l; }
+  if (Array.isArray(s.skillEq)) out.skillEq = Array.from(new Set(s.skillEq.filter(id => typeof id === 'string' && SKILL_BY[id] && out.skills[id]))).slice(0, SKILL_SLOTS);
   out.skillUnlock = {}; if (obj(s.skillUnlock)) for (const k of Object.keys(s.skillUnlock)) if (SKILL_BY[k]) out.skillUnlock[k] = num(s.skillUnlock[k], 0);
   out.skillLog = (Array.isArray(s.skillLog) ? s.skillLog : []).filter(u => obj(u) && SKILL_BY[u.id]).map(u => { const o = {id: u.id, ts: num(u.ts, 0), date: isDate(u.date) ? u.date : null}; if (u.dmg != null) o.dmg = int(u.dmg, 0, 5000, 0); if (u.cost != null) o.cost = int(u.cost, 0, 1000, 0); if (typeof u.task === 'string') o.task = u.task.slice(0,40);
     if (SKILL_BY[u.id].kind === 'buff' && obj(u.buff) && obj(u.buff.st)){ const st = {}; for (const k of SK) if (u.buff.st[k] != null) st[k] = int(u.buff.st[k], 0, 20, 0); o.buff = {st, days: int(u.buff.days, 1, 7, 2)}; }
     return o; });
-  out.buys = (Array.isArray(s.buys) ? s.buys : []).filter(b => obj(b) && b.kind === 'reroll').map(b => { const o = {kind:'reroll', id: str(b.id, 40), ts: num(b.ts, 0), g: int(b.g, 0, 100000, 0)}; if (isDate(b.date)) o.date = b.date; return o; });
+  out.buys = (Array.isArray(s.buys) ? s.buys : []).filter(b => obj(b) && (b.kind === 'reroll' || b.kind === 'skilleq')).map(b => { const o = {kind: b.kind, id: str(b.id, 40), ts: num(b.ts, 0), g: int(b.g, 0, 100000, 0)}; if (isDate(b.date)) o.date = b.date; return o; });
   out.potions = (Array.isArray(s.potions) ? s.potions : []).filter(p => obj(p) && POTION_BY[p.id] && isDate(p.date)).map(p => { const o = {id: p.id, ts: num(p.ts, 0), date: p.date, g: int(p.g, 0, 100000, 0)}; if (p.bag){ o.bag = true; o.g = 0; } return o; });
   out.runeBuys = (Array.isArray(s.runeBuys) ? s.runeBuys : []).filter(r => obj(r) && RUNE_BY[r.id] && isDate(r.date)).map(r => { const o = {id: r.id, ts: num(r.ts, 0), date: r.date, g: int(r.g, 0, 100000, 0)}; if (r.token) o.token = true; if (r.bag){ o.bag = true; o.g = 0; delete o.token; } return o; });
   if (obj(s.todos) && Array.isArray(s.todos.lists)){
@@ -1075,6 +1168,12 @@ function sanitize(s, created){
   out.testGold = PREVIEW && Array.isArray(s.testGold) ? s.testGold.filter(x => obj(x)).map(x => ({ts: num(x.ts, 0), g: int(x.g, 0, 100000, 0)})) : [];
   // which checklist steps are ticked, per day and task
   if (isDate(s.stepFrom)) out.stepFrom = s.stepFrom; else delete out.stepFrom;
+  if (isDate(s.habitFrom)) out.habitFrom = s.habitFrom; else delete out.habitFrom;
+  if (isDate(s.slumpFrom)) out.slumpFrom = s.slumpFrom; else delete out.slumpFrom;
+  out.slumpLog = {}; if (obj(s.slumpLog)) for (const [d, r] of Object.entries(s.slumpLog)) if (isDate(d) && obj(r)){
+    if (r.g != null) out.slumpLog[d] = {g: int(r.g, 0, 1e9, 0)};
+    else if (r.hp != null) out.slumpLog[d] = {hp: int(r.hp, 0, 100000, 0)};
+    else if (typeof r.item === 'string' && (POTION_BY[r.item] || RUNE_BY[r.item] || GEAR_BY[r.item] || ITEM[r.item])) out.slumpLog[d] = {item: r.item, kind: r.kind === 'bag' ? 'bag' : 'owned', cost: int(r.cost, 0, 100000, 0)}; }
   out.stepLog = {}; if (obj(s.stepLog)) for (const [d, m] of Object.entries(s.stepLog)) if (isDate(d) && obj(m)){ const mm = {}; let n = 0; for (const [key, v] of Object.entries(m)) if (n < 200 && typeof key === 'string' && key.length <= 90 && /^(tk|td):/.test(key) && obj(v) && Number.isFinite(v.ts)){ mm[key] = {ts: v.ts, g: v.g === 2 ? 2 : 1}; n++; } if (n) out.stepLog[d] = mm; }
   out.checks = {}; if (obj(s.checks)) for (const [d, m] of Object.entries(s.checks)) if (isDate(d) && obj(m)){ const mm = {}; for (const [tid, ids] of Object.entries(m)) if (typeof tid === 'string' && tid.length <= 40 && !PROTO_KEYS.has(tid) && Array.isArray(ids)){ const v = Array.from(new Set(ids.filter(x => typeof x === 'string' && x.length <= 20))).slice(0, CHECK_MAX); if (v.length) mm[tid] = v; } if (Object.keys(mm).length) out.checks[d] = mm; }
   // legendary drops are written down the moment they're won, so they can never disappear later
@@ -1255,7 +1354,7 @@ const skillGearOk = sk => !sk.branch || sk.branch === 'core' || (buildLean() || 
 const skillNeedText = sk => [...Object.entries(sk.needStat || {}).map(([k, v]) => `${STATS[k].name} ${v} to learn`), ...(sk.branch && sk.branch !== 'core' ? [`a ${STYLES[sk.branch].name} build to use`] : [])].join(' · ');
 const buffUntil = u => addDays(u.date, (u.buff.days || 1) - 1);
 function buffsAt(ts, d){ return S.skillLog.filter(u => u.buff && u.date && u.date <= d && buffUntil(u) >= d && u.ts <= ts); }
-const fxAt = (ts, d) => fxOf(gearAt(ts), runesAt(ts, d), buffsAt(ts, d));
+const fxAt = (ts, d) => { const fx = fxOf(gearAt(ts), runesAt(ts, d), buffsAt(ts, d)); for (const h of habitFxAt(ts)) addFx(fx, h.fx); return fx; };
 // stats you earned + stat points from gear and runes
 const effStats = (statLv, fx) => Object.fromEntries(SK.map(k => [k, statLv[k] + (((fx && fx.st) || {})[k] || 0)]));
 function combatOf(statLv, level, fx){
@@ -1306,6 +1405,43 @@ function weekTarget(t, k){ const wk = weekKey(k); let tg = ((S.wkTg[wk]||{})[t.i
 const effTarget = (t, k) => Math.max(1, weekTarget(t,k) - (((S.lightens[weekKey(k)]||{})[t.id]) || 0));
 const active = () => S.tasks.filter(t => !t.archived);
 const stage = lv => lv < 5 ? 0 : lv < 12 ? 1 : 2;
+/* Habit mastery: every habit (a times-per-week task) climbs New Habit → Trying → Regular → Mastery.
+   Each check-off adds 1 point; a week that hits its target adds 2, plus 1 per week of a running hit streak (up to 4 more);
+   a week that misses its target costs 6 points and breaks the streak. Weeks with an Inn stay don't count either way.
+   Progress counts from S.habitFrom (the day this arrived), and a Mastered habit adds +2 to its main stat (+1 to the second). */
+const HABIT_LV = [{k:'new', name:'New Habit', at:0, icon:'leaf'}, {k:'try', name:'Trying', at:10, icon:'bolt'}, {k:'reg', name:'Regular', at:35, icon:'flame'}, {k:'mast', name:'Mastery', at:80, icon:'star'}];
+const HABIT_HIT = 2, HABIT_STREAK_MAX = 4, HABIT_MISS = 6;
+const habitLvOf = pts => { let i = 0; for (let j = 0; j < HABIT_LV.length; j++) if (pts >= HABIT_LV[j].at) i = j; return i; };
+const masteryFx = t => { const st = {}; const s0 = (t.stats || [])[0], s1 = (t.stats || [])[1]; if (s0) st[s0] = 2; if (s1 && s1 !== s0) st[s1] = (st[s1] || 0) + 1; return {st}; };
+let HAB = {lv: {}, tl: []};
+function habitInfo(innOn, today){
+  const out = {lv: {}, tl: []};
+  if (!S.habitFrom) return out;
+  const from = S.habitFrom, startWk = weekKey(from);
+  for (const t of S.tasks){
+    let pts = 0, run = 0, lv = 0, mastAt = null; const hist = [];
+    const set = (np, ts) => { pts = Math.max(0, np); const nl = habitLvOf(pts); if (nl !== lv){ if (nl === 3 && lv !== 3) mastAt = ts; if (lv === 3 && nl !== 3 && mastAt != null){ out.tl.push({tid: t.id, from: mastAt, to: ts, fx: masteryFx(t)}); mastAt = null; } hist.push({ts, lv: nl}); lv = nl; } };
+    let any = false;
+    for (let wk = startWk; wk <= today; wk = addDays(wk, 7)){
+      const wkEnd = addDays(wk, 6); let n = 0, habitWeek = false, inn = false;
+      for (let i = 0; i < 7; i++){ const d = addDays(wk, i); if (d > today) break;
+        if (innOn(d)) inn = true;
+        const sc = schedAt(t, d); if (sc.cad !== 'week' || offOn(t, d) || (t.created || S.created) > d) continue;
+        habitWeek = true;
+        if (done(d, t.id)){ n++; if (d >= from){ any = true; set(pts + 1, S.log[d][t.id] || parseKey(d).getTime()); } } }
+      if (!habitWeek || wkEnd >= today) continue;          // only weeks that are over get judged
+      const tg = effTarget(t, wk), endTs = endOf(wkEnd);
+      if (n >= tg){ if (wkEnd >= from){ any = true; set(pts + HABIT_HIT + Math.min(run, HABIT_STREAK_MAX), endTs); } run++; }
+      else if (!inn && wk >= from){ any = true; set(pts - HABIT_MISS, endTs); run = 0; }
+      else if (!inn) run = 0;
+    }
+    if (mastAt != null) out.tl.push({tid: t.id, from: mastAt, to: Infinity, fx: masteryFx(t)});
+    const nx = HABIT_LV[lv + 1];
+    out.lv[t.id] = {pts, lv, run, any, next: nx ? nx.at : null, hist};
+  }
+  return out;
+}
+const habitFxAt = ts => HAB.tl.filter(h => ts >= h.from && ts < h.to);
 const bossHp = (boss, lvl) => (boss.final ? 6000 : boss.rite ? 2400 : boss.titan ? 1300 : boss.seasonal ? 1000 : 650) + 40*(lvl-1);
 
 function derive(){
@@ -1318,6 +1454,7 @@ function derive(){
   // on the check-in day, only what happens after you check in is covered by the stay
   const innAtD = (d, ts) => (S.inn || []).some(st => stayOn(st, d) && !(d === st.from && st.ts && ts < st.ts));
   const innNowD = () => (S.inn || []).find(st => !st.to && !cut.has(st)) || null;
+  HAB = habitInfo(innOnD, today);
   const prevActiveD = d => { let p = addDays(d,-1), g = 0; while (innOnD(p) && g++ < 400) p = addDays(p,-1); return p; };
   const ratio = k => { if (k < S.created) return 0.6; if (innOnD(k)) return ratio(prevActiveD(k)); const due = S.tasks.filter(t => dailyOn(t,k)); if (!due.length) return 1; return due.filter(t => covered(k,t.id)).length / due.length; };
   const moodOf = d => { const r = 0.6*ratio(addDays(d,-1)) + 0.4*ratio(addDays(d,-2)); return r >= 0.85 ? 'great' : r >= 0.6 ? 'good' : r >= 0.3 ? 'meh' : r >= 0.1 ? 'bad' : 'awful'; };
@@ -1344,12 +1481,19 @@ function derive(){
   // opened Focus chests that weren't legendary pay their small prize the moment they're opened
   const legTs = new Set(pomoInfo.rolls.map(r => r.ts));
   for (const [ts, at] of Object.entries(S.fchests || {})){ if (legTs.has(+ts)) continue; const pz = chestPrize(+ts); if (pz.kind !== 'potion' && at <= Date.now()) add(todayKeyAt(at), {k:'fchest', ts: at, pz}); }
+  // the bag: what you bought minus what you used
+  const bag = Object.create(null);
+  for (const b of S.bag) bag[b.id] = (bag[b.id] || 0) + 1;
+  for (const ts of Object.keys(S.fchests || {})){ if (legTs.has(+ts)) continue; const pz = chestPrize(+ts); if (pz.kind === 'potion') bag[pz.id] = (bag[pz.id] || 0) + 1; }   // potions from Focus chests
+  for (const p of S.potions) if (p.bag) bag[p.id] = (bag[p.id] || 0) - 1;
+  for (const r of S.runeBuys) if (r.bag) bag[r.id] = (bag[r.id] || 0) - 1;
+  for (const r of Object.values(S.slumpLog || {})) if (r.item && r.kind === 'bag') bag[r.item] = (bag[r.item] || 0) - 1;   // what the Slump ate
   let streak = 0, lastCheck = null, curLv = 1, innSpent = 0;
   const todoPaid = new Set();
   const partial = {}, todoDone = Object.create(null); for (const L of S.todos.lists) for (const it of L.items) if (it.doneOn) todoDone[it.id] = it.doneOn;
   const freezeBefore = cycleOf(yest), newResults = {}, newFaints = {};
   // weekly-goal XP lands the moment a goal is hit, so the level here matches the level you see
-  let chestXp = 0; const chestGot = Object.create(null);
+  let chestXp = 0, chestG = 0; const chestGot = Object.create(null);   // chestG: weekly-chest gold so far (paid for real after the loop)
   const lvlNow = () => levelInfo(xp + chestXp).level;
   const lvlBase = () => levelInfo(xp).level;          // boss HP has always used this one
   const combatFrom = S.combatFrom && S.combatFrom > COMBAT_FROM ? S.combatFrom : COMBAT_FROM;
@@ -1358,6 +1502,29 @@ function derive(){
   const statLvNow = () => Object.fromEntries(SK.map(k => [k, statLevel(stat[k])]));
   const statusOn = (key, d) => status[key] && status[key].from < d && d <= status[key].until;
   const faint = (d, C) => { const fz = S.faintLog[d]; const bal = gold - staticSpent - dyn - lost; const loss = fz ? fz.loss : Math.max(0, Math.floor(bal * 0.1)); lost += loss; if (!fz) newFaints[d] = {loss}; hp = Math.round(C.maxHP / 2); faints.push({d, loss}); const F = cyc[cycleOf(d)]; if (F && !F.wonOn) F.rem = Math.min(F.hp, F.rem + Math.round(F.hp * 0.1)); };
+  // the Slump (see SLUMP_DAYS): which days you finished something, and what it has eaten
+  const actDay = new Set(); for (const [d0, ents] of Object.entries(S.log)) if (ents && Object.keys(ents).length) actDay.add(d0); for (const id in todoDone) actDay.add(todoDone[id]);
+  let slump = null, emptyRun = 0; const slumpBites = [], newSlump = {}, slumpTaken = new Set();
+  const slumpPick = () => {
+    const eqd = new Set([...Object.values(S.gear), ...Object.values(S.equip)].filter(Boolean));
+    const consum = Object.keys(bag).filter(id => bag[id] > 0).map(id => ({id, kind:'bag', cost: (POTION_BY[id] || RUNE_BY[id] || {}).price || 0}));
+    const owned = S.owned.filter(id => !slumpTaken.has(id)).map(id => GEAR_BY[id] || ITEM[id]).filter(it => it && it.price > 0 && !it.boss && !it.legendary).map(it => ({id: it.id, kind:'owned', cost: it.price, eq: eqd.has(it.id)}));
+    const by = (a, b) => (a.cost - b.cost) || (a.id < b.id ? -1 : 1);
+    return consum.sort(by)[0] || owned.filter(x => !x.eq).sort(by)[0] || owned.filter(x => x.eq).sort(by)[0] || null;
+  };
+  const slumpBite = (d, C) => {
+    const fz = (S.slumpLog || {})[d]; let rec;
+    if (fz){ rec = fz; if (fz.g) lost += fz.g; else if (fz.hp){ hp -= fz.hp; if (hp <= 0) faint(d, C); } else if (fz.item && fz.kind === 'owned') slumpTaken.add(fz.item); }
+    else {
+      const bal = gold + chestG - staticSpent - dyn - lost;
+      if (bal > 0){ const g = Math.min(bal, Math.max(SLUMP_MIN, Math.floor(bal * SLUMP_PCT))); lost += g; rec = {g}; }
+      else { const it = slumpPick();
+        if (it){ rec = {item: it.id, kind: it.kind, cost: it.cost}; if (d < yest){ if (it.kind === 'bag') bag[it.id]--; else slumpTaken.add(it.id); } }
+        else { const n = Math.ceil(C.maxHP * SLUMP_HP); hp -= n; rec = {hp: n}; if (hp <= 0) faint(d, C); } }
+      if (d < yest) newSlump[d] = rec;
+    }
+    slumpBites.push({d, ...rec, pending: !fz && d >= yest && !!rec.item});
+  };
   // between a boss beaten early (after altarFrom) and the next one, tasks give Keystones instead of XP, gold and MP
   const lullAt = (F, ts) => !!(S.altarFrom && ts >= S.altarFrom && (F.frozen ? (F.frozen.status === 'won' && F.frozen.wonTs && ts > F.frozen.wonTs) : (F.wonTs && ts > F.wonTs)));
   const keysAll = [], keysByDay = Object.create(null);
@@ -1390,7 +1557,7 @@ function derive(){
       if (bal < fee){ for (const st of (S.inn || [])) if (!st.to && stayOn(st, d) && d > (st.paid || st.from)){ cut.set(st, d); newInnEnds.push({st, to: addDays(d,-1)}); } } }
     const inn = innOnD(d);
     if (inn){ const fee = innFee(lvlNow()); dyn += fee; const open = innNowD(); if (open && d >= open.from) innSpent += fee; }
-    if (live && !inn && statusOn('poison', d)){ hp -= Math.ceil(C.maxHP * 0.06); if (hp <= 0) faint(d, C); }
+    if (live && !inn && !slump && statusOn('poison', d)){ hp -= Math.ceil(C.maxHP * 0.06); if (hp <= 0) faint(d, C); }
     const mood = moodOf(d), boost = live ? MOOD_BOOST[mood] : 1;
     let checked = false, rewardedTodos = 0;
     const lvUp = (fx) => { const L = lvlNow(); if (L > curLv){ curLv = L; C = combatOf(statLvNow(), L, fx); hp = C.maxHP; mp = C.maxMP; } };
@@ -1425,7 +1592,7 @@ function derive(){
         lvUp(fx);
         checkIn(fx, e.ts);
         if (sn ? sn.w : t.cad === 'week'){ const wc = weeks[weekKey(d)] || (weeks[weekKey(d)] = {}); if (!wc[e.tid]) wc[e.tid] = {n:0, tg:0, bn:0, bns:[]}; const w = wc[e.tid]; w.n++; w.bns.push(sn ? (sn.bn||0) : (t.bonus||0)); w.tg = Math.max(w.tg, sn ? (sn.tg||1) : (t.target||1)); w.bn = Math.max(w.bn, sn ? (sn.bn||0) : (t.bonus||0)); }
-        if (sn ? sn.w : t.cad === 'week'){ const wk = weekKey(d), w = weeks[wk][e.tid], key = wk + '|' + e.tid; if (!chestGot[key] && w.n >= effOf(wk, e.tid, w)){ chestGot[key] = true; chestXp += 20; lvUp(fx); } }
+        if (sn ? sn.w : t.cad === 'week'){ const wk = weekKey(d), w = weeks[wk][e.tid], key = wk + '|' + e.tid; if (!chestGot[key] && w.n >= effOf(wk, e.tid, w)){ chestGot[key] = true; chestXp += 20; chestG += 30; lvUp(fx); } }
       } else if (e.k === 'altar'){
         if (e.pz.kind === 'gold') gold += e.pz.n; else if (e.pz.kind === 'xp'){ xp += e.pz.n; lvUp(fx); } else { C = combatOf(statLvNow(), lvlNow(), fx); mp = Math.min(C.maxMP, mp + e.pz.n); }
       } else if (e.k === 'fchest'){
@@ -1464,6 +1631,13 @@ function derive(){
       g = Math.min(g, STEP_CAP);
       if (g){ gold += g; partial[d] = {g, n}; }
     }
+    // end of day: the Slump counts the days you were away and eats while it's attached
+    const slumpLive = d < today && S.slumpFrom && d >= S.slumpFrom && live;
+    const shielded = !!(slumpLive && slump);
+    if (slumpLive && !inn){
+      if (actDay.has(d)){ emptyRun = 0; if (slump) slump.back++; }
+      else { emptyRun++; if (slump){ slump.back = 0; slumpBite(d, combatOf(statLvNow(), lvlNow(), fxAt(endOf(d), d))); } }
+    }
     // end of day: the boss strikes back for each missed daily (and heals a little from each)
     if (d < today && d >= S.created && bossAlive() && !inn){
       const missed = S.tasks.filter(t => dailyOn(t,d) && !covered(d,t.id));
@@ -1476,13 +1650,17 @@ function derive(){
         C = combatOf(statLvNow(), lvlNow(), fxE);
         let raw = 0, dodged = 0;
         for (const t of missed){ if (roll('dodge|' + d + '|' + t.id) < C.dodge) dodged++; else raw += F.boss.atk + Math.floor(F.lvl / 3); }
-        const taken = Math.round(raw * (1 - C.def) * MOOD_HURT[mood]);
+        const taken = shielded ? 0 : Math.round(raw * (1 - C.def) * MOOD_HURT[mood]);
         hp -= taken;
-        attacks[d] = {boss: F.boss.name, missed: missed.length, dodged, dmg: taken, mood};
-        if (F.boss.status && missed.length >= 2){ status[F.boss.status] = {from: d, until: addDays(d, F.boss.status === 'poison' ? 3 : 2)}; attacks[d].status = F.boss.status; }
+        attacks[d] = {boss: F.boss.name, missed: missed.length, dodged, dmg: taken, mood, ...(shielded ? {shield: true} : {})};
+        if (!shielded && F.boss.status && missed.length >= 2){ status[F.boss.status] = {from: d, until: addDays(d, F.boss.status === 'poison' ? 3 : 2)}; attacks[d].status = F.boss.status; }
         if (!F.frozen){ const anti = Math.min(1, fxE.antiheal || 0); const h = Math.round(missed.length * (F.boss.titan ? 10 : 6) * (1 - anti)); F.heal += h; F.rem = Math.min(F.hp, F.rem + h); }
         if (hp <= 0) faint(d, C);
       }
+    }
+    if (slumpLive && !inn){
+      if (!slump && emptyRun >= SLUMP_DAYS) slump = {from: d, back: 0};
+      else if (slump && slump.back >= SLUMP_BACK) slump = null;
     }
   }
   // weekly chests and perfect weeks (the XP was already shown in-loop; it's counted for real here)
@@ -1506,12 +1684,6 @@ function derive(){
     if (ok && any) perfectWeeks++;
   }
   const tokens = Math.max(0, perfectWeeks - S.runeBuys.filter(r => r.token).length - S.bag.filter(b => b.token).length);
-  // the bag: what you bought minus what you used
-  const bag = Object.create(null);
-  for (const b of S.bag) bag[b.id] = (bag[b.id] || 0) + 1;
-  for (const ts of Object.keys(S.fchests || {})){ if (legTs.has(+ts)) continue; const pz = chestPrize(+ts); if (pz.kind === 'potion') bag[pz.id] = (bag[pz.id] || 0) + 1; }   // potions from Focus chests
-  for (const p of S.potions) if (p.bag) bag[p.id] = (bag[p.id] || 0) - 1;
-  for (const r of S.runeBuys) if (r.bag) bag[r.id] = (bag[r.id] || 0) - 1;
   for (const k of Object.keys(bag)) if (bag[k] <= 0) delete bag[k];
   // fights
   const fights = Object.values(cyc).sort((a,b) => a.c - b.c).map(F => {
@@ -1525,6 +1697,7 @@ function derive(){
   if (!fights.length || fights[fights.length-1].c !== cycleOf(today)){ const boss = riteFor(lvlNow(), ritesWon, cycleOf(today)) || bossFor(cycleOf(today)), lastF = fights[fights.length-1], carry = boss.rite && lastF && lastF.boss.id === boss.id && lastF.rem > 0, bhp = carry ? lastF.hp : bossHp(boss, lvlNow()); fights.push({c:cycleOf(today), boss, start:cycleStart(cycleOf(today)), end:addDays(cycleStart(cycleOf(today)),CYCLE-1), hp:bhp, rem: carry ? lastF.rem : bhp, heal:0, dmg:0, hits:{}, status:'now', wonOn:null}); }
   const lv = levelInfo(xp), statLv = statLvNow();
   const fxNow = fxOf({...S.gear, hat: S.equip.hat}, runesAt(nowMs, today), buffsAt(nowMs, today));
+  for (const h of habitFxAt(nowMs)) addFx(fxNow, h.fx);
   const C = combatOf(statLv, lv.level, fxNow);
   hp = clamp(hp == null ? C.maxHP : hp, 0, C.maxHP); mp = clamp(mp == null ? Math.round(C.maxMP/2) : mp, 0, C.maxMP);
   const moodToday = moodOf(today);
@@ -1547,11 +1720,11 @@ function derive(){
   const skills = {};
   const effNowStats = effStats(statLv, fxNow);
   for (const sk of SKILLS){ const l = S.skills[sk.id] || 0; if (!l){ skills[sk.id] = {l:0}; continue; } const cost = sk.cost(l); skills[sk.id] = {l, cost, mp, ready: mp >= cost, power: sk.power ? Math.round(sk.power(l, weakLv, effNowStats) * (1 + (fxNow.spell||0))) : 0}; }
-  const readyCount = Object.values(skills).filter(x => x.ready).length;
+  const readyCount = Object.entries(skills).filter(([id, x]) => x.ready && skillEqd(id)).length;
   const spent = staticSpent + dyn;
   const newDrops = [...drops].filter(id => isDrop(id) && !S.seenDrops.includes(id));
   const nextRite = riteForL(levelInfo(xp).level, ritesWon);
-  return {nextRite, ritesWon, pomo: pomoInfo, inn: innNowD(), newInnEnds, innPaid: (() => { const o = innNowD(); return o && (o.paid || o.from) < today ? o : null; })(), innSpent, innFee: innFee(levelInfo(xp).level), statBonus: fxNow.st, bag, newDrops, newResults, newFaints, newLegends: pomoInfo.rolls.filter(r => !r.kept), todoPaid, partial, altar: {keys: keysAll.filter(k => !(S.altarUsed || {})[k.key]).map(k => k.key), all: new Set(keysAll.map(k => k.key)), got: altarInfo.got, wins: altarInfo.wins, won: altarInfo.won}, freezeBefore, points, skills, readyCount, weakLv, today, yest, xp, lv, gold, spent, lost, balance: gold - spent - lost, stat, statLv, fx: fxNow, C, hp, mp, status: statusNow, attacks, lastAttack: attacks[yest] || null, faints, lastFaint: faints.length ? faints[faints.length-1] : null, mood: face, moodKey: moodToday, statusText, streak: lastCheck && lastCheck >= prevActiveD(today) ? streak : 0, checkedToday: lastCheck === today, mystery, tokens, perfectWeeks, castDeficit, fights, cur, drops, weeks, T, activeRunes: runesAt(nowMs, today), activeBuffs: buffsAt(nowMs, today)};
+  return {slump: {on: !!slump, from: slump ? slump.from : null, back: slump ? slump.back : 0, emptyRun, bites: slumpBites, taken: slumpTaken, todayActive: actDay.has(today)}, newSlump, habits: HAB, nextRite, ritesWon, pomo: pomoInfo, inn: innNowD(), newInnEnds, innPaid: (() => { const o = innNowD(); return o && (o.paid || o.from) < today ? o : null; })(), innSpent, innFee: innFee(levelInfo(xp).level), statBonus: fxNow.st, bag, newDrops, newResults, newFaints, newLegends: pomoInfo.rolls.filter(r => !r.kept), todoPaid, partial, altar: {keys: keysAll.filter(k => !(S.altarUsed || {})[k.key]).map(k => k.key), all: new Set(keysAll.map(k => k.key)), got: altarInfo.got, wins: altarInfo.wins, won: altarInfo.won}, freezeBefore, points, skills, readyCount, weakLv, today, yest, xp, lv, gold, spent, lost, balance: gold - spent - lost, stat, statLv, fx: fxNow, C, hp, mp, status: statusNow, attacks, lastAttack: attacks[yest] || null, faints, lastFaint: faints.length ? faints[faints.length-1] : null, mood: face, moodKey: moodToday, statusText, streak: lastCheck && lastCheck >= prevActiveD(today) ? streak : 0, checkedToday: lastCheck === today, mystery, tokens, perfectWeeks, castDeficit, fights, cur, drops, weeks, T, activeRunes: runesAt(nowMs, today), activeBuffs: buffsAt(nowMs, today)};
 }
 
 /* ---------- persistence ---------- */
@@ -1659,10 +1832,13 @@ function mergeSaves(a, b){
     if (!isObj(o[k])) continue; if (!isObj(out[k])) out[k] = {};
     for (const [d, m] of Object.entries(o[k])){ if (!isObj(m)) continue; if (!isObj(out[k][d])) out[k][d] = {}; for (const [id, v] of Object.entries(m)) if (!(id in out[k][d])) out[k][d][id] = v; }
   }
-  for (const k of ['faintLog','results','skillUnlock','fchests','altarUsed','lrunes']){ if (!isObj(o[k])) continue; if (!isObj(out[k])) out[k] = {}; for (const [id, v] of Object.entries(o[k])) if (!(id in out[k])) out[k][id] = v; }
+  for (const k of ['faintLog','results','skillUnlock','fchests','altarUsed','lrunes','slumpLog']){ if (!isObj(o[k])) continue; if (!isObj(out[k])) out[k] = {}; for (const [id, v] of Object.entries(o[k])) if (!(id in out[k])) out[k][id] = v; }
   out.legends = {...(o.legends || {}), ...(out.legends || {})};
+  if (!Array.isArray(out.skillEq) && Array.isArray(o.skillEq)) out.skillEq = o.skillEq.slice();
   if (o.chestFrom && (!out.chestFrom || o.chestFrom < out.chestFrom)) out.chestFrom = o.chestFrom;
   if (o.altarFrom && (!out.altarFrom || o.altarFrom < out.altarFrom)) out.altarFrom = o.altarFrom;
+  if (o.habitFrom && (!out.habitFrom || o.habitFrom < out.habitFrom)) out.habitFrom = o.habitFrom;
+  if (o.slumpFrom && (!out.slumpFrom || o.slumpFrom < out.slumpFrom)) out.slumpFrom = o.slumpFrom;
   for (const k of ['potions','runeBuys','bag','buys','skillLog','gearLog','pomoLog','sells','inn','testGold']){
     if (!Array.isArray(o[k])) continue; if (!Array.isArray(out[k])) out[k] = [];
     const seen = new Set(out[k].map(x => JSON.stringify(x)));
@@ -2056,10 +2232,17 @@ function drawGear(g, x0, y0, w, h, ground, f, motion, sp, on){
   sp = sp || PET[0]; on = on || (() => false);
   const bodyMax = sp.faceL + sp.faceW;
   const belly = (fn) => { for (let r = sp.eye + 4; r < h - 1; r++) for (let c = 0; c < bodyMax; c++){ if (!on(c,r)) continue; const edge = !on(c+1,r) || !on(c-1,r) || !on(c,r+1) || !on(c,r-1); if (!edge) fn(x0+c, y0+r, r, c); } };
-  if (g.armor === 'vest') belly((X,Y,r,c) => { const mid = x0 + sp.faceL + Math.floor(sp.faceW/2) - 1; px(X, Y, 1, 1, X === mid ? PW : PB); });
+  // tiered gear reuses a handful of looks on the pet
+  const LOOK = {jerkin:'vest', wetsuit:'stripes', silkwraps:'stripes', hoodie:'tee', coralmail:'scales', turtle:'plate', abyssplate:'plate', dragonplate:'plate', kelpcloak:'robe', tiderobe:'robe', phantom:'dots', starrobe:'dots'};
+  const arm = LOOK[g.armor] || g.armor;
+  if (arm === 'tee') belly((X,Y,r) => px(X, Y, 1, 1, r === sp.eye + 6 ? PB : PW));
+  if (arm === 'stripes') belly((X,Y,r) => px(X, Y, 1, 1, ((X + r) % 4 === 0) ? PB : PW));
+  if (arm === 'scales') belly((X,Y,r) => px(X, Y, 1, 1, ((X + (r % 2)) % 2 === 0) ? PB : PW));
+  if (arm === 'dots') belly((X,Y) => px(X, Y, 1, 1, ((X * 3 + Y * 5) % 7 === 0) ? PW : PB));
+  if (arm === 'vest') belly((X,Y,r,c) => { const mid = x0 + sp.faceL + Math.floor(sp.faceW/2) - 1; px(X, Y, 1, 1, X === mid ? PW : PB); });
   if (g.armor === 'leviathan') belly((X,Y) => px(X, Y, 1, 1, ((X + Y) % 3 === 0) ? PB : PW));
-  if (g.armor === 'robe') belly((X,Y,r) => px(X, Y, 1, 1, (r % 3 === 0) ? PW : PB));
-  if (g.armor === 'plate') belly((X,Y) => px(X, Y, 1, 1, lit(X,Y,0.5) ? PW : PB));
+  if (arm === 'robe') belly((X,Y,r) => px(X, Y, 1, 1, (r % 3 === 0) ? PW : PB));
+  if (arm === 'plate') belly((X,Y) => px(X, Y, 1, 1, lit(X,Y,0.5) ? PW : PB));
   if (g.armor === 'guards'){
     const last = sp.rows[h-1], segs = []; let st = -1;
     for (let c=0;c<=last.length;c++){ if (last[c] === '#' && st < 0) st = c; else if (last[c] !== '#' && st >= 0){ segs.push([st, c-st]); st = -1; } }
@@ -2075,7 +2258,18 @@ function drawGear(g, x0, y0, w, h, ground, f, motion, sp, on){
       tidebreaker:[[[hx+1,hy-12,2,13],[hx-1,hy+1,6,1],[hx+1,hy+2,2,2],[hx,hy-14,4,2]], [[hx+2,hy-11,1,10]]],
       staff:      [[[hx+1,hy-10,1,14],[hx-1,hy-14,5,4],[hx,hy-15,3,1]], [[hx+1,hy-12,1,1]]],
       broom:      [[[hx+1,hy-9,1,10],[hx-1,hy+1,5,4]], [[hx,hy+2,1,3],[hx+2,hy+2,1,3]]],
-      cleaver:    [[[hx+1,hy-1,1,4],[hx-1,hy-9,5,8]], [[hx+2,hy-7,1,1],[hx+3,hy-9,1,8]]]
+      cleaver:    [[[hx+1,hy-1,1,4],[hx-1,hy-9,5,8]], [[hx+2,hy-7,1,1],[hx+3,hy-9,1,8]]],
+      stick:      [[[hx+1,hy-8,1,11]], []],
+      warhammer:  [[[hx+1,hy-7,1,10],[hx-2,hy-10,7,3]], [[hx-1,hy-9,1,1],[hx+3,hy-9,1,1]]],
+      maul:       [[[hx+1,hy-6,1,9],[hx-2,hy-11,7,5]], [[hx-1,hy-9,5,1]]],
+      stormsplit: [[[hx+1,hy-13,2,14],[hx-1,hy+1,6,1],[hx+1,hy+2,2,2]], [[hx+2,hy-12,1,3],[hx+1,hy-7,1,2]]],
+      flail:      [[[hx+1,hy-5,1,8],[hx+2,hy-7,1,2],[hx+3,hy-9,1,2],[hx+2,hy-13,4,4]], [[hx+3,hy-12,2,2]]],
+      halberd:    [[[hx+1,hy-13,1,16],[hx+2,hy-11,3,4],[hx+1,hy-15,1,2]], [[hx+3,hy-10,1,2]]],
+      kris:       [[[hx+1,hy-8,1,8],[hx+2,hy-6,1,2],[hx,hy-3,1,2],[hx-1,hy,5,1],[hx+1,hy+1,1,2]], []],
+      grapple:    [[[hx+1,hy-9,1,10],[hx-1,hy-10,5,1],[hx-1,hy-12,1,2],[hx+3,hy-12,1,2]], []],
+      moonfang:   [[[hx+1,hy-8,1,8],[hx+2,hy-7,1,3],[hx-1,hy,5,1],[hx+1,hy+1,1,2]], []],
+      maelstrom:  [[[hx+1,hy-9,1,13],[hx-1,hy-14,5,5]], [[hx,hy-13,3,1],[hx+2,hy-12,1,2],[hx,hy-11,2,1]]],
+      deeprod:    [[[hx+1,hy-11,1,15],[hx,hy-14,4,3],[hx+3,hy-15,2,2]], [[hx+1,hy-13,1,1]]]
     };
     if (g.weapon === 'whip'){ const pts = []; for (let i=0;i<8;i++) pts.push([hx+1+Math.round(Math.sin((i + (motion?f:0)*0.5)/1.5)*1.5), hy-1-i, 1, 1]); shape([[hx,hy,2,2], ...pts]); }
     else if (W[g.weapon]) shape(W[g.weapon][0], W[g.weapon][1]);
@@ -2087,7 +2281,21 @@ function drawGear(g, x0, y0, w, h, ground, f, motion, sp, on){
       buckler: [[[ox,oy-3,4,6],[ox-1,oy-2,6,4]], [[ox+1,oy-1,2,2]]],
       aegis:   [[[ox-2,oy-5,8,10],[ox-1,oy-6,6,12]], [[ox,oy-3,4,6],[ox+1,oy-1,2,2]]],
       dirk:    [[[ox+1,oy-6,1,6],[ox,oy,3,1],[ox+1,oy+1,1,2]], []],
-      tome:    [[[ox-1,oy-3,6,6]], [[ox,oy-2,1,4],[ox+2,oy-1,2,2]]]
+      tome:    [[[ox-1,oy-3,6,6]], [[ox,oy-2,1,4],[ox+2,oy-1,2,2]]],
+      potlid:  [[[ox-1,oy-1,6,3],[ox+1,oy-3,2,2]], [[ox,oy,4,1]]],
+      journal: [[[ox,oy-3,4,6]], [[ox+1,oy-2,2,1],[ox+1,oy,2,1]]],
+      wraps:   [[[ox,oy-2,4,4]], [[ox,oy-1,4,1],[ox,oy+1,4,1]]],
+      bracer:  [[[ox,oy-2,4,4],[ox-1,oy-3,1,1],[ox+4,oy-3,1,1],[ox-1,oy+2,1,1],[ox+4,oy+2,1,1]], [[ox,oy,4,1]]],
+      warbuckler: [[[ox,oy-3,4,6],[ox-1,oy-2,6,4],[ox-2,oy,1,1],[ox+5,oy,1,1],[ox+1,oy-4,2,1],[ox+1,oy+3,2,1]], [[ox+1,oy-1,2,2]]],
+      reefwall:[[[ox-1,oy-5,6,7],[ox,oy+2,4,2],[ox+1,oy+4,2,1]], [[ox+2,oy-3,1,5],[ox+1,oy-2,1,1],[ox+3,oy-1,1,1]]],
+      bastion: [[[ox-2,oy-6,8,11],[ox-2,oy-8,2,2],[ox+1,oy-8,2,2],[ox+4,oy-8,2,2]], [[ox-1,oy-4,6,1],[ox+1,oy-1,2,4]]],
+      mirror:  [[[ox-2,oy-5,8,10],[ox-1,oy-6,6,12]], [[ox,oy-3,4,6],[ox+1,oy-2,1,1],[ox+2,oy-1,1,1]]],
+      hook:    [[[ox+1,oy-3,1,3],[ox,oy-5,1,2],[ox+1,oy-6,2,1],[ox+3,oy-5,1,2],[ox,oy,3,1],[ox+1,oy+1,1,2]], []],
+      shiv:    [[[ox+1,oy-5,1,5],[ox+2,oy-4,1,1],[ox,oy,3,1],[ox+1,oy+1,1,2]], []],
+      stiletto:[[[ox+1,oy-8,1,8],[ox-1,oy,5,1],[ox+1,oy+1,1,2]], []],
+      conch:   [[[ox,oy-3,5,5],[ox+4,oy+1,2,2]], [[ox+1,oy-2,2,1],[ox+2,oy-1,1,2]]],
+      orb:     [[[ox,oy-4,4,4],[ox-1,oy-3,6,2],[ox,oy+1,4,1]], [[ox+1,oy-3,1,1]]],
+      grimoire:[[[ox-2,oy-4,7,8]], [[ox-1,oy-3,1,6],[ox+1,oy-1,3,1],[ox+2,oy-2,1,3]]]
     };
     if (O[g.offhand]) shape(O[g.offhand][0], O[g.offhand][1]);
   }
@@ -2124,13 +2332,42 @@ function drawHat(hat, cx, top, rx, ry, f, motion){
     emberhelm:[[[cx-rx,top-2,2*rx+1,4],[cx-rx+1,top-4,2*rx-1,2],[cx-1,top-8,3,4],[cx-2,top-6,5,2]], [[cx-rx+2,top,2*rx-3,1],[cx,top-7,1,2]]],
     abysscrown:[[[cx-7,top-1,15,3],[cx-7,top-6,2,5],[cx-3,top-8,2,7],[cx+2,top-8,2,7],[cx+6,top-6,2,5],[cx-1,top-11,3,3]], [[cx-5,top,1,1],[cx-1,top,3,1],[cx+5,top,1,1],[cx,top-10,1,1]]],
     starcrown:[[[cx-5,top-2,11,2],[cx-5,top-5,1,3],[cx-2,top-6,1,4],[cx,top-8,1,6],[cx+2,top-6,1,4],[cx+5,top-5,1,3],[cx-1,top-9,3,1],[cx,top-10,1,1]], [[cx-3,top-1,1,1],[cx,top-1,1,1],[cx+3,top-1,1,1]]],
-    sunhat: [[[cx-4,top-5,9,4],[cx-10,top-1,21,2]], [[cx-4,top-2,9,1],[cx-8,top,1,1],[cx+8,top,1,1]]]
+    sunhat: [[[cx-4,top-5,9,4],[cx-10,top-1,21,2]], [[cx-4,top-2,9,1],[cx-8,top,1,1],[cx+8,top,1,1]]],
+    ballcap:[[[cx-3,top-5,7,1],[cx-5,top-4,11,2],[cx-6,top-2,13,2],[cx-12,top-1,7,2]], [[cx,top-5,1,1],[cx-6,top-1,1,1],[cx-2,top-3,1,1],[cx+2,top-3,1,1]]],
+    sentinel:[[[cx-3,top-7,7,1],[cx-5,top-6,11,2],[cx-6,top-4,13,4],[cx-7,top,15,1],[cx-1,top+1,3,3]], [[cx-6,top-2,13,1],[cx,top-6,1,4],[cx,top+1,1,2]]],
+    gullmask:[[[cx-5,top-3,11,3],[cx-6,top-1,13,2],[cx+3,top-6,2,3],[cx+4,top-9,2,3],[cx+5,top-12,2,3],[cx+6,top-14,2,2]], [[cx-6,top,13,1],[cx+5,top-11,1,6],[cx-2,top-2,1,1],[cx+1,top-2,1,1]]],
+    circlet:[[[cx-rx+1,top,2*rx-1,2],[cx-5,top-2,1,2],[cx+5,top-2,1,2],[cx-2,top-3,5,3],[cx-1,top-5,3,2],[cx,top-6,1,1]], [[cx,top-3,1,2],[cx-rx+2,top+1,2*rx-3,1]]],
+    warhelm:[[[cx-6,top-7,13,6],[cx-7,top-2,15,2],[cx-10,top-10,2,5],[cx-9,top-6,3,2],[cx+9,top-10,2,5],[cx+7,top-6,3,2]], [[cx-5,top-1,11,1],[cx,top-6,1,4]]],
+    greathelm:[[[cx-6,top-11,13,10],[cx-7,top-2,15,2]], [[cx-5,top-6,11,1],[cx-1,top-5,1,2],[cx+1,top-5,1,2],[cx-4,top-9,1,1],[cx+4,top-9,1,1],[cx-6,top-1,15,1]]],
+    nighthood:[[[cx-5,top-3,11,4],[cx-3,top-6,7,3],[cx+2,top-9,3,3],[cx+4,top-10,2,2],[cx-rx,top+1,2,6],[cx+rx-1,top+1,2,6]], [[cx-4,top-1,9,1],[cx+3,top-8,1,2]]],
+    archcrown:[[[cx-6,top-2,13,3],[cx-6,top-6,1,4],[cx-3,top-8,1,6],[cx,top-11,1,9],[cx+3,top-8,1,6],[cx+6,top-6,1,4],[cx-1,top-13,3,3]], [[cx,top-12,1,1],[cx-4,top-1,1,1],[cx,top-1,1,1],[cx+4,top-1,1,1]]]
   };
   if (H[hat]) shape(H[hat][0], H[hat][1]);
 }
 function drawScene(canvas, o){
   ctx = canvas.getContext('2d'); ctx.imageSmoothingEnabled = false;
-  drawBg(o.bg, o.f, o.motion, o.night != null ? o.night : isNightNow()); if (!o.noPet) drawPet(o);
+  drawBg(o.bg, o.f, o.motion, o.night != null ? o.night : isNightNow()); if (!o.noPet){ drawPet(o); if (o.slump) drawSlump(o); }
+}
+/* the Slump: a wobbly amoeba glued around the pet's feet, with drips climbing its sides and two sleepy eyes */
+function drawSlump(o){
+  const cx = o.cx != null ? o.cx : 32, g = o.ground != null ? o.ground : GROUND, t = o.motion ? o.f : 0;
+  const rx = 16, ry = o.stage === 2 ? 4 : 3, m = new Set(), key = (x, y) => x + "," + y;
+  for (let y = -ry; y <= 1; y++) for (let x = -rx - 2; x <= rx + 2; x++){
+    const wob = 1 + 0.1 * Math.sin(x * 0.55 + t * 0.35) + 0.05 * Math.sin(x * 1.3 - t * 0.2);
+    if ((x * x) / (rx * rx * wob * wob) + (y * y) / (ry * ry) <= 1) m.add(key(cx + x, g + y));
+  }
+  // drips that creep up both sides of the pet
+  for (const [dx, hgt, ph] of [[-13, 5, 0], [11, 4, 2]]){ const hh = hgt + Math.round(Math.sin((t + ph) * 0.25)); for (let i = 0; i < hh; i++){ const w = i < hh - 1 ? 3 : 2; for (let k = 0; k < w; k++) m.add(key(cx + dx + k, g - ry + 1 - i)); } }
+  const has = (x, y) => m.has(key(x, y));
+  // a black rim so the goo reads against the pet and the grass, then a dithered gray body with drifting bubbles
+  for (const k of m){ const [x, y] = k.split(',').map(Number); for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (!has(x+dx, y+dy)) B_(x+dx, y+dy); }
+  for (const k of m){ const [x, y] = k.split(',').map(Number);
+    const edge = !has(x+1,y) || !has(x-1,y) || !has(x,y-1) || !has(x,y+1);
+    const bub = ((x * 5 + y * 7 + Math.floor(t / 4)) % 17) === 0;
+    if (edge || bub || (x + y) % 2 === 0) W_(x, y); else B_(x, y); }
+  // sleepy eyes and a droopy mouth, cut out in black
+  for (const ex of [cx - 7, cx + 5]){ B_(ex - 1, g - 2, 5, 2); W_(ex, g - 2, 3, 1); }
+  B_(cx - 2, g, 5, 2); W_(cx - 1, g, 3, 1);
 }
 
 function drawPetIcon(canvas, o){
@@ -2138,6 +2375,57 @@ function drawPetIcon(canvas, o){
   B_(0,0,canvas.width,canvas.height);
   drawPet({stage:o.stage, color:o.color || 'axo', hat:o.hat, gear:{}, mood:'happy', f:0, motion:false, cx: Math.floor(canvas.width/2), ground: canvas.height - 3, shadow:false});
 }
+
+/* Shop art for the tiered gear: 24×24, cream on black, built from a few shared shapes. */
+const th2 = (x0,y0,x1,y1,col=PW) => { wline(x0,y0,x1,y1,col); wline(x0+1,y0,x1+1,y1,col); };
+const spark = (x,y) => { W_(x,y); W_(x-1,y); W_(x+1,y); W_(x,y-1); W_(x,y+1); };
+const hilt = () => { wline(4,14,8,18); wline(4,13,9,18); th2(5,18,3,20); W_(2,20,2,2); };
+const ellF = (cx,cy,rx,ry,col=PW) => { for (let y=-ry;y<=ry;y++) for (let x=-rx;x<=rx;x++) if ((x*x)/(rx*rx)+(y*y)/(ry*ry) <= 1) px(cx+x,cy+y,1,1,col); };
+const torso = (w0, flare, top=4, bot=21) => { for (let y=top;y<bot;y++){ const hw = Math.round(w0 + (y-top)*flare); W_(12-hw, y, hw*2, 1); } };
+const GEAR_ART = {
+  // novice
+  stick: () => { th2(4,20,18,6); W_(18,4,2,3); B_(9,15,2,1); B_(14,10,2,1); for (let i=0;i<3;i++) B_(5+i,18-i,1,1); },
+  potlid: () => { ellF(12,14,10,6); ellF(12,14,7,4,PB); ellF(12,14,6,3); B_(5,14,14,1); W_(10,5,4,3); W_(11,8,2,2); B_(11,6,2,1); },
+  journal: () => { W_(6,4,12,17); B_(7,5,1,15); B_(9,7,7,1); B_(9,10,7,1); B_(9,13,5,1); W_(16,11,4,3); B_(17,12,2,1); W_(6,21,12,1); },
+  hoodie: () => { disc(12,6,5,PW); disc(12,7,3,PB); torso(6,0.1,9,21); W_(3,10,4,10); W_(17,10,4,10); B_(7,10,1,10); B_(16,10,1,10); B_(8,15,8,1); B_(8,15,1,4); B_(15,15,1,4); B_(11,10,1,3); B_(13,10,1,3); B_(5,20,14,1); },
+  // warrior
+  wraps: () => { for (const x0 of [3,13]){ W_(x0,6,8,12); for (let y=7;y<17;y+=3) B_(x0,y,8,1); B_(x0+2,6,1,12); W_(x0+1,4,6,2); } },
+  jerkin: () => { torso(6,0.12,5,21); W_(4,4,4,3); W_(16,4,4,3); B_(11,5,2,15); for (let y=7;y<19;y+=3){ B_(10,y,1,1); B_(13,y,1,1); W_(11,y+1,2,1); } B_(6,18,12,1); },
+  warhammer: () => { th2(4,21,14,8); W_(10,2,12,6); B_(11,3,10,1); W_(14,8,3,2); B_(12,5,2,2); B_(18,5,2,2); W_(9,3,1,4); W_(22,3,1,4); },
+  bracer: () => { W_(5,7,14,11); B_(5,10,14,1); B_(5,14,14,1); for (const x of [6,10,14,18]){ W_(x,4,1,3); W_(x,18,1,3); } W_(4,6,1,13); W_(19,6,1,13); disc(12,12,1,PB); },
+  stormsplit: () => { for (let i=0;i<14;i++) for (let k=0;k<3;k++) W_(6+i+k, 17-i); for (let i=2;i<13;i+=3) B_(8+i, 17-i); W_(20,2,3,3); hilt(); wline(15,3,18,6,PB); for (const [x,y] of [[4,4],[19,13],[9,2]]) spark(x,y); },
+  maul: () => { th2(4,21,12,10); W_(8,2,14,9); B_(9,3,12,1); B_(9,9,12,1); for (const x of [11,15,19]) B_(x,5,1,3); W_(7,4,1,5); W_(22,4,1,5); },
+  warbuckler: () => { disc(12,12,9,PW); disc(12,12,7,PB); disc(12,12,6,PW); for (let a=0;a<8;a++){ const an = a*Math.PI/4; W_(Math.round(12+Math.cos(an)*11), Math.round(12+Math.sin(an)*11)); } B_(11,7,2,10); B_(7,11,10,2); disc(12,12,1,PW); },
+  dragonplate: () => { for (let y=4;y<21;y++){ const half = y < 8 ? 9 : y < 16 ? 8 : 8 - (y-15); W_(12-half, y, half*2, 1); } for (const x of [3,20]){ W_(x,1,1,3); W_(x+(x<12?1:-1),2,1,2); } B_(11,4,2,16); for (let y=6;y<18;y+=3){ B_(7,y,3,1); B_(14,y,3,1); } W_(11,6,2,1); W_(11,10,2,1); W_(11,14,2,1); },
+  // guardian
+  flail: () => { th2(3,21,9,15); W_(9,13,2,2); for (const [x,y] of [[12,12],[13,10],[14,8]]) W_(x,y); disc(17,6,4,PW); for (const [x,y] of [[17,0],[23,6],[17,12],[11,6],[21,2],[21,10],[13,2]]) W_(x,y); B_(16,5,2,2); },
+  reefwall: () => { for (let y=2;y<22;y++){ const half = y < 12 ? 9 : Math.max(0, 9 - Math.round((y-12)*1)); W_(12-half, y, half*2, 1); } for (let y=4;y<18;y++){ const half = y < 12 ? 7 : Math.max(0, 7 - Math.round((y-12)*1.1)); B_(12-half, y, 1, 1); B_(11+half, y, 1, 1); } wline(12,16,12,8,PB); wline(12,11,9,8,PB); wline(12,10,15,7,PB); wline(9,8,8,6,PB); wline(15,7,16,5,PB); },
+  coralmail: () => { torso(7,0.1,4,21); W_(3,5,4,4); W_(17,5,4,4); for (let y=6;y<20;y+=2) for (let x=6+((y/2)%2);x<18;x+=2) B_(x,y); B_(10,4,4,2); },
+  turtle: () => { ellF(12,12,10,9); for (const [x,y] of [[12,12],[7,9],[17,9],[7,15],[17,15],[12,6],[12,18]]){ B_(x-2,y,5,1); B_(x-2,y,1,1); } for (const [x,y] of [[12,12],[7,9],[17,9],[7,15],[17,15]]){ B_(x-1,y-2,3,1); B_(x-1,y+2,3,1); B_(x-2,y-1,1,3); B_(x+2,y-1,1,3); } },
+  halberd: () => { th2(5,22,16,5); W_(16,1,2,5); for (let i=0;i<6;i++) W_(18, 4+i, Math.max(1,5-Math.abs(i-2)), 1); W_(11,7,4,3); B_(12,8,2,1); B_(9,15,2,1); },
+  bastion: () => { W_(4,5,16,17); for (const x of [4,8,12,16]) W_(x,2,3,3); B_(6,8,12,1); B_(6,19,12,1); B_(6,8,1,12); B_(17,8,1,12); W_(10,13,4,6); B_(11,14,2,5); B_(9,10,1,2); B_(14,10,1,2); },
+  mirror: () => { disc(12,12,10,PW); disc(12,12,8,PB); disc(12,12,7,PW); for (let i=0;i<5;i++){ B_(8+i,8+i-1+0,1,1); B_(9+i,8+i,1,1); } for (let i=0;i<3;i++) B_(13+i,9+i,1,1); disc(12,12,1,PB); spark(20,4); },
+  abyssplate: () => { for (let y=5;y<21;y++){ const half = y < 9 ? 9 : y < 16 ? 8 : 8 - (y-15); W_(12-half, y, half*2, 1); } for (const x of [3,6,17,20]) W_(x,1,1,4); W_(2,4,5,2); W_(17,4,5,2); B_(11,5,2,15); for (let y=8;y<18;y+=4) for (const x of [6,16]) B_(x,y,2,2); },
+  // rogue
+  hook: () => { th2(3,21,7,17); W_(7,15,3,3); for (let i=0;i<9;i++){ const a = Math.PI*1.1*i/8; W_(Math.round(14+Math.cos(a)*5), Math.round(9-Math.sin(a)*5)); W_(Math.round(14+Math.cos(a)*4), Math.round(9-Math.sin(a)*4)); } W_(9,6,2,2); W_(10,12,2,4); },
+  wetsuit: () => { torso(5,0.1,4,21); W_(3,6,4,10); W_(17,6,4,10); B_(10,4,4,2); B_(11,6,1,14); for (let y=7;y<20;y+=2) W_(11,y); B_(5,12,4,1); B_(15,12,4,1); },
+  kris: () => { for (let i=0;i<13;i++){ const o = Math.round(Math.sin(i*1.1)*1.3); W_(9+i+o, 14-i, 3, 1); } W_(20,1,2,2); W_(5,12,8,2); W_(6,14,3,3); W_(4,17,3,4); B_(5,18,1,2); },
+  grapple: () => { disc(8,15,6,PW); disc(8,15,4,PB); disc(8,15,3,PW); disc(8,15,1,PB); wline(13,12,18,6); W_(17,3,2,5); W_(14,3,3,1); W_(19,3,3,1); W_(13,4,1,2); W_(22,4,1,2); },
+  shiv: () => { for (let i=0;i<8;i++) W_(10+i, 14-i, 2, 1); for (const i of [2,5]) W_(12+i, 14-i-1); W_(7,14,6,2); W_(6,16,3,4); B_(7,17,1,2); },
+  kelpcloak: () => { for (let y=4;y<20;y++){ const hw = 3 + Math.round((y-4)*0.5); W_(12-hw, y, hw*2, 1); } for (let x=4;x<21;x+=3) W_(x,20,1,2+((x/3)%2)); B_(11,4,2,8); disc(12,4,2,PW); for (let y=10;y<19;y+=3) wline(7,y,9,y-2,PB); for (let y=11;y<19;y+=3) wline(15,y,17,y-2,PB); },
+  moonfang: () => { for (const flip of [0,1]){ for (let i=0;i<12;i++){ const x = flip ? 20 - i : 4 + i, y = 18 - i - Math.round(Math.sin(i/11*Math.PI)*2); W_(x,y,2,1); } } W_(2,18,4,3); W_(18,18,4,3); B_(3,19,2,1); B_(19,19,2,1); },
+  stiletto: () => { for (let i=0;i<14;i++) W_(8+i, 15-i, 1, 1); for (let i=0;i<12;i++) W_(9+i, 15-i, 1, 1); W_(5,14,6,2); W_(5,16,2,2); W_(3,18,3,3); B_(4,19,1,1); W_(9,17,2,1); },
+  phantom: () => { for (let y=4;y<22;y++){ const hw = 3 + Math.round((y-4)*0.5); for (let x=12-hw;x<12+hw;x++) if (y < 15 || lit(x,y, 1 - (y-15)/8)) W_(x,y); } B_(11,4,2,8); disc(12,4,2,PW); B_(9,6,1,1); B_(14,6,1,1); },
+  silkwraps: () => { torso(5,0.1,4,21); W_(3,6,4,9); W_(17,6,4,9); for (let i=0;i<16;i++){ B_(6+Math.round(i*0.75), 5+i); B_(17-Math.round(i*0.75), 5+i); } B_(10,4,4,2); },
+  // caster
+  conch: () => { for (let i=0;i<60;i++){ const a = i*0.22, r = 1 + i*0.15; W_(Math.round(11+Math.cos(a)*r), Math.round(11+Math.sin(a)*r*0.9)); } ellF(13,13,8,6); for (let i=0;i<40;i++){ const a = i*0.3, r = 1 + i*0.12; B_(Math.round(12+Math.cos(a)*r), Math.round(12+Math.sin(a)*r*0.8)); } W_(19,17,3,4); },
+  orb: () => { disc(12,10,7,PW); disc(12,10,5,PB); disc(12,10,4,PW); B_(10,8,2,2); W_(9,7,1,1); W_(7,18,10,2); W_(9,17,6,1); W_(5,20,14,2); },
+  tiderobe: () => { for (let y=4;y<20;y++){ const hw = 4 + Math.round((y-4)*0.35); W_(12-hw, y, hw*2, 1); } for (let x=5;x<20;x++) W_(x, 20 + Math.round(Math.sin(x*0.9)), 1, 1); B_(11,4,2,9); for (let x=6;x<19;x++) B_(x, 16 + Math.round(Math.sin(x*0.9)), 1, 1); W_(4,7,3,6); W_(17,7,3,6); },
+  maelstrom: () => { th2(5,22,13,10); for (let i=0;i<40;i++){ const a = i*0.35, r = 6 - i*0.13; W_(Math.round(16+Math.cos(a)*r), Math.round(6+Math.sin(a)*r)); } W_(12,9,4,2); spark(22,12); },
+  deeprod: () => { th2(5,22,15,6); W_(13,2,8,3); W_(19,4,3,2); W_(12,5,2,2); B_(15,3,3,1); for (const [x,y] of [[20,1],[22,7]]) W_(x,y); W_(9,14,4,2); },
+  grimoire: () => { W_(4,3,16,19); B_(5,4,1,17); B_(7,5,11,1); B_(7,19,11,1); for (let a=0;a<5;a++){ const an = -Math.PI/2 + a*2*Math.PI/5; wline(13,12,Math.round(13+Math.cos(an)*4),Math.round(12+Math.sin(an)*4),PB); } W_(19,9,3,6); B_(20,11,1,2); },
+  starrobe: () => { for (let y=4;y<22;y++){ const hw = 4 + Math.round((y-4)*0.35); W_(12-hw, y, hw*2, 1); } B_(11,4,2,9); for (const [x,y] of [[8,14],[15,17],[10,19],[15,11],[7,18]]){ B_(x,y); B_(x-1,y); B_(x+1,y); B_(x,y-1); B_(x,y+1); } W_(4,7,3,6); W_(17,7,3,6); }
+};
 /* Shop icons: just the item, centered on a 24×24 black tile. */
 function drawIcon(canvas, kind, id){
   ctx = canvas.getContext('2d'); ctx.imageSmoothingEnabled = false;
@@ -2186,6 +2474,7 @@ function drawIcon(canvas, kind, id){
     case 'guards': for (const x0 of [3,13]){ W_(x0,5,8,12); W_(x0+1,4,6,1); W_(x0+1,17,6,1); B_(x0,8,8,1); B_(x0,13,8,1); disc(x0+4,11,1,PB); } break;
     case 'plate': for (let y=4;y<21;y++){ const half = y < 8 ? 9 : y < 16 ? 8 : 8 - (y-15); W_(12-half, y, half*2, 1); } B_(9,4,6,3); B_(11,8,2,12); for (const [x,y] of [[6,9],[17,9],[6,14],[17,14]]) B_(x,y); break;
     default:
+      if (GEAR_ART[id]){ GEAR_ART[id](); return; }
       if (id.startsWith('pot_')){
         W_(10,2,4,2); B_(10,3,4,1); W_(11,4,2,3); disc(12,13,7,PW);
         for (let y=12;y<=20;y++) for (let x=5;x<=19;x++) if ((x-12)**2 + (y-13)**2 <= 40 && lit(x,y,0.5)) B_(x,y);
@@ -2482,11 +2771,12 @@ function taskRow(t, k){
     const n = weekCount(t.id, k), tg = effTarget(t, k);
     wk = `<div class="wk">${bar(100*n/tg, STATS[prim].c)}<span class="wkn"><b>${n}</b> of ${tg}</span></div>`;
     meta = (n >= tg ? 'Weekly goal hit' : `+${r.xp} xp each`) + (tg < weekTarget(t,k) ? ' · lightened' : '') + (t.bonus ? ` · bonus at ${t.bonus}` : '');
+    const hb = D.habits.lv[t.id]; if (hb) meta += hb.next != null ? ` · ${hb.pts}/${hb.next} to ${HABIT_LV[hb.lv + 1].name}` : ' · Mastered: ' + fxText(masteryFx(t));
     if (!isDue(t,k)){ disabled = !isD; meta = `Not open today · opens ${daysText(schedAt(t,k).days)}`; }
   }
   // a change to how often waits for tomorrow; say where the task is headed so it doesn't look stuck
   const nextCad = schedAt(t, addDays(k,1)).cad;
-  if (nextCad !== cad) meta += nextCad === 'week' ? ' · moves to Weekly Challenges tomorrow' : ' · moves to Dailies tomorrow';
+  if (nextCad !== cad) meta += nextCad === 'week' ? ' · moves to Habits tomorrow' : ' · moves to Dailies tomorrow';
   const closed = !isD && !rested && !isDue(t,k);
   const name = isPool ? pick.name : t.name;
   let rr = '';
@@ -2519,6 +2809,7 @@ function checklistBlock(t, k, locked){
 function assistMsg(){
   const f = D.cur, daysLeft = dayIdx(f.end) - dayIdx(D.today) + 1, a = D.lastAttack;
   if (D.inn) return {k:'Resting at the Inn', p:`The fight is paused while ${esc(S.petName)} sleeps it off. ${D.innFee} G a day.`, cta:'See battle'};
+  if (D.slump && D.slump.on) return {k:'The Slump', p:`A Slump is stuck to ${esc(S.petName)}. Boss hits can't land, but it eats your gold while you're away. Finish something ${SLUMP_BACK} days in a row to shake it off.`, cta:'See battle'};
   if (D.lastFaint && D.lastFaint.d === D.yest) return {k:'You fainted', p:`${a ? a.boss : f.boss.name} knocked you out last night. You lost ${D.lastFaint.loss} G and woke up at half HP.`, cta:'Heal up'};
   if (a && a.dmg > 0) return {k:`Last night · ${a.boss}`, p:`Hit you for ${a.dmg} HP for ${a.missed} missed dailies${a.dodged ? ` (you dodged ${a.dodged})` : ''}.${a.status ? ` You're ${STATUS[a.status].name.toLowerCase()}.` : ''}`, cta:'See battle'};
   if (D.readyCount) return {k:`${S.petName} says`, p:`${D.readyCount} skill${D.readyCount===1?' is':'s are'} ready to use. Time to hit ${f.boss.name}.`, cta:'Use skills'};
@@ -2526,7 +2817,7 @@ function assistMsg(){
   const weakTxt = f.boss.weak.length >= 5 ? 'Every stat hits it hard.' : `${f.boss.weak.map(s => STATS[s].name).join(' and ')} tasks hit twice as hard.`;
   return {k:`${f.boss.name} · ${daysLeft} day${daysLeft===1?'':'s'} left`, p:`${f.rem} HP to go. ${weakTxt}`, cta:"Let's fight"};
 }
-// Dailies and Weekly Challenges are two tabs, like the lists on To-dos; each device remembers which one was open
+// Dailies and Habits are two tabs, like the lists on To-dos; each device remembers which one was open
 const TODAY_TAB_KEY = 'oathkeeper-todaytab';
 var todayTab = (() => { try { return localStorage.getItem(TODAY_TAB_KEY) === 'week' ? 'week' : 'day'; } catch(e){ return 'day'; } })();
 // a tab's tasks split into Anytime / Morning / Afternoon / Evening, each a group you can fold away (like To-do priorities)
@@ -2538,6 +2829,15 @@ function todGroups(all, cad, k){
       <div class="tdhead"><button class="tdpill tod-rest" data-clopen="${restKey}" aria-expanded="${restOpen}">NOT TODAY (${off.length})<span class="chev ${restOpen ? '' : 'up'}">${svg('back',14,2.6)}</span></button></div>
       ${restOpen ? `<div class="list">${off.map(t => taskRow(t,k)).join('')}</div>` : ''}
     </div>` : '';
+  // Habits group by how far along each habit is instead of by time of day
+  if (cad === 'week') return HABIT_LV.map((g, gi) => {
+    const rows = list.filter(t => ((D.habits.lv[t.id] || {}).lv || 0) === gi), key = 'shut:hab-' + g.k, shut = clOpen.has(key);
+    const open = rows.filter(t => weekCount(t.id,k) < effTarget(t,k)).length;
+    return `<div class="tdgroup todgrp ${rows.length ? '' : 'empty'}" data-hab="${g.k}">
+      <div class="tdhead"><button class="tdpill hab-${g.k}" data-clopen="${key}" aria-expanded="${!shut}">${svg(g.icon,16,2.2)} ${g.name.toUpperCase()} (${rows.length})<span class="chev ${shut ? 'up' : ''}">${svg('back',14,2.6)}</span></button>${gi === 0 ? `<button class="tdplus" data-newtask="week" aria-label="Add a habit">${svg('plus',16,2.4)}</button>` : ''}</div>
+      ${shut || !rows.length ? '' : `<div class="list">${rows.map(t => taskRow(t,k)).join('')}</div>`}
+    </div>`;
+  }).join('') + rest;
   return TODS.map(g => {
     const rows = list.filter(t => (t.tod || 'any') === g.k), key = 'shut:' + cad + '-' + g.k, shut = clOpen.has(key);
     const open = rows.filter(t => cad === 'day' ? isDue(t,k) && !done(k,t.id) : weekCount(t.id,k) < effTarget(t,k)).length;
@@ -2571,6 +2871,7 @@ function renderToday(){
   </section>
   ${vitals()}
   ${myst && !dismissed('myst') ? notice('myst', `Daily check-in bonus: <b>+${myst.xp ? myst.xp + ' XP' : myst.gold + ' G'}</b>`) : ''}
+  ${slumpNote()}
   ${lullNote()}
   ${altarCard()}
   ${chestCard()}
@@ -2581,7 +2882,7 @@ function renderToday(){
     <span><span class="k">${esc(a.k)}</span><p>${esc(a.p)}</p><span class="pillbtn">${esc(a.cta)}</span></span>
     <canvas id="bossMiniCv" width="64" height="52" aria-hidden="true"></canvas>
   </button><button class="cardtog" data-collapse="boss" aria-expanded="true" aria-label="Collapse the boss card">${svg('back',16,2.6)}</button></div>`}
-  <div class="tdtabs" role="tablist" aria-label="Which tasks"><button role="tab" class="tdtab ${todayTab === 'day' ? 'on' : ''}" data-todaytab="day" aria-selected="${todayTab === 'day'}">Dailies</button><button role="tab" class="tdtab ${todayTab === 'week' ? 'on' : ''}" data-todaytab="week" aria-selected="${todayTab === 'week'}">Weekly Challenges</button></div>
+  <div class="tdtabs" role="tablist" aria-label="Which tasks"><button role="tab" class="tdtab ${todayTab === 'day' ? 'on' : ''}" data-todaytab="day" aria-selected="${todayTab === 'day'}">Dailies</button><button role="tab" class="tdtab ${todayTab === 'week' ? 'on' : ''}" data-todaytab="week" aria-selected="${todayTab === 'week'}">Habits</button></div>
   <div class="row between"><span class="muted small" style="white-space:nowrap">${todayTab === 'day' ? `${doneD} of ${dueD.length} done` : `${weekLeft} left · ${wkRange}`}</span>
     <div class="seg" role="group" aria-label="Which day to log"><button data-vday="today" class="${vday==='today'?'on':''}">Today</button><button data-vday="yest" class="${vday==='yest'?'on':''}">Yesterday</button></div></div>
   ${todayTab === 'day'
@@ -2595,31 +2896,49 @@ function skillTargets(id){
   if (id === 'lighten') return active().filter(t => t.cad === 'week' && effTarget(t,k) > 1 && weekCount(t.id,k) < effTarget(t,k));
   return null;
 }
-function skillCards(){
-  const k = D.today, bossLive = D.cur.status === 'now';
-  // Battle shows only skills you've learned; learning and leveling happen in Stats
-  return SKILLS.filter(sk => D.skills[sk.id].l > 0 && (skillFilter === 'all' || (skillFilter === 'ready' ? D.skills[sk.id].ready && skillGearOk(sk) : sk.kind === skillFilter))).sort((a, b) => (skillGearOk(b) ? 1 : 0) - (skillGearOk(a) ? 1 : 0)).map(sk => {
-    const st = D.skills[sk.id], l = st.l;
-    let pips = ''; for (let i=0;i<SKILL_MAX;i++) pips += `<i class="${i<l?'on':''}"></i>`;
-    const targets = skillTargets(sk.id);
-    let why = '';
-    if (!skillGearOk(sk)) why = `Needs a ${STYLES[sk.branch].name} build`;
-    else if (sk.kind === 'dmg' && !bossLive) why = 'Boss already defeated';
-    else if (targets && !targets.length) why = sk.id === 'wind' ? 'No open dailies today' : 'No weekly goal to lighten';
-    else if (sk.id === 'sanct' && S.waives[k] && S.waives[k]['*']) why = 'Already a rest day';
-    else if (sk.kind === 'dmg' && D.inn) why = 'Resting at the Inn';
-    else if (sk.kind === 'buff'){ const u = D.activeBuffs.find(x => x.id === sk.id); if (u) why = `Active · ${dayIdx(buffUntil(u)) - dayIdx(D.today) + 1}d left`; }
-    const pick = targets && targets.length && !why ? `<select id="sel-${sk.id}" aria-label="Choose a task for ${esc(sk.name)}">${targets.map(t => `<option value="${esc(t.id)}">${esc(t.name)}</option>`).join('')}</select>` : '';
-    const btn = `<button class="btn ${st.ready && !why ? 'primary' : ''}" data-cast="${sk.id}" ${st.ready && !why ? '' : 'disabled'}>${why ? esc(why) : st.ready ? `Use · ${st.cost} MP` : `Needs ${st.cost} MP (you have ${D.mp})`}</button>`;
-    return `<div class="skill ${st.ready && !why ? 'ready' : ''}">
-      <div class="row between"><span class="sname">${esc(sk.name)}</span><span class="kind ${sk.kind}">${{dmg:'Damage', relief:'Relief', buff:'Boost'}[sk.kind]}</span></div>
-      <div class="row between"><span class="lvpips" aria-label="Level ${l} of ${SKILL_MAX}">${pips}</span><span class="small muted">Level ${l} · ${st.cost} MP</span></div>
-      <span>${esc(skText(sk, l))}</span>
-      ${pick}${btn}
-    </div>`;
-  }).join('');
+// why a learned skill can't be used right now ('' when it can)
+function skillWhy(sk){
+  const k = D.today, bossLive = D.cur.status === 'now', targets = skillTargets(sk.id);
+  if (!skillGearOk(sk)) return `Needs a ${STYLES[sk.branch].name} build`;
+  if (sk.kind === 'dmg' && !bossLive) return 'Boss defeated';
+  if (targets && !targets.length) return sk.id === 'wind' ? 'No open dailies' : 'No habit to lighten';
+  if (sk.id === 'sanct' && S.waives[k] && S.waives[k]['*']) return 'Already a rest day';
+  if (sk.kind === 'dmg' && D.inn) return 'Resting at the Inn';
+  if (sk.kind === 'buff'){ const u = D.activeBuffs.find(x => x.id === sk.id); if (u) return `Active · ${dayIdx(buffUntil(u)) - dayIdx(D.today) + 1}d left`; }
+  return '';
 }
-let battleSec = 'skills', skillFilter = 'all';
+const KIND_TXT = {dmg:'Damage', relief:'Relief', buff:'Boost'};
+const pipsOf = l => { let p = ''; for (let i=0;i<SKILL_MAX;i++) p += `<i class="${i<l?'on':''}"></i>`; return `<span class="lvpips" aria-label="Level ${l} of ${SKILL_MAX}">${p}</span>`; };
+let skillSwap = null;   // a skill waiting to be swapped into a full slot
+// Battle: the equipped skills sit side by side as compact tiles; everything else you've learned folds away below
+function skillCards(){
+  const eq = (S.skillEq || []).filter(id => SKILL_BY[id] && D.skills[id] && D.skills[id].l);
+  const tiles = [];
+  for (let i = 0; i < SKILL_SLOTS; i++){
+    const id = eq[i];
+    if (!id){ tiles.push(`<div class="sktile empty"><span class="small muted">Empty slot</span><span class="small muted">${skillSwap ? `<button class="btn sm" data-skeq="${esc(skillSwap)}">Put ${esc(SKILL_BY[skillSwap].name)} here · ${SKILL_EQ_FEE} G</button>` : 'Equip a skill below'}</span></div>`); continue; }
+    const sk = SKILL_BY[id], st = D.skills[id], why = skillWhy(sk), targets = skillTargets(id);
+    const ok = st.ready && !why;
+    const pick = targets && targets.length && !why ? `<select id="sel-${sk.id}" aria-label="Choose a task for ${esc(sk.name)}">${targets.map(t => `<option value="${esc(t.id)}">${esc(t.name)}</option>`).join('')}</select>` : '';
+    const btn = skillSwap ? `<button class="btn sm" data-skswap="${esc(skillSwap)}|${esc(id)}">Swap for ${esc(SKILL_BY[skillSwap].name)}</button>`
+      : `<button class="btn sm ${ok ? 'primary' : ''}" data-cast="${sk.id}" ${ok ? '' : 'disabled'}>${why ? esc(why) : st.ready ? `Use · ${st.cost} MP` : `${st.cost} MP`}</button>`;
+    tiles.push(`<div class="sktile ${ok ? 'ready' : ''}" title="${esc(skText(sk, st.l))}">
+      <span class="skhead"><span class="kdot ${sk.kind}" aria-label="${KIND_TXT[sk.kind]}"></span><b class="sname">${esc(sk.name)}</b><button class="skoff" data-skoff="${sk.id}" aria-label="Take ${esc(sk.name)} off (free)">✕</button></span>
+      <span class="skmeta">${pipsOf(st.l)}${sk.power ? `<span class="small muted">${st.power} dmg</span>` : ''}</span>
+      ${pick}${btn}
+    </div>`);
+  }
+  const rest = SKILLS.filter(sk => D.skills[sk.id].l > 0 && !eq.includes(sk.id));
+  const full = eq.length >= SKILL_SLOTS, open = clOpen.has('skmore');
+  const restRows = rest.map(sk => { const st = D.skills[sk.id];
+    const btn = skillSwap === sk.id ? `<button class="btn sm" data-skswapcancel>Cancel</button>`
+      : `<button class="btn sm gold" ${full ? `data-skarm="${sk.id}"` : `data-skeq="${sk.id}"`} ${D.balance >= SKILL_EQ_FEE ? '' : 'disabled'}>${full ? 'Swap in' : 'Equip'} · ${SKILL_EQ_FEE} G</button>`;
+    return `<div class="sprow"><span class="tbody"><span class="tname">${esc(sk.name)} <span class="kind ${sk.kind}">${KIND_TXT[sk.kind]}</span></span><span class="tmeta">${pipsOf(st.l)} ${esc(skText(sk, st.l))} · ${st.cost} MP</span>${!skillGearOk(sk) ? `<span class="sneed">Needs a ${STYLES[sk.branch].name} build to use</span>` : ''}</span>${btn}</div>`; }).join('');
+  return `<div class="skgrid">${tiles.join('')}</div>
+    ${skillSwap ? `<p class="how small">Pick a slot above for <b>${esc(SKILL_BY[skillSwap].name)}</b>, or <button class="linkbtn" data-skswapcancel>cancel</button>.</p>` : ''}
+    ${rest.length ? `<div class="skmore ${open ? 'open' : ''}"><button class="skmorehead" data-clopen="skmore" aria-expanded="${open}"><b>Other skills (${rest.length})</b><span class="small muted">Equip costs ${SKILL_EQ_FEE} G · taking one off is free</span><span class="clchev">${svg(open ? 'up' : 'down',16,2.4)}</span></button>${open ? `<div class="sprows">${restRows}</div>` : ''}</div>` : ''}`;
+}
+let battleSec = 'skills';
 function innCard(){
   const st = D.inn;
   const how = `<details class="howto"><summary>How the Inn works</summary><ul class="howlist">
@@ -2652,6 +2971,19 @@ function runeState(r){
   const have = D.bag[r.id] || 0, act = D.activeRunes.find(x => x.id === r.id), full = D.activeRunes.length >= RUNE_SLOTS, ok = meetsReq(r, D.statLv);
   return {have, act, full, ok, canUse: have > 0 && !act && !full && ok, why: !have ? 'None in bag' : act ? 'Already active' : full ? 'Slots full' : !ok ? `Needs ${reqText(r)}` : ''};
 }
+// the Slump: a warning the day before it attaches, then what it's doing while it's stuck to you
+function slumpNote(){
+  const sl = D.slump; if (!sl || D.inn) return '';
+  if (!sl.on){
+    if (sl.emptyRun >= SLUMP_DAYS - 1 && !sl.todayActive) return `<div class="mystery slumpnote">${svg('moon',18,2)} <span class="ntext"><b>Nothing finished for ${sl.emptyRun} days.</b> Finish anything today, or a Slump attaches tonight.</span></div>`;
+    return '';
+  }
+  const last = sl.bites.length ? sl.bites[sl.bites.length - 1] : null, n = sl.back + (sl.todayActive ? 1 : 0);
+  const nm = id => (GEAR_BY[id] || ITEM[id] || POTION_BY[id] || RUNE_BY[id] || {}).name || id;
+  let ate = '';
+  if (last && last.d === D.yest) ate = last.g ? ` Last night it ate <b>${last.g} G</b>.` : last.hp ? ` Last night it drained <b>${last.hp} HP</b>.` : last.pending ? ` It's chewing on your <b>${esc(nm(last.item))}</b>: log yesterday's tasks to save it.` : ` Last night it ate your <b>${esc(nm(last.item))}</b>.`;
+  return `<div class="mystery slumpnote on">${svg('moon',18,2)} <span class="ntext"><b>A Slump is stuck to you.</b> It blocks boss hits, but every day you finish nothing it eats gold, then your stuff, then HP.${ate} Finish something ${SLUMP_BACK} days in a row to shake it off: <b>${Math.min(n, SLUMP_BACK)} of ${SLUMP_BACK}</b>${sl.todayActive ? ' (today counts)' : ''}.</span></div>`;
+}
 function renderBattle(){
   const f = D.cur, b = f.boss, daysLeft = dayIdx(f.end) - dayIdx(D.today) + 1, C = D.C;
   const hits = Object.entries(f.hits).sort((a,b) => b[1]-a[1]).slice(0,5);
@@ -2670,7 +3002,8 @@ function renderBattle(){
   </div>
   ${inLull() ? altarPanel() : ''}
   <div class="chips">${(b.weak.length >= 5 ? ['ALL'] : b.weak).map(s => `<span class="chip-s" style="background:${s==='ALL' ? 'var(--yellow)' : STATS[s].c};font-size:13px;padding:5px 12px">Weak to ${s==='ALL' ? 'every stat' : esc(STATS[s].name)}</span>`).join('')}<span class="chip-s plain" style="background:var(--track);font-size:13px;padding:5px 12px">Hits ${b.atk + Math.floor((f.lvl || D.lv.level)/3)} per missed daily</span></div>
-  ${a ? `<div class="card attack"><b>Last night</b><span>${esc(a.boss)} hit you for <b>${a.dmg} HP</b> · ${a.missed} missed${a.dodged ? `, ${a.dodged} dodged` : ''}${a.status ? ` · ${esc(STATUS[a.status].name)}` : ''}</span></div>` : ''}
+  ${slumpNote()}
+  ${a ? `<div class="card attack"><b>Last night</b><span>${a.shield ? `The Slump blocked ${esc(a.boss)}'s hits` : `${esc(a.boss)} hit you for <b>${a.dmg} HP</b>`} · ${a.missed} missed${a.dodged ? `, ${a.dodged} dodged` : ''}${a.status ? ` · ${esc(STATUS[a.status].name)}` : ''}</span></div>` : ''}
   <div class="sec-h"><h2>You</h2><span class="muted small">Block ${pctTxt(C.def)} · Dodge ${pctTxt(C.dodge)} · Crit ${pctTxt(C.crit)}</span></div>
   ${vitals()}
   ${potionRow()}
@@ -2695,11 +3028,10 @@ function renderBattle(){
   <p class="how">These are the bosses you must face. When your level reaches a rite, it takes the next fight and stays, fight after fight, until you beat it. Damage you deal carries over, so every fight wears it down.</p>
   ${past.length ? `<div class="sec-h"><h2>Past fights</h2></div><div class="list">${past.map(p => `<div class="tl"><span class="pill ${p.status==='won'?'won':'lost'}">${p.status==='won'?'Won':p.boss.rite?'Continues':'Escaped'}</span><span>${esc(p.boss.name)}</span><span class="small muted">${fmt(p.start)}</span></div>`).join('')}</div>` : ''}
   <p class="how">Titans can poison or paralyze you if you miss two dailies in a day; potions cure it. If your HP hits 0 you faint, lose 10% of your gold and wake up at half HP. Your mood quietly helps too: a good streak makes tasks hit harder, and a bad one makes boss hits sting more.</p>` : `
-  <div class="catpills" role="group" aria-label="Skill type">${[['all','All'],['dmg','Damage'],['relief','Relief'],['buff','Boost'],['ready','Ready now']].map(([v,l]) => `<button class="catpill ${skillFilter===v?'on':''}" data-skf="${v}" aria-pressed="${skillFilter===v}">${l}</button>`).join('')}</div>
-  <details class="howto"><summary>How skills work</summary><p class="how">Skills spend from your MP. Every finished task adds ${MP_PER_TASK} MP, up to your max. Learn and level skills in Stats. Core skills always work; branch skills work when your build leans that way (2+ equipped items of one style). Swap gear anytime to change what's available, and you never lose a skill you've learned.</p></details>
+  <details class="howto"><summary>How skills work</summary><p class="how">You can have ${SKILL_SLOTS} skills equipped at a time, and only equipped skills can be used or leveled up. A newly learned skill drops into an empty slot for free; after that, equipping a skill costs ${SKILL_EQ_FEE} G and taking one off is free. Skills spend MP: every finished task adds ${MP_PER_TASK} MP, up to your max. Core skills always work; branch skills work when your build leans that way (2+ equipped items of one style). You never lose a skill you've learned.</p></details>
   ${(() => { const L = buildLean(); return `<div class="leanline">${L ? `<span class="bdot" style="--bc:${STYLES[L.style].c}"></span> Build: <b>${STYLES[L.style].name}</b>` : 'Build: <b>none yet</b> · equip 2+ items of one style'}</div>`; })()}
   ${D.points ? `<button class="card bagrow" data-plus="stats" data-gopts><span><b>${D.points} skill point${D.points===1?'':'s'} to spend</b><span class="muted small" style="display:block">Learn and level skills in Stats</span></span><span class="bagopen">Stats ›</span></button>` : ''}
-  <div class="list">${skillCards() || `<p class="how">${SKILLS.some(sk => D.skills[sk.id].l) ? 'None of your skills fit this filter.' : 'You haven’t learned any skills yet. Spend skill points in Stats to learn your first one.'}</p>`}</div>`}`;
+  ${SKILLS.some(sk => D.skills[sk.id].l) ? skillCards() : `<p class="how">You haven’t learned any skills yet. Spend skill points in Stats to learn your first one.</p>`}`}`;
 }
 
 /* ---------- to-dos ---------- */
@@ -2782,9 +3114,14 @@ function itemState(it){
 }
 const seasonTag = it => it.season ? `<span class="tagseason">${esc(it.when)} only · until ${fmt(seasonEnd(it, D.today))}</span>` : '';
 const styleTag = it => it.style && STYLES[it.style] ? `<span class="tagstyle" style="background:${STYLES[it.style].c}">${STYLES[it.style].name}</span>` : '';
+const tierTag = it => !it.tier ? '' : it.tier === 'novice' ? (it.spec ? '<span class="tagtier">Specialty</span>' : '') : `<span class="tagtier">${TIER_BY[it.tier].name} · Lv ${TIER_BY[it.tier].lvl}${it.spec ? ' · Specialty' : ''}</span>`;
+let shopTier = 'all';
 let shopStyle = 'all', sellArm = null;
 function renderShop(){
-  let items = shopItems().filter(it => (shopCat === 'all' || it.kind === shopCat) && (shopStyle === 'all' || it.style === shopStyle));
+  let items = shopItems().filter(it => (shopCat === 'all' || it.kind === shopCat) && (shopStyle === 'all' || it.style === shopStyle) && (shopTier === 'all' || it.tier === shopTier));
+  // gear and hats sort by tier, then price; everything else keeps its order after them
+  const tierIx = it => it.tier ? TIER_BY[it.tier].i : 9;
+  items = items.map((it, i) => [it, i]).sort((a, b) => (tierIx(a[0]) - tierIx(b[0])) || (a[0].tier && b[0].tier ? (a[0].price || 0) - (b[0].price || 0) : a[1] - b[1])).map(x => x[0]);
   if (shopAfford) items = items.filter(it => { const s = itemState(it); return !s.owned && s.afford && s.ok; });
   const cards = items.map(it => {
     const s = itemState(it);
@@ -2798,8 +3135,9 @@ function renderShop(){
       btn = `<span class="ownedtag">${s.eq ? 'Owned · equipped' : 'Owned'}</span>` + (sellable ? `<button class="btn sm sellbtn ${sellArm === it.id ? 'armed' : ''}" data-sell="${it.id}">${sellArm === it.id ? `Tap again to sell${s.eq ? ' (takes it off)' : ''}` : `Sell · ${half} G`}</button>` : ''); }
     else if (!s.ok) btn = `<button class="btn" disabled>Needs ${reqText(it)}</button>`;
     else btn = `<button class="btn gold" ${it.gear ? `data-buygear="${it.id}"` : `data-buy="${it.id}"`} ${s.afford ? '' : 'disabled'}>Buy · ${it.price} G</button>`;
-    return `<div class="item ${s.eq?'eq':''} ${s.owned && !it.potion && !it.rune ? 'owned' : ''}">${itemArt(it)}
-      <b>${esc(it.name)}</b>${styleTag(it)}<span class="small muted">${esc(it.text)}${(it.req || it.lvl) && !s.owned && !s.eq ? ` · needs ${reqText(it)}` : ''}</span>${seasonTag(it)}${btn}</div>`;
+    const lockd = !s.owned && (!s.ok || !s.afford);   // above your level/stats or price: the art dims to gray
+    return `<div class="item ${s.eq?'eq':''} ${s.owned && !it.potion && !it.rune ? 'owned' : ''} ${lockd ? 'locked' : ''}">${itemArt(it)}
+      <b>${esc(it.name)}</b><span class="tags">${styleTag(it)}${tierTag(it)}</span><span class="small muted">${esc(it.text)}${(it.req || it.lvl) && !s.owned && !s.eq ? ` · needs ${reqText(it)}` : ''}</span>${seasonTag(it)}${btn}</div>`;
   }).join('');
   return `<div class="bignum"><b>${D.balance}</b><span>gold to spend</span></div>
   <button class="card bagrow" data-plus="inv"><span><b>Inventory</b><span class="muted small" style="display:block">Equip gear, drink potions and set runes (${D.activeRunes.length}/${RUNE_SLOTS} active)</span></span><span class="bagopen">Open ›</span></button>
@@ -2807,10 +3145,11 @@ function renderShop(){
   <div class="filters">
     <div class="catpills" role="group" aria-label="Item type">${SHOP_CATS.map(([v,l]) => `<button class="catpill ${shopCat===v?'on':''}" data-cat="${v}" aria-pressed="${shopCat===v}">${l}</button>`).join('')}</div>
     <div class="catpills" role="group" aria-label="Play style">${[['all','Any style'], ...Object.entries(STYLES).map(([k,v]) => [k, v.name])].map(([v,l]) => `<button class="catpill ${shopStyle===v?'on':''}" data-shopstyle="${v}" aria-pressed="${shopStyle===v}">${l}</button>`).join('')}</div>
+    <div class="catpills" role="group" aria-label="Gear tier">${[['all','Any tier'], ...TIERS.map(t => [t.k, t.k === 'novice' ? t.name : `${t.name} · Lv ${t.lvl}`])].map(([v,l]) => `<button class="catpill ${shopTier===v?'on':''}" data-shoptier="${v}" aria-pressed="${shopTier===v}">${l}</button>`).join('')}</div>
     <label class="checkrow" for="afford"><input type="checkbox" id="afford" ${shopAfford ? 'checked' : ''}> Only what I can buy now</label>
   </div>
   ${items.length ? `<div class="shopgrid">${cards}</div>` : `<p class="how">Nothing here fits that filter yet. Keep finishing tasks to earn gold and levels.</p>`}
-  <p class="how">Potions and runes stack in your bag; use them from your inventory. Gear and looks are one of a kind: once you own one it greys out here, and you can sell it back for half what it cost. Gear and hats lean toward a play style: Warriors hit hard, Guardians soak hits, Rogues dodge and crit, and Casters build MP and skill damage. Mix them however you like. Seasonal items only show up in the shop during their dates, and you keep them forever. Boss and Titan prizes never appear here; you get them by winning.</p>`;
+  <p class="how">Potions and runes stack in your bag; use them from your inventory. Gear and looks are one of a kind: once you own one it greys out here, and you can sell it back for half what it cost. Gear and hats lean toward a play style: Warriors hit hard, Guardians soak hits, Rogues dodge and crit, and Casters build MP and skill damage. Novice gear fits anyone at level 1; then every style has an Early set at level 5, a Mid set at 15 and an End set at 30, each with a specialty piece for a different take on the build. Mix them however you like. Seasonal items only show up in the shop during their dates, and you keep them forever. Boss and Titan prizes never appear here; you get them by winning.</p>`;
 }
 function itemArt(it, small){
   const isBg = it.kind === 'bg', isHat = it.kind === 'hat';
@@ -3164,7 +3503,8 @@ function renderStatsPanel(){
     const bonus = (D.statBonus || {})[k] || 0;
     const boosts = [...[...Object.values(S.gear), S.equip.hat].filter(Boolean).map(id => GEAR_BY[id] || ITEM[id]).filter(g => g && g.fx && ((g.fx.sxp && g.fx.sxp[k]) || (g.fx.pct && g.fx.pct[k]) || (g.fx.st && g.fx.st[k]))).map(g => g.fx.st && g.fx.st[k] ? `${gearName(g)} (+${g.fx.st[k]})` : gearName(g)),
       ...D.activeRunes.map(r => RUNE_BY[r.id]).filter(r => r && ((r.fx.st && r.fx.st[k]) || (r.fx.sxp && r.fx.sxp[k]))).map(r => r.fx.st && r.fx.st[k] ? `${runeName(r)} (+${r.fx.st[k]})` : runeName(r)),
-      ...D.activeBuffs.filter(u => u.buff.st[k]).map(u => `${SKILL_BY[u.id].name} (+${u.buff.st[k]})`)];
+      ...D.activeBuffs.filter(u => u.buff.st[k]).map(u => `${SKILL_BY[u.id].name} (+${u.buff.st[k]})`),
+      ...habitFxAt(Date.now()).filter(h => h.fx.st[k] && D.T[h.tid]).map(h => `mastered ${D.T[h.tid].name} (+${h.fx.st[k]})`)];
     if (statEdit === k){
       const e = statDraft || s;
       return `<div class="statcard editing">
@@ -3190,18 +3530,23 @@ function renderStatsPanel(){
   const pts = D.points;
   const row = sk => { const l = S.skills[sk.id] || 0, statOk = skillStatOk(sk, D.statLv), locked = D.lv.level < sk.unlock || (!l && !statOk);
     let pips = ''; for (let i=0;i<SKILL_MAX;i++) pips += `<i class="${i<l?'on':''}"></i>`;
-    const btn = D.lv.level < sk.unlock ? `<button class="btn sm" disabled>Lv ${sk.unlock}</button>` : locked ? `<button class="btn sm" disabled>Locked</button>` : l >= SKILL_MAX ? `<button class="btn sm" disabled>Max</button>` : `<button class="btn ${pts ? 'gold' : ''} sm" data-learn="${sk.id}" ${pts ? '' : 'disabled'}>${l ? 'Level up' : 'Learn'}</button>`;
-    return `<div class="sprow node ${locked ? 'locked' : ''} ${l ? 'learned' : ''}"><span class="tbody"><span class="tname">${esc(sk.name)} <span class="kind ${sk.kind}">${{dmg:'Damage', relief:'Relief', buff:'Boost'}[sk.kind]}</span></span><span class="tmeta"><span class="lvpips">${pips}</span> ${esc(skText(sk, Math.max(1, l)))}</span>${sk.needStat || (sk.branch && sk.branch !== 'core') ? `<span class="sneed ${statOk && skillGearOk(sk) ? 'ok' : ''}">${l && !skillGearOk(sk) ? 'Learned · ' : ''}Needs ${esc(skillNeedText(sk))}</span>` : ''}</span>${btn}</div>`; };
+    const eqd = l && skillEqd(sk.id), nextCost = l < SKILL_MAX ? sk.cost(l + 1) : 0;
+    const btn = D.lv.level < sk.unlock ? `<button class="btn sm" disabled>Lv ${sk.unlock}</button>` : locked ? `<button class="btn sm" disabled>Locked</button>` : l >= SKILL_MAX ? `<button class="btn sm" disabled>Max</button>`
+      : nextCost > D.C.maxMP ? `<button class="btn sm" disabled>Needs ${nextCost} max MP</button>`
+      : l && !eqd ? `<button class="btn sm" disabled>Equip to level</button>`
+      : `<button class="btn ${pts ? 'gold' : ''} sm" data-learn="${sk.id}" ${pts ? '' : 'disabled'}>${l ? 'Level up' : 'Learn'}</button>`;
+    return `<div class="sprow node ${locked ? 'locked' : ''} ${l ? 'learned' : ''}"><span class="tbody"><span class="tname">${esc(sk.name)} <span class="kind ${sk.kind}">${{dmg:'Damage', relief:'Relief', buff:'Boost'}[sk.kind]}</span>${eqd ? ' <span class="eqtag">Equipped</span>' : ''}</span><span class="tmeta"><span class="lvpips">${pips}</span> ${esc(skText(sk, Math.max(1, l)))}</span>${sk.needStat || (sk.branch && sk.branch !== 'core') ? `<span class="sneed ${statOk && skillGearOk(sk) ? 'ok' : ''}">${l && !skillGearOk(sk) ? 'Learned · ' : ''}Needs ${esc(skillNeedText(sk))}</span>` : ''}</span>${btn}</div>`; };
   const lean = buildLean();
   const skillRows = BRANCHES.map(([b, name, sub]) => { const list = SKILLS.filter(sk => (sk.branch || 'core') === b).sort((x, y) => x.unlock - y.unlock); if (!list.length) return '';
     const col = b === 'core' ? 'var(--track)' : STYLES[b].c;
-    return `<section class="branch ${lean && lean.style === b ? 'lean' : ''}" style="--bc:${col}"><div class="bhead"><span class="bdot"></span><b>${name}</b><span class="small muted">${sub}</span>${lean && lean.style === b ? '<span class="leantag">Your build</span>' : ''}</div><div class="bnodes">${list.map(row).join('')}</div></section>`; }).join('');
+    const shut = clOpen.has('brshut:' + b), nL = list.filter(sk => S.skills[sk.id]).length;
+    return `<section class="branch ${lean && lean.style === b ? 'lean' : ''} ${shut ? 'shut' : ''}" style="--bc:${col}"><button class="bhead" data-clopen="brshut:${b}" aria-expanded="${!shut}"><span class="bdot"></span><b>${name}</b><span class="small muted">${sub} · ${nL}/${list.length} learned</span>${lean && lean.style === b ? '<span class="leantag">Your build</span>' : ''}<span class="clchev">${svg(shut ? 'down' : 'up',16,2.4)}</span></button>${shut ? '' : `<div class="bnodes">${list.map(row).join('')}</div>`}</section>`; }).join('');
   return `<div class="card statsum"><div class="bignum"><b>${lv.level}</b><span>level · ${lv.into}/${lv.need} xp</span></div>${bar(100*lv.into/lv.need, 'var(--ink)')}
     ${pts && statsSec !== 'skills' ? `<button class="btn gold" data-gopoints>You have ${pts} skill point${pts===1?'':'s'} · spend them</button>` : statsSec !== 'skills' ? `<span class="small muted">You get 1 skill point each level.</span>` : ''}</div>
   <div class="seg wide" role="tablist" aria-label="Stats or skills"><button role="tab" data-ssec="stats" class="${statsSec==='stats'?'on':''}" aria-selected="${statsSec==='stats'}">Stats</button><button role="tab" data-ssec="skills" class="${statsSec==='skills'?'on':''}" aria-selected="${statsSec==='skills'}">Skill building${pts ? ` · ${pts}` : ''}</button></div>
   ${statsSec === 'skills' ? `
   <div class="sec-h" id="ptsH"><h2>Skill points</h2><span class="count">${pts} to spend</span></div>
-  <details class="howto"><summary>How skill building works</summary><p class="how">You earn 1 point every level. Spend a point to learn a new skill or make one stronger, then use your skills in Battle (they cost MP). Some skills need stat levels to learn or certain gear equipped to use, so your build shapes what you can do.</p></details>
+  <details class="howto"><summary>How skill building works</summary><p class="how">You earn 1 point every level. Spend a point to learn a new skill or make one stronger, then use your skills in Battle (they cost MP). You can only learn or raise a skill if your max MP covers its cost, and only equipped skills (${SKILL_SLOTS} at a time) can be leveled up. Some skills need stat levels to learn or certain gear equipped to use, so your build shapes what you can do.</p></details>
   ${lean ? `<div class="card leancard" style="--bc:${STYLES[lean.style].c}"><span class="bdot"></span><span><b>Your build leans ${STYLES[lean.style].name}</b><span class="small muted" style="display:block">${lean.n} of your equipped items are ${STYLES[lean.style].name} gear, so that branch's skills work in battle. Keep learning every branch: switch gear later and those skills are ready.</span></span></div>` : `<p class="how">Equip two or more items of one style and your build will lean that way, so that branch's skills work in battle.</p>`}
   <div class="tree">${skillRows}</div>
   <button class="btn" data-gobattle>Use skills in Battle ›</button>` : `
@@ -3264,12 +3609,27 @@ function renderInner(){
   for (const sl of Object.keys(S.gear)){ const g = GEAR_BY[S.gear[sl]]; if (g && g.boss && !D.drops.has(g.id)){ S.gear[sl] = null; S.gearLog.push({ts: Date.now(), slot: sl, id: null}); save(true); D = derive(); } }
   if (!S.stepFrom && !recoveryMode){ S.stepFrom = D.today; save(true); D = derive(); }
   if (!S.chestFrom && !recoveryMode){ S.chestFrom = Date.now(); save(true); D = derive(); }
+  // the equip slots arrived after skills: whatever you'd learned fills them first, best skills first, for free
+  if (!Array.isArray(S.skillEq) && !recoveryMode){ S.skillEq = SKILLS.filter(sk => S.skills[sk.id]).sort((a, b) => (S.skills[b.id] - S.skills[a.id]) || (b.unlock - a.unlock)).slice(0, SKILL_SLOTS).map(sk => sk.id); save(true); D = derive(); }
+  if (!S.habitFrom && !recoveryMode){ S.habitFrom = D.today; save(true); D = derive(); }   // habit mastery counts from the day it arrived
   if (!S.altarFrom && !recoveryMode){ S.altarFrom = Date.now(); save(true); D = derive(); }   // the Rune Altar opens only after bosses beaten from now on
   if (D.altar.wins.length && !recoveryMode){ D.altar.wins.forEach(w => { if (!S.lrunes[w.id]) S.lrunes[w.id] = w.key; }); save(true); D = derive(); }   // legendary runes are kept for good   // Focus chests start with sessions finished from now on   // partial-progress pay starts the day this build first ran, never earlier
   if (S.seenInit === false){ S.seenDrops = Array.from(new Set([...S.seenDrops, ...[...D.drops].filter(id => ITEM[id] && ITEM[id].boss)])); S.seenInit = true; save(true); D = derive(); }
   for (const c of Object.keys(S.results)) if (+c >= D.freezeBefore) delete S.results[c];
   const nr = Object.keys(D.newResults || {}).filter(c => !S.results[c]);
   if (nr.length){ nr.forEach(c => S.results[c] = D.newResults[c]); save(true); D = derive(); }
+  // what the Slump ate is written down for good; things you bought leave your inventory (counted like a sale for 0 G)
+  const ns = Object.keys(D.newSlump || {}).filter(d => !(S.slumpLog || {})[d]).sort();
+  if (ns.length && !recoveryMode){ if (!S.slumpLog) S.slumpLog = {}; const ate = [];
+    for (const d of ns){ const r = D.newSlump[d]; S.slumpLog[d] = r;
+      if (r.item && r.kind === 'owned' && S.owned.includes(r.item)){ const it = GEAR_BY[r.item] || ITEM[r.item];
+        S.owned = S.owned.filter(id => id !== r.item); S.sells.push({id: r.item, ts: Date.now(), date: d, cost: r.cost, g: 0});
+        if (GEAR_BY[r.item]) for (const sl of Object.keys(S.gear)) if (S.gear[sl] === r.item){ S.gear[sl] = null; S.gearLog.push({ts: Date.now(), slot: sl, id: null}); }
+        if (S.equip.hat === r.item) setHat(null); if (S.equip.bg === r.item) S.equip.bg = 'dawn'; if (S.equip.color === r.item) S.equip.color = 'axo';
+        ate.push(it ? it.name : r.item); }
+      else if (r.item) ate.push((POTION_BY[r.item] || RUNE_BY[r.item] || {}).name || r.item); }
+    save(true); D = derive(); if (ate.length) toast(`The Slump ate your ${ate.join(', ')}`); }
+  if (!S.slumpFrom && !recoveryMode){ S.slumpFrom = D.today; save(true); D = derive(); }   // the Slump only counts days from now on
   const nf = Object.keys(D.newFaints || {}).filter(d => !S.faintLog[d]);
   if (nf.length){ nf.forEach(d => S.faintLog[d] = D.newFaints[d]); save(true); D = derive(); }
   // once today's fee is covered it's settled for good, so a later purchase can't undo past nights
@@ -3300,7 +3660,7 @@ function drawIcons(root){
 function draw(){
   const now = Date.now();
   const sc = document.getElementById('scene');
-  if (sc) drawScene(sc, {bg: D.inn ? 'inn' : S.equip.bg, color:S.equip.color, hat:S.equip.hat, gear:S.gear, stage:stage(D.lv.level), mood: now < jumpUntil ? 'happy' : D.mood, f:frame, motion:motionOK, jump: now < jumpUntil && (Math.floor(now/120)%2===0)});
+  if (sc) drawScene(sc, {slump: D.slump && D.slump.on, bg: D.inn ? 'inn' : S.equip.bg, color:S.equip.color, hat:S.equip.hat, gear:S.gear, stage:stage(D.lv.level), mood: now < jumpUntil ? 'happy' : D.mood, f:frame, motion:motionOK, jump: now < jumpUntil && (Math.floor(now/120)%2===0)});
   const hurt = now < hurtUntil && Math.floor(now/90)%2 === 0;
   const m = document.getElementById('bossMiniCv'); if (m) drawBoss(m, D.cur.boss, frame, motionOK, hurt, D.cur.status === 'won');
   const b = document.getElementById('bossCv'); if (b) drawBoss(b, D.cur.boss, frame, motionOK, hurt, D.cur.status === 'won');
@@ -3538,6 +3898,7 @@ function toggle(id, el){
 function cast(id, el){
   const sk = SKILL_BY[id], st = D.skills[id], k = D.today;
   if (!st || !st.ready || !st.l) return;
+  if (!skillEqd(id)){ toast(`Equip ${sk.name} first`); return; }
   if (!skillGearOk(sk)){ toast(`${sk.name} needs a ${STYLES[sk.branch].name} build`); return; }
   const use = {id, ts: Date.now(), date: k, cost: st.cost};
   let msg = '';
@@ -3620,8 +3981,8 @@ function renderEditor(){
       <div class="swatches"><button class="iconpick ${!t.icon ? 'on' : ''}" data-ticon="" aria-pressed="${!t.icon}" aria-label="Use the main stat's icon" style="font-size:12px;font-weight:700">Auto</button>${TASK_ICONS.map(ic => `<button class="iconpick ${t.icon === ic ? 'on' : ''}" data-ticon="${ic}" aria-pressed="${t.icon === ic}" aria-label="Icon ${ic}">${svg(ic,18,2)}</button>`).join('')}</div>
       <div class="emojirow"><input type="text" id="tEmoji" maxlength="16" inputmode="text" autocomplete="off" value="${t.icon && t.icon.startsWith('e:') ? esc(t.icon.slice(2)) : ''}" placeholder="Or type an emoji 🙂" aria-label="Emoji icon"></div>
       <p class="how small">On iPhone, tap the box and switch to the emoji keyboard (🌐 or 🙂). On a Mac, press Control‑Command‑Space.</p></div>
-    <div class="f" style="display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;font-weight:600;color:var(--muted)">Time of day</span>
-      <div class="seg wide todpick" role="group" aria-label="Time of day">${TODS.map(g => `<button type="button" class="${(t.tod || 'any') === g.k ? 'on' : ''}" data-ttod="${g.k}" aria-pressed="${(t.tod || 'any') === g.k}">${g.label}</button>`).join('')}</div></div>
+    ${t.cad === 'week' ? (() => { const hb = !t.isNew && D.habits.lv[t.id]; return `<p class="how small">Habits are grouped by how far along they are: ${HABIT_LV.map(g => g.name).join(' → ')}. ${hb ? `This one is <b>${HABIT_LV[hb.lv].name}</b> with ${hb.pts} points${hb.next != null ? ` (${HABIT_LV[hb.lv + 1].name} at ${hb.next})` : ''}.` : 'New ones start as New Habit.'} Each check-off adds 1 point, a week on target adds ${HABIT_HIT} plus your week streak, and a missed week takes away ${HABIT_MISS}. Mastery adds stats.</p>`; })() : `<div class="f" style="display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;font-weight:600;color:var(--muted)">Time of day</span>
+      <div class="seg wide todpick" role="group" aria-label="Time of day">${TODS.map(g => `<button type="button" class="${(t.tod || 'any') === g.k ? 'on' : ''}" data-ttod="${g.k}" aria-pressed="${(t.tod || 'any') === g.k}">${g.label}</button>`).join('')}</div></div>`}
     <label class="f" for="tCad">How often<select id="tCad"><option value="day" ${t.cad==='day' && !t.rep?'selected':''}>Every day (daily)</option><option value="week" ${t.cad==='week'?'selected':''}>Times per week</option><option value="xday" ${t.rep && t.rep.unit==='day'?'selected':''}>Every few days</option><option value="xweek" ${t.rep && t.rep.unit==='week'?'selected':''}>Every few weeks</option><option value="xmonth" ${t.rep && t.rep.unit==='month'?'selected':''}>Every few months</option></select></label>
     ${t.rep ? `<div class="row"><label class="f" for="tEvery" style="flex:1">Every how many ${t.rep.unit === 'day' ? 'days' : t.rep.unit === 'week' ? 'weeks' : 'months'}<input type="number" id="tEvery" min="1" max="${REP_MAX[t.rep.unit]}" value="${t.rep.every}"></label>
       ${t.rep.unit === 'month' ? `<label class="f" for="tDom" style="flex:1.4">On the<select id="tDom">${[...Array(31)].map((_, i) => `<option value="${i+1}" ${t.rep.dom === i+1 ? 'selected' : ''}>${ordinal(i+1)}</option>`).join('')}<option value="last" ${t.rep.dom === 'last' ? 'selected' : ''}>Last day</option></select></label>` : ''}</div>
@@ -3635,6 +3996,7 @@ function renderEditor(){
       <div class="chips">${DOW_ORDER.map(d => `<button class="chip ${t.days.includes(d)?'on':''}" data-day="${d}" style="${t.days.includes(d)?'background:var(--ink);color:var(--inv)':''}" aria-pressed="${t.days.includes(d)}">${DOW[d]}</button>`).join('')}</div></div>`}
     ${!t.isNew ? '<p class="how small">Changes to days or how often start tomorrow, so today stays as it was. Archiving removes the task now if it’s done today; otherwise it stays until tonight, so it can’t be used to skip a daily.</p>' : ''}
     <p class="how small" id="edErr" role="alert"></p>
+    ${t.isNew ? '' : '<button class="btn" data-copytask>Copy as new task</button>'}
     <div class="row between">${t.isNew ? '<span></span>' : '<button class="btn danger" data-archive>Archive</button>'}<button class="btn primary" data-savetask>Save task</button></div>`;
 }
 function readEditorFields(){
@@ -3737,7 +4099,6 @@ function onClick(e){
   if (el.dataset.collapse){ const k = el.dataset.collapse; if (k !== 'vitals' && k !== 'boss') return; S.settings.collapse[k] = !S.settings.collapse[k]; save(); render(); return; }
   if (el.dataset.dismiss){ const k = el.dataset.dismiss; if (!/^[a-z]{2,12}$/.test(k)) return; S.settings.dismissed = Object.fromEntries(Object.entries(S.settings.dismissed).filter(([, v]) => v === D.today)); S.settings.dismissed[k] = D.today; save(); render(); return; }
   if (el.dataset.bsec){ battleSec = ['inn','info'].includes(el.dataset.bsec) ? el.dataset.bsec : 'skills'; render(); return; }
-  if (el.dataset.skf){ skillFilter = el.dataset.skf; render(); return; }
   if (el.dataset.inn){
     if (el.dataset.inn === 'in'){ if (innNow()) return; if (D.balance < D.innFee){ toast('Not enough gold for a night at the Inn'); return; }
       S.inn.push({from: D.today, to: null, ts: Date.now()}); save(); render(); toast(`Checked in. The fight is paused · ${D.innFee} G a day`); return; }
@@ -3821,11 +4182,31 @@ function onClick(e){
     if (Object.keys(m).length) S.statMeta[statEdit] = m; else delete S.statMeta[statEdit];
     applyStatMeta(); const nmShown = STATS[statEdit].name; statEdit = null; statDraft = null; save(); render(); renderSheet(); toast(`${nmShown} updated`); return; }
   if (el.dataset.cat){ shopCat = el.dataset.cat; render(); return; }
+  if (el.dataset.shoptier){ shopTier = TIER_BY[el.dataset.shoptier] ? el.dataset.shoptier : 'all'; render(); return; }
   if (el.dataset.shopstyle){ shopStyle = STYLES[el.dataset.shopstyle] ? el.dataset.shopstyle : 'all'; render(); return; }
   if ('newroulette' in el.dataset){ openEditor(null, true); return; }
   if (el.dataset.learn){ const sk = SKILL_BY[el.dataset.learn], l = S.skills[sk.id] || 0;
     if (!l && !skillStatOk(sk, D.statLv)){ toast(`Needs ${skillNeedText(sk)}`); return; }
-    if (D.points >= 1 && D.lv.level >= sk.unlock && l < SKILL_MAX){ S.skills[sk.id] = l + 1; if (!S.skillUnlock[sk.id]) S.skillUnlock[sk.id] = Date.now(); save(); render(); toast(l ? `${sk.name} is now Lv ${l+1}` : `Learned ${sk.name}. It charges as you finish tasks.`); } return; }
+    // a skill you couldn't afford to cast with a full MP bar can't be learned or raised yet
+    if (sk.cost(l + 1) > D.C.maxMP){ toast(`${sk.name} costs ${sk.cost(l + 1)} MP at that level. Your max is ${D.C.maxMP}.`); return; }
+    if (l && !skillEqd(sk.id)){ toast(`Equip ${sk.name} in Battle to level it up`); return; }
+    if (D.points >= 1 && D.lv.level >= sk.unlock && l < SKILL_MAX){
+      S.skills[sk.id] = l + 1; if (!S.skillUnlock[sk.id]) S.skillUnlock[sk.id] = Date.now();
+      let slotted = false; if (!l){ S.skillEq = (S.skillEq || []).slice(); if (S.skillEq.length < SKILL_SLOTS){ S.skillEq.push(sk.id); slotted = true; } }
+      save(); render(); toast(l ? `${sk.name} is now Lv ${l+1}` : slotted ? `Learned ${sk.name} and equipped it` : `Learned ${sk.name}. Your ${SKILL_SLOTS} slots are full, so swap it in from Battle.`); } return; }
+  // equipping costs gold (it's help that doesn't come from finishing a task); taking a skill off is free
+  if (el.dataset.skeq){ const id = el.dataset.skeq, sk = SKILL_BY[id]; const eq = (S.skillEq || []).slice();
+    if (!sk || !S.skills[id] || eq.includes(id)) return;
+    if (eq.length >= SKILL_SLOTS){ toast('All slots are full. Take one off first.'); return; }
+    if (D.balance < SKILL_EQ_FEE){ toast(`Equipping costs ${SKILL_EQ_FEE} G`); return; }
+    eq.push(id); S.skillEq = eq; S.buys.push({kind:'skilleq', id, ts: Date.now(), g: SKILL_EQ_FEE, date: D.today}); skillSwap = null; save(); render(); toast(`Equipped ${sk.name} for ${SKILL_EQ_FEE} G`); return; }
+  if (el.dataset.skoff){ const id = el.dataset.skoff; S.skillEq = (S.skillEq || []).filter(x => x !== id); save(); render(); toast(`${SKILL_BY[id].name} taken off. It stays learned.`); return; }
+  if (el.dataset.skarm){ skillSwap = SKILL_BY[el.dataset.skarm] ? el.dataset.skarm : null; render(); return; }
+  if ('skswapcancel' in el.dataset){ skillSwap = null; render(); return; }
+  if (el.dataset.skswap){ const [nw, old] = el.dataset.skswap.split('|'); const eq = (S.skillEq || []).slice(), i = eq.indexOf(old);
+    if (!SKILL_BY[nw] || !S.skills[nw] || i < 0 || eq.includes(nw)) return;
+    if (D.balance < SKILL_EQ_FEE){ toast(`Equipping costs ${SKILL_EQ_FEE} G`); return; }
+    eq[i] = nw; S.skillEq = eq; S.buys.push({kind:'skilleq', id: nw, ts: Date.now(), g: SKILL_EQ_FEE, date: D.today}); skillSwap = null; save(); render(); toast(`Swapped ${SKILL_BY[old].name} for ${SKILL_BY[nw].name} (${SKILL_EQ_FEE} G)`); return; }
   if (el.dataset.cast){ cast(el.dataset.cast, el); return; }
   if ('gobattle' in el.dataset){ closeEditor(); tab = 'battle'; battleSec = 'skills'; render(); const h = document.getElementById('skillsH'); if (h) h.scrollIntoView({block:'start'}); return; }
   if ('gopoints' in el.dataset){ statsSec = 'skills'; renderSheet(); const b = document.getElementById('sheetBody'); if (b) b.scrollTop = 0; return; }
@@ -3862,6 +4243,21 @@ function onClick(e){
     renderEditor(); return; }
   if (el.dataset.day !== undefined && draft){ readEditorFields(); const d = +el.dataset.day, i = draft.days.indexOf(d); if (i >= 0){ if (draft.days.length > 1) draft.days.splice(i,1); } else draft.days.push(d); renderEditor(); return; }
   if ('archive' in el.dataset){ const t = S.tasks.find(t => t.id === draft.id); if (t){ t.archived = true; (t.off || (t.off = [])).push([addDays(D.today,1), null]); save(); } closeEditor(); render(); return; }
+  // a copy starts as a brand-new task with the same settings and steps; nothing is saved until you press Save
+  if ('copytask' in el.dataset){
+    readEditorFields();
+    const src = draft, n = Date.now().toString(36);
+    const cp = clone(src); delete cp.sched; delete cp.off; delete cp.archived; delete cp.isNew;
+    cp.id = 't' + n; cp.created = D.today; cp.isNew = true;
+    cp.name = ((src.name || '').trim() + ' copy').slice(0, 40).trim();
+    if (cp.checklist) cp.checklist = cp.checklist.map((c, i) => ({id: 'c' + n + i, text: c.text}));
+    if (cp.rep && cp.rep.first && cp.rep.first < D.today) delete cp.rep.first;
+    draft = cp; renderEditor(); showSheet(draft.pool ? 'New roulette' : 'New task');
+    document.getElementById('sheetBody').scrollTop = 0;
+    toast('Copied. Edit it and press Save to add it.');
+    setTimeout(() => { const nm = document.getElementById('tName'); if (nm){ nm.focus(); nm.select(); } }, 30);
+    return;
+  }
   if ('savetask' in el.dataset){
     readEditorFields();
     const name = draft.name.trim();
@@ -3919,7 +4315,7 @@ function onClick(e){
     if (out.pool) for (const dk of relock){ if (S.picks[dk]) delete S.picks[dk][out.id]; const p = pickFor(out, dk); (S.picks[dk] || (S.picks[dk] = {}))[out.id] = {n:p.name, s:p.stats.slice()}; }
     const nowCad = schedAt(out, D.today).cad, nextCad = schedAt(out, addDays(D.today,1)).cad;
     save(); closeEditor(); render();
-    if (old && nowCad !== nextCad) toast(nowCad === 'day' ? 'Saved. It’s still a daily today (so it can’t dodge tonight), then moves to Weekly Challenges tomorrow.' : 'Saved. It moves to Dailies tomorrow.');
+    if (old && nowCad !== nextCad) toast(nowCad === 'day' ? 'Saved. It’s still a daily today (so it can’t dodge tonight), then moves to Habits tomorrow.' : 'Saved. It moves to Dailies tomorrow.');
     return;
   }
   if ('copy' in el.dataset){ const msg = document.getElementById('copyMsg');
