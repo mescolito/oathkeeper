@@ -354,6 +354,10 @@ html[data-mode="dark"] .trow.done .check{color:var(--inv)}
 .chesticon{width:40px;height:40px;border-radius:10px;background:#141312;image-rendering:pixelated;flex:none}
 .awardin canvas.chestbig{width:150px;height:150px;border-radius:24px;background:#141312;image-rendering:pixelated}
 html[data-mode="dark"] .awardin canvas.chestbig{background:transparent}
+.hprow{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.nextboss{flex:none;border:0;background:var(--ink);color:var(--inv);border-radius:999px;font:inherit;font-size:14px;font-weight:700;padding:10px 16px;cursor:pointer;white-space:nowrap}
+.awardin canvas.nbcv{width:192px;height:156px}
+.nbtips{text-align:left;margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.35}
 .legk{color:#a87b10 !important}
 html[data-mode="dark"] .legk{color:var(--gold) !important}
 .chestprize{display:flex;flex-direction:column;align-items:center;gap:8px}
@@ -630,7 +634,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '910d92886b';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'bc06c8d3c3';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -924,31 +928,31 @@ const RUNE_SLOTS = 3;
 const LEGACY_SLOT = {shield:'weapon'};   // the Tower Shield used to sit in the weapon hand
 const gearSlotOk = (id, sl) => !!GEAR_BY[id] && (GEAR_BY[id].slot === sl || LEGACY_SLOT[id] === sl);
 const BOSSES = [
-  {id:'kraken', name:'Couch Kraken',  weak:['STA'],      shape:'kraken', atk:6, flavor:'Wraps the sofa in tentacles and whispers "one more episode."', drop:'hood'},
-  {id:'gremlin',name:'Knee Gremlin',  weak:['ARM'],      shape:'gremlin',atk:6, flavor:'Chews on unprotected joints. Hates prehab.', drop:'horns'},
-  {id:'hunch',  name:'The Hunch',     weak:['MOB'],      shape:'hunch',  atk:6, flavor:'Curls your spine toward the screen, one scroll at a time.', drop:'halo'},
-  {id:'golem',  name:'Laundry Golem', weak:['HRT'],      shape:'golem',  atk:6, flavor:'Built from every shirt you meant to fold.', drop:'basket'},
-  {id:'sloth',  name:'Iron Sloth',    weak:['MGT'],      shape:'sloth',  atk:6, flavor:'Heavy, slow, and only moves when you lift.', drop:'helm'},
-  {id:'wraith', name:'Riptide Wraith',weak:['STA','MOB'],shape:'wraith', atk:6, flavor:'Drags tired paddlers out past the break.', drop:'fin'}
+  {id:'kraken', name:'Couch Kraken',  weak:['STA'],      shape:'kraken', atk:6, beaten:'Untangled from the sofa, it slinks back under the cushions. The remote is yours again.', flavor:'Wraps the sofa in tentacles and whispers "one more episode."', drop:'hood'},
+  {id:'gremlin',name:'Knee Gremlin',  weak:['ARM'],      shape:'gremlin',atk:6, beaten:'Knees braced, joints warm. It skitters off to find someone who skips warm-ups.', flavor:'Chews on unprotected joints. Hates prehab.', drop:'horns'},
+  {id:'hunch',  name:'The Hunch',     weak:['MOB'],      shape:'hunch',  atk:6, beaten:'Shoulders back, head up. It shrinks into a dust bunny behind your monitor.', flavor:'Curls your spine toward the screen, one scroll at a time.', drop:'halo'},
+  {id:'golem',  name:'Laundry Golem', weak:['HRT'],      shape:'golem',  atk:6, beaten:'Folded, sorted and put away. Nothing left but a single lonely sock.', flavor:'Built from every shirt you meant to fold.', drop:'basket'},
+  {id:'sloth',  name:'Iron Sloth',    weak:['MGT'],      shape:'sloth',  atk:6, beaten:"You out-lifted it. It naps on the bench and won't bother you until next time.", flavor:'Heavy, slow, and only moves when you lift.', drop:'helm'},
+  {id:'wraith', name:'Riptide Wraith',weak:['STA','MOB'],shape:'wraith', atk:6, beaten:'You paddled past it and caught the set. It sinks back under the break.', flavor:'Drags tired paddlers out past the break.', drop:'fin'}
 ];
 const TITANS = [
-  {id:'doldrums', name:'The Doldrums', weak:SK.slice(), shape:'titan', titan:true, atk:10, status:'para', flavor:'Titan of flat days and skipped plans. Miss two dailies and it paralyzes you.', drop:'tidecrown', drop2:'anchor'},
-  {id:'undertow', name:'The Undertow', weak:SK.slice(), shape:'eel', titan:true, atk:10, status:'poison', flavor:'A drowned giant that drags at your ankles. Miss two dailies and it poisons you.', drop:'fang'},
-  {id:'colossus', name:'The Fog Colossus', weak:SK.slice(), shape:'giant', titan:true, atk:11, status:'para', flavor:'A wall of fog that turns days into blur. Miss two dailies and it paralyzes you.', drop:'cloak'}
+  {id:'doldrums', name:'The Doldrums', weak:SK.slice(), shape:'titan', titan:true, atk:10, status:'para', beaten:'The wind picks up again. Your plans have somewhere to go.', flavor:'Titan of flat days and skipped plans. Miss two dailies and it paralyzes you.', drop:'tidecrown', drop2:'anchor'},
+  {id:'undertow', name:'The Undertow', weak:SK.slice(), shape:'eel', titan:true, atk:10, status:'poison', beaten:'You kicked free and swam to shore. It sinks back into the deep, beaten.', flavor:'A drowned giant that drags at your ankles. Miss two dailies and it poisons you.', drop:'fang'},
+  {id:'colossus', name:'The Fog Colossus', weak:SK.slice(), shape:'giant', titan:true, atk:11, status:'para', beaten:'The fog burns off. Every day has its edges again.', flavor:'A wall of fog that turns days into blur. Miss two dailies and it paralyzes you.', drop:'cloak'}
 ];
 const TITAN = TITANS[0];
 const SEASONAL = [
-  {id:'pumpkin',  name:'The Pumpkin Wraith', when:'10-31', weak:['MOB','HRT'], shape:'pumpkin', atk:8, seasonal:true, flavor:'A Halloween haunt that feeds on skipped chores.', drop:'jackhat'},
-  {id:'gobbler',  name:'The Gobbler',        when:'thanks', weak:['STA','MGT'], shape:'turkey',  atk:8, seasonal:true, flavor:'Thanksgiving glutton. Out-train the second helping.', drop:'pilgrim'},
-  {id:'krampus',  name:'Krampus',            when:'12-25', weak:['ARM','HRT'], shape:'krampus', atk:9, seasonal:true, flavor:'Christmas shadow that punishes the slackers.', drop:'santa'},
-  {id:'fathertime', name:'Father Time',      when:'01-01', weak:SK.slice(),   shape:'hourglass', atk:9, seasonal:true, flavor:'New Year’s keeper of broken resolutions.', drop:'party'},
-  {id:'heartbreak', name:'The Heartbreaker', when:'02-14', weak:['MOB','STA'], shape:'heart',   atk:8, seasonal:true, flavor:'Valentine’s menace. Show up for yourself.', drop:'heartband'}
+  {id:'pumpkin',  name:'The Pumpkin Wraith', when:'10-31', weak:['MOB','HRT'], shape:'pumpkin', atk:8, seasonal:true, beaten:'Smashed into pie filling. The chores got done after all.', flavor:'A Halloween haunt that feeds on skipped chores.', drop:'jackhat'},
+  {id:'gobbler',  name:'The Gobbler',        when:'thanks', weak:['STA','MGT'], shape:'turkey',  atk:8, seasonal:true, beaten:'Full, tired and defeated. You trained right through the second helping.', flavor:'Thanksgiving glutton. Out-train the second helping.', drop:'pilgrim'},
+  {id:'krampus',  name:'Krampus',            when:'12-25', weak:['ARM','HRT'], shape:'krampus', atk:9, seasonal:true, beaten:'Sent back to the shadows with a lump of coal of his own.', flavor:'Christmas shadow that punishes the slackers.', drop:'santa'},
+  {id:'fathertime', name:'Father Time',      when:'01-01', weak:SK.slice(),   shape:'hourglass', atk:9, seasonal:true, beaten:'Your resolutions made it past January. He tips his hourglass to you.', flavor:'New Year’s keeper of broken resolutions.', drop:'party'},
+  {id:'heartbreak', name:'The Heartbreaker', when:'02-14', weak:['MOB','STA'], shape:'heart',   atk:8, seasonal:true, beaten:'You showed up for yourself. Its arrows clatter to the floor.', flavor:'Valentine’s menace. Show up for yourself.', drop:'heartband'}
 ];
 /* Rites of passage: the bosses you must face. They show up when your level reaches their range and stay, fight after fight, until beaten. Nothing (not even a holiday) can bump them. */
 const RITES = [
-  {id:'hydra',     name:'The Hydra of Someday', levels:[30,35], weak:['MGT','HRT'], shape:'hydra', rite:true, atk:14, status:'para', flavor:'Cut off one "later" and two more grow back. A rite of passage for level 30.', drop:'hydracrown'},
-  {id:'burnout',   name:'The Burnout',          levels:[55,60], weak:['STA','MOB'], shape:'candle', rite:true, atk:18, status:'poison', flavor:'A melted giant that lives on overwork. Rest is the only blade that cuts it. A rite of passage for level 55.', drop:'emberhelm'},
-  {id:'leviathan', name:'Leviathan, the Last Tide', levels:[95,100], weak:SK.slice(), shape:'leviathan', rite:true, final:true, atk:25, status:'poison', flavor:'The tide that swallows every habit you ever built. Too big to see all at once. The final boss.', drop:'abysscrown'}
+  {id:'hydra',     name:'The Hydra of Someday', levels:[30,35], weak:['MGT','HRT'], shape:'hydra', rite:true, atk:14, status:'para', beaten:'Every someday became today. No heads left to grow back.', flavor:'Cut off one "later" and two more grow back. A rite of passage for level 30.', drop:'hydracrown'},
+  {id:'burnout',   name:'The Burnout',          levels:[55,60], weak:['STA','MOB'], shape:'candle', rite:true, atk:18, status:'poison', beaten:"Rested and steady, you snuffed it out. The candle can't burn you again.", flavor:'A melted giant that lives on overwork. Rest is the only blade that cuts it. A rite of passage for level 55.', drop:'emberhelm'},
+  {id:'leviathan', name:'Leviathan, the Last Tide', levels:[95,100], weak:SK.slice(), shape:'leviathan', rite:true, final:true, atk:25, status:'poison', beaten:'The last tide breaks against you and pulls back for good. Every oath kept.', flavor:'The tide that swallows every habit you ever built. Too big to see all at once. The final boss.', drop:'abysscrown'}
 ];
 const ALL_BOSSES = [...BOSSES, ...TITANS, ...SEASONAL, ...RITES];
 // once your level reaches a rite, it's your boss every fight until you beat it (its HP carries over between fights)
@@ -3127,10 +3131,10 @@ function renderBattle(){
   return `
   <section class="game boss" aria-label="${esc(b.name)}">
     <canvas id="bossCv" width="64" height="52" role="img" aria-label="${esc(b.name)}"></canvas>
-    <div class="dlg"><div class="dlg-in"><div class="dlg-h"><span>${esc(b.name)}</span><span>${f.status==='won' ? 'Defeated' : (b.seasonal ? 'Holiday · ' : b.titan ? 'Titan · ' : '') + daysLeft + 'd left'}</span></div><p>${esc(b.flavor)}</p></div></div>
+    <div class="dlg"><div class="dlg-in"><div class="dlg-h"><span>${esc(b.name)}</span><span>${f.status==='won' ? 'Defeated' : (b.seasonal ? 'Holiday · ' : b.titan ? 'Titan · ' : '') + daysLeft + 'd left'}</span></div><p>${esc(f.status === 'won' && b.beaten ? b.beaten : b.flavor)}</p></div></div>
   </section>
   <div>
-    <div class="bignum"><b>${f.rem}</b><span>of ${f.hp} boss HP</span></div>
+    <div class="hprow"><div class="bignum"><b>${f.rem}</b><span>of ${f.hp} boss HP</span></div>${f.status === 'won' ? (() => { const n = dayIdx(upcoming[0].start) - dayIdx(D.today); return `<button class="nextboss" data-nextboss>Next boss · ${n <= 0 ? 'today' : n === 1 ? 'tomorrow' : `in ${n}d`} ›</button>`; })() : ''}</div>
     <div style="margin-top:10px">${bar(100*f.rem/f.hp, 'var(--pink)', 'thick')}</div>
   </div>
   ${inLull() ? altarPanel() : ''}
@@ -3343,6 +3347,34 @@ function renderInventory(){
   return `${altarCard()}${chestCard()}<div class="sec-h"><h2>Equipped</h2></div>${eqHtml}
   <div class="catpills" role="group" aria-label="Inventory type">${INV_TABS.map(([v,l]) => `<button class="catpill ${invTab===v?'on':''}" data-invtab="${v}" aria-pressed="${invTab===v}">${l}${v==='potion' || v==='rune' ? ` <span class="small">${(v==='potion' ? POTIONS : RUNES).reduce((a,x) => a + (D.bag[x.id]||0), 0) || ''}</span>` : ''}</button>`).join('')}</div>
   <div class="list">${list}</div>`;
+}
+
+/* ---------- the next boss, so you can prepare ---------- */
+function openNextBoss(){
+  const el = document.getElementById('award'); if (!el) return;
+  const c = D.cur.c + 1, b = D.nextRite || bossFor(c), start = cycleStart(c), n = dayIdx(start) - dayIdx(D.today);
+  const lv = D.lv.level, hp = bossHp(b, lv), hit = b.atk + Math.floor(lv / 3);
+  const weak = b.weak.length >= 5 ? 'every stat' : b.weak.map(k => STATS[k].name).join(' and ');
+  const prize = ITEM[b.drop] || GEAR_BY[b.drop], prize2 = b.drop2 && (ITEM[b.drop2] || GEAR_BY[b.drop2]);
+  const kind = b.final ? 'Final boss' : b.rite ? 'Rite of passage' : b.seasonal ? 'Holiday boss' : b.titan ? 'Titan' : 'Boss';
+  const tips = [`Tasks that train ${weak} hit it hardest.`];
+  if (b.status) tips.push(`Miss two dailies and you'll be ${STATUS[b.status].name.toLowerCase()} (${STATUS[b.status].text.toLowerCase()}). Keep a ${(POTION_BY[STATUS[b.status].cure] || {}).name || 'cure'} in your bag.`);
+  if (b.final || b.rite) tips.push('It heals itself, so gear that cuts boss healing helps.');
+  el.innerHTML = `<div class="awardin chestbox nextbox" role="dialog" aria-modal="true" aria-label="Next boss: ${esc(b.name)}">
+    <span class="kick">${kind} · ${n <= 0 ? 'arrives today' : n === 1 ? 'arrives tomorrow' : `arrives in ${n} days`}</span>
+    <canvas class="chestbig nbcv" width="64" height="52" aria-hidden="true"></canvas>
+    <b class="awn">${esc(b.name)}</b>
+    <p class="how">${esc(b.flavor)}</p>
+    <div class="chips" style="justify-content:center">${(b.weak.length >= 5 ? ['ALL'] : b.weak).map(k => `<span class="chip-s" style="background:${k==='ALL' ? 'var(--yellow)' : STATS[k].c};font-size:13px;padding:5px 12px">Weak to ${k==='ALL' ? 'every stat' : esc(STATS[k].name)}</span>`).join('')}<span class="chip-s plain" style="background:var(--track);font-size:13px;padding:5px 12px">About ${hp} HP</span><span class="chip-s plain" style="background:var(--track);font-size:13px;padding:5px 12px">Hits ${hit} per missed daily</span></div>
+    <ul class="nbtips">${tips.map(t => `<li>${esc(t)}</li>`).join('')}${prize ? `<li>Beat it to win <b>${esc(prize.name)}</b>${prize2 ? ` and <b>${esc(prize2.name)}</b>` : ''}.</li>` : ''}</ul>
+    <p class="small muted" style="margin:0">Shows up ${esc(fmtDow(start))}${b.rite ? ' and stays until you beat it' : ''}.</p>
+    <button class="btn primary" data-altardone>Got it</button>
+  </div>`;
+  el.hidden = false;
+  document.querySelectorAll('.app, .nav').forEach(x => x.inert = true);
+  const cv = el.querySelector('.nbcv'), t0 = performance.now();
+  const step = now => { if (!cv.isConnected) return; drawBoss(cv, b, Math.floor((now - t0) / 120), motionOK, false, false); if (motionOK) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
 }
 
 /* ---------- the Rune Altar ---------- */
@@ -4204,6 +4236,7 @@ function onClick(e){
     const won = D.altar.won.get(key);
     openAltarUI(key, won ? {kind: 'legendary', id: won} : altarPrize(key)); sfxInit(); sfx(won ? 'focusDone' : 'start');
     render(); return; }
+  if ('nextboss' in el.dataset){ openNextBoss(); return; }
   if ('altardone' in el.dataset){ const aw = document.getElementById('award'); aw.hidden = true; aw.innerHTML = ''; document.querySelectorAll('.app, .nav').forEach(n => n.inert = false); render(); showAward(); return; }
   if (el.dataset.lrune){ const id = el.dataset.lrune; if (!LRUNE_BY[id] || !D.altar.got.includes(id)) return;
     const cur = gearAt(Date.now()).lrune, next = cur === id ? null : id; S.gearLog.push({ts: Date.now(), slot: 'lrune', id: next}); save(); render();
