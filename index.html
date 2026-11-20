@@ -619,7 +619,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '619f7b9e81';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '0b0194df04';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -696,8 +696,9 @@ const ROULETTES = [
 /* Play styles: Warrior (Might, attack), Guardian (Defense, HP), Rogue (Mobility, dodge, crits), Caster (Focus, MP, skill damage). */
 const STYLES = {war:{name:'Warrior', c:'#f2d982'}, guard:{name:'Guardian', c:'#a9b97c'}, rogue:{name:'Rogue', c:'#eeb7d8'}, cast:{name:'Caster', c:'#c9b8f0'}, novice:{name:'Novice', c:'#d9d3c3'}};
 /* Gear comes in tiers so any build can start early: a plain Novice set anyone can wear at level 1, then a set per build
-   at level 5 (Early), 15 (Mid) and 30 (End), each with a specialty piece or two for a different take on the build. */
-const TIERS = [{k:'novice', name:'Novice', lvl:1}, {k:'early', name:'Early', lvl:5}, {k:'mid', name:'Mid', lvl:15}, {k:'end', name:'End', lvl:30}];
+   at level 5 (Early), 15 (Mid), 30 (Late), 45 (Elite, for the Burnout) and 80 (End, to prepare for Leviathan), each with a specialty
+   piece for a different take on the build. End gear leans on what the final boss needs: big hits and stopping its healing. */
+const TIERS = [{k:'novice', name:'Novice', lvl:1}, {k:'early', name:'Early', lvl:5}, {k:'mid', name:'Mid', lvl:15}, {k:'late', name:'Late', lvl:30}, {k:'elite', name:'Elite', lvl:45}, {k:'end', name:'End', lvl:80}];
 const TIER_BY = Object.fromEntries(TIERS.map((t, i) => [t.k, {...t, i}]));
 const GEAR = [
   // Novice: anyone, level 1
@@ -714,10 +715,10 @@ const GEAR = [
   {id:'warhammer',  tier:'mid',   lvl:15, style:'war', slot:'weapon',  name:'War Hammer',       price:700, req:{MGT:8},       fx:{st:{MGT:4}, pct:{MGT:.4}, crit:.05}, spec:true},
   {id:'bracer',     tier:'mid',   lvl:15, style:'war', slot:'offhand', name:'Spiked Bracer',    price:520, req:{MGT:7},       fx:{st:{MGT:3, ARM:2}}},
   {id:'plate',      tier:'mid',   lvl:15, style:'war', slot:'armor',   name:'Iron Plate',       price:450, req:{ARM:6},       fx:{st:{ARM:6, MGT:1}, sxp:{MGT:.1}}},
-  {id:'stormsplit', tier:'end',   lvl:30, style:'war', slot:'weapon',  name:'Stormsplitter',    price:2000, req:{MGT:14},     fx:{st:{MGT:8}, all:.3, crit:.05, flat:6}},
-  {id:'maul',       tier:'end',   lvl:30, style:'war', slot:'weapon',  name:'Colossus Maul',    price:1900, req:{MGT:14, STA:10}, fx:{st:{MGT:9, STA:2}, pct:{MGT:.5}}, spec:true},
-  {id:'warbuckler', tier:'end',   lvl:30, style:'war', slot:'offhand', name:'Warlord’s Buckler',price:1400, req:{MGT:12},     fx:{st:{MGT:5, ARM:4}}},
-  {id:'dragonplate',tier:'end',   lvl:30, style:'war', slot:'armor',   name:'Dragonbone Plate', price:1800, req:{ARM:12},     fx:{st:{ARM:9, MGT:3}, sxp:{MGT:.15}}},
+  {id:'stormsplit', tier:'late',   lvl:30, style:'war', slot:'weapon',  name:'Stormsplitter',    price:2000, req:{MGT:14},     fx:{st:{MGT:8}, all:.3, crit:.05, flat:6}},
+  {id:'maul',       tier:'late',   lvl:30, style:'war', slot:'weapon',  name:'Colossus Maul',    price:1900, req:{MGT:14, STA:10}, fx:{st:{MGT:9, STA:2}, pct:{MGT:.5}}, spec:true},
+  {id:'warbuckler', tier:'late',   lvl:30, style:'war', slot:'offhand', name:'Warlord’s Buckler',price:1400, req:{MGT:12},     fx:{st:{MGT:5, ARM:4}}},
+  {id:'dragonplate',tier:'late',   lvl:30, style:'war', slot:'armor',   name:'Dragonbone Plate', price:1800, req:{ARM:12},     fx:{st:{ARM:9, MGT:3}, sxp:{MGT:.15}}},
   // Guardian
   {id:'trident',    tier:'early', lvl:5,  style:'guard', slot:'weapon',  name:'Riptide Trident',  price:220, req:{STA:3},     fx:{st:{STA:2}, pct:{STA:.4}}},
   {id:'shield',     tier:'early', lvl:5,  style:'guard', slot:'offhand', name:'Tower Shield',     price:220, req:{ARM:3},     fx:{st:{ARM:3, MOB:1}, pct:{ARM:.4}}},
@@ -728,10 +729,10 @@ const GEAR = [
   {id:'reefwall',   tier:'mid',   lvl:15, style:'guard', slot:'offhand', name:'Reef Bulwark',     price:620, req:{ARM:8},     fx:{st:{ARM:5, STA:2}}},
   {id:'coralmail',  tier:'mid',   lvl:15, style:'guard', slot:'armor',   name:'Coral Mail',       price:650, req:{ARM:7},     fx:{st:{ARM:5, STA:3}}},
   {id:'turtle',     tier:'mid',   lvl:15, style:'guard', slot:'armor',   name:'Turtle Shell',     price:640, req:{ARM:8},     fx:{st:{ARM:6}, sxp:{ARM:.15}, def:.03}, spec:true},
-  {id:'halberd',    tier:'end',   lvl:30, style:'guard', slot:'weapon',  name:'Tidewall Halberd', price:1900, req:{STA:14},   fx:{st:{STA:7, ARM:3}, pct:{STA:.5}}},
-  {id:'bastion',    tier:'end',   lvl:30, style:'guard', slot:'offhand', name:'Bastion of the Bay', price:1700, req:{ARM:14}, fx:{st:{ARM:8, STA:3}}},
-  {id:'mirror',     tier:'end',   lvl:30, style:'guard', slot:'offhand', name:'Mirror Shield',    price:1650, req:{ARM:12, HRT:8}, fx:{st:{ARM:6, HRT:2}, def:.05, antiheal:.25}, spec:true},
-  {id:'abyssplate', tier:'end',   lvl:30, style:'guard', slot:'armor',   name:'Abyssal Plate',    price:1800, req:{ARM:13},   fx:{st:{ARM:8, STA:5}}},
+  {id:'halberd',    tier:'late',   lvl:30, style:'guard', slot:'weapon',  name:'Tidewall Halberd', price:1900, req:{STA:14},   fx:{st:{STA:7, ARM:3}, pct:{STA:.5}}},
+  {id:'bastion',    tier:'late',   lvl:30, style:'guard', slot:'offhand', name:'Bastion of the Bay', price:1700, req:{ARM:14}, fx:{st:{ARM:8, STA:3}}},
+  {id:'mirror',     tier:'late',   lvl:30, style:'guard', slot:'offhand', name:'Mirror Shield',    price:1650, req:{ARM:12, HRT:8}, fx:{st:{ARM:6, HRT:2}, def:.05, antiheal:.25}, spec:true},
+  {id:'abyssplate', tier:'late',   lvl:30, style:'guard', slot:'armor',   name:'Abyssal Plate',    price:1800, req:{ARM:13},   fx:{st:{ARM:8, STA:5}}},
   // Rogue
   {id:'whip',       tier:'early', lvl:5,  style:'rogue', slot:'weapon',  name:'Stretch-Strap Whip', price:220, req:{MOB:3},   fx:{st:{MOB:2}, pct:{MOB:.4}, crit:.03}},
   {id:'dirk',       tier:'early', lvl:5,  style:'rogue', slot:'offhand', name:'Shell Dirk',       price:160, req:{MOB:3},     fx:{st:{MOB:2}, crit:.05}},
@@ -741,10 +742,10 @@ const GEAR = [
   {id:'grapple',    tier:'mid',   lvl:15, style:'rogue', slot:'weapon',  name:'Grappling Line',   price:640, req:{MOB:8},     fx:{st:{MOB:5}, pct:{MOB:.4}}, spec:true},
   {id:'shiv',       tier:'mid',   lvl:15, style:'rogue', slot:'offhand', name:'Barnacle Shiv',    price:500, req:{MOB:7},     fx:{st:{MOB:3}, crit:.06}},
   {id:'kelpcloak',  tier:'mid',   lvl:15, style:'rogue', slot:'armor',   name:'Shadowkelp Cloak', price:620, req:{MOB:8},     fx:{st:{MOB:4, ARM:2}, dodge:.05}},
-  {id:'moonfang',   tier:'end',   lvl:30, style:'rogue', slot:'weapon',  name:'Moonfang Blades',  price:1900, req:{MOB:14},   fx:{st:{MOB:7, MGT:3}, crit:.12}},
-  {id:'stiletto',   tier:'end',   lvl:30, style:'rogue', slot:'offhand', name:'Eel Stiletto',     price:1400, req:{MOB:12},   fx:{st:{MOB:5}, crit:.1}},
-  {id:'phantom',    tier:'end',   lvl:30, style:'rogue', slot:'armor',   name:'Phantom Tide Cloak', price:1800, req:{MOB:13}, fx:{st:{MOB:7, ARM:3}, dodge:.08}},
-  {id:'silkwraps',  tier:'end',   lvl:30, style:'rogue', slot:'armor',   name:'Silkrunner Wraps', price:1700, req:{MOB:14},   fx:{st:{MOB:8}, dodge:.1}, spec:true},
+  {id:'moonfang',   tier:'late',   lvl:30, style:'rogue', slot:'weapon',  name:'Moonfang Blades',  price:1900, req:{MOB:14},   fx:{st:{MOB:7, MGT:3}, crit:.12}},
+  {id:'stiletto',   tier:'late',   lvl:30, style:'rogue', slot:'offhand', name:'Eel Stiletto',     price:1400, req:{MOB:12},   fx:{st:{MOB:5}, crit:.1}},
+  {id:'phantom',    tier:'late',   lvl:30, style:'rogue', slot:'armor',   name:'Phantom Tide Cloak', price:1800, req:{MOB:13}, fx:{st:{MOB:7, ARM:3}, dodge:.08}},
+  {id:'silkwraps',  tier:'late',   lvl:30, style:'rogue', slot:'armor',   name:'Silkrunner Wraps', price:1700, req:{MOB:14},   fx:{st:{MOB:8}, dodge:.1}, spec:true},
   // Caster
   {id:'wand',       tier:'early', lvl:5,  style:'cast', slot:'weapon',  name:'Tidecaller Wand',   price:200, req:{HRT:3},     fx:{st:{HRT:3}, spell:.15, mpTask:2}},
   {id:'broom',      tier:'early', lvl:5,  style:'cast', slot:'weapon',  name:'Broom of Order',    price:220, req:{HRT:3},     fx:{st:{HRT:1}, pct:{HRT:.4}}, spec:true},
@@ -754,10 +755,43 @@ const GEAR = [
   {id:'conch',      tier:'mid',   lvl:15, style:'cast', slot:'offhand', name:'Conch of Echoes',   price:540, req:{HRT:8},     fx:{st:{HRT:4}, spell:.25}},
   {id:'orb',        tier:'mid',   lvl:15, style:'cast', slot:'offhand', name:'Orb of Stillness',  price:520, req:{HRT:7},     fx:{st:{HRT:3}, mpMax:15}, spec:true},
   {id:'tiderobe',   tier:'mid',   lvl:15, style:'cast', slot:'armor',   name:'Tidewoven Robe',    price:620, req:{HRT:8},     fx:{st:{HRT:5, ARM:2}, mpTask:3}},
-  {id:'maelstrom',  tier:'end',   lvl:30, style:'cast', slot:'weapon',  name:'Maelstrom Scepter', price:2000, req:{HRT:14},   fx:{st:{HRT:8}, spell:.5, mpTask:4}},
-  {id:'deeprod',    tier:'end',   lvl:30, style:'cast', slot:'weapon',  name:'Deepcurrent Rod',   price:1900, req:{HRT:13, MGT:8}, fx:{st:{HRT:6, MGT:3}, pct:{HRT:.4}, spell:.3}, spec:true},
-  {id:'grimoire',   tier:'end',   lvl:30, style:'cast', slot:'offhand', name:'Grimoire of Tides', price:1500, req:{HRT:13},   fx:{st:{HRT:6}, spell:.35}},
-  {id:'starrobe',   tier:'end',   lvl:30, style:'cast', slot:'armor',   name:'Starlight Vestments', price:1800, req:{HRT:13}, fx:{st:{HRT:8, ARM:3}, mpTask:4}},
+  {id:'maelstrom',  tier:'late',   lvl:30, style:'cast', slot:'weapon',  name:'Maelstrom Scepter', price:2000, req:{HRT:14},   fx:{st:{HRT:8}, spell:.5, mpTask:4}},
+  {id:'deeprod',    tier:'late',   lvl:30, style:'cast', slot:'weapon',  name:'Deepcurrent Rod',   price:1900, req:{HRT:13, MGT:8}, fx:{st:{HRT:6, MGT:3}, pct:{HRT:.4}, spell:.3}, spec:true},
+  {id:'grimoire',   tier:'late',   lvl:30, style:'cast', slot:'offhand', name:'Grimoire of Tides', price:1500, req:{HRT:13},   fx:{st:{HRT:6}, spell:.35}},
+  {id:'starrobe',   tier:'late',   lvl:30, style:'cast', slot:'armor',   name:'Starlight Vestments', price:1800, req:{HRT:13}, fx:{st:{HRT:8, ARM:3}, mpTask:4}},
+  // Elite (45) and End (80): the last two sets, built to take on the Burnout and then Leviathan
+  {id:'sunderblade', tier:'elite', lvl:45, style:'war', slot:'weapon',  name:'Sunder Blade',      price:3400, req:{MGT:18},         fx:{st:{MGT:11}, all:.35, crit:.06, flat:8}},
+  {id:'quakeaxe',    tier:'elite', lvl:45, style:'war', slot:'weapon',  name:'Quake Axe',         price:3300, req:{MGT:18, STA:14}, fx:{st:{MGT:12, STA:3}, pct:{MGT:.6}}, spec:true},
+  {id:'warbanner',   tier:'elite', lvl:45, style:'war', slot:'offhand', name:'War Banner',        price:2600, req:{MGT:16},         fx:{st:{MGT:6, STA:4}, all:.1}},
+  {id:'magmaplate',  tier:'elite', lvl:45, style:'war', slot:'armor',   name:'Magma Plate',       price:3200, req:{ARM:16},         fx:{st:{ARM:11, MGT:4}, sxp:{MGT:.2}}},
+  {id:'worldsplit',  tier:'end',   lvl:80, style:'war', slot:'weapon',  name:'Worldsplitter',     price:7000, req:{MGT:26},         fx:{st:{MGT:15}, all:.45, crit:.08, flat:12}},
+  {id:'tidebane',    tier:'end',   lvl:80, style:'war', slot:'weapon',  name:'Tidebane',          price:6800, req:{MGT:26, HRT:16}, fx:{st:{MGT:14, HRT:4}, all:.35, antiheal:.35}, spec:true},
+  {id:'oathshield',  tier:'end',   lvl:80, style:'war', slot:'offhand', name:'Oath Shield',       price:5200, req:{MGT:24},         fx:{st:{MGT:8, ARM:7}}},
+  {id:'titanplate',  tier:'end',   lvl:80, style:'war', slot:'armor',   name:'Titanforged Plate', price:6500, req:{ARM:22},         fx:{st:{ARM:15, MGT:6}, sxp:{MGT:.25}}},
+  {id:'ironwave',    tier:'elite', lvl:45, style:'guard', slot:'weapon',  name:'Ironwave Glaive',   price:3300, req:{STA:18},         fx:{st:{STA:10, ARM:5}, pct:{STA:.6}}},
+  {id:'cliffwall',   tier:'elite', lvl:45, style:'guard', slot:'offhand', name:'Cliffwall Shield',  price:3100, req:{ARM:18},         fx:{st:{ARM:11, STA:4}}},
+  {id:'lighthouse',  tier:'elite', lvl:45, style:'guard', slot:'offhand', name:'Lighthouse Lantern',price:3000, req:{ARM:16, HRT:12}, fx:{st:{ARM:7, HRT:4}, def:.06, antiheal:.3}, spec:true},
+  {id:'reefplate',   tier:'elite', lvl:45, style:'guard', slot:'armor',   name:'Living Reef Plate', price:3200, req:{ARM:17},         fx:{st:{ARM:11, STA:7}}},
+  {id:'abyssglaive', tier:'end',   lvl:80, style:'guard', slot:'weapon',  name:'Abyss Glaive',      price:6800, req:{STA:26},         fx:{st:{STA:14, ARM:7}, pct:{STA:.7}}},
+  {id:'worldwall',   tier:'end',   lvl:80, style:'guard', slot:'offhand', name:'Worldwall',         price:6500, req:{ARM:26},         fx:{st:{ARM:16, STA:6}}},
+  {id:'oathplate',   tier:'end',   lvl:80, style:'guard', slot:'armor',   name:'Oathkeeper Plate',  price:6500, req:{ARM:24},         fx:{st:{ARM:15, STA:9}}},
+  {id:'mountainmail',tier:'end',   lvl:80, style:'guard', slot:'armor',   name:'Mountain Mail',     price:6600, req:{ARM:24, STA:20}, fx:{st:{ARM:13, STA:10}, def:.06}, spec:true},
+  {id:'stormfangs',  tier:'elite', lvl:45, style:'rogue', slot:'weapon',  name:'Storm Fangs',       price:3300, req:{MOB:18},         fx:{st:{MOB:11, MGT:5}, crit:.16}},
+  {id:'chainwhip',   tier:'elite', lvl:45, style:'rogue', slot:'weapon',  name:'Riptide Chain',     price:3200, req:{MOB:18},         fx:{st:{MOB:12}, pct:{MOB:.6}, dodge:.04}, spec:true},
+  {id:'smokepouch',  tier:'elite', lvl:45, style:'rogue', slot:'offhand', name:'Smoke Pouch',       price:2500, req:{MOB:16},         fx:{st:{MOB:6}, dodge:.08, crit:.05}},
+  {id:'stormcloak',  tier:'elite', lvl:45, style:'rogue', slot:'armor',   name:'Stormrunner Cloak', price:3200, req:{MOB:17},         fx:{st:{MOB:11, ARM:4}, dodge:.11}},
+  {id:'voidfangs',   tier:'end',   lvl:80, style:'rogue', slot:'weapon',  name:'Voidfang Daggers',  price:6800, req:{MOB:26},         fx:{st:{MOB:15, MGT:7}, crit:.2}},
+  {id:'tideknife',   tier:'end',   lvl:80, style:'rogue', slot:'offhand', name:'Last-Tide Knife',   price:5200, req:{MOB:24},         fx:{st:{MOB:9}, crit:.14, antiheal:.25}},
+  {id:'ghostsilk',   tier:'end',   lvl:80, style:'rogue', slot:'armor',   name:'Ghostsilk Shroud',  price:6500, req:{MOB:24},         fx:{st:{MOB:15, ARM:6}, dodge:.14}},
+  {id:'mirage',      tier:'end',   lvl:80, style:'rogue', slot:'armor',   name:'Mirage Wraps',      price:6600, req:{MOB:28},         fx:{st:{MOB:17}, dodge:.18}, spec:true},
+  {id:'stormstaff',  tier:'elite', lvl:45, style:'cast', slot:'weapon',  name:'Stormcaller Staff',  price:3400, req:{HRT:18},         fx:{st:{HRT:11}, spell:.65, mpTask:5}},
+  {id:'starchart',   tier:'elite', lvl:45, style:'cast', slot:'offhand', name:'Star Chart',         price:2800, req:{HRT:17},         fx:{st:{HRT:8}, spell:.45}},
+  {id:'hourglass',   tier:'elite', lvl:45, style:'cast', slot:'offhand', name:'Moon Hourglass',     price:2700, req:{HRT:16},         fx:{st:{HRT:6}, mpMax:30, mpTask:3}, spec:true},
+  {id:'aurorarobe',  tier:'elite', lvl:45, style:'cast', slot:'armor',   name:'Aurora Robe',        price:3200, req:{HRT:17},         fx:{st:{HRT:11, ARM:4}, mpTask:5}},
+  {id:'tidesong',    tier:'end',   lvl:80, style:'cast', slot:'weapon',  name:'Tidesong Staff',     price:7000, req:{HRT:26},         fx:{st:{HRT:15}, spell:.85, mpTask:6}},
+  {id:'eclipsewand', tier:'end',   lvl:80, style:'cast', slot:'weapon',  name:'Eclipse Wand',       price:6800, req:{HRT:26, MGT:16}, fx:{st:{HRT:13, MGT:5}, spell:.6, pct:{HRT:.5}, antiheal:.3}, spec:true},
+  {id:'codex',       tier:'end',   lvl:80, style:'cast', slot:'offhand', name:'Codex of the Deep',  price:5400, req:{HRT:24},         fx:{st:{HRT:11}, spell:.6}},
+  {id:'cosmosrobe',  tier:'end',   lvl:80, style:'cast', slot:'armor',   name:'Cosmos Robe',        price:6500, req:{HRT:24},         fx:{st:{HRT:15, ARM:6}, mpTask:6, mpMax:20}},
   // legendary: only from focus sessions, one per slot
   {id:'tidebreaker', legendary:true, slot:'weapon',  name:'Tidebreaker',      fx:{st:{MGT:6, HRT:3}, crit:.1, spell:.2}},
   {id:'aegis',       legendary:true, slot:'offhand', name:'Aegis of the Deep', fx:{st:{ARM:6, MOB:3}}},
@@ -923,10 +957,18 @@ const ITEMS = [
   {id:'sentinel', tier:'mid', lvl:15, kind:'hat', name:'Sentinel Helm', price:460, style:'guard', fx:{st:{ARM:3, STA:2}}},
   {id:'gullmask', tier:'mid', lvl:15, kind:'hat', name:'Gull-Feather Cap', price:440, style:'rogue', fx:{st:{MOB:3}, crit:.03}},
   {id:'circlet',  tier:'mid', lvl:15, kind:'hat', name:'Seer’s Circlet', price:460, style:'cast', fx:{st:{HRT:4}, spell:.15}},
-  {id:'warhelm',  tier:'end', lvl:30, kind:'hat', name:'Warlord Helm',  price:1300, style:'war', fx:{st:{MGT:5, STA:2}}},
-  {id:'greathelm',tier:'end', lvl:30, kind:'hat', name:'Warden’s Greathelm', price:1300, style:'guard', fx:{st:{ARM:5, STA:3}}},
-  {id:'nighthood',tier:'end', lvl:30, kind:'hat', name:'Nightdiver Hood', price:1300, style:'rogue', fx:{st:{MOB:5}, crit:.05}},
-  {id:'archcrown',tier:'end', lvl:30, kind:'hat', name:'Archmage Crown', price:1400, style:'cast', fx:{st:{HRT:6}, spell:.2}},
+  {id:'warhelm',  tier:'late', lvl:30, kind:'hat', name:'Warlord Helm',  price:1300, style:'war', fx:{st:{MGT:5, STA:2}}},
+  {id:'greathelm',tier:'late', lvl:30, kind:'hat', name:'Warden’s Greathelm', price:1300, style:'guard', fx:{st:{ARM:5, STA:3}}},
+  {id:'nighthood',tier:'late', lvl:30, kind:'hat', name:'Nightdiver Hood', price:1300, style:'rogue', fx:{st:{MOB:5}, crit:.05}},
+  {id:'archcrown',tier:'late', lvl:30, kind:'hat', name:'Archmage Crown', price:1400, style:'cast', fx:{st:{HRT:6}, spell:.2}},
+  {id:'flamehelm',  tier:'elite', lvl:45, kind:'hat', name:'Flame Helm',        price:2400, style:'war',   fx:{st:{MGT:7, STA:3}}},
+  {id:'bulwarkhelm',tier:'elite', lvl:45, kind:'hat', name:'Bulwark Helm',      price:2400, style:'guard', fx:{st:{ARM:7, STA:5}}},
+  {id:'shadowcowl', tier:'elite', lvl:45, kind:'hat', name:'Shadow Cowl',       price:2400, style:'rogue', fx:{st:{MOB:7}, crit:.08}},
+  {id:'oraclehood', tier:'elite', lvl:45, kind:'hat', name:'Oracle Hood',       price:2400, style:'cast',  fx:{st:{HRT:8}, spell:.25}},
+  {id:'conqueror',  tier:'end',   lvl:80, kind:'hat', name:'Conqueror’s Crown', price:5000, style:'war',   fx:{st:{MGT:10, STA:5}}},
+  {id:'citadel',    tier:'end',   lvl:80, kind:'hat', name:'Citadel Helm',      price:5000, style:'guard', fx:{st:{ARM:10, STA:6}}},
+  {id:'phantommask',tier:'end',   lvl:80, kind:'hat', name:'Phantom Mask',      price:5000, style:'rogue', fx:{st:{MOB:10}, crit:.1}},
+  {id:'astralcrown',tier:'end',   lvl:80, kind:'hat', name:'Astral Crown',      price:5000, style:'cast',  fx:{st:{HRT:10}, spell:.3}},
   {id:'hood',    kind:'hat', name:'Kraken Hood',  boss:'kraken', style:'guard', fx:{st:{STA:2}}},
   {id:'horns',   kind:'hat', name:'Gremlin Horns',boss:'gremlin', style:'war', fx:{st:{MGT:2}}},
   {id:'halo',    kind:'hat', name:'Posture Halo', boss:'hunch', style:'cast', fx:{st:{HRT:2}, mpTask:1}},
@@ -2250,7 +2292,7 @@ function drawGear(g, x0, y0, w, h, ground, f, motion, sp, on){
   const bodyMax = sp.faceL + sp.faceW;
   const belly = (fn) => { for (let r = sp.eye + 4; r < h - 1; r++) for (let c = 0; c < bodyMax; c++){ if (!on(c,r)) continue; const edge = !on(c+1,r) || !on(c-1,r) || !on(c,r+1) || !on(c,r-1); if (!edge) fn(x0+c, y0+r, r, c); } };
   // tiered gear reuses a handful of looks on the pet
-  const LOOK = {jerkin:'vest', wetsuit:'stripes', silkwraps:'stripes', hoodie:'tee', coralmail:'scales', turtle:'plate', abyssplate:'plate', dragonplate:'plate', kelpcloak:'robe', tiderobe:'robe', phantom:'dots', starrobe:'dots'};
+  const LOOK = {magmaplate:'plate', titanplate:'plate', oathplate:'plate', reefplate:'scales', mountainmail:'scales', stormcloak:'robe', ghostsilk:'dots', mirage:'stripes', aurorarobe:'robe', cosmosrobe:'dots', jerkin:'vest', wetsuit:'stripes', silkwraps:'stripes', hoodie:'tee', coralmail:'scales', turtle:'plate', abyssplate:'plate', dragonplate:'plate', kelpcloak:'robe', tiderobe:'robe', phantom:'dots', starrobe:'dots'};
   const arm = LOOK[g.armor] || g.armor;
   if (arm === 'tee') belly((X,Y,r) => px(X, Y, 1, 1, r === sp.eye + 6 ? PB : PW));
   if (arm === 'stripes') belly((X,Y,r) => px(X, Y, 1, 1, ((X + r) % 4 === 0) ? PB : PW));
@@ -2288,6 +2330,8 @@ function drawGear(g, x0, y0, w, h, ground, f, motion, sp, on){
       maelstrom:  [[[hx+1,hy-9,1,13],[hx-1,hy-14,5,5]], [[hx,hy-13,3,1],[hx+2,hy-12,1,2],[hx,hy-11,2,1]]],
       deeprod:    [[[hx+1,hy-11,1,15],[hx,hy-14,4,3],[hx+3,hy-15,2,2]], [[hx+1,hy-13,1,1]]]
     };
+    const WA = {sunderblade:'stormsplit', worldsplit:'stormsplit', quakeaxe:'cleaver', tidebane:'tidebreaker', ironwave:'halberd', abyssglaive:'halberd', stormfangs:'moonfang', voidfangs:'moonfang', chainwhip:'grapple', stormstaff:'staff', tidesong:'maelstrom', eclipsewand:'wand'};
+    if (!W[g.weapon] && WA[g.weapon]) W[g.weapon] = W[WA[g.weapon]];
     if (g.weapon === 'whip'){ const pts = []; for (let i=0;i<8;i++) pts.push([hx+1+Math.round(Math.sin((i + (motion?f:0)*0.5)/1.5)*1.5), hy-1-i, 1, 1]); shape([[hx,hy,2,2], ...pts]); }
     else if (W[g.weapon]) shape(W[g.weapon][0], W[g.weapon][1]);
   }
@@ -2314,6 +2358,9 @@ function drawGear(g, x0, y0, w, h, ground, f, motion, sp, on){
       orb:     [[[ox,oy-4,4,4],[ox-1,oy-3,6,2],[ox,oy+1,4,1]], [[ox+1,oy-3,1,1]]],
       grimoire:[[[ox-2,oy-4,7,8]], [[ox-1,oy-3,1,6],[ox+1,oy-1,3,1],[ox+2,oy-2,1,3]]]
     };
+    const OA = {oathshield:'warbuckler', cliffwall:'bastion', worldwall:'bastion', lighthouse:'orb', smokepouch:'orb', hourglass:'orb', tideknife:'stiletto', starchart:'tome', codex:'grimoire'};
+    O.warbanner = [[[ox+3,oy-9,1,13],[ox-2,oy-8,5,5]], [[ox-1,oy-7,3,1],[ox-1,oy-5,3,1]]];
+    if (!O[g.offhand] && OA[g.offhand]) O[g.offhand] = O[OA[g.offhand]];
     if (O[g.offhand]) shape(O[g.offhand][0], O[g.offhand][1]);
   }
   if (g.rune){ const bx = x0 + sp.faceL - 6, by = y0 + sp.top + (motion ? (Math.floor(f/5)%2) : 0); shape([[bx+1,by,1,1],[bx,by+1,3,1],[bx+1,by+2,1,1]]); if (motion && f%8 < 4) W_(bx-2, by-2); }
@@ -2357,7 +2404,15 @@ function drawHat(hat, cx, top, rx, ry, f, motion){
     warhelm:[[[cx-6,top-7,13,6],[cx-7,top-2,15,2],[cx-10,top-10,2,5],[cx-9,top-6,3,2],[cx+9,top-10,2,5],[cx+7,top-6,3,2]], [[cx-5,top-1,11,1],[cx,top-6,1,4]]],
     greathelm:[[[cx-6,top-11,13,10],[cx-7,top-2,15,2]], [[cx-5,top-6,11,1],[cx-1,top-5,1,2],[cx+1,top-5,1,2],[cx-4,top-9,1,1],[cx+4,top-9,1,1],[cx-6,top-1,15,1]]],
     nighthood:[[[cx-5,top-3,11,4],[cx-3,top-6,7,3],[cx+2,top-9,3,3],[cx+4,top-10,2,2],[cx-rx,top+1,2,6],[cx+rx-1,top+1,2,6]], [[cx-4,top-1,9,1],[cx+3,top-8,1,2]]],
-    archcrown:[[[cx-6,top-2,13,3],[cx-6,top-6,1,4],[cx-3,top-8,1,6],[cx,top-11,1,9],[cx+3,top-8,1,6],[cx+6,top-6,1,4],[cx-1,top-13,3,3]], [[cx,top-12,1,1],[cx-4,top-1,1,1],[cx,top-1,1,1],[cx+4,top-1,1,1]]]
+    archcrown:[[[cx-6,top-2,13,3],[cx-6,top-6,1,4],[cx-3,top-8,1,6],[cx,top-11,1,9],[cx+3,top-8,1,6],[cx+6,top-6,1,4],[cx-1,top-13,3,3]], [[cx,top-12,1,1],[cx-4,top-1,1,1],[cx,top-1,1,1],[cx+4,top-1,1,1]]],
+    flamehelm:[[[cx-6,top-6,13,6],[cx-7,top-1,15,2],[cx-3,top-9,2,3],[cx,top-11,2,5],[cx+3,top-9,2,3],[cx-5,top-8,1,2],[cx+6,top-8,1,2]], [[cx-5,top,13,1],[cx-4,top-4,9,1],[cx,top-4,1,3]]],
+    bulwarkhelm:[[[cx-6,top-7,13,7],[cx-8,top-1,17,2],[cx-1,top-10,3,3]], [[cx-6,top-4,13,1],[cx-3,top-6,1,1],[cx+3,top-6,1,1],[cx,top-9,1,2]]],
+    shadowcowl:[[[cx-6,top-3,13,4],[cx-4,top-6,9,3],[cx-2,top-8,5,2],[cx-rx,top+1,2,7],[cx+rx-1,top+1,2,7],[cx-rx+1,top+5,2*rx-1,2]], [[cx-5,top-1,11,1],[cx-rx+2,top+6,2*rx-3,1]]],
+    oraclehood:[[[cx-6,top-3,13,4],[cx-4,top-7,9,4],[cx-1,top-10,3,3],[cx-rx,top+1,2,6],[cx+rx-1,top+1,2,6]], [[cx-1,top-6,3,3],[cx,top-5,1,1],[cx-5,top-1,11,1]]],
+    conqueror:[[[cx-7,top-3,15,4],[cx-7,top-7,2,4],[cx-4,top-9,2,6],[cx-1,top-12,3,9],[cx+3,top-9,2,6],[cx+6,top-7,2,4]], [[cx-5,top-2,1,1],[cx,top-2,1,1],[cx+5,top-2,1,1],[cx,top-10,1,3],[cx-6,top,13,1]]],
+    citadel:[[[cx-7,top-11,15,10],[cx-8,top-2,17,2],[cx-7,top-13,3,2],[cx-1,top-13,3,2],[cx+5,top-13,3,2]], [[cx-5,top-7,11,1],[cx-1,top-6,1,2],[cx+1,top-6,1,2],[cx-7,top-1,17,1]]],
+    phantommask:[[[cx-rx,top+2,2*rx+1,4],[cx-6,top-3,13,5],[cx-4,top-5,9,2]], [[cx-5,top+3,3,1],[cx+3,top+3,3,1],[cx-4,top+4,1,1],[cx+4,top+4,1,1],[cx,top-2,1,4]]],
+    astralcrown:[[[cx-6,top-2,13,3],[cx-6,top-7,1,5],[cx-3,top-9,1,7],[cx,top-12,1,10],[cx+3,top-9,1,7],[cx+6,top-7,1,5],[cx-2,top-15,5,1],[cx,top-17,1,5],[cx-1,top-16,3,3]], [[cx,top-15,1,1],[cx-4,top-1,1,1],[cx,top-1,1,1],[cx+4,top-1,1,1]]],
   };
   if (H[hat]) shape(H[hat][0], H[hat][1]);
 }
@@ -2443,6 +2498,43 @@ const GEAR_ART = {
   grimoire: () => { W_(4,3,16,19); B_(5,4,1,17); B_(7,5,11,1); B_(7,19,11,1); for (let a=0;a<5;a++){ const an = -Math.PI/2 + a*2*Math.PI/5; wline(13,12,Math.round(13+Math.cos(an)*4),Math.round(12+Math.sin(an)*4),PB); } W_(19,9,3,6); B_(20,11,1,2); },
   starrobe: () => { for (let y=4;y<22;y++){ const hw = 4 + Math.round((y-4)*0.35); W_(12-hw, y, hw*2, 1); } B_(11,4,2,9); for (const [x,y] of [[8,14],[15,17],[10,19],[15,11],[7,18]]){ B_(x,y); B_(x-1,y); B_(x+1,y); B_(x,y-1); B_(x,y+1); } W_(4,7,3,6); W_(17,7,3,6); }
 };
+
+// Elite (45) and End (80) sets
+const glint = pts => { for (const [x,y] of pts) spark(x,y); };
+Object.assign(GEAR_ART, {
+  sunderblade: () => { for (let i=0;i<14;i++) for (let k=0;k<4;k++) W_(6+i+k, 17-i); for (let i=1;i<13;i++) B_(8+i, 17-i); for (const i of [4,8,12]){ W_(9+i,17-i-2); } W_(21,1,2,3); hilt(); glint([[4,4]]); },
+  quakeaxe: () => { th2(4,21,13,9); for (let y=1;y<13;y++){ const w = 7 - Math.abs(y-6); W_(14, y, Math.max(1,w)+2, 1); W_(13-Math.max(0,w-2), y, Math.max(0,w-2), 1); } B_(14,2,1,10); for (const [x,y] of [[20,3],[20,9]]) B_(x,y); },
+  warbanner: () => { W_(5,2,2,20); W_(4,1,4,2); W_(7,4,13,10); for (let x=7;x<20;x+=2) W_(x,14,1,2); B_(10,6,7,1); B_(12,7,3,4); B_(10,11,7,1); W_(13,8,1,2); },
+  magmaplate: () => { for (let y=4;y<21;y++){ const half = y < 8 ? 9 : y < 16 ? 8 : 8 - (y-15); W_(12-half, y, half*2, 1); } for (let i=0;i<6;i++){ B_(7+i, 7+i*2); B_(16-i, 8+i*2); B_(9+(i%3), 13+i); } B_(11,4,2,3); W_(3,2,2,2); W_(19,2,2,2); },
+  worldsplit: () => { for (let i=0;i<16;i++) for (let k=0;k<4;k++) W_(5+i+k, 18-i); for (let i=1;i<15;i++) B_(7+i, 18-i); for (let i=2;i<15;i+=3) B_(9+i, 17-i); W_(21,0,3,3); B_(22,1,1,1); wline(3,15,9,21); wline(3,14,10,21); W_(1,20,4,3); glint([[3,4],[19,15],[10,1]]); },
+  tidebane: () => { for (let i=0;i<14;i++){ const o = Math.round(Math.sin(i*0.7)); for (let k=0;k<3;k++) W_(6+i+k+o, 17-i); } for (let i=1;i<13;i++) B_(8+i+Math.round(Math.sin(i*0.7)), 17-i); hilt(); for (let x=13;x<22;x++) W_(x, 21 + Math.round(Math.sin(x)), 1, 1); },
+  oathshield: () => { for (let y=2;y<22;y++){ const half = y < 13 ? 9 : Math.max(0, 9 - Math.round((y-13)*1.05)); W_(12-half, y, half*2, 1); } for (let y=4;y<19;y++){ const half = y < 13 ? 7 : Math.max(0, 7 - Math.round((y-13)*1.2)); B_(12-half, y); B_(11+half, y); } B_(8,8,8,6); W_(9,9,6,4); B_(11,9,2,4); B_(9,10,6,1); for (const [x,y] of [[11,15],[12,16]]) B_(x,y); },
+  titanplate: () => { for (let y=5;y<21;y++){ const half = y < 9 ? 10 : y < 16 ? 8 : 8 - (y-15); W_(12-half, y, half*2, 1); } W_(1,3,6,3); W_(17,3,6,3); B_(11,5,2,15); for (let y=8;y<19;y+=2) { B_(6,y,3,1); B_(15,y,3,1); } disc(12,10,2,PB); disc(12,10,1,PW); },
+  ironwave: () => { th2(4,22,15,6); for (let i=0;i<8;i++) W_(14+Math.round(Math.sin(i*0.8)*1.5), 6-i+4, 4, 1); W_(17,0,3,4); W_(11,8,5,2); B_(12,9,3,1); },
+  cliffwall: () => { W_(3,4,18,18); for (let x=3;x<21;x+=3) W_(x,2,2,2); for (let y=7;y<20;y+=4){ B_(5,y,14,1); } for (let y=7;y<20;y+=4) for (let x=5+((y/4)%2)*3;x<19;x+=6) B_(x,y,1,4); },
+  lighthouse: () => { W_(9,4,6,15); W_(8,19,8,3); W_(10,1,4,3); B_(10,7,4,1); B_(10,12,4,1); B_(11,15,2,4); for (const [x0,y0,x1,y1] of [[15,4,22,1],[15,5,22,7],[8,4,1,1],[8,5,1,7]]) wline(x0,y0,x1,y1); },
+  reefplate: () => { torso(8,0.06,4,21); for (let y=6;y<20;y+=3) for (let x=6+(y%2);x<18;x+=3){ B_(x,y); B_(x+1,y+1); } W_(2,4,4,5); W_(18,4,4,5); B_(10,4,4,2); for (const x of [5,18]) W_(x,1,1,3); },
+  abyssglaive: () => { th2(4,22,15,7); for (let i=0;i<9;i++) W_(14+i%2, 7-i+1, 6-Math.floor(i/2), 1); W_(19,0,2,3); B_(16,4,1,3); W_(10,9,6,2); B_(11,10,4,1); disc(8,16,2,PW); B_(8,16,1,1); },
+  worldwall: () => { for (let y=1;y<23;y++){ const half = y < 15 ? 10 : Math.max(0, 10 - Math.round((y-15)*1.25)); W_(12-half, y, half*2, 1); } for (let y=3;y<20;y++){ const half = y < 15 ? 8 : Math.max(0, 8 - Math.round((y-15)*1.4)); B_(12-half, y); B_(11+half, y); } B_(6,8,12,1); B_(6,13,12,1); B_(11,3,2,16); disc(12,11,2,PB); W_(12,11); },
+  oathplate: () => { for (let y=4;y<21;y++){ const half = y < 8 ? 9 : y < 16 ? 8 : 8 - (y-15); W_(12-half, y, half*2, 1); } B_(11,4,2,3); for (let a=0;a<5;a++){ const an = -Math.PI/2 + a*2*Math.PI/5; wline(12,12,Math.round(12+Math.cos(an)*4),Math.round(12+Math.sin(an)*4),PB); } for (const [x,y] of [[6,8],[17,8],[6,17],[17,17]]) B_(x,y); },
+  mountainmail: () => { torso(8,0.06,4,21); for (let i=0;i<8;i++){ B_(4+i*2, 18 - (i%2 ? 4 : 0)); } wline(4,18,8,12,PB); wline(8,12,12,16,PB); wline(12,16,16,10,PB); wline(16,10,20,16,PB); W_(2,4,4,4); W_(18,4,4,4); B_(10,4,4,2); },
+  stormfangs: () => { for (const flip of [0,1]){ for (let i=0;i<13;i++){ const x = flip ? 20 - i : 4 + i, y = 19 - i - Math.round(Math.sin(i/12*Math.PI)*3); W_(x,y,2,1); if (i%4 === 2) W_(x + (flip ? -1 : 1), y-1); } } W_(2,19,4,3); W_(18,19,4,3); spark(12,3); },
+  chainwhip: () => { th2(2,21,5,18); W_(1,20,3,3); for (let i=0;i<9;i++){ const x = 7 + i*1.6, y = 16 - Math.sin(i/8*Math.PI)*10; disc(Math.round(x), Math.round(y), 1, PW); B_(Math.round(x), Math.round(y)); } W_(20,9,3,3); B_(21,10,1,1); },
+  smokepouch: () => { disc(12,15,6,PW); W_(10,8,4,2); B_(9,9,6,1); W_(8,7,8,1); for (const [x,y,r] of [[7,4,2],[12,3,2],[17,4,2],[19,8,1]]) disc(x,y,r,PW); B_(10,14,4,1); B_(11,13,2,3); },
+  stormcloak: () => { for (let y=4;y<21;y++){ const hw = 3 + Math.round((y-4)*0.5); W_(12-hw, y, hw*2, 1); } B_(11,4,2,8); disc(12,4,2,PW); wline(8,9,11,13,PB); wline(11,13,9,15,PB); wline(9,15,13,19,PB); for (let x=4;x<21;x+=4) B_(x,20,2,1); },
+  voidfangs: () => { for (const flip of [0,1]){ for (let i=0;i<14;i++){ const x = flip ? 20 - i : 4 + i, y = 20 - i - Math.round(Math.sin(i/13*Math.PI)*3); W_(x,y,2,1); } } W_(2,20,4,3); W_(18,20,4,3); disc(12,7,3,PW); disc(12,7,2,PB); W_(12,7); glint([[4,3],[20,3]]); },
+  tideknife: () => { for (let i=0;i<12;i++){ const o = Math.round(Math.sin(i*0.6)); W_(9+i+o, 15-i, 2, 1); } W_(5,14,7,2); W_(4,16,3,4); B_(5,17,1,2); for (let x=12;x<22;x++) W_(x, 20 + Math.round(Math.sin(x*0.9)), 1, 1); },
+  ghostsilk: () => { for (let y=3;y<22;y++){ const hw = 3 + Math.round((y-3)*0.5); for (let x=12-hw;x<12+hw;x++) if (y < 13 || lit(x,y, 1 - (y-13)/10) || ((x+y)%5===0)) W_(x,y); } B_(11,3,2,8); disc(12,3,2,PW); B_(9,6,2,1); B_(13,6,2,1); },
+  mirage: () => { torso(5,0.1,4,21); W_(3,6,4,9); W_(17,6,4,9); for (let y=5;y<21;y+=3) for (let x=4;x<20;x++) if ((x+y)%2) B_(x,y); B_(10,4,4,2); },
+  stormstaff: () => { th2(5,22,13,10); for (const [x,y] of [[14,3],[18,4],[19,8],[16,10],[13,8],[12,5]]) W_(x,y,2,2); wline(16,2,14,6); wline(14,6,17,6); wline(17,6,15,10); spark(21,1); },
+  starchart: () => { W_(3,4,18,15); B_(4,5,16,13); for (const [x,y] of [[6,8],[10,6],[15,9],[18,7],[13,14],[7,15]]) W_(x,y); wline(6,8,10,6); wline(10,6,15,9); wline(15,9,18,7); wline(15,9,13,14); W_(2,3,2,17); W_(20,3,2,17); },
+  hourglass: () => { W_(5,2,14,2); W_(5,20,14,2); for (let y=4;y<20;y++){ const w = Math.abs(y-12); W_(12-w-1, y, 1, 1); W_(12+w, y, 1, 1); } for (let y=14;y<20;y++){ const w = y-12; W_(13-w, y, w*2-1, 1); } W_(11,9,2,3); B_(11,16,2,1); },
+  aurorarobe: () => { for (let y=4;y<22;y++){ const hw = 4 + Math.round((y-4)*0.35); W_(12-hw, y, hw*2, 1); } B_(11,4,2,9); for (let k=0;k<3;k++) for (let x=6;x<19;x++) B_(x, 14 + k*3 + Math.round(Math.sin(x*0.6 + k)), 1, 1); W_(4,7,3,6); W_(17,7,3,6); },
+  tidesong: () => { th2(5,22,13,10); disc(16,6,5,PW); disc(16,6,3,PB); for (let a=0;a<12;a++){ const an = a*Math.PI/6; W_(Math.round(16+Math.cos(an)*3), Math.round(6+Math.sin(an)*3)); } W_(16,6); for (const [x,y] of [[22,2],[21,12],[10,2]]) spark(x,y); },
+  eclipsewand: () => { th2(4,21,12,13); disc(16,8,6,PW); disc(18,6,5,PB); for (const [x,y] of [[22,13],[9,4]]) spark(x,y); },
+  codex: () => { W_(3,2,18,20); B_(4,3,1,18); B_(6,4,13,1); B_(6,19,13,1); disc(12,11,5,PB); disc(12,11,4,PW); disc(13,10,3,PB); for (let x=7;x<18;x++) B_(x, 17 + Math.round(Math.sin(x)), 1, 1); W_(20,8,3,7); B_(21,10,1,3); },
+  cosmosrobe: () => { for (let y=4;y<22;y++){ const hw = 4 + Math.round((y-4)*0.35); W_(12-hw, y, hw*2, 1); } for (let y=6;y<22;y++){ const hw = 2 + Math.round((y-6)*0.3); B_(12-hw, y, hw*2, 1); } for (const [x,y] of [[11,9],[13,13],[10,16],[14,19],[12,20]]) W_(x,y); disc(12,13,1,PW); W_(4,7,3,6); W_(17,7,3,6); }
+});
 /* Shop icons: just the item, centered on a 24×24 black tile. */
 function drawIcon(canvas, kind, id){
   ctx = canvas.getContext('2d'); ctx.imageSmoothingEnabled = false;
@@ -3177,7 +3269,7 @@ function renderShop(){
     <label class="checkrow" for="afford"><input type="checkbox" id="afford" ${shopAfford ? 'checked' : ''}> Only what I can buy now</label>
   </div>
   ${items.length ? `<div class="shopgrid">${cards}</div>` : `<p class="how">Nothing here fits that filter yet. Keep finishing tasks to earn gold and levels.</p>`}
-  <p class="how">Potions and runes stack in your bag; use them from your inventory. Gear and looks are one of a kind: once you own one it greys out here, and you can sell it back for half what it cost. Gear and hats lean toward a play style: Warriors hit hard, Guardians soak hits, Rogues dodge and crit, and Casters build MP and skill damage. Novice gear fits anyone at level 1; then every style has an Early set at level 5, a Mid set at 15 and an End set at 30, each with a specialty piece for a different take on the build. Mix them however you like. Seasonal items only show up in the shop during their dates, and you keep them forever. Boss and Titan prizes never appear here; you get them by winning.</p>`;
+  <p class="how">Potions and runes stack in your bag; use them from your inventory. Gear and looks are one of a kind: once you own one it greys out here, and you can sell it back for half what it cost. Gear and hats lean toward a play style: Warriors hit hard, Guardians soak hits, Rogues dodge and crit, and Casters build MP and skill damage. Novice gear fits anyone at level 1; then every style has sets at level 5 (Early), 15 (Mid), 30 (Late), 45 (Elite) and 80 (End, your prep for the final boss), each with a specialty piece for a different take on the build. Mix them however you like. Seasonal items only show up in the shop during their dates, and you keep them forever. Boss and Titan prizes never appear here; you get them by winning.</p>`;
 }
 function itemArt(it, small){
   const isBg = it.kind === 'bg', isHat = it.kind === 'hat';
