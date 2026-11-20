@@ -575,7 +575,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'e5b86605a8';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '1851c24418';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -2166,7 +2166,7 @@ function drawIcon(canvas, kind, id){
 }
 
 /* bosses: black silhouettes with a white rim and glowing eyes, framed by a soft floor light */
-function drawBoss(canvas, boss, f, motion, hurt){
+function drawBoss(canvas, boss, f, motion, hurt, dead){
   ctx = canvas.getContext('2d');
   const BW = 64, BH = 52, m = new Uint8Array(BW*BH);
   B_(0,0,BW,BH);
@@ -2182,7 +2182,8 @@ function drawBoss(canvas, boss, f, motion, hurt){
   const line = (x0,y0,x1,y1) => { const n = Math.max(Math.abs(x1-x0), Math.abs(y1-y0)); for (let i=0;i<=n;i++) mk(x0+(x1-x0)*i/n, y0+(y1-y0)*i/n); };
   const fm = motion ? f : 0;
   const details = [];
-  const eyes = (pts, s=3) => details.push(() => { for (const [x,y] of pts){ W_(x,y,s,s); B_(x+s-2,y+1,1,s-1); W_(x,y,1,1); } });
+  const eyePts = [];
+  const eyes = (pts, s=3) => { pts.forEach(([x,y]) => eyePts.push([x,y,s])); details.push(() => { for (const [x,y] of pts){ W_(x,y,s,s); B_(x+s-2,y+1,1,s-1); W_(x,y,1,1); } }); };
   switch (boss.shape){
     case 'kraken':
       ell(32,20,14,12);
@@ -2283,6 +2284,19 @@ function drawBoss(canvas, boss, f, motion, hurt){
       for (const [x,y,rx,ry] of [[21,25,12,10],[40,20,14,12],[31,32,16,11],[48,32,9,8],[15,35,8,7]]) ell(x,y,rx,ry);
       eyes([[16,23],[26,18],[38,17],[46,24],[33,27]],3); details.push(() => { for (let x=24;x<40;x+=2) W_(x,37,1,2); });
       break;
+  }
+  // defeated: the boss slumps (squashed down onto the ground), its eyes turn to X's and little stars circle its head
+  if (dead){
+    const GY = 46, SQ = 0.58, sy = y => Math.round(GY - (GY - y) * SQ), m2 = new Uint8Array(BW*BH);
+    for (let y=0;y<BH;y++) for (let x=0;x<BW;x++){ const src = Math.round(GY - (GY - y) / SQ); if (src >= 0 && src < BH && m[src*BW+x]) m2[y*BW+x] = 1; }
+    m.set(m2); details.length = 0;
+    let top = BH; for (let i=0;i<m.length;i++) if (m[i]){ top = (i/BW)|0; break; }
+    details.push(() => {
+      for (const [x,y,s] of eyePts){ const yy = sy(y + s/2) - 1, c = x + Math.floor(s/2); W_(c-1,yy-1,1,1); W_(c+1,yy-1,1,1); W_(c,yy,1,1); W_(c-1,yy+1,1,1); W_(c+1,yy+1,1,1); }
+      const n = 3, cx = 32, cy = Math.max(4, top - 4);
+      for (let i=0;i<n;i++){ const a = fm * 0.12 + i * Math.PI * 2 / n, x = Math.round(cx + Math.cos(a) * 11), y = Math.round(cy + Math.sin(a) * 2.5);
+        W_(x,y,1,1); if (Math.sin(fm * 0.3 + i * 2) > -0.3){ W_(x-1,y,1,1); W_(x+1,y,1,1); W_(x,y-1,1,1); W_(x,y+1,1,1); } }
+    });
   }
   ctx.fillStyle = PW;
   for (let y=0;y<BH;y++) for (let x=0;x<BW;x++){ if (m[y*BW+x]) continue; if ((x>0&&m[y*BW+x-1]) || (x<BW-1&&m[y*BW+x+1]) || (y>0&&m[(y-1)*BW+x]) || (y<BH-1&&m[(y+1)*BW+x])) ctx.fillRect(x,y,1,1); }
@@ -3159,8 +3173,8 @@ function draw(){
   const sc = document.getElementById('scene');
   if (sc) drawScene(sc, {bg: D.inn ? 'inn' : S.equip.bg, color:S.equip.color, hat:S.equip.hat, gear:S.gear, stage:stage(D.lv.level), mood: now < jumpUntil ? 'happy' : D.mood, f:frame, motion:motionOK, jump: now < jumpUntil && (Math.floor(now/120)%2===0)});
   const hurt = now < hurtUntil && Math.floor(now/90)%2 === 0;
-  const m = document.getElementById('bossMiniCv'); if (m) drawBoss(m, D.cur.boss, frame, motionOK, hurt);
-  const b = document.getElementById('bossCv'); if (b) drawBoss(b, D.cur.boss, frame, motionOK, hurt);
+  const m = document.getElementById('bossMiniCv'); if (m) drawBoss(m, D.cur.boss, frame, motionOK, hurt, D.cur.status === 'won');
+  const b = document.getElementById('bossCv'); if (b) drawBoss(b, D.cur.boss, frame, motionOK, hurt, D.cur.status === 'won');
   const sp = document.getElementById('spaceCv'); if (sp) drawSpace(sp);
 }
 setInterval(() => { frame++; if (motionOK || Date.now() < jumpUntil + 200 || Date.now() < hurtUntil + 200) draw(); }, 140);
