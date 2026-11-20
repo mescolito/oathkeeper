@@ -615,7 +615,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'da7725d799';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '88472cc60b';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1411,12 +1411,13 @@ const effTarget = (t, k) => Math.max(1, weekTarget(t,k) - (((S.lightens[weekKey(
 const active = () => S.tasks.filter(t => !t.archived);
 const stage = lv => lv < 5 ? 0 : lv < 12 ? 1 : 2;
 /* Habit mastery: every habit (a times-per-week task) climbs New Habit → Trying → Regular → Mastery.
-   Each check-off adds 1 point; the check-off that hits the week's target adds 2 more, plus 1 per week of a running hit streak
+   Check-offs up to the week's goal share HABIT_WEEK points (3 for a 3-a-week habit is 1 each, a 1-a-week habit gets all 3 at once;
+   extras add up to 1 each); the check-off that hits the week's target adds 2 more, plus 1 per week of a running hit streak
    (up to 4 more), and reaching the bonus goal adds 2 more;
    a week that misses its target costs 6 points and breaks the streak. Weeks with an Inn stay don't count either way.
    Progress counts from S.habitFrom (the start of the week this arrived), and a Mastered habit adds +2 to its main stat (+1 to the second). */
 const HABIT_LV = [{k:'new', name:'New Habit', at:0, icon:'leaf'}, {k:'try', name:'Trying', at:10, icon:'bolt'}, {k:'reg', name:'Regular', at:35, icon:'flame'}, {k:'mast', name:'Mastery', at:80, icon:'star'}];
-const HABIT_HIT = 2, HABIT_BONUS = 2, HABIT_STREAK_MAX = 4, HABIT_MISS = 6;
+const HABIT_WEEK = 3, HABIT_HIT = 2, HABIT_BONUS = 2, HABIT_STREAK_MAX = 4, HABIT_MISS = 6;
 const habitLvOf = pts => { let i = 0; for (let j = 0; j < HABIT_LV.length; j++) if (pts >= HABIT_LV[j].at) i = j; return i; };
 const masteryFx = t => { const st = {}; const s0 = (t.stats || [])[0], s1 = (t.stats || [])[1]; if (s0) st[s0] = 2; if (s1 && s1 !== s0) st[s1] = (st[s1] || 0) + 1; return {st}; };
 let HAB = {lv: {}, tl: []};
@@ -1426,7 +1427,7 @@ function habitInfo(innOn, today){
   const from = S.habitFrom, startWk = weekKey(from);
   for (const t of S.tasks){
     let pts = 0, run = 0, lv = 0, mastAt = null; const hist = [];
-    const set = (np, ts) => { pts = Math.max(0, np); const nl = habitLvOf(pts); if (nl !== lv){ if (nl === 3 && lv !== 3) mastAt = ts; if (lv === 3 && nl !== 3 && mastAt != null){ out.tl.push({tid: t.id, from: mastAt, to: ts, fx: masteryFx(t)}); mastAt = null; } hist.push({ts, lv: nl}); lv = nl; } };
+    const set = (np, ts) => { pts = Math.max(0, Math.round(np * 100) / 100); const nl = habitLvOf(pts); if (nl !== lv){ if (nl === 3 && lv !== 3) mastAt = ts; if (lv === 3 && nl !== 3 && mastAt != null){ out.tl.push({tid: t.id, from: mastAt, to: ts, fx: masteryFx(t)}); mastAt = null; } hist.push({ts, lv: nl}); lv = nl; } };
     let any = false;
     for (let wk = startWk; wk <= today; wk = addDays(wk, 7)){
       const wkEnd = addDays(wk, 6); let n = 0, habitWeek = false, inn = false;
@@ -1436,7 +1437,7 @@ function habitInfo(innOn, today){
         const sc = schedAt(t, d); if (sc.cad !== 'week' || offOn(t, d) || (t.created || S.created) > d) continue;
         habitWeek = true;
         if (done(d, t.id)){ n++; if (d >= from){ any = true; const ts = S.log[d][t.id] || parseKey(d).getTime();
-          set(pts + 1, ts);
+          set(pts + (n <= tg ? HABIT_WEEK / tg : Math.min(1, HABIT_WEEK / tg)), ts);   // a week's check-offs are worth the same whatever the goal
           // hitting the week's goal pays its bonus right away, and so does reaching the bonus goal
           if (n === tg) set(pts + HABIT_HIT + Math.min(run, HABIT_STREAK_MAX), ts);
           if (bn > tg && n === bn) set(pts + HABIT_BONUS, ts); } } }
@@ -1448,7 +1449,7 @@ function habitInfo(innOn, today){
     }
     if (mastAt != null) out.tl.push({tid: t.id, from: mastAt, to: Infinity, fx: masteryFx(t)});
     const nx = HABIT_LV[lv + 1];
-    out.lv[t.id] = {pts, lv, run, any, next: nx ? nx.at : null, hist};
+    out.lv[t.id] = {pts, shown: Math.floor(pts * 10) / 10, lv, run, any, next: nx ? nx.at : null, hist};
   }
   return out;
 }
@@ -2785,7 +2786,7 @@ function taskRow(t, k){
     const n = weekCount(t.id, k), tg = effTarget(t, k);
     wk = `<div class="wk">${bar(100*n/tg, STATS[prim].c)}<span class="wkn"><b>${n}</b> of ${tg}</span></div>`;
     meta = (n >= tg ? 'Weekly goal hit' : `+${r.xp} xp each`) + (tg < weekTarget(t,k) ? ' · lightened' : '') + (t.bonus ? ` · bonus at ${t.bonus}` : '');
-    const hb = D.habits.lv[t.id]; if (hb) meta += hb.next != null ? ` · ${hb.pts}/${hb.next} to ${HABIT_LV[hb.lv + 1].name}` : ' · Mastered: ' + fxText(masteryFx(t));
+    const hb = D.habits.lv[t.id]; if (hb) meta += hb.next != null ? ` · ${hb.shown}/${hb.next} to ${HABIT_LV[hb.lv + 1].name}` : ' · Mastered: ' + fxText(masteryFx(t));
     if (!isDue(t,k)){ disabled = !isD; meta = `Not open today · opens ${daysText(schedAt(t,k).days)}`; }
   }
   // a change to how often waits for tomorrow; say where the task is headed so it doesn't look stuck
@@ -4006,7 +4007,7 @@ function renderEditor(){
       <div class="swatches"><button class="iconpick ${!t.icon ? 'on' : ''}" data-ticon="" aria-pressed="${!t.icon}" aria-label="Use the main stat's icon" style="font-size:12px;font-weight:700">Auto</button>${TASK_ICONS.map(ic => `<button class="iconpick ${t.icon === ic ? 'on' : ''}" data-ticon="${ic}" aria-pressed="${t.icon === ic}" aria-label="Icon ${ic}">${svg(ic,18,2)}</button>`).join('')}</div>
       <div class="emojirow"><input type="text" id="tEmoji" maxlength="16" inputmode="text" autocomplete="off" value="${t.icon && t.icon.startsWith('e:') ? esc(t.icon.slice(2)) : ''}" placeholder="Or type an emoji 🙂" aria-label="Emoji icon"></div>
       <p class="how small">On iPhone, tap the box and switch to the emoji keyboard (🌐 or 🙂). On a Mac, press Control‑Command‑Space.</p></div>
-    ${t.cad === 'week' ? (() => { const hb = !t.isNew && D.habits.lv[t.id]; return `<p class="how small">Habits are grouped by how far along they are: ${HABIT_LV.map(g => g.name).join(' → ')}. ${hb ? `This one is <b>${HABIT_LV[hb.lv].name}</b> with ${hb.pts} point${hb.pts === 1 ? '' : 's'}${hb.next != null ? ` (${HABIT_LV[hb.lv + 1].name} at ${hb.next})` : ''}.` : 'New ones start as New Habit.'} Each check-off adds 1 point. Hitting the week's goal adds ${HABIT_HIT} more plus 1 per week of your streak, and hitting the bonus goal adds ${HABIT_BONUS} more. A missed week takes away ${HABIT_MISS}. Mastery adds stats.</p>`; })() : `<div class="f" style="display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;font-weight:600;color:var(--muted)">Time of day</span>
+    ${t.cad === 'week' ? (() => { const hb = !t.isNew && D.habits.lv[t.id]; return `<p class="how small">Habits are grouped by how far along they are: ${HABIT_LV.map(g => g.name).join(' → ')}. ${hb ? `This one is <b>${HABIT_LV[hb.lv].name}</b> with ${hb.shown} point${hb.shown === 1 ? '' : 's'}${hb.next != null ? ` (${HABIT_LV[hb.lv + 1].name} at ${hb.next})` : ''}.` : 'New ones start as New Habit.'} The check-offs that reach your weekly goal are worth ${HABIT_WEEK} points in total, so a once-a-week habit grows as fast as a daily one, and extra check-offs add a little more. Hitting the week's goal adds ${HABIT_HIT} more plus 1 per week of your streak, and hitting the bonus goal adds ${HABIT_BONUS} more. A missed week takes away ${HABIT_MISS}. Mastery adds stats.</p>`; })() : `<div class="f" style="display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;font-weight:600;color:var(--muted)">Time of day</span>
       <div class="seg wide todpick" role="group" aria-label="Time of day">${TODS.map(g => `<button type="button" class="${(t.tod || 'any') === g.k ? 'on' : ''}" data-ttod="${g.k}" aria-pressed="${(t.tod || 'any') === g.k}">${g.label}</button>`).join('')}</div></div>`}
     <label class="f" for="tCad">How often<select id="tCad"><option value="day" ${t.cad==='day' && !t.rep?'selected':''}>Every day (daily)</option><option value="week" ${t.cad==='week'?'selected':''}>Times per week</option><option value="xday" ${t.rep && t.rep.unit==='day'?'selected':''}>Every few days</option><option value="xweek" ${t.rep && t.rep.unit==='week'?'selected':''}>Every few weeks</option><option value="xmonth" ${t.rep && t.rep.unit==='month'?'selected':''}>Every few months</option></select></label>
     ${t.rep ? `<div class="row"><label class="f" for="tEvery" style="flex:1">Every how many ${t.rep.unit === 'day' ? 'days' : t.rep.unit === 'week' ? 'weeks' : 'months'}<input type="number" id="tEvery" min="1" max="${REP_MAX[t.rep.unit]}" value="${t.rep.every}"></label>
