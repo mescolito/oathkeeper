@@ -581,7 +581,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'db6b6e9da5';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'fa8d784ea3';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1432,7 +1432,7 @@ function derive(){
         if (e.pz.kind === 'gold') gold += e.pz.n; else { xp += e.pz.n; lvUp(fx); }
       } else if (e.k === 'todo'){
         // only to-dos added on an earlier day pay out, and at most TODO_CAP a day
-        if (lullAt(F, e.ts)){ if (!(e.it.createdOn && e.it.createdOn >= d)) giveKey(d, 'td|' + e.it.id, e.ts); checkIn(fx, e.ts); continue; }
+        if (lullAt(F, e.ts)){ giveKey(d, 'td|' + e.it.id, e.ts); checkIn(fx, e.ts); continue; }
         if ((e.it.createdOn && e.it.createdOn >= d) || rewardedTodos >= TODO_CAP) continue;
         rewardedTodos++; todoPaid.add(e.it.id);
         xp += Math.round(8 * (1 + fx.xp) * boost); gold += Math.round(6 * (1 + fx.gold) * boost);
