@@ -194,6 +194,13 @@ label.f{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:60
 .catpills::-webkit-scrollbar{display:none}
 .catpill{flex:none;border:0;background:#ece5d6;border-radius:999px;padding:10px 16px;min-height:44px;font-weight:600;font-size:14px;cursor:pointer}
 .catpill.on{background:var(--ink);color:#fff}
+.catpill{display:inline-flex;align-items:center;gap:4px}
+.fbar{padding-bottom:2px}
+.fsel{position:relative;padding-right:12px;gap:6px}
+.fsel select{appearance:none;-webkit-appearance:none;border:0;background:transparent;color:inherit;font:inherit;font-weight:600;font-size:14px;padding:0;margin:0;width:auto;min-width:0;cursor:pointer;outline:none}
+.fsel select option{color:#171614}
+.fsel svg{flex:none;pointer-events:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .seg.wide{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;width:100%}
 .seg.wide button{padding:9px 6px}
 .sheet .panel > *{flex-shrink:0}
@@ -231,6 +238,8 @@ html[data-mode="dark"] .btn.ghost{background:transparent}
 html[data-mode="dark"] .btn.danger{background:transparent;color:#f0a19c}
 html[data-mode="dark"] input[type=text],html[data-mode="dark"] input[type=password],html[data-mode="dark"] input[type=number],html[data-mode="dark"] select,html[data-mode="dark"] textarea,html[data-mode="dark"] .chip,html[data-mode="dark"] .iconpick{background:#171614;color:var(--ink);border-color:#3a3631}
 html[data-mode="dark"] .iconpick.on{background:var(--ink);color:var(--inv);border-color:var(--ink)}
+html[data-mode="dark"] .fsel select{background:transparent;border:0;color:inherit}
+.fsel select option{background:#fff}
 html[data-mode="dark"] .opt{background:#1a1816}
 html[data-mode="dark"] .chip-s,html[data-mode="dark"] .ticon,html[data-mode="dark"] .kind,html[data-mode="dark"] .pill,html[data-mode="dark"] .assist,html[data-mode="dark"] .mystery{color:#171614}
 html[data-mode="dark"] .pill.next{background:#34312c;color:var(--ink)}
@@ -619,7 +628,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '0b0194df04';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '5aeecc566c';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -3235,7 +3244,7 @@ function itemState(it){
 const seasonTag = it => it.season ? `<span class="tagseason">${esc(it.when)} only · until ${fmt(seasonEnd(it, D.today))}</span>` : '';
 const styleTag = it => it.style && STYLES[it.style] ? `<span class="tagstyle" style="background:${STYLES[it.style].c}">${STYLES[it.style].name}</span>` : '';
 const tierTag = it => !it.tier ? '' : it.tier === 'novice' ? (it.spec ? '<span class="tagtier">Specialty</span>' : '') : `<span class="tagtier">${TIER_BY[it.tier].name} · Lv ${TIER_BY[it.tier].lvl}${it.spec ? ' · Specialty' : ''}</span>`;
-let shopTier = 'all';
+let shopTier = 'all', shopMyLv = false;
 let shopStyle = 'all', sellArm = null;
 function renderShop(){
   let items = shopItems().filter(it => (shopCat === 'all' || it.kind === shopCat) && (shopStyle === 'all' || it.style === shopStyle) && (shopTier === 'all' || it.tier === shopTier));
@@ -3243,6 +3252,7 @@ function renderShop(){
   const tierIx = it => it.tier ? TIER_BY[it.tier].i : 9;
   items = items.map((it, i) => [it, i]).sort((a, b) => (tierIx(a[0]) - tierIx(b[0])) || (a[0].tier && b[0].tier ? (a[0].price || 0) - (b[0].price || 0) : a[1] - b[1])).map(x => x[0]);
   if (shopAfford) items = items.filter(it => { const s = itemState(it); return !s.owned && s.afford && s.ok; });
+  if (shopMyLv) items = items.filter(it => !it.lvl || it.lvl <= D.lv.level);   // hide anything your level can't wear yet
   const cards = items.map(it => {
     const s = itemState(it);
     let btn;
@@ -3264,9 +3274,12 @@ function renderShop(){
   ${D.tokens && !dismissed('tokens') ? notice('tokens', `You earned ${D.tokens} free rune${D.tokens===1?'':'s'} from a perfect week. Claim it in your inventory.`) : ''}
   <div class="filters">
     <div class="catpills" role="group" aria-label="Item type">${SHOP_CATS.map(([v,l]) => `<button class="catpill ${shopCat===v?'on':''}" data-cat="${v}" aria-pressed="${shopCat===v}">${l}</button>`).join('')}</div>
-    <div class="catpills" role="group" aria-label="Play style">${[['all','Any style'], ...Object.entries(STYLES).map(([k,v]) => [k, v.name])].map(([v,l]) => `<button class="catpill ${shopStyle===v?'on':''}" data-shopstyle="${v}" aria-pressed="${shopStyle===v}">${l}</button>`).join('')}</div>
-    <div class="catpills" role="group" aria-label="Gear tier">${[['all','Any tier'], ...TIERS.map(t => [t.k, t.k === 'novice' ? t.name : `${t.name} · Lv ${t.lvl}`])].map(([v,l]) => `<button class="catpill ${shopTier===v?'on':''}" data-shoptier="${v}" aria-pressed="${shopTier===v}">${l}</button>`).join('')}</div>
-    <label class="checkrow" for="afford"><input type="checkbox" id="afford" ${shopAfford ? 'checked' : ''}> Only what I can buy now</label>
+    <div class="catpills fbar" role="group" aria-label="More filters">
+      <label class="catpill fsel ${shopStyle !== 'all' ? 'on' : ''}"><span class="sr">Play style</span><select id="fStyle">${[['all','Any style'], ...Object.entries(STYLES).map(([k,v]) => [k, v.name])].map(([v,l]) => `<option value="${v}" ${shopStyle===v?'selected':''}>${l}</option>`).join('')}</select>${svg('down',14,2.6)}</label>
+      <label class="catpill fsel ${shopTier !== 'all' ? 'on' : ''}"><span class="sr">Gear tier</span><select id="fTier">${[['all','Any tier'], ...TIERS.map(t => [t.k, t.k === 'novice' ? t.name : `${t.name} · Lv ${t.lvl}`])].map(([v,l]) => `<option value="${v}" ${shopTier===v?'selected':''}>${l}</option>`).join('')}</select>${svg('down',14,2.6)}</label>
+      <button class="catpill ${shopMyLv ? 'on' : ''}" data-shoptog="mylv" aria-pressed="${shopMyLv}" title="Hide items above level ${D.lv.level}">${shopMyLv ? svg('check',14,3) + ' ' : ''}My level</button>
+      <button class="catpill ${shopAfford ? 'on' : ''}" data-shoptog="afford" aria-pressed="${shopAfford}" title="Only what you can buy right now">${shopAfford ? svg('check',14,3) + ' ' : ''}Can buy now</button>
+    </div>
   </div>
   ${items.length ? `<div class="shopgrid">${cards}</div>` : `<p class="how">Nothing here fits that filter yet. Keep finishing tasks to earn gold and levels.</p>`}
   <p class="how">Potions and runes stack in your bag; use them from your inventory. Gear and looks are one of a kind: once you own one it greys out here, and you can sell it back for half what it cost. Gear and hats lean toward a play style: Warriors hit hard, Guardians soak hits, Rogues dodge and crit, and Casters build MP and skill damage. Novice gear fits anyone at level 1; then every style has sets at level 5 (Early), 15 (Mid), 30 (Late), 45 (Elite) and 80 (End, your prep for the final boss), each with a specialty piece for a different take on the build. Mix them however you like. Seasonal items only show up in the shop during their dates, and you keep them forever. Boss and Titan prizes never appear here; you get them by winning.</p>`;
@@ -4305,6 +4318,7 @@ function onClick(e){
     if (Object.keys(m).length) S.statMeta[statEdit] = m; else delete S.statMeta[statEdit];
     applyStatMeta(); const nmShown = STATS[statEdit].name; statEdit = null; statDraft = null; save(); render(); renderSheet(); toast(`${nmShown} updated`); return; }
   if (el.dataset.cat){ shopCat = el.dataset.cat; render(); return; }
+  if (el.dataset.shoptog){ if (el.dataset.shoptog === 'mylv') shopMyLv = !shopMyLv; else shopAfford = !shopAfford; render(); return; }
   if (el.dataset.shoptier){ shopTier = TIER_BY[el.dataset.shoptier] ? el.dataset.shoptier : 'all'; render(); return; }
   if (el.dataset.shopstyle){ shopStyle = STYLES[el.dataset.shopstyle] ? el.dataset.shopstyle : 'all'; render(); return; }
   if ('newroulette' in el.dataset){ openEditor(null, true); return; }
@@ -4499,6 +4513,8 @@ document.addEventListener('change', e => {
   if (recoveryMode) return;
   if (e.target.id === 'tCad' && draft){ readEditorFields(); renderEditor(); }
   if (e.target.id === 'afford'){ shopAfford = e.target.checked; render(); }
+  if (e.target.id === 'fStyle'){ shopStyle = STYLES[e.target.value] ? e.target.value : 'all'; render(); }
+  if (e.target.id === 'fTier'){ shopTier = TIER_BY[e.target.value] ? e.target.value : 'all'; render(); }
   if (e.target.id === 'hideDone'){ S.settings.hideDone = e.target.checked; save(); render(); }
   if (e.target.id === 'tRandom' && draft){ readEditorFields();
     draft.pool = e.target.checked ? (draft.pool || [{name:'', stats:draft.stats.slice()}, {name:'', stats:['MOB']}]) : null;
