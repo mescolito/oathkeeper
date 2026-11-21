@@ -520,6 +520,8 @@ details.howto .how{padding-bottom:12px;margin:0}
 .item.owned canvas{filter:grayscale(1);opacity:.45}
 .item.owned > b, .item.owned > .small{opacity:.55}
 .item.locked canvas{filter:brightness(.42)}
+.slot.locked2h{opacity:.5}
+.slot.locked2h canvas{filter:brightness(.6)}
 .invbtns{display:flex;flex-direction:column;gap:6px;align-items:stretch;flex:none}
 .invbtns .btn{white-space:nowrap}
 .item .tags{display:flex;flex-wrap:wrap;gap:4px;justify-content:center}
@@ -637,7 +639,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'ded3dc34d0';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '311837aa1b';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -824,6 +826,40 @@ const LEGACY_WARD = {vest:.3, guards:.5, plate:.75};
 // Runes used to be permanent gear; kept here only so old history keeps the boosts it earned.
 const LEGACY_RUNES = {rune_MGT:{fx:{sxp:{MGT:.3}}}, rune_STA:{fx:{sxp:{STA:.3}}}, rune_MOB:{fx:{sxp:{MOB:.3}}}, rune_ARM:{fx:{sxp:{ARM:.3}}}, rune_HRT:{fx:{sxp:{HRT:.3}}}, rune_gold:{fx:{gold:.25}}, rune_xp:{fx:{xp:.25}}};
 const GEAR_BY = Object.assign(Object.create(null), Object.fromEntries(GEAR.map(g => [g.id, g])));
+/* Hand rules. Warrior weapons are two-handed: equip one and the off hand empties and locks. Rogue weapons are dual-wield:
+   the off hand can only hold a blade (no shields, books or orbs). Guardian and Caster gear pairs with anything.
+   Two-handers hit harder to make up for the empty off hand; the stronger numbers count from S.gearRev (when this arrived),
+   and fxOld keeps every earlier day exactly as it was. Warrior off-hand gear isn't sold any more (you keep what you own). */
+const GEAR_REV = {
+  driftsword: {st:{MGT:3, ARM:1}, flat:3},
+  mace:       {st:{MGT:3, ARM:1}, pct:{MGT:.5}},
+  cleaver:    {st:{MGT:8, ARM:2}, all:.25, flat:5},
+  warhammer:  {st:{MGT:7, ARM:2}, pct:{MGT:.5}, crit:.05},
+  stormsplit: {st:{MGT:13, ARM:4}, all:.35, crit:.06, flat:8},
+  maul:       {st:{MGT:14, STA:3, ARM:3}, pct:{MGT:.6}},
+  sunderblade:{st:{MGT:17, STA:4}, all:.45, crit:.07, flat:10},
+  quakeaxe:   {st:{MGT:18, STA:5}, pct:{MGT:.7}},
+  worldsplit: {st:{MGT:23, ARM:7}, all:.55, crit:.1, flat:15},
+  tidebane:   {st:{MGT:21, HRT:5, ARM:5}, all:.45, antiheal:.4}
+};
+for (const [id, fx] of Object.entries(GEAR_REV)){ const it = GEAR_BY[id]; it.fxOld = it.fx; it.fx = fx; }
+// fewer knives: rogue weapons become katars and claws; the off-hand blades get distinct shapes
+const GEAR_RENAME = {kris:'Riptide Katar', moonfang:'Moonfang Katar', stormfangs:'Storm Claws', voidfangs:'Void Katar', shiv:'Barnacle Claw', stiletto:'Eel Fang', smokepouch:'Smoke Chakram', tideknife:'Last-Tide Sickle', driftsword:'Driftwood Greatsword', mace:'Kettlebell Maul', warhammer:'War Hammer', cleaver:'Titan Cleaver'};
+for (const [id, nm] of Object.entries(GEAR_RENAME)) GEAR_BY[id].name = nm;
+for (const it of GEAR){
+  if (it.slot === 'weapon' && it.style === 'war') it.hands = 2;
+  if (it.slot === 'weapon' && it.style === 'rogue') it.dual = true;
+  if (it.slot === 'offhand' && it.style === 'rogue') it.blade = true;
+  if (it.slot === 'offhand' && it.style === 'war' && !it.boss && !it.legendary) it.retired = true;
+}
+// katars and claws can be bought twice: the second copy is its own off-hand item, so you can have one in each hand
+const PAIRABLE = ['kris', 'moonfang', 'stormfangs', 'voidfangs'];
+for (const id of PAIRABLE){ const w = GEAR_BY[id]; const c = {...w, id: id + '_2', slot: 'offhand', pair: id, name: w.name + ' (second)', dual: false, blade: true}; delete c.spec; GEAR.push(c); GEAR_BY[c.id] = c; }
+// what the off hand can hold with this main-hand weapon equipped ('' when it can)
+const offhandBlock = (weaponId, offId) => { const w = GEAR_BY[weaponId], o = GEAR_BY[offId]; if (!w || !o) return '';
+  if (w.hands === 2) return `${w.name} takes both hands`;
+  if (w.dual && !o.blade) return `${w.name} pairs only with an off-hand blade`;
+  return ''; };
 /* Runes are consumables now: each lasts a few days from the moment you buy it. */
 const RUNES = [
   {id:'rune_MGT', style:'war',    name:'Rune of Might',    price:60,  days:3, fx:{sxp:{MGT:.3}}},
@@ -1239,6 +1275,7 @@ function sanitize(s, created){
   if (isDate(s.habitFrom)) out.habitFrom = s.habitFrom; else delete out.habitFrom;
   if (s.habitWk) out.habitWk = 1; else delete out.habitWk;
   if (isDate(s.slumpFrom)) out.slumpFrom = s.slumpFrom; else delete out.slumpFrom;
+  if (typeof s.gearRev === 'number' && s.gearRev > 0) out.gearRev = s.gearRev; else delete out.gearRev;
   out.slumpLog = {}; if (obj(s.slumpLog)) for (const [d, r] of Object.entries(s.slumpLog)) if (isDate(d) && obj(r)){
     if (r.g != null) out.slumpLog[d] = {g: int(r.g, 0, 1e9, 0)};
     else if (r.hp != null) out.slumpLog[d] = {hp: int(r.hp, 0, 100000, 0)};
@@ -1403,9 +1440,9 @@ function addFx(fx, f){
   for (const k in (f.sxp||{})) fx.sxp[k] = (fx.sxp[k]||0) + f.sxp[k];
   for (const k in (f.st||{})) fx.st[k] = (fx.st[k]||0) + f.st[k];
 }
-function fxOf(g, runes, buffs){
+function fxOf(g, runes, buffs, ts){
   const fx = {flat:0, all:0, pct:{}, sxp:{}, st:{}, gold:0, xp:0, crit:0, def:0, dodge:0, mpMax:0, antiheal:0, spell:0, mpTask:0};
-  for (const id of Object.values(g)){ if (id == null) continue; const it = GEAR_BY[id] || LEGACY_RUNES[id] || LRUNE_BY[id] || (ITEM[id] && ITEM[id].kind === 'hat' && ITEM[id]); if (it && it.fx) addFx(fx, it.fx); }
+  for (const id of Object.values(g)){ if (id == null) continue; const it = GEAR_BY[id] || LEGACY_RUNES[id] || LRUNE_BY[id] || (ITEM[id] && ITEM[id].kind === 'hat' && ITEM[id]); if (it && it.fx) addFx(fx, it.fxOld && (!S.gearRev || ts == null || ts < S.gearRev) ? it.fxOld : it.fx); }
   for (const r of (runes || [])){ const rr = RUNE_BY[r.id]; if (rr) addFx(fx, rr.fx); }
   for (const u of (buffs || [])) addFx(fx, u.buff);
   return fx;
@@ -1423,7 +1460,7 @@ const skillGearOk = sk => !sk.branch || sk.branch === 'core' || (buildLean() || 
 const skillNeedText = sk => [...Object.entries(sk.needStat || {}).map(([k, v]) => `${STATS[k].name} ${v} to learn`), ...(sk.branch && sk.branch !== 'core' ? [`a ${STYLES[sk.branch].name} build to use`] : [])].join(' · ');
 const buffUntil = u => addDays(u.date, (u.buff.days || 1) - 1);
 function buffsAt(ts, d){ return S.skillLog.filter(u => u.buff && u.date && u.date <= d && buffUntil(u) >= d && u.ts <= ts); }
-const fxAt = (ts, d) => { const fx = fxOf(gearAt(ts), runesAt(ts, d), buffsAt(ts, d)); for (const h of habitFxAt(ts)) addFx(fx, h.fx); return fx; };
+const fxAt = (ts, d) => { const fx = fxOf(gearAt(ts), runesAt(ts, d), buffsAt(ts, d), ts); for (const h of habitFxAt(ts)) addFx(fx, h.fx); return fx; };
 // stats you earned + stat points from gear and runes
 const effStats = (statLv, fx) => Object.fromEntries(SK.map(k => [k, statLv[k] + (((fx && fx.st) || {})[k] || 0)]));
 function combatOf(statLv, level, fx){
@@ -1774,7 +1811,7 @@ function derive(){
   const ritesWon = new Set(fights.filter(x => x.boss.rite && x.status === 'won').map(x => x.boss.id));
   if (!fights.length || fights[fights.length-1].c !== cycleOf(today)){ const boss = riteFor(lvlNow(), ritesWon, cycleOf(today)) || bossFor(cycleOf(today)), lastF = fights[fights.length-1], carry = boss.rite && lastF && lastF.boss.id === boss.id && lastF.rem > 0, bhp = carry ? lastF.hp : bossHp(boss, lvlNow()); fights.push({c:cycleOf(today), boss, start:cycleStart(cycleOf(today)), end:addDays(cycleStart(cycleOf(today)),CYCLE-1), hp:bhp, rem: carry ? lastF.rem : bhp, heal:0, dmg:0, hits:{}, status:'now', wonOn:null}); }
   const lv = levelInfo(xp), statLv = statLvNow();
-  const fxNow = fxOf({...S.gear, hat: S.equip.hat}, runesAt(nowMs, today), buffsAt(nowMs, today));
+  const fxNow = fxOf({...S.gear, hat: S.equip.hat}, runesAt(nowMs, today), buffsAt(nowMs, today), nowMs);
   for (const h of habitFxAt(nowMs)) addFx(fxNow, h.fx);
   const C = combatOf(statLv, lv.level, fxNow);
   hp = clamp(hp == null ? C.maxHP : hp, 0, C.maxHP); mp = clamp(mp == null ? Math.round(C.maxMP/2) : mp, 0, C.maxMP);
@@ -1918,6 +1955,7 @@ function mergeSaves(a, b){
   if (o.habitFrom && (!out.habitFrom || o.habitFrom < out.habitFrom)) out.habitFrom = o.habitFrom;
   if (o.habitWk) out.habitWk = 1;
   if (o.slumpFrom && (!out.slumpFrom || o.slumpFrom < out.slumpFrom)) out.slumpFrom = o.slumpFrom;
+  if (o.gearRev && (!out.gearRev || o.gearRev < out.gearRev)) out.gearRev = o.gearRev;
   for (const k of ['potions','runeBuys','bag','buys','skillLog','gearLog','pomoLog','sells','inn','testGold']){
     if (!Array.isArray(o[k])) continue; if (!Array.isArray(out[k])) out[k] = [];
     const seen = new Set(out[k].map(x => JSON.stringify(x)));
@@ -2330,7 +2368,7 @@ function drawGear(g, x0, y0, w, h, ground, f, motion, sp, on){
   if (g.weapon){
     const hx = x0 + sp.hand, hy = y0 + Math.floor(h*0.6);
     const W = {
-      driftsword: [[[hx+1,hy-9,1,9],[hx-1,hy,5,1],[hx+1,hy+1,1,2]], []],
+      driftsword: [[[hx+1,hy-11,2,11],[hx-1,hy,6,1],[hx+1,hy+1,2,3]], [[hx+1,hy-9,1,7]]],
       mace:       [[[hx+1,hy-4,1,7],[hx-1,hy-8,5,4],[hx,hy-9,3,1]], [[hx,hy-7,1,1],[hx+2,hy-6,1,1]]],
       trident:    [[[hx+1,hy-10,1,13],[hx-1,hy-10,5,1],[hx-1,hy-13,1,3],[hx+1,hy-14,1,4],[hx+3,hy-13,1,3]], []],
       wand:       [[[hx+1,hy-7,1,9],[hx,hy-10,3,3]], [[hx+1,hy-9,1,1]]],
@@ -2344,13 +2382,13 @@ function drawGear(g, x0, y0, w, h, ground, f, motion, sp, on){
       stormsplit: [[[hx+1,hy-13,2,14],[hx-1,hy+1,6,1],[hx+1,hy+2,2,2]], [[hx+2,hy-12,1,3],[hx+1,hy-7,1,2]]],
       flail:      [[[hx+1,hy-5,1,8],[hx+2,hy-7,1,2],[hx+3,hy-9,1,2],[hx+2,hy-13,4,4]], [[hx+3,hy-12,2,2]]],
       halberd:    [[[hx+1,hy-13,1,16],[hx+2,hy-11,3,4],[hx+1,hy-15,1,2]], [[hx+3,hy-10,1,2]]],
-      kris:       [[[hx+1,hy-8,1,8],[hx+2,hy-6,1,2],[hx,hy-3,1,2],[hx-1,hy,5,1],[hx+1,hy+1,1,2]], []],
+      kris:       [[[hx-1,hy-2,5,1],[hx-1,hy-1,1,3],[hx+3,hy-1,1,3],[hx,hy-5,3,3],[hx+1,hy-9,1,4]], [[hx+1,hy-4,1,1]]],
       grapple:    [[[hx+1,hy-9,1,10],[hx-1,hy-10,5,1],[hx-1,hy-12,1,2],[hx+3,hy-12,1,2]], []],
-      moonfang:   [[[hx+1,hy-8,1,8],[hx+2,hy-7,1,3],[hx-1,hy,5,1],[hx+1,hy+1,1,2]], []],
+      moonfang:   [[[hx-1,hy-2,5,1],[hx-1,hy-1,1,3],[hx+3,hy-1,1,3],[hx,hy-6,3,4],[hx+1,hy-10,1,4]], [[hx+1,hy-5,1,1]]],
       maelstrom:  [[[hx+1,hy-9,1,13],[hx-1,hy-14,5,5]], [[hx,hy-13,3,1],[hx+2,hy-12,1,2],[hx,hy-11,2,1]]],
       deeprod:    [[[hx+1,hy-11,1,15],[hx,hy-14,4,3],[hx+3,hy-15,2,2]], [[hx+1,hy-13,1,1]]]
     };
-    const WA = {sunderblade:'stormsplit', worldsplit:'stormsplit', quakeaxe:'cleaver', tidebane:'tidebreaker', ironwave:'halberd', abyssglaive:'halberd', stormfangs:'moonfang', voidfangs:'moonfang', chainwhip:'grapple', stormstaff:'staff', tidesong:'maelstrom', eclipsewand:'wand'};
+    const WA = {sunderblade:'stormsplit', worldsplit:'stormsplit', quakeaxe:'cleaver', tidebane:'tidebreaker', ironwave:'halberd', abyssglaive:'halberd', stormfangs:'kris', voidfangs:'moonfang', chainwhip:'grapple', stormstaff:'staff', tidesong:'maelstrom', eclipsewand:'wand'};
     if (!W[g.weapon] && WA[g.weapon]) W[g.weapon] = W[WA[g.weapon]];
     if (g.weapon === 'whip'){ const pts = []; for (let i=0;i<8;i++) pts.push([hx+1+Math.round(Math.sin((i + (motion?f:0)*0.5)/1.5)*1.5), hy-1-i, 1, 1]); shape([[hx,hy,2,2], ...pts]); }
     else if (W[g.weapon]) shape(W[g.weapon][0], W[g.weapon][1]);
@@ -2372,13 +2410,14 @@ function drawGear(g, x0, y0, w, h, ground, f, motion, sp, on){
       bastion: [[[ox-2,oy-6,8,11],[ox-2,oy-8,2,2],[ox+1,oy-8,2,2],[ox+4,oy-8,2,2]], [[ox-1,oy-4,6,1],[ox+1,oy-1,2,4]]],
       mirror:  [[[ox-2,oy-5,8,10],[ox-1,oy-6,6,12]], [[ox,oy-3,4,6],[ox+1,oy-2,1,1],[ox+2,oy-1,1,1]]],
       hook:    [[[ox+1,oy-3,1,3],[ox,oy-5,1,2],[ox+1,oy-6,2,1],[ox+3,oy-5,1,2],[ox,oy,3,1],[ox+1,oy+1,1,2]], []],
-      shiv:    [[[ox+1,oy-5,1,5],[ox+2,oy-4,1,1],[ox,oy,3,1],[ox+1,oy+1,1,2]], []],
-      stiletto:[[[ox+1,oy-8,1,8],[ox-1,oy,5,1],[ox+1,oy+1,1,2]], []],
+      shiv:    [[[ox,oy-2,5,3],[ox,oy-5,1,3],[ox+2,oy-6,1,4],[ox+4,oy-5,1,3]], [[ox+1,oy-1,3,1]]],
+      stiletto:[[[ox+2,oy-2,2,3],[ox+1,oy-5,2,3],[ox+1,oy-7,1,2],[ox+2,oy-8,1,1]], []],
+      katar_oh:[[[ox-1,oy,5,1],[ox-1,oy+1,1,2],[ox+3,oy+1,1,2],[ox,oy-3,3,3],[ox+1,oy-7,1,4]], [[ox+1,oy-2,1,1]]],
       conch:   [[[ox,oy-3,5,5],[ox+4,oy+1,2,2]], [[ox+1,oy-2,2,1],[ox+2,oy-1,1,2]]],
       orb:     [[[ox,oy-4,4,4],[ox-1,oy-3,6,2],[ox,oy+1,4,1]], [[ox+1,oy-3,1,1]]],
       grimoire:[[[ox-2,oy-4,7,8]], [[ox-1,oy-3,1,6],[ox+1,oy-1,3,1],[ox+2,oy-2,1,3]]]
     };
-    const OA = {oathshield:'warbuckler', cliffwall:'bastion', worldwall:'bastion', lighthouse:'orb', smokepouch:'orb', hourglass:'orb', tideknife:'stiletto', starchart:'tome', codex:'grimoire'};
+    const OA = {oathshield:'warbuckler', cliffwall:'bastion', worldwall:'bastion', lighthouse:'orb', smokepouch:'potlid', hourglass:'orb', tideknife:'hook', kris_2:'katar_oh', moonfang_2:'katar_oh', stormfangs_2:'katar_oh', voidfangs_2:'katar_oh', starchart:'tome', codex:'grimoire'};
     O.warbanner = [[[ox+3,oy-9,1,13],[ox-2,oy-8,5,5]], [[ox-1,oy-7,3,1],[ox-1,oy-5,3,1]]];
     if (!O[g.offhand] && OA[g.offhand]) O[g.offhand] = O[OA[g.offhand]];
     if (O[g.offhand]) shape(O[g.offhand][0], O[g.offhand][1]);
@@ -2555,6 +2594,50 @@ Object.assign(GEAR_ART, {
   codex: () => { W_(3,2,18,20); B_(4,3,1,18); B_(6,4,13,1); B_(6,19,13,1); disc(12,11,5,PB); disc(12,11,4,PW); disc(13,10,3,PB); for (let x=7;x<18;x++) B_(x, 17 + Math.round(Math.sin(x)), 1, 1); W_(20,8,3,7); B_(21,10,1,3); },
   cosmosrobe: () => { for (let y=4;y<22;y++){ const hw = 4 + Math.round((y-4)*0.35); W_(12-hw, y, hw*2, 1); } for (let y=6;y<22;y++){ const hw = 2 + Math.round((y-6)*0.3); B_(12-hw, y, hw*2, 1); } for (const [x,y] of [[11,9],[13,13],[10,16],[14,19],[12,20]]) W_(x,y); disc(12,13,1,PW); W_(4,7,3,6); W_(17,7,3,6); }
 });
+
+// two-handed warrior weapons (long grips, big guards) and the reworked rogue katars, claws and off-hand blades
+const gsword = (w, len, o = {}) => {
+  const x0 = 9, y0 = 14;                                   // where the blade meets the guard
+  const yo = i => o.wave ? Math.round(Math.sin(i*0.9)) : 0;
+  for (let i=0;i<len;i++){ const ww = o.taper && i > len - 4 ? Math.max(1, w - (i - (len - 4))) : w; for (let k=0;k<ww;k++){ W_(x0+i+k, y0-i-yo(i)); W_(x0+i+k, y0-i+1-yo(i)); } }
+  W_(x0+len+Math.floor(w/2), y0-len-yo(len));              // point
+  if (w >= 3) for (let i=2;i<len-2;i++) B_(x0+i+Math.floor(w/2), y0-i-yo(i));   // fuller
+  if (o.teeth) for (let i=1;i<len-2;i+=2) W_(x0+i+w, y0-i);   // serrated back edge
+  for (let t=-3;t<=3;t++){ W_(x0-1+t, y0+1+t, 2, 1); W_(x0+t, y0+2+t, 1, 1); }      // crossguard
+  if (o.curl){ W_(x0-5, y0-3, 2, 2); W_(x0+3, y0+5, 2, 2); }
+  for (let t=0;t<5;t++) W_(x0-3-t, y0+3+t, 2, 2);          // long two-hand grip
+  for (const t of [1,3]) B_(x0-3-t, y0+3+t);
+  disc(x0-9, y0+9, 1, PW);                                   // pommel
+};
+const katar = (len, hw0, o = {}) => {
+  const G = [9, 13];
+  for (let s2=0;s2<=len;s2++){ const hw = Math.max(0, Math.round(hw0 * (1 - s2/len))); for (let j=-hw;j<=hw;j++){ const x = G[0] + s2 + j, y = G[1] - s2 + j; W_(x, y); W_(x+1, y); } }
+  if (o.notch) for (const s2 of o.notch){ const x = G[0] + s2 + hw0 - 1, y = G[1] - s2 + hw0 - 1; B_(x, y); B_(x+1, y); }
+  if (hw0 >= 2) for (let s2=1;s2<len-2;s2++) B_(G[0] + s2, G[1] - s2);   // center ridge
+  wline(G[0]-4, G[1]-4, G[0]+4, G[1]+4);                     // guard across the blade's base
+  wline(G[0]-4, G[1]-4, G[0]-10, G[1]+2); wline(G[0]+4, G[1]+4, G[0]-2, G[1]+10);   // the two side bars
+  wline(G[0]-8, G[1], G[0]-4, G[1]+4); wline(G[0]-7, G[1]+1, G[0]-3, G[1]+5);       // the grip you punch with
+};
+Object.assign(GEAR_ART, {
+  driftsword: () => { gsword(3, 11); for (const i of [3,6,9]) B_(9+i+2, 14-i); },
+  mace: () => { th2(2,22,12,12); W_(11,11,3,3); disc(16,7,5,PW); disc(16,7,3,PB); disc(16,7,2,PW); B_(15,6,2,2); W_(13,0,7,2); W_(12,1,1,2); W_(19,1,1,2); for (const [x,y] of [[22,7],[16,13],[21,2],[21,12],[11,12]]) W_(x,y); },
+  cleaver: () => { for (let i=0;i<12;i++) for (let k=0;k<6;k++){ W_(8+i+k, 13-i+k); W_(9+i+k, 13-i+k); } disc(17,8,1,PB); for (let i=2;i<11;i++) B_(9+i+5, 13-i+5); for (let t=-3;t<=3;t++){ W_(7+t, 15+t); W_(8+t, 15+t); } for (let t=0;t<5;t++) W_(5-t, 17+t, 2, 2); B_(4,18); B_(2,20); disc(0,23,1,PW); },
+  warhammer: () => { th2(2,22,13,11); W_(11,1,11,8); B_(12,2,9,1); B_(12,7,9,1); W_(22,3,2,4); for (const x of [14,17,20]) B_(x,4,1,2); W_(15,0,3,1); W_(15,9,3,2); W_(5,18,2,2); },
+  maul: () => { th2(2,22,11,13); W_(8,1,15,11); B_(9,2,13,1); B_(9,10,13,1); for (const [x,y] of [[10,4],[20,4],[10,8],[20,8],[15,6]]) { B_(x,y,2,2); } W_(7,3,1,7); W_(23,3,1,7); W_(11,12,4,2); },
+  stormsplit: () => { gsword(4, 13, {taper:true}); for (let i=1;i<11;i+=2){ B_(10+i+1, 14-i); B_(11+i+1, 14-i-1); } for (const [x,y] of [[4,3],[20,14],[22,9],[13,1]]) spark(x,y); },
+  sunderblade: () => { gsword(4, 13, {teeth:true, curl:true}); spark(4,4); },
+  quakeaxe: () => { th2(2,22,15,9); ellF(16,6,7,5); disc(10,6,2,PB); disc(22,6,2,PB); B_(14,0,4,13); W_(15,0,2,13); B_(9,2,1,1); B_(23,2,1,1); B_(9,10,1,1); B_(23,10,1,1); for (const [x,y] of [[12,6],[20,6]]) B_(x,y); },
+  worldsplit: () => { gsword(5, 14); for (let i=11;i<14;i++) B_(9+i+2, 14-i); spark(22,0); spark(19,1); for (const [x,y] of [[3,2],[18,15],[12,0]]) spark(x,y); },
+  tidebane: () => { gsword(3, 12, {wave:true}); spark(21,5); spark(5,4); },
+  kris: () => { katar(10, 3, {notch:[3,6]}); },
+  moonfang: () => { katar(11, 3); disc(15,6,2,PB); disc(16,5,1,PW); spark(21,2); },
+  stormfangs: () => { W_(2,14,8,7); B_(3,15,6,1); B_(3,17,6,1); B_(3,19,6,1); th2(8,13,17,3); th2(10,15,20,5); th2(12,17,22,8); W_(18,2,2,1); W_(21,4,2,1); W_(22,7,1,1); spark(5,5); },
+  voidfangs: () => { katar(12, 3); disc(14,8,2,PB); W_(14,8); for (const [x,y] of [[22,1],[19,3]]) spark(x,y); W_(5,6,2,2); W_(15,17,2,2); },
+  shiv: () => { W_(4,14,8,7); B_(5,15,6,1); B_(5,17,6,1); B_(5,19,6,1); for (const dx of [0,4,8]){ wline(5+dx,13,7+dx,6); W_(8+dx,5,2,1); W_(9+dx,6,1,1); } },
+  stiletto: () => { for (let i=0;i<=16;i++){ const t = i/16, cx = 7 + t*14, cy = 17 - t*15 + Math.sin(t*Math.PI)*4, r = Math.max(0.6, 3.2*(1-t)); for (let dx=-4;dx<=4;dx++) for (let dy=-4;dy<=4;dy++) if (dx*dx+dy*dy <= r*r) W_(Math.round(cx+dx), Math.round(cy+dy)); } for (let i=2;i<11;i++){ const t = i/16; B_(Math.round(7 + t*14) - 1, Math.round(17 - t*15 + Math.sin(t*Math.PI)*4) + 1); } W_(3,18,7,2); th2(4,19,1,22); },
+  smokepouch: () => { disc(12,12,8,PW); disc(12,12,5,PB); disc(12,12,4,PW); disc(12,12,2,PB); for (let a=0;a<6;a++){ const an = a*Math.PI/3; W_(Math.round(12+Math.cos(an)*10), Math.round(12+Math.sin(an)*10)); W_(Math.round(12+Math.cos(an+.25)*9), Math.round(12+Math.sin(an+.25)*9)); } for (const [x,y,r] of [[3,20,1],[6,22,1],[20,3,1]]) disc(x,y,r,PW); },
+  tideknife: () => { th2(4,22,9,15); W_(8,14,3,2); for (let i=0;i<22;i++){ const a = Math.PI*1.15*i/21 - 0.35, r = 6.5; disc(Math.round(14+Math.cos(a)*r), Math.round(9-Math.sin(a)*r), i < 16 ? 1 : 0, PW); } spark(21,18); },
+});
 /* Shop icons: just the item, centered on a 24×24 black tile. */
 function drawIcon(canvas, kind, id){
   ctx = canvas.getContext('2d'); ctx.imageSmoothingEnabled = false;
@@ -2579,6 +2662,8 @@ function drawIcon(canvas, kind, id){
     wline(5,14,9,18); wline(5,13,10,18);
     thick(5,18,3,20); W_(2,20,2,2); B_(3,21,1,1);
   };
+  if (GEAR_BY[id] && GEAR_BY[id].pair) id = GEAR_BY[id].pair;
+  if (GEAR_ART[id]){ GEAR_ART[id](); return; }
   switch (id){
     case 'driftsword': sword(2, true); break;
     case 'cleaver': for (let i=0;i<11;i++) for (let k=0;k<5;k++){ W_(7+i+k, 12-i+k); W_(8+i+k, 12-i+k); } for (let i=1;i<10;i++) B_(7+i, 12-i); B_(16,9,2,2); wline(4,14,8,18); wline(4,13,9,18); thick(5,18,3,20); W_(2,20,2,2); break;
@@ -3239,7 +3324,7 @@ function renderTodo(){
 const SHOP_CATS = [['all','All'],['weapon','Hands'],['armor','Armor'],['rune','Runes'],['potion','Potions'],['hat','Hats'],['color','Patterns'],['bg','Scenes']];
 function shopItems(){
   // boss and quest prizes are never sold; they arrive in a pop-up when you earn them
-  const gear = GEAR.filter(g => !g.boss && !g.legendary).map(g => ({...g, name: gearName(g), text: gearText(g), kind:g.slot === 'offhand' ? 'weapon' : g.slot, gear:true}));
+  const gear = GEAR.filter(g => !g.boss && !g.legendary && !g.pair && (!g.retired || S.owned.includes(g.id))).map(g => ({...g, name: gearName(g), text: gearText(g) + handTxt(g), kind:g.slot === 'offhand' ? 'weapon' : g.slot, gear:true}));
   const runes = RUNES.map(r => ({...r, name: runeName(r), text: runeText(r), kind:'rune', rune:true}));
   const pots = POTIONS.map(p => ({...p, kind:'potion', potion:true}));
   const cos = ITEMS.filter(i => !i.boss && !i.legendary && i.price !== 0 && (inSeason(i, D.today) || S.owned.includes(i.id))).map(i => ({...i, text: i.kind === 'hat' ? fxText(i.fx || {}) : i.kind === 'color' ? 'Pet pattern' : 'Scene (changes with day and night)'}));
@@ -3274,7 +3359,10 @@ function renderShop(){
       if (have) btn = `<span class="small muted inbag">${have} in your bag</span>` + btn;
     }
     else if (s.owned){ const half = Math.floor((it.price || 0) / 2), sellable = S.owned.includes(it.id) && it.price > 0;
-      btn = `<span class="ownedtag">${s.eq ? 'Owned · equipped' : 'Owned'}</span>` + (sellable ? `<button class="btn sm sellbtn ${sellArm === it.id ? 'armed' : ''}" data-sell="${it.id}">${sellArm === it.id ? `Tap again to sell${s.eq ? ' (takes it off)' : ''}` : `Sell · ${half} G`}</button>` : ''); }
+      const cp = GEAR_BY[it.id + '_2'], hasCp = cp && S.owned.includes(cp.id);
+      btn = `<span class="ownedtag">${hasCp ? 'Own two' : s.eq ? 'Owned · equipped' : 'Owned'}</span>`
+        + (cp && !hasCp ? `<button class="btn sm gold" data-buygear="${cp.id}" ${D.balance >= cp.price ? '' : 'disabled'}>Buy a second for your off hand · ${cp.price} G</button>` : '')
+        + (sellable ? `<button class="btn sm sellbtn ${sellArm === it.id ? 'armed' : ''}" data-sell="${it.id}">${sellArm === it.id ? `Tap again to sell${s.eq ? ' (takes it off)' : ''}` : `Sell · ${half} G`}</button>` : ''); }
     else if (!s.ok) btn = `<button class="btn" disabled>Needs ${reqText(it)}</button>`;
     else btn = `<button class="btn gold" ${it.gear ? `data-buygear="${it.id}"` : `data-buy="${it.id}"`} ${s.afford ? '' : 'disabled'}>Buy · ${it.price} G</button>`;
     const lockd = !s.owned && (!s.ok || !s.afford);   // above your level/stats or price: the art dims to gray
@@ -3305,6 +3393,7 @@ function itemArt(it, small){
 const invTabOf = it => it.potion ? 'potion' : it.rune ? 'rune' : it.gear ? 'gear' : it.kind === 'hat' ? 'hat' : 'looks';
 
 /* ---------- inventory (third panel under the plus) ---------- */
+const handTxt = x => x.hands === 2 ? ' · Two-handed' : x.dual ? (GEAR_BY[x.id + '_2'] ? ' · Dual-wield: buy two, or pair with a blade' : ' · Pairs with an off-hand blade') : x.pair ? ' · Off hand' : x.blade ? ' · Off-hand blade' : '';
 // anything you bought can be sold back for half, at any level (two taps, like in the shop)
 const sellBtn = (it, eq) => S.owned.includes(it.id) && it.price > 0 && !it.boss && !it.legendary ? `<button class="btn sm sellbtn ${sellArm === it.id ? 'armed' : ''}" data-sell="${it.id}">${sellArm === it.id ? `Sell${eq ? ' (takes it off)' : ''}?` : `Sell · ${Math.floor(it.price / 2)} G`}</button>` : '';
 let invTab = 'gear';
@@ -3317,19 +3406,21 @@ function renderInventory(){
   const runes = D.activeRunes.map(r => RUNE_BY[r.id] && {...RUNE_BY[r.id], name: runeName(RUNE_BY[r.id]), kind:'rune', left: dayIdx(runeUntil(r)) - dayIdx(D.today) + 1});
   const eqHtml = `<div class="slotgrid">
     ${slot('Main hand', g('weapon'), g('weapon') && `data-equipgear="${S.gear.weapon}"`, '⚔')}
-    ${slot('Off hand', g('offhand'), g('offhand') && `data-equipgear="${S.gear.offhand}"`, '⛨')}
+    ${(GEAR_BY[S.gear.weapon] || {}).hands === 2 ? `<button class="slot locked2h" disabled aria-label="Off hand: used by your two-handed weapon"><span class="slotart">${itemArt(g('weapon'), true)}</span><span class="slotl">Off hand</span><span class="slotn">Two-handed</span></button>`
+      : slot('Off hand', g('offhand'), g('offhand') && `data-equipgear="${S.gear.offhand}"`, '⛨', (GEAR_BY[S.gear.weapon] || {}).dual && !S.gear.offhand ? 'Blade only' : '')}
     ${slot('Armor', g('armor'), g('armor') && `data-equipgear="${S.gear.armor}"`, '▣')}
     ${slot('Helmet', hat, hat && `data-equip="${hat.id}"`, '◠')}
   </div>
   <div class="slotgrid four">${[0,1,2].map(i => runes[i] ? slot(`Rune ${i+1}`, runes[i], null, '', `${runes[i].left}d left`) : slot(`Rune ${i+1}`, null, null, '◇')).join('')}${(() => { const lr = LRUNE_BY[gearAt(Date.now()).lrune];
     return `<button class="slot legend ${lr ? 'full' : ''}" ${lr ? `data-lrune="${lr.id}"` : 'disabled'} aria-label="Legendary rune: ${lr ? esc(lr.name) + ', tap to take off' : 'empty'}"><span class="slotart">${lr ? itemArt({...lr, kind:'lrune'}, true) : '<span class="slotempty">✦</span>'}</span><span class="slotl">Legendary</span><span class="slotn">${lr ? esc(lr.name.replace('Rune of the ', '')) : D.altar.got.length ? 'Empty' : 'Locked'}</span></button>`; })()}</div>
-  <p class="how">One item per hand, plus armor and a helmet. Up to ${RUNE_SLOTS} runes can be active at once, and each slot frees up when its rune runs out. The ✦ slot holds one legendary rune from the Rune Altar; they never run out and you can swap them any time.</p>`;
+  <p class="how">One item per hand, plus armor and a helmet. Warrior weapons take both hands, and Rogue weapons only pair with an off-hand blade (katars and claws can be bought twice, one for each hand). Up to ${RUNE_SLOTS} runes can be active at once, and each slot frees up when its rune runs out. The ✦ slot holds one legendary rune from the Rune Altar; they never run out and you can swap them any time.</p>`;
   let list = '';
   const row = (it, sub, btn) => `<div class="invrow">${itemArt(it, true)}<span class="tbody"><span class="tname">${esc(it.name)}</span><span class="tmeta">${sub}</span></span><span class="invbtns">${btn}</span></div>`;
   if (invTab === 'gear'){
     const mine = GEAR.filter(x => owns(x.id));
     list = mine.map(x => { const it = {...x, gear:true}, eq = S.gear[x.slot] === x.id, ok = canWear(x, D.statLv);
-      return row(it, `${esc(SLOTS[x.slot])}${x.style ? ' · ' + STYLES[x.style].name : ''} · ${esc(gearText(x))}${x.boss ? ' · prize' : ''}`, (ok || eq ? `<button class="btn ${eq ? 'ghost' : 'primary'} sm" data-equipgear="${x.id}">${eq ? 'Take off' : 'Equip'}</button>` : `<button class="btn sm" disabled>Needs ${reqText({req: x.req})}</button>`) + sellBtn(x, eq)); }).join('');
+      const block = !eq && x.slot === 'offhand' ? offhandBlock(S.gear.weapon, x.id) : '';
+      return row(it, `${esc(SLOTS[x.slot])}${handTxt(x)}${x.style ? ' · ' + STYLES[x.style].name : ''} · ${esc(gearText(x))}${x.boss ? ' · prize' : ''}`, (block ? `<button class="btn sm" disabled>${(GEAR_BY[S.gear.weapon] || {}).hands === 2 ? 'Hands full' : 'Blades only'}</button>` : ok || eq ? `<button class="btn ${eq ? 'ghost' : 'primary'} sm" data-equipgear="${x.id}">${eq ? 'Take off' : 'Equip'}</button>` : `<button class="btn sm" disabled>Needs ${reqText({req: x.req})}</button>`) + sellBtn(x, eq)); }).join('');
     if (!mine.length) list = `<p class="how">No gear yet. Buy weapons, shields and armor in the shop, or win them from Titans.</p>`;
   } else if (invTab === 'potion'){
     const mine = POTIONS.filter(p => D.bag[p.id]);
@@ -3789,6 +3880,10 @@ function renderInner(){
   // the equip slots arrived after skills: whatever you'd learned fills them first, best skills first, for free
   if (!Array.isArray(S.skillEq) && !recoveryMode){ S.skillEq = SKILLS.filter(sk => S.skills[sk.id]).sort((a, b) => (S.skills[b.id] - S.skills[a.id]) || (b.unlock - a.unlock)).slice(0, SKILL_SLOTS).map(sk => sk.id); save(true); D = derive(); }
   // habit mastery counts from the start of the week it arrived, so this week's check-offs already count
+  // hand rules arrived: from now on two-handers empty the off hand and rogue weapons only pair with a blade
+  if (!S.gearRev && !recoveryMode){ S.gearRev = Date.now();
+    if (S.gear.weapon && S.gear.offhand && offhandBlock(S.gear.weapon, S.gear.offhand)){ const nm = (GEAR_BY[S.gear.offhand] || {}).name; S.gear.offhand = null; S.gearLog.push({ts: S.gearRev, slot:'offhand', id:null}); setTimeout(() => toast(`Your ${GEAR_BY[S.gear.weapon].name} now takes the off hand too, so your ${nm} went back to your bag`), 600); }
+    save(true); D = derive(); }
   if (!S.habitFrom && !recoveryMode){ S.habitFrom = weekKey(D.today); S.habitWk = 1; save(true); D = derive(); }
   if (S.habitFrom && !S.habitWk && !recoveryMode){ S.habitFrom = weekKey(S.habitFrom); S.habitWk = 1; save(true); D = derive(); }
   if (!S.altarFrom && !recoveryMode){ S.altarFrom = Date.now(); save(true); D = derive(); }   // the Rune Altar opens only after bosses beaten from now on
@@ -4074,6 +4169,14 @@ function toggle(id, el){
   const bm = document.getElementById('bossmini'); if (bm && dd > 0){ bm.classList.remove('shake'); void bm.offsetWidth; bm.classList.add('shake'); }
 }
 
+// put a piece of gear on (or take it off with id null); a two-hander empties the off hand and a rogue weapon only keeps a blade there.
+// Returns the name of anything that had to come off the off hand.
+function wearGear(it, next){
+  const now = Date.now(); let freed = '';
+  S.gear[it.slot] = next; S.gearLog.push({ts: now, slot: it.slot, id: next});
+  if (next && it.slot === 'weapon' && S.gear.offhand && offhandBlock(next, S.gear.offhand)){ freed = (GEAR_BY[S.gear.offhand] || {}).name || ''; S.gear.offhand = null; S.gearLog.push({ts: now, slot: 'offhand', id: null}); }
+  return freed;
+}
 function cast(id, el){
   const sk = SKILL_BY[id], st = D.skills[id], k = D.today;
   if (!st || !st.ready || !st.l) return;
@@ -4404,10 +4507,15 @@ function onClick(e){
       (S.picks[k] || (S.picks[k] = {}))[id] = {n: nx.name, s: nx.stats.slice()};
       (S.rerolls[k] || (S.rerolls[k] = {}))[id] = used + 1; S.buys.push({kind:'reroll', id, ts:Date.now(), g:price}); save(); render(); toast(`Rerolled to ${nx.name} for ${price} G`); } return; }
   if (el.dataset.buygear){ const it = GEAR_BY[el.dataset.buygear];
-    if (it && !it.boss && !it.legendary && it.price > 0 && D.balance >= it.price && !S.owned.includes(it.id) && meetsReq(it, D.statLv)){ S.owned.push(it.id); S.gear[it.slot] = it.id; S.gearLog.push({ts:Date.now(), slot:it.slot, id:it.id}); save(); render(); toast(`Equipped ${gearName(it)}`); } return; }
+    if (it && !it.boss && !it.legendary && it.price > 0 && D.balance >= it.price && !S.owned.includes(it.id) && meetsReq(it, D.statLv) && (!it.pair || S.owned.includes(it.pair))){
+      S.owned.push(it.id);
+      if (it.slot === 'offhand' && offhandBlock(S.gear.weapon, it.id)){ save(); render(); toast(`Bought ${gearName(it)}. It's in your inventory (${offhandBlock(S.gear.weapon, it.id).toLowerCase()}).`); return; }
+      const freed = wearGear(it, it.id); save(); render(); toast(`Equipped ${gearName(it)}${freed ? `. Your ${freed} went back to your bag` : ''}`); } return; }
   if (el.dataset.equipgear){ const it = GEAR_BY[el.dataset.equipgear]; if (!it || !owns(it.id)) return; const next = S.gear[it.slot] === it.id ? null : it.id;
     if (next && !canWear(it, D.statLv)) return;
-    S.gear[it.slot] = next; S.gearLog.push({ts:Date.now(), slot:it.slot, id:next}); save(); render(); return; }
+    if (next && it.slot === 'offhand'){ const why = offhandBlock(S.gear.weapon, next); if (why){ toast(why); return; } }
+    const freed = wearGear(it, next);
+    save(); render(); if (freed) toast(`${it.name} took your ${freed} off the off hand`); return; }
   if (el.dataset.ostat && draft && draft.pool){ readEditorFields(); const [i, k] = el.dataset.ostat.split(':'); const o = draft.pool[+i]; const j = o.stats.indexOf(k);
     if (j >= 0){ if (o.stats.length > 1) o.stats.splice(j,1); } else { o.stats.push(k); if (o.stats.length > 2) o.stats.shift(); }
     renderEditor(); return; }
