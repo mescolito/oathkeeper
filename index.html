@@ -639,7 +639,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '311837aa1b';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'db32cf7fdc';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -843,6 +843,25 @@ const GEAR_REV = {
   tidebane:   {st:{MGT:21, HRT:5, ARM:5}, all:.45, antiheal:.4}
 };
 for (const [id, fx] of Object.entries(GEAR_REV)){ const it = GEAR_BY[id]; it.fxOld = it.fx; it.fx = fx; }
+/* Balance pass (counts from S.balRev): Warriors keep the hardest hits but carry about a third less Defense, so Guardians stay
+   the tanks. With a Guardian build, damage blocked can reach 70% instead of 60%. With a Rogue build, crit past the 50% cap
+   turns into extra crit damage and dodge past 50% becomes a chance to hit back when you dodge. fxPre keeps the numbers from
+   before this pass for the days before it. */
+const BAL_REV = {
+  plate:       {st:{ARM:4, MGT:1}, sxp:{MGT:.1}},
+  dragonplate: {st:{ARM:6, MGT:3}, sxp:{MGT:.15}},
+  magmaplate:  {st:{ARM:7, MGT:4}, sxp:{MGT:.2}},
+  titanplate:  {st:{ARM:10, MGT:6}, sxp:{MGT:.25}},
+  cleaver:     {st:{MGT:8, ARM:1}, all:.25, flat:5},
+  warhammer:   {st:{MGT:7, ARM:1}, pct:{MGT:.5}, crit:.05},
+  stormsplit:  {st:{MGT:13, ARM:3}, all:.35, crit:.06, flat:8},
+  maul:        {st:{MGT:14, STA:3, ARM:2}, pct:{MGT:.6}},
+  worldsplit:  {st:{MGT:23, ARM:5}, all:.55, crit:.1, flat:15},
+  tidebane:    {st:{MGT:21, HRT:5, ARM:3}, all:.45, antiheal:.4}
+};
+for (const [id, fx] of Object.entries(BAL_REV)){ const it = GEAR_BY[id]; it.fxPre = it.fx; it.fx = fx; }
+// which numbers a piece of gear had at a given moment
+const fxPick = (it, ts) => it.fxOld && (!S.gearRev || ts == null || ts < S.gearRev) ? it.fxOld : it.fxPre && (!S.balRev || ts == null || ts < S.balRev) ? it.fxPre : it.fx;
 // fewer knives: rogue weapons become katars and claws; the off-hand blades get distinct shapes
 const GEAR_RENAME = {kris:'Riptide Katar', moonfang:'Moonfang Katar', stormfangs:'Storm Claws', voidfangs:'Void Katar', shiv:'Barnacle Claw', stiletto:'Eel Fang', smokepouch:'Smoke Chakram', tideknife:'Last-Tide Sickle', driftsword:'Driftwood Greatsword', mace:'Kettlebell Maul', warhammer:'War Hammer', cleaver:'Titan Cleaver'};
 for (const [id, nm] of Object.entries(GEAR_RENAME)) GEAR_BY[id].name = nm;
@@ -1276,6 +1295,7 @@ function sanitize(s, created){
   if (s.habitWk) out.habitWk = 1; else delete out.habitWk;
   if (isDate(s.slumpFrom)) out.slumpFrom = s.slumpFrom; else delete out.slumpFrom;
   if (typeof s.gearRev === 'number' && s.gearRev > 0) out.gearRev = s.gearRev; else delete out.gearRev;
+  if (typeof s.balRev === 'number' && s.balRev > 0) out.balRev = s.balRev; else delete out.balRev;
   out.slumpLog = {}; if (obj(s.slumpLog)) for (const [d, r] of Object.entries(s.slumpLog)) if (isDate(d) && obj(r)){
     if (r.g != null) out.slumpLog[d] = {g: int(r.g, 0, 1e9, 0)};
     else if (r.hp != null) out.slumpLog[d] = {hp: int(r.hp, 0, 100000, 0)};
@@ -1442,7 +1462,10 @@ function addFx(fx, f){
 }
 function fxOf(g, runes, buffs, ts){
   const fx = {flat:0, all:0, pct:{}, sxp:{}, st:{}, gold:0, xp:0, crit:0, def:0, dodge:0, mpMax:0, antiheal:0, spell:0, mpTask:0};
-  for (const id of Object.values(g)){ if (id == null) continue; const it = GEAR_BY[id] || LEGACY_RUNES[id] || LRUNE_BY[id] || (ITEM[id] && ITEM[id].kind === 'hat' && ITEM[id]); if (it && it.fx) addFx(fx, it.fxOld && (!S.gearRev || ts == null || ts < S.gearRev) ? it.fxOld : it.fx); }
+  const lean = {};
+  for (const id of Object.values(g)){ if (id == null) continue; const it = GEAR_BY[id] || LEGACY_RUNES[id] || LRUNE_BY[id] || (ITEM[id] && ITEM[id].kind === 'hat' && ITEM[id]); if (it && it.fx) addFx(fx, fxPick(it, ts)); if (it && it.style && (GEAR_BY[id] || ITEM[id])) lean[it.style] = (lean[it.style] || 0) + 1; }
+  // the build lean (2+ pieces of one style, no tie) unlocks the Guardian and Rogue perks, from the balance pass on
+  if (S.balRev && ts != null && ts >= S.balRev){ const b = Object.entries(lean).sort((x, y) => y[1] - x[1]); if (b.length && b[0][1] >= 2 && !(b[1] && b[1][1] === b[0][1])) fx.lean = b[0][0]; }
   for (const r of (runes || [])){ const rr = RUNE_BY[r.id]; if (rr) addFx(fx, rr.fx); }
   for (const u of (buffs || [])) addFx(fx, u.buff);
   return fx;
@@ -1465,13 +1488,18 @@ const fxAt = (ts, d) => { const fx = fxOf(gearAt(ts), runesAt(ts, d), buffsAt(ts
 const effStats = (statLv, fx) => Object.fromEntries(SK.map(k => [k, statLv[k] + (((fx && fx.st) || {})[k] || 0)]));
 function combatOf(statLv, level, fx){
   const e = effStats(statLv, fx);
+  const rawCrit = 0.05 + 0.01*(e.MGT-1) + (fx.crit||0), rawDodge = 0.03 + 0.015*(e.MOB-1) + (fx.dodge||0);
   return {
     maxHP: 50 + 5*(e.STA-1) + 3*(level-1),
     maxMP: 30 + 5*(e.HRT-1) + 2*(level-1) + (fx.mpMax||0),
     atk: (e.MGT-1),
-    crit: Math.min(0.5, 0.05 + 0.01*(e.MGT-1) + (fx.crit||0)),
-    dodge: Math.min(0.5, 0.03 + 0.015*(e.MOB-1) + (fx.dodge||0)),
-    def: Math.min(0.6, 0.03*(e.ARM-1) + (fx.def||0))
+    crit: Math.min(0.5, rawCrit),
+    dodge: Math.min(0.5, rawDodge),
+    def: Math.min(fx.lean === 'guard' ? 0.7 : 0.6, 0.03*(e.ARM-1) + (fx.def||0)),
+    // Rogue build: crit past the cap adds crit damage (+2% per 1% over), dodge past the cap becomes a chance to hit back
+    critX: 1.5 + (fx.lean === 'rogue' ? Math.max(0, rawCrit - 0.5) * 2 : 0),
+    counter: fx.lean === 'rogue' ? Math.min(1, Math.max(0, rawDodge - 0.5) * 2) : 0,
+    counterDmg: Math.round((10 + 2*e.MOB) * (1 + (fx.all||0)))
   };
 }
 const dropName = bs => [(ITEM[bs.drop] || GEAR_BY[bs.drop] || {}).name, bs.drop2 && (GEAR_BY[bs.drop2] || ITEM[bs.drop2] || {}).name].filter(Boolean).join(' and ') || 'a prize';
@@ -1697,7 +1725,7 @@ function derive(){
         if (bossAlive() && !innAtD(d, e.ts)){
           const weak = stats.some(x => F.boss.weak.includes(x));
           let dmg = (10 + 2*(live ? sl[prim] + (fx.st[prim]||0) : sl[prim]) + (live ? C.atk : (fx.flat||0))) * (weak ? 2 : 1) * (1 + fx.all + (fx.pct[prim]||0)) * boost;
-          if (live && roll('crit|' + d + '|' + e.tid) < C.crit) dmg *= 1.5;
+          if (live && roll('crit|' + d + '|' + e.tid) < C.crit) dmg *= C.critX;
           if (statusOn('para', d)) dmg *= 0.5;
           hitBoss(F, d, e.tid, Math.round(dmg), e.ts);
         }
@@ -1764,10 +1792,11 @@ function derive(){
         const endTs = endOf(d), fxE = fxAt(endTs, d);
         C = combatOf(statLvNow(), lvlNow(), fxE);
         let raw = 0, dodged = 0;
-        for (const t of missed){ if (roll('dodge|' + d + '|' + t.id) < C.dodge) dodged++; else raw += F.boss.atk + Math.floor(F.lvl / 3); }
+        let counters = 0;
+        for (const t of missed){ if (roll('dodge|' + d + '|' + t.id) < C.dodge){ dodged++; if (C.counter && !shielded && bossAlive() && roll('counter|' + d + '|' + t.id) < C.counter){ counters++; hitBoss(F, d, 'counter', C.counterDmg, endTs); } } else raw += F.boss.atk + Math.floor(F.lvl / 3); }
         const taken = shielded ? 0 : Math.round(raw * (1 - C.def) * MOOD_HURT[mood]);
         hp -= taken;
-        attacks[d] = {boss: F.boss.name, missed: missed.length, dodged, dmg: taken, mood, ...(shielded ? {shield: true} : {})};
+        attacks[d] = {boss: F.boss.name, missed: missed.length, dodged, dmg: taken, mood, ...(shielded ? {shield: true} : {}), ...(counters ? {counters} : {})};
         if (!shielded && F.boss.status && missed.length >= 2){ status[F.boss.status] = {from: d, until: addDays(d, F.boss.status === 'poison' ? 3 : 2)}; attacks[d].status = F.boss.status; }
         if (!F.frozen){ const anti = Math.min(1, fxE.antiheal || 0); const h = Math.round(missed.length * (F.boss.titan ? 10 : 6) * (1 - anti)); F.heal += h; F.rem = Math.min(F.hp, F.rem + h); }
         if (hp <= 0) faint(d, C);
@@ -1956,6 +1985,7 @@ function mergeSaves(a, b){
   if (o.habitWk) out.habitWk = 1;
   if (o.slumpFrom && (!out.slumpFrom || o.slumpFrom < out.slumpFrom)) out.slumpFrom = o.slumpFrom;
   if (o.gearRev && (!out.gearRev || o.gearRev < out.gearRev)) out.gearRev = o.gearRev;
+  if (o.balRev && (!out.balRev || o.balRev < out.balRev)) out.balRev = o.balRev;
   for (const k of ['potions','runeBuys','bag','buys','skillLog','gearLog','pomoLog','sells','inn','testGold']){
     if (!Array.isArray(o[k])) continue; if (!Array.isArray(out[k])) out[k] = [];
     const seen = new Set(out[k].map(x => JSON.stringify(x)));
@@ -3229,8 +3259,8 @@ function renderBattle(){
   ${inLull() ? altarPanel() : ''}
   <div class="chips">${(b.weak.length >= 5 ? ['ALL'] : b.weak).map(s => `<span class="chip-s" style="background:${s==='ALL' ? 'var(--yellow)' : STATS[s].c};font-size:13px;padding:5px 12px">Weak to ${s==='ALL' ? 'every stat' : esc(STATS[s].name)}</span>`).join('')}<span class="chip-s plain" style="background:var(--track);font-size:13px;padding:5px 12px">Hits ${b.atk + Math.floor((f.lvl || D.lv.level)/3)} per missed daily</span></div>
   ${slumpNote()}
-  ${a ? `<div class="card attack"><b>Last night</b><span>${a.shield ? `The Slump blocked ${esc(a.boss)}'s hits` : `${esc(a.boss)} hit you for <b>${a.dmg} HP</b>`} · ${a.missed} missed${a.dodged ? `, ${a.dodged} dodged` : ''}${a.status ? ` · ${esc(STATUS[a.status].name)}` : ''}</span></div>` : ''}
-  <div class="sec-h"><h2>You</h2><span class="muted small">Block ${pctTxt(C.def)} · Dodge ${pctTxt(C.dodge)} · Crit ${pctTxt(C.crit)}</span></div>
+  ${a ? `<div class="card attack"><b>Last night</b><span>${a.shield ? `The Slump blocked ${esc(a.boss)}'s hits` : `${esc(a.boss)} hit you for <b>${a.dmg} HP</b>`} · ${a.missed} missed${a.dodged ? `, ${a.dodged} dodged` : ''}${a.counters ? `, ${a.counters} counter${a.counters === 1 ? '' : 's'}` : ''}${a.status ? ` · ${esc(STATUS[a.status].name)}` : ''}</span></div>` : ''}
+  <div class="sec-h"><h2>You</h2><span class="muted small">Block ${pctTxt(C.def)} · Dodge ${pctTxt(C.dodge)} · Crit ${pctTxt(C.crit)}${C.critX > 1.5 ? ` ×${C.critX.toFixed(1)}` : ''}${C.counter ? ` · Counter ${pctTxt(C.counter)}` : ''}</span></div>
   ${vitals()}
   ${potionRow()}
   <div class="seg wide" role="tablist" aria-label="Battle actions" id="skillsH">
@@ -3244,7 +3274,7 @@ function renderBattle(){
     <b>${f.status==='won' ? 'Defeated on' : 'Escapes after'}</b><span>${f.status==='won' ? fmtDow(f.wonOn) : fmtDow(f.end)}</span>
     <b>Reward</b><span>${BOSS_REWARD(b)} G + ${esc((ITEM[b.drop] || GEAR_BY[b.drop] || {name:'?'}).name)}${b.drop2 ? ' + ' + esc((GEAR_BY[b.drop2]||ITEM[b.drop2]||{name:''}).name) : ''}</span>
   </div>
-  ${hits.length ? `<div class="sec-h"><h2>Top hits</h2></div><div class="list">${hits.map(([id,d]) => { const sk = id.startsWith('skill:') ? SKILL_BY[id.slice(6)] : null; const t = D.T[id]; const s0 = t ? statsFor(t, D.today)[0] : null;
+  ${hits.length ? `<div class="sec-h"><h2>Top hits</h2></div><div class="list">${hits.map(([id,d]) => { const sk = id.startsWith('skill:') ? SKILL_BY[id.slice(6)] : id === 'counter' ? {name:'Counterattacks'} : null; const t = D.T[id]; const s0 = t ? statsFor(t, D.today)[0] : null;
     return `<div class="tl"><span class="chip-s" style="background:${sk ? 'var(--blue)' : STATS[s0||'MGT'].c}">${sk ? 'SKILL' : esc(STATS[s0||'MGT'].abbr)}</span><span>${esc(sk ? sk.name : (t||{name:id}).name)}</span><span style="font-weight:700;font-variant-numeric:tabular-nums">${d}</span></div>`; }).join('')}</div>` : ''}
   <div class="sec-h"><h2>Boss calendar</h2><span class="muted small">new boss every 2 weeks</span></div>
   <div class="list">${upcoming.map(u => `<div class="tl"><span class="pill ${u.boss.rite ? 'rite' : u.boss.titan||u.boss.seasonal?'now':'next'}">${tag(u.boss)}</span><span>${esc(u.boss.name)}</span><span class="small muted">${fmt(u.start)}</span></div>`).join('')}</div>
@@ -3824,7 +3854,9 @@ function renderStatsPanel(){
     <b>Attack bonus</b><span>+${C.atk} <span class="muted small">from ${esc(STATS.MGT.name)}</span></span>
     <b>Crit chance</b><span>${pctTxt(C.crit)} <span class="muted small">from ${esc(STATS.MGT.name)}</span></span>
     <b>Dodge</b><span>${pctTxt(C.dodge)} <span class="muted small">from ${esc(STATS.MOB.name)}</span></span>
-    <b>Damage blocked</b><span>${pctTxt(C.def)} <span class="muted small">from ${esc(STATS.ARM.name)}</span></span>
+    <b>Damage blocked</b><span>${pctTxt(C.def)} <span class="muted small">from ${esc(STATS.ARM.name)} · cap ${D.fx.lean === 'guard' ? '70% (Guardian build)' : '60%'}</span></span>
+    <b>Crit damage</b><span>×${C.critX.toFixed(2)} <span class="muted small">${D.fx.lean === 'rogue' ? 'Rogue build: crit past 50% adds to this' : 'a Rogue build turns crit past 50% into more'}</span></span>
+    ${D.fx.lean === 'rogue' ? `<b>Counterattack</b><span>${pctTxt(C.counter)} <span class="muted small">of dodged hits strike back for ${C.counterDmg}</span></span>` : ''}
   </div>
   <div class="list">${cards}</div>
   <p class="how">The big number is the level you earned from tasks; the + is what your gear, runes and boost skills add right now. Combat uses both. Renaming a stat changes its label everywhere. What it powers stays the same.</p>`}`;
@@ -3884,6 +3916,7 @@ function renderInner(){
   if (!S.gearRev && !recoveryMode){ S.gearRev = Date.now();
     if (S.gear.weapon && S.gear.offhand && offhandBlock(S.gear.weapon, S.gear.offhand)){ const nm = (GEAR_BY[S.gear.offhand] || {}).name; S.gear.offhand = null; S.gearLog.push({ts: S.gearRev, slot:'offhand', id:null}); setTimeout(() => toast(`Your ${GEAR_BY[S.gear.weapon].name} now takes the off hand too, so your ${nm} went back to your bag`), 600); }
     save(true); D = derive(); }
+  if (!S.balRev && !recoveryMode){ S.balRev = Date.now(); save(true); D = derive(); }   // the build balance pass counts from now on
   if (!S.habitFrom && !recoveryMode){ S.habitFrom = weekKey(D.today); S.habitWk = 1; save(true); D = derive(); }
   if (S.habitFrom && !S.habitWk && !recoveryMode){ S.habitFrom = weekKey(S.habitFrom); S.habitWk = 1; save(true); D = derive(); }
   if (!S.altarFrom && !recoveryMode){ S.altarFrom = Date.now(); save(true); D = derive(); }   // the Rune Altar opens only after bosses beaten from now on
