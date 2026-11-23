@@ -930,7 +930,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'a7be8dca98';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '17b305a298';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -2819,7 +2819,7 @@ function drawWreath(bg, f, motion){
   else if (bg === 'solar'){
     // you are the sun: planets on tilted orbits circle the pet at their own speeds
     for (let i = 0; i < 30; i++){ const h = hash('sol' + i), x = h % SW, y = (h >>> 8) % SH; if (!motion || (t + i * 5) % 23 > 1) ink(x, y); }
-    const oc = [32, 25], orb = [[18, 7], [24, 10], [30, 14], [36, 18]];
+    const oc = [32, 22], orb = [[18, 7], [24, 10], [30, 14], [36, 18]];
     for (const [ox, oy] of orb.slice(1)) for (let a = 0; a < Math.PI * 2; a += 0.02) if (Math.floor(a / 0.02) % 7 === 0) ink(Math.round(oc[0] + Math.cos(a) * ox), Math.round(oc[1] + Math.sin(a) * oy));
     const pos = (o, a) => [Math.round(oc[0] + Math.cos(a) * orb[o][0]), Math.round(oc[1] + Math.sin(a) * orb[o][1])];
     { const [x, y] = pos(0, 0.5 + t * 0.09); pink(x, y); }                                                             // a tiny fast inner planet
@@ -2872,6 +2872,21 @@ function drawBg(bg, f, motion, night){
 /* The pet always gets clear air: anything the scene drew within 2px of the pet (or in the gaps of its outline)
    is painted back to plain paper. Rows from the floor line down are left alone, so the feet still stand on the ground. */
 let petScratch = null;
+/* In a wreath frame the pet floats in the middle of the ring: measure it at rest (no bob, no jump) and move it so
+   its middle sits on the ring's centre, then let it bob from there. */
+function centerPet(o){
+  const main = ctx;
+  if (!petScratch) petScratch = document.createElement('canvas');
+  petScratch.width = SW; petScratch.height = SH;
+  ctx = petScratch.getContext('2d'); ctx.clearRect(0, 0, SW, SH);
+  const g = o.ground != null ? o.ground : GROUND, cx = o.cx != null ? o.cx : 32;
+  drawPet(Object.assign({}, o, {motion: false, jump: false, shadow: false, mood: o.mood === 'sleep' ? 'sleep' : 'ok', ground: g, cx}));
+  const d = ctx.getImageData(0, 0, SW, SH).data; ctx = main;
+  let y0 = SH, y1 = -1, x0 = SW, x1 = -1;
+  for (let y = 0; y < SH; y++) for (let x = 0; x < SW; x++) if (d[(y * SW + x) * 4 + 3]){ if (y < y0) y0 = y; if (y > y1) y1 = y; if (x < x0) x0 = x; if (x > x1) x1 = x; }
+  if (y1 < 0) return o;
+  return Object.assign({}, o, {ground: g + Math.round(21.5 - (y0 + y1) / 2), cx: cx + Math.round(31.5 - (x0 + x1) / 2), shadow: false});
+}
 function clearAroundPet(o, paper, floor){
   const main = ctx, W = main.canvas.width, H = main.canvas.height, R = 2;
   if (!petScratch) petScratch = document.createElement('canvas');
@@ -3273,7 +3288,8 @@ function drawHat(hat, cx, top, rx, ry, f, motion){
 }
 function drawScene(canvas, o){
   ctx = canvas.getContext('2d'); ctx.imageSmoothingEnabled = false;
-  const paper = drawBg(o.bg, o.f, o.motion, o.night != null ? o.night : isNightNow()); if (!o.noPet) clearAroundPet(o, paper, 38); if (o.smog) drawSmog(o); if (!o.noPet){ drawPet(o); if (o.slump) drawSlump(o); } if (o.siren) drawSiren(o); if (o.riff) drawRiff(o);
+  const wr = WREATHS.includes(o.bg); if (wr && !o.noPet) o = centerPet(o);
+  const paper = drawBg(o.bg, o.f, o.motion, o.night != null ? o.night : isNightNow()); if (!o.noPet) clearAroundPet(o, paper, wr ? SH : 38); if (o.smog) drawSmog(o); if (!o.noPet){ drawPet(o); if (o.slump) drawSlump(o); } if (o.siren) drawSiren(o); if (o.riff) drawRiff(o);
 }
 /* the Siren: a winged figure with pink hair and a pink flame, bobbing in the sky with flapping wings.
    Drawn cream with a black outline so she reads over a light or a dark sky. */
