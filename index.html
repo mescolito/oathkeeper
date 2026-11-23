@@ -928,7 +928,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'c657ef56c2';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'aecec55178';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1616,6 +1616,7 @@ function sanitize(s, created){
   if (isDate(s.slumpFrom)) out.slumpFrom = s.slumpFrom; else delete out.slumpFrom;
   if (isDate(s.smogFrom)) out.smogFrom = s.smogFrom; else delete out.smogFrom;
   if (isDate(s.sirenFrom)) out.sirenFrom = s.sirenFrom; else delete out.sirenFrom;
+  if (isDate(s.bossFrom)) out.bossFrom = s.bossFrom; else delete out.bossFrom;
   out.siren = (Array.isArray(s.siren) ? s.siren : []).filter(x => obj(x) && isDate(x.wk)).map(x => { const o = {wk: x.wk, day: isDate(x.day) ? x.day : x.wk};
     if (num(x.declined, 0)) o.declined = num(x.declined, 0);
     else if (num(x.drawn, 0)){ o.drawn = num(x.drawn, 0); o.res = x.res === 'bless' ? 'bless' : 'curse'; o.kind = x.kind === 'todo' ? 'todo' : 'daily'; if (typeof x.tid === 'string') o.tid = str(x.tid, 40); if (typeof x.lid === 'string') o.lid = str(x.lid, 40); if (typeof x.iid === 'string') o.iid = str(x.iid, 40); if (typeof x.name === 'string') o.name = str(x.name, 80); }
@@ -1945,7 +1946,11 @@ function habitInfo(innOn, today){
   return out;
 }
 const habitFxAt = ts => HAB.tl.filter(h => ts >= h.from && ts < h.to);
-const bossHp = (boss, lvl) => (boss.final ? 6000 : boss.rite ? 2400 : boss.titan ? 1300 : boss.seasonal ? 1000 : 650) + 40*(lvl-1);
+// Boss HP. Fights that start on or after S.bossFrom (the day this balance arrived) use the tougher numbers: about double, and growing
+// faster with level, so a good pace takes about 8 days instead of 4–5. Earlier fights keep the old numbers, so the past never changes.
+const bossHp = (boss, lvl, c) => (c != null && S.bossFrom && cycleStart(c) >= S.bossFrom)
+  ? (boss.final ? 11000 : boss.rite ? 4400 : boss.titan ? 2400 : boss.seasonal ? 1850 : 1200) + 85*(lvl-1)
+  : (boss.final ? 6000 : boss.rite ? 2400 : boss.titan ? 1300 : boss.seasonal ? 1000 : 650) + 40*(lvl-1);
 
 function derive(){
   const nowMs = Date.now(), today = todayKey(), yest = addDays(today,-1);
@@ -2047,7 +2052,7 @@ function derive(){
       const fr = c < freezeBefore && S.results[c];
       const won = new Set(Object.values(cyc).filter(x => x.boss.rite && (x.wonOn || (x.frozen && x.frozen.status === 'won'))).map(x => x.boss.id));
       const boss = (fr && ALL_BOSSES.find(b => b.id === fr.boss)) || riteFor(lvlNow(), won, c) || bossFor(c);
-      const lvl = lvlBase(); let bhp = bossHp(boss, lvl), rem0 = bhp;
+      const lvl = lvlBase(); let bhp = bossHp(boss, lvl, c), rem0 = bhp;
       const prevF = cyc[c-1];
       if (!fr && boss.rite && prevF && prevF.boss.id === boss.id){ const pr = prevF.frozen ? prevF.frozen.rem : prevF.rem; if (pr > 0){ bhp = prevF.frozen ? prevF.frozen.hp : prevF.hp; rem0 = pr; } }
       cyc[c] = {c, boss, lvl, hp: bhp, rem: rem0, heal: 0, dmg: 0, hits: {}, wonOn: null, wonTs: 0, frozen: fr || null, start: cycleStart(c), end: addDays(cycleStart(c), CYCLE-1)};
@@ -2228,7 +2233,7 @@ function derive(){
     return out;
   });
   const ritesWon = new Set(fights.filter(x => x.boss.rite && x.status === 'won').map(x => x.boss.id));
-  if (!fights.length || fights[fights.length-1].c !== cycleOf(today)){ const boss = riteFor(lvlNow(), ritesWon, cycleOf(today)) || bossFor(cycleOf(today)), lastF = fights[fights.length-1], carry = boss.rite && lastF && lastF.boss.id === boss.id && lastF.rem > 0, bhp = carry ? lastF.hp : bossHp(boss, lvlNow()); fights.push({c:cycleOf(today), boss, start:cycleStart(cycleOf(today)), end:addDays(cycleStart(cycleOf(today)),CYCLE-1), hp:bhp, rem: carry ? lastF.rem : bhp, heal:0, dmg:0, hits:{}, status:'now', wonOn:null}); }
+  if (!fights.length || fights[fights.length-1].c !== cycleOf(today)){ const boss = riteFor(lvlNow(), ritesWon, cycleOf(today)) || bossFor(cycleOf(today)), lastF = fights[fights.length-1], carry = boss.rite && lastF && lastF.boss.id === boss.id && lastF.rem > 0, bhp = carry ? lastF.hp : bossHp(boss, lvlNow(), cycleOf(today)); fights.push({c:cycleOf(today), boss, start:cycleStart(cycleOf(today)), end:addDays(cycleStart(cycleOf(today)),CYCLE-1), hp:bhp, rem: carry ? lastF.rem : bhp, heal:0, dmg:0, hits:{}, status:'now', wonOn:null}); }
   const lv = levelInfo(xp), statLv = statLvNow();
   const fxNow = fxOf({...S.gear, hat: S.equip.hat}, runesAt(nowMs, today), buffsAt(nowMs, today), nowMs);
   for (const h of habitFxAt(nowMs)) addFx(fxNow, h.fx);
@@ -2378,6 +2383,7 @@ function mergeSaves(a, b){
   if (o.slumpFrom && (!out.slumpFrom || o.slumpFrom < out.slumpFrom)) out.slumpFrom = o.slumpFrom;
   if (o.smogFrom && (!out.smogFrom || o.smogFrom < out.smogFrom)) out.smogFrom = o.smogFrom;
   if (o.sirenFrom && (!out.sirenFrom || o.sirenFrom < out.sirenFrom)) out.sirenFrom = o.sirenFrom;
+  if (o.bossFrom && (!out.bossFrom || o.bossFrom < out.bossFrom)) out.bossFrom = o.bossFrom;
   if (Array.isArray(o.siren)){ if (!Array.isArray(out.siren)) out.siren = []; for (const x of o.siren){ const i = out.siren.findIndex(y => y.wk === x.wk); if (i < 0) out.siren.push(x); else if ((x.drawn || x.declined || 0) < (out.siren[i].drawn || out.siren[i].declined || 0)) out.siren[i] = x; } }   // the first answer for a week wins
   // timers: each device's copy of a timer, the newer edit wins; a payout or reset logged on either device counts once
   if (Array.isArray(o.timers)){ if (!Array.isArray(out.timers)) out.timers = []; for (const t of o.timers){ const i = out.timers.findIndex(x => x.id === t.id); if (i < 0) out.timers.push(t); else { const m = out.timers[i]; if ((t.edited || 0) > (m.edited || 0)) out.timers[i] = t; if (t.deleted && !m.deleted) out.timers[i].deleted = t.deleted; } } }
@@ -4161,7 +4167,7 @@ function renderInventory(){
 function openNextBoss(){
   const el = document.getElementById('award'); if (!el) return;
   const c = D.cur.c + 1, b = D.nextRite || bossFor(c), start = cycleStart(c), n = dayIdx(start) - dayIdx(D.today);
-  const lv = D.lv.level, hp = bossHp(b, lv), hit = b.atk + Math.floor(lv / 3);
+  const lv = D.lv.level, hp = bossHp(b, lv, c), hit = b.atk + Math.floor(lv / 3);
   const weak = b.weak.length >= 5 ? 'every stat' : b.weak.map(k => STATS[k].name).join(' and ');
   const prize = ITEM[b.drop] || GEAR_BY[b.drop], prize2 = b.drop2 && (ITEM[b.drop2] || GEAR_BY[b.drop2]);
   const kind = b.final ? 'Final boss' : b.rite ? 'Rite of passage' : b.seasonal ? 'Holiday boss' : b.titan ? 'Titan' : 'Boss';
@@ -4660,6 +4666,7 @@ function renderInner(){
   if (!S.slumpFrom && !recoveryMode){ S.slumpFrom = D.today; save(true); D = derive(); }
   if (!S.smogFrom && !recoveryMode){ S.smogFrom = D.today; save(true); D = derive(); }   // toxic air only counts nights after today
   if (!S.sirenFrom && !recoveryMode){ S.sirenFrom = D.today; save(true); }   // the Siren starts visiting from today
+  if (!S.bossFrom && !recoveryMode){ S.bossFrom = D.today; save(true); D = derive(); }   // tougher bosses from the next fight on
   if (!recoveryMode) timerSweep();   // the Slump only counts days from now on
   const nf = Object.keys(D.newFaints || {}).filter(d => !S.faintLog[d]);
   if (nf.length){ nf.forEach(d => S.faintLog[d] = D.newFaints[d]); save(true); D = derive(); }
@@ -6056,6 +6063,7 @@ function pomoTick(){
     } else {
       // breaks end in a ready state: the next focus block never starts on its own
       S.pomo.run = {phase:'focus', startTs:0, pausedMs:0, pauseAt:null, n: r.phase === 'long' ? 0 : r.n, idle:true};
+      lofiIdleUntil = end + 10 * 60000;   // the break music keeps going while the timer waits for you
       toast('Break over. Ready when you are.'); sfx('breakDone'); buzz([150, 80, 150]);
     }
     changed = true;
@@ -6064,6 +6072,13 @@ function pomoTick(){
   else if (tab === 'focus') updateFocusClock();
 }
 setInterval(() => { if (!recoveryMode && D) pomoTick(); }, 1000);
+setInterval(() => { try {
+  if (recoveryMode) return;
+  if (!lofiWanted()){ if (lofi) musicSync(); return; }
+  if (actx && actx.state !== 'running' && actx.state !== 'closed'){ const p = actx.resume(); if (p && p.catch) p.catch(() => {}); return; }
+  if (!lofi || (actx && actx.state === 'closed')){ audioWake.tries = 0; if (actx && actx.state === 'closed') audioRebuild(); else musicSync(); }
+  else if (lofi.next < actx.currentTime - 1){ lofi.next = actx.currentTime + 0.05; lofiSchedule(); }   // the scheduler fell behind: pick up from now
+} catch(e){} }, 3000);
 
 /* ---------- focus timer sounds (made on the fly, no files) and vibration ---------- */
 let actx = null;
@@ -6170,7 +6185,7 @@ const LOFI_BASS_PAT = {
   chip: [[0, 0, 1.4], [2, 12, 0.9], [3, 0, 0.9], [4, 7, 1.4], [6, 12, 0.9], [7, 7, 0.9]]
 };
 const songOwned = k => !!LOFI_STYLES[k] && (!LOFI_STYLES[k].price || (S.buys || []).some(b => b.kind === 'song' && b.id === k));
-var songPrevT = 0, lofiPrev = null;   // a short preview from Riff's stall: {style, until}
+var songPrevT = 0, lofiPrev = null, lofiIdleUntil = 0;   // a short preview from Riff's stall: {style, until}
 const lofiKey = () => lofiPrev ? lofiPrev.style : (LOFI_STYLES[S.pomo.cfg.lofi] && songOwned(S.pomo.cfg.lofi) ? S.pomo.cfg.lofi : 'chill');
 const lofiStyle = () => LOFI_STYLES[lofiKey()];
 let lofi = null;
@@ -6179,6 +6194,7 @@ const lofiPick = (mode, style) => { const ps = (LOFI_STYLES[style] && LOFI_STYLE
 function lofiWanted(){
   const r = S.pomo && S.pomo.run;
   if (lofiPrev && Date.now() < lofiPrev.until && !recoveryMode) return 'focus';
+  if (S.pomo && S.pomo.cfg.music && r && r.idle && Date.now() < lofiIdleUntil && !recoveryMode) return 'break';
   if (!S.pomo || !S.pomo.cfg.music || !r || r.idle || r.pauseAt || recoveryMode) return null;
   return r.phase === 'focus' ? 'focus' : 'break';
 }
