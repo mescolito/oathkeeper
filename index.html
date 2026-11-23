@@ -930,7 +930,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'b32aacb613';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'eeef1a06ba';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1940,7 +1940,7 @@ const covered = (k, id) => done(k,id) || waived(k,id);
 function weekTarget(t, k){ const wk = weekKey(k); if (wk === weekKey(todayKey())) return t.target || 1; let tg = ((S.wkTg[wk]||{})[t.id]) || 0; for (let i=0;i<7;i++){ const sn = (S.snap[addDays(wk,i)]||{})[t.id]; if (sn && sn.w) tg = Math.max(tg, sn.tg || 1); } if (wk === weekKey(todayKey()) || !tg) tg = Math.max(tg, t.target || 1); return tg; }
 const effTarget = (t, k) => Math.max(1, weekTarget(t,k) - (((S.lightens[weekKey(k)]||{})[t.id]) || 0));
 const active = () => S.tasks.filter(t => !t.archived);
-const stage = lv => lv < 5 ? 0 : lv < 12 ? 1 : 2;
+const stage = lv => lv < 5 ? 0 : lv < 12 ? 1 : lv < 20 ? 2 : lv < 60 ? 3 : 4;   // hatchling, juvenile, adult, knight (Lv 20), legend (Lv 60)
 /* Habit mastery: every habit (a times-per-week task) climbs New Habit → Trying → Consistent → Mastery.
    Check-offs up to the week's goal share HABIT_WEEK points (3 for a 3-a-week habit is 1 each, a 1-a-week habit gets all 3 at once;
    extras add up to 1 each); the check-off that hits the week's target adds 2 more, plus 1 per week of a running hit streak
@@ -2802,8 +2802,98 @@ const PET = [
     ".#.##########.####....",
     "...##########.........",
     "....########..........",
-    "....##....##.........."]}
+    "....##....##.........."]},
+  // Knight: stands tall in armor, ears up, gear fitted to its hands
+  {eye:5, top:2, faceL:4, faceW:14, ax:11, hand:18, headH:9, rows:[
+    "......#........#......",
+    "......##......##......",
+    ".....############.....",
+    "....##############....",
+    "....##############....",
+    "....##############....",
+    "....##############....",
+    "....##############....",
+    ".....############.....",
+    "......##########......",
+    "...################...",
+    "..##################..",
+    "..###.##########.###..",
+    "..###.##########.###..",
+    "..###.##########.###..",
+    "..###.##########.###..",
+    "...#..##########..#...",
+    "......##########......",
+    "......####..####......",
+    "......####..####......",
+    "......####..####......",
+    ".....#####..#####....."]}
 ];
+PET[4] = PET[3];   // the legendary form keeps the knight's frame and adds its class's look
+/* small outlined sprite for the pet's extras: '#' cream, 'b' black, 'p' pink; a dark ring around it */
+function petSpr(rows, ox, oy, mirror){
+  const w = rows[0].length, at = (c, r) => { if (r < 0 || r >= rows.length || c < 0 || c >= w) return '.'; return rows[r][mirror ? w - 1 - c : c]; };
+  for (let r = -1; r <= rows.length; r++) for (let c = -1; c <= w; c++){ if (at(c, r) !== '.') continue; let n = false; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (at(c + dx, r + dy) !== '.') n = true; if (n) B_(ox + c, oy + r); }
+  for (let r = 0; r < rows.length; r++) for (let c = 0; c < w; c++){ const ch = at(c, r); if (ch === '#') W_(ox + c, oy + r); else if (ch === 'b') B_(ox + c, oy + r); else if (ch === 'p') px(ox + c, oy + r, 1, 1, '#eeb7d8'); }
+}
+const PET_WING = [
+  "#...........",
+  "##..........",
+  "###.........",
+  "####........",
+  "#####.......",
+  ".######.....",
+  ".#######b...",
+  "..#####b###.",
+  "..####b#####",
+  "...##b######",
+  "...#b#b#####",
+  "....#b#b####",
+  ".....#.#b###",
+  "........#.##"];
+const PET_CAPE = [
+  "..##############..",
+  ".################.",
+  ".################.",
+  "##################",
+  "##################",
+  "##################",
+  "##################",
+  "##################",
+  "#b######b######b##",
+  "#b######b######b##",
+  "##b####b##b####b#."];
+const PET_ROBE = [
+  "....##########....",
+  "...############...",
+  "...####b##b####...",
+  "..#####b##b#####..",
+  "..####b####b####..",
+  ".#####b####b#####.",
+  ".####b######b####.",
+  "#####b######b#####",
+  "####b########b####",
+  "##################"];
+const PET_HOOD = [
+  "......######......",
+  "....##########....",
+  "...############...",
+  "..####bbbbbb####..",
+  "..###bbbbbbbb###..",
+  ".###bbbbbbbbbb###.",
+  ".###bbbbbbbbbb###.",
+  ".###bbbbbbbbbb###.",
+  ".####bbbbbbbb####.",
+  "..######bb######.."];
+const PET_WIZHAT = [
+  ".......#.....",
+  "......###....",
+  "......####...",
+  ".....#####...",
+  ".....##p###..",
+  "....########.",
+  "...#########.",
+  "#############"];
+const PET_TITLE = (st, cls) => st < 3 ? ['Hatchling','Juvenile','Adult'][st] : st === 3 ? 'Knight' : cls === 'mage' ? 'Archmage' : cls === 'rogue' ? 'Phantom' : 'Seraph Knight';
 function drawPet(o){
   const cx = o.cx != null ? o.cx : 32, ground = o.ground != null ? o.ground : GROUND;
   const sp = PET[o.stage] || PET[0], h = sp.rows.length, w = sp.rows[0].length;
@@ -2815,22 +2905,25 @@ function drawPet(o){
   const on = (c,r) => r >= 0 && r < h && c >= 0 && c < w && sp.rows[r][c] === '#';
   const fl = x0 + sp.faceL, fw = sp.faceW;
   const L = o.stage ? fl + Math.round(fw*0.24) : fl + 2, R = o.stage ? fl + fw - Math.round(fw*0.24) - 2 : fl + fw - 4;
-  const ey = y0 + sp.eye, tall = o.stage === 2 ? 1 : 0, ew = o.stage > 0 ? 2 : 1;
+  const ey = y0 + sp.eye, tall = o.stage >= 2 ? 1 : 0, ew = o.stage > 0 ? 2 : 1;
   const inFace = (X,Y) => Y >= ey - 1 && Y <= ey + 4 && X >= L - 1 && X <= R + 2;
   if (o.shadow !== false) W_(x0 + sp.faceL + 3, ground + 1, fw - 6, 1);
+  const KN = o.stage >= 3, LEG = o.stage >= 4, cls = o.cls || 'knight', tick = o.motion ? o.f : 0;
+  if (LEG && cls === 'knight'){ const fl2 = (tick >> 3) % 2; petSpr(PET_WING, x0 - 9, y0 + 1 - fl2); petSpr(PET_WING, x0 + 19, y0 + 1 - fl2, true); }   // seraph wings
+  if (LEG && cls === 'rogue'){ for (let i = 0; i < 9; i++){ const sx = x0 + 15 + i, sy = y0 + 10 + Math.round(Math.sin(i / 2 + tick * 0.3) * 1.5); W_(sx, sy, 1, 2); B_(sx, sy - 1); B_(sx, sy + 2); } }   // trailing scarf
   for (let r=0;r<h;r++) for (let c=0;c<w;c++){ if (!on(c,r)) continue; for (let dy=-1;dy<=1;dy++) for (let dx=-1;dx<=1;dx++) if (!on(c+dx,r+dy)) B_(x0+c+dx, y0+r+dy); }
   for (let r=0;r<h;r++) for (let c=0;c<w;c++){
     if (!on(c,r)) continue;
     const edge = !on(c+1,r) || !on(c-1,r) || !on(c,r+1) || !on(c,r-1);
     const X = x0+c, Y = y0+r;
     let white = true;
-    if (!edge && !inFace(X,Y)){
+    if (!edge && !inFace(X,Y) && !(KN && r > (sp.headH || 99))){
       if (pat === 'sea') white = !((X+Y)%2 === 0 && X%2 === 0 && Y%2 === 0);
       else if (pat === 'ember') white = r % 2 === 0;
       else if (pat === 'gilded') white = !((((X + Y + (o.motion ? o.f : 0)) % 5) < 2) && lit(X,Y,0.75));
     }
-    if (pat === 'ghost' && !edge) white = false;
-    if (pat === 'cosmic' && !edge){ const tw = o.motion ? Math.floor(o.f / 3) : 0; white = ((X*7 + Y*13 + tw) % 11 === 0) || ((X*3 + Y*5) % 17 === 0 && !inFace(X,Y)); if (inFace(X,Y)) white = false; }
+    if (pat === 'ghost' && !edge && !(KN && r > sp.headH)) white = false;
+    if (pat === 'cosmic' && !edge && !(KN && r > sp.headH)){ const tw = o.motion ? Math.floor(o.f / 3) : 0; white = ((X*7 + Y*13 + tw) % 11 === 0) || ((X*3 + Y*5) % 17 === 0 && !inFace(X,Y)); if (inFace(X,Y)) white = false; }
     px(X, Y, 1, 1, white ? PW : PB);
   }
   // face
@@ -2852,12 +2945,32 @@ function drawPet(o){
   else if (sad){ px(mx,my+1,1,1,ink); px(mx+1,my,1,1,ink); px(mx+2,my+1,1,1,ink); }
   else if (o.mood === 'hungry'){ if (o.stage) px(mx,my,3,2,ink); else { px(mx+1,my,1,1,ink); px(mx,my+1,3,1,ink); } }
   else { px(mx+1,my,1,1,ink); }
-  drawGear(o.gear || {}, x0, y0, w, h, ground - jump, o.f, o.motion, sp, on);
-  drawHat(o.hat, fl + Math.floor(fw/2), y0 + sp.top, Math.min(9, Math.floor(fw/2) - 1), Math.ceil(h/2), o.f, o.motion);
+  if ((o.mood === 'happy' || o.mood === 'ok') && pat !== 'ghost' && pat !== 'cosmic' && !(LEG && cls === 'rogue')){ px(L - 1, ey + 3 + tall, 2, 1, '#eeb7d8'); px(R + 1, ey + 3 + tall, 2, 1, '#eeb7d8'); }   // pink cheeks
+  if (KN){
+    const X = c => x0 + c, Y = r => y0 + r, arm = ({magmaplate:'plate', titanplate:'plate', oathplate:'plate', reefplate:'scales', mountainmail:'scales', ghostsilk:'dots', cosmosrobe:'dots', mirage:'stripes'})[(o.gear || {}).armor] || (o.gear || {}).armor;
+    B_(X(6), Y(9), 10, 1); B_(X(2), Y(12), 3, 1); B_(X(17), Y(12), 3, 1); B_(X(2), Y(15), 3, 1); B_(X(17), Y(15), 3, 1);   // gorget, pauldron and gauntlet rims
+    B_(X(10), Y(12), 2, 5); B_(X(6), Y(17), 10, 1); W_(X(10), Y(17), 2, 1);                                         // chest seam, belt and buckle
+    for (let c = 7; c < 15; c++){ if (c === 10 || c === 11) continue;                                                 // the plate's own look
+      if (arm === 'scales'){ if ((c + 0) % 2 === 0) { B_(X(c), Y(13)); B_(X(c + 1), Y(15)); } }
+      else if (arm === 'dots'){ if ((c * 3) % 5 === 0) { B_(X(c), Y(13)); B_(X(c), Y(15)); } }
+      else if (arm === 'stripes'){ if (c % 3 === 0) B_(X(c), Y(13), 1, 3); }
+      else { B_(X(c), Y(14)); } }
+    B_(X(6), Y(19), 4, 1); B_(X(12), Y(19), 4, 1); B_(X(5), Y(20), 5, 1); B_(X(12), Y(20), 5, 1);                   // knee guards, boot tops
+    if (LEG && cls === 'mage') petSpr(PET_ROBE, x0 + 2, y0 + 12);                                                     // archmage robe over the legs
+    if (LEG && cls === 'mage') for (let i = 0; i < 3; i++){ const a = tick * 0.12 + i * 2.1, ox = Math.round(x0 + 11 + Math.cos(a) * 14), oy = Math.round(y0 + 9 + Math.sin(a) * 4); B_(ox - 1, oy - 1, 4, 4); (i === 1 ? (x2, y2) => px(x2, y2, 2, 2, '#eeb7d8') : (x2, y2) => W_(x2, y2, 2, 2))(ox, oy); }   // orbiting orbs
+    if (LEG && cls === 'rogue'){ petSpr(PET_HOOD, x0 + 2, y0 - 1); const gl = (tick >> 4) % 9 ? '#eeb7d8' : PW; px(x0 + 7, y0 + 5, 2, 1, gl); px(x0 + 13, y0 + 5, 2, 1, gl);   // hood, glowing eyes
+      for (let i = 0; i < 14; i++){ const sx = x0 + 3 + i + ((tick >> 2) + i) % 3, sy = ground - ((i * 7 + (tick >> 1)) % 4); if ((i + (tick >> 2)) % 2) W_(sx, sy); } }   // smoke at its feet
+    if (LEG && cls === 'knight'){ const hb = (tick >> 4) % 2; for (let i = -5; i <= 5; i++){ const yy = y0 - 4 - hb + (Math.abs(i) > 3 ? 1 : 0); px(x0 + 11 + i, yy, 1, 1, '#eeb7d8'); B_(x0 + 11 + i, yy - 1); } px(x0 + 6, y0 - 3 - hb, 1, 1, '#eeb7d8'); px(x0 + 16, y0 - 3 - hb, 1, 1, '#eeb7d8');   // pink halo
+      if (o.motion && (tick % 24) < 3) { W_(x0 - 4, y0 + 4); W_(x0 + 26, y0 + 8); W_(x0 + 11, y0 - 7); } }
+  }
+  drawGear(o.gear || {}, x0, y0, w, h, ground - jump, o.f, o.motion, sp, on, KN);
+  if (LEG && cls === 'mage' && !o.hat) petSpr(PET_WIZHAT, x0 + 5, y0 - 6);
+  else if (!(LEG && cls === 'rogue')) drawHat(o.hat, fl + Math.floor(fw/2), y0 + sp.top, Math.min(9, Math.floor(fw/2) - 1), sp.headH ? 5 : Math.ceil(h/2), o.f, o.motion);
   if (o.mood === 'sleep'){ const zx = fl + fw + 2, zy = y0 + sp.top - 3 - (o.motion ? (Math.floor(o.f/6)%2) : 0); W_(zx,zy,3,1); W_(zx+1,zy+1); W_(zx,zy+2,3,1); }
 }
-function drawGear(g, x0, y0, w, h, ground, f, motion, sp, on){
+function drawGear(g, x0, y0, w, h, ground, f, motion, sp, on, knight){
   sp = sp || PET[0]; on = on || (() => false);
+  if (knight) g = {...g, armor: g.armor === 'guards' ? 'guards' : null};
   const bodyMax = sp.faceL + sp.faceW;
   const belly = (fn) => { for (let r = sp.eye + 4; r < h - 1; r++) for (let c = 0; c < bodyMax; c++){ if (!on(c,r)) continue; const edge = !on(c+1,r) || !on(c-1,r) || !on(c,r+1) || !on(c,r-1); if (!edge) fn(x0+c, y0+r, r, c); } };
   // tiered gear reuses a handful of looks on the pet
@@ -4167,7 +4280,7 @@ function renderToday(){
   <section class="game" aria-label="Your pet">
     <canvas id="scene" width="${SW}" height="${SH}" role="img" aria-label="${esc(S.petName)}, your pixel pet"></canvas>
     <div class="dlg"><div class="dlg-in">
-      <div class="dlg-h"><span>${esc(S.petName)}</span><span>Lv ${lv.level} · ${st === 0 ? 'Hatchling' : st === 1 ? 'Juvenile' : 'Adult'}</span></div>
+      <div class="dlg-h"><span>${esc(S.petName)}</span><span>Lv ${lv.level} · ${PET_TITLE(st, petCls())}</span></div>
       <p>${esc(D.statusText)}</p>
     </div></div>
   </section>
@@ -4668,6 +4781,8 @@ function runRow(){
   const rune = D.activeRunes.some(r => r.id === 'rune_agi'), pot = D.bag.pot_agi || 0;
   return `<div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn sm" data-runaway>Run away · ${rune ? '10' : '5'}%</button>${pot ? `<button class="btn sm gold" data-runaway="pot">Drink Agility Potion & run · 80%</button>` : ''}</div>${rune ? '' : `<p class="how small">Get away without Agility and it grabs ${Math.round(RUN_STEAL * 100)}% of your gold.</p>`}`;
 }
+// the pet's class look in its legendary form follows your build
+const petCls = () => { const L = buildLean(); return L && L.style === 'cast' ? 'mage' : L && L.style === 'rogue' ? 'rogue' : 'knight'; };
 const miniPrizeTxt = mm => mm.prize === 'keys' ? '3 Keystones' : '3 Focus chests';
 // the last mini-boss: beaten (today or yesterday) or ran off when the boss arrived
 function miniNote(){
@@ -4906,7 +5021,7 @@ function drawNight(cv){
     W_(x,y); if (i % 9 === 0){ W_(x-1,y); W_(x+1,y); W_(x,y-1); W_(x,y+1); } }
   disc(N-15, 13, 4, PW); disc(N-13, 12, 4, PB);
   const bob = mv ? Math.round(Math.sin(frame / 14)) : 0;
-  drawPet({stage: stage(D.lv.level), color: S.equip.color, hat: S.equip.hat, gear: S.gear, mood: 'sleep', f: frame, motion: mv, cx: Math.floor(c), ground: Math.floor(c) + 12 + bob, shadow: false});
+  drawPet({stage: stage(D.lv.level), cls: petCls(), color: S.equip.color, hat: S.equip.hat, gear: S.gear, mood: 'sleep', f: frame, motion: mv, cx: Math.floor(c), ground: Math.floor(c) + 12 + bob, shadow: false});
 }
 function drawSpace(cv){
   ctx = cv.getContext('2d'); ctx.imageSmoothingEnabled = false;
@@ -4927,7 +5042,7 @@ function drawSpace(cv){
   const bob = mv ? Math.round(Math.sin(frame / per) * amp) : 0;
   const mood = ps === 'long' ? 'sleep' : ps === 'focus' || ps === 'short' ? 'happy' : 'ok';
   const gy = Math.floor(c) + 9 + bob;
-  drawPet({stage: stage(D.lv.level), color: S.equip.color, hat: S.equip.hat, gear: S.gear, mood, f: frame, motion: mv && ps !== 'paused', cx: Math.floor(c), ground: gy, shadow: false});
+  drawPet({stage: stage(D.lv.level), cls: petCls(), color: S.equip.color, hat: S.equip.hat, gear: S.gear, mood, f: frame, motion: mv && ps !== 'paused', cx: Math.floor(c), ground: gy, shadow: false});
   if (ps === 'focus'){ // a little spark orbiting its head: thinking hard
     const a = mv ? frame / 4 : 0.8; const x = Math.round(c + Math.cos(a) * 12), y = Math.round(c - 8 + Math.sin(a) * 3);
     W_(x,y); if (Math.sin(a) > 0){ W_(x-1,y); W_(x+1,y); W_(x,y-1); W_(x,y+1); } }
@@ -5172,7 +5287,7 @@ function renderInner(){
   showAward();
 }
 function drawIcons(root){
-  const st = Math.max(1, stage(D.lv.level));
+  const st = Math.min(2, Math.max(1, stage(D.lv.level)));
   drawChestIcons(root); drawAltarIcons(root);
   root.querySelectorAll('canvas[data-icon]').forEach(cv => {
     const [kind, id] = cv.dataset.icon.split(':');
@@ -5185,7 +5300,7 @@ function drawIcons(root){
 function draw(){
   const now = Date.now();
   const sc = document.getElementById('scene');
-  if (sc) drawScene(sc, {siren: !!sirenPending(), riff: riffHere() && !D.inn, smog: D.inn || !D.smog.pts ? 0 : D.smog.pts >= 9 ? 3 : D.smog.pts >= 4 ? 2 : 1, slump: D.slump && D.slump.on, bg: D.inn ? 'inn' : S.equip.bg, color:S.equip.color, hat:S.equip.hat, gear:S.gear, stage:stage(D.lv.level), mood: now < jumpUntil ? 'happy' : D.mood, f:frame, motion:motionOK, jump: now < jumpUntil && (Math.floor(now/120)%2===0)});
+  if (sc) drawScene(sc, {siren: !!sirenPending(), riff: riffHere() && !D.inn, smog: D.inn || !D.smog.pts ? 0 : D.smog.pts >= 9 ? 3 : D.smog.pts >= 4 ? 2 : 1, slump: D.slump && D.slump.on, bg: D.inn ? 'inn' : S.equip.bg, color:S.equip.color, hat:S.equip.hat, gear:S.gear, stage:stage(D.lv.level), cls: petCls(), mood: now < jumpUntil ? 'happy' : D.mood, f:frame, motion:motionOK, jump: now < jumpUntil && (Math.floor(now/120)%2===0)});
   const hurt = now < hurtUntil && Math.floor(now/90)%2 === 0;
   const foe = D.mini ? D.mini.m : D.cur.boss, down = !D.mini && D.cur.status === 'won';
   const m = document.getElementById('bossMiniCv'); if (m) drawBoss(m, foe, frame, motionOK, hurt, down);
