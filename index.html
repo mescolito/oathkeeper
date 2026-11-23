@@ -897,7 +897,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '21800d8be6';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'ac00c0bc89';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -5391,6 +5391,12 @@ function onClick(e){
   if (el.dataset.todaytab){ todayTab = ['week', 'timer'].includes(el.dataset.todaytab) ? el.dataset.todaytab : 'day'; try { localStorage.setItem(TODAY_TAB_KEY, todayTab); } catch(e){} render(); return; }
   if ('newtask' in el.dataset){ openEditor(null); const [nc, nt] = (el.dataset.newtask || '').split('|'); if (nc === 'week') draft.cad = 'week'; if (TOD_KEYS.includes(nt)) draft.tod = nt; if (nc === 'week' || nt) renderEditor(); return; }
   if (el.dataset.invtab){ invTab = el.dataset.invtab; if (sheetMode === 'inv' && !document.getElementById('sheet').hidden){ renderSheet(); return; } }
+  // the big + adds whatever you're looking at: a daily, a habit, a timer, or an item in the open to-do list
+  if (el.dataset.plus === 'task'){
+    if (tab === 'today' && todayTab === 'timer'){ openTimerEditor(null); return; }
+    if (tab === 'today' && todayTab === 'week'){ openQuickAdd('task|week'); return; }
+    if (tab === 'todo'){ const L = curTodoList(); if (L){ openQuickAdd(`todo|${L.id}|none`); return; } }
+    openQuickAdd('task|day|any'); return; }
   if (el.dataset.plus){ if ('gopts' in el.dataset) statsSec = 'skills'; if (el.dataset.plus === 'stats' || el.dataset.plus === 'inv'){ if (!PAGE_TABS.includes(tab)) prevTab = tab; tab = el.dataset.plus === 'inv' ? 'inv' : ('gopts' in el.dataset ? 'skills' : 'stats'); render(); window.scrollTo(0, 0); return; } openPlus(el.dataset.plus); return; }
   if (el.dataset.sheetmode){ if (sheetMode === 'task') readEditorFields(); sheetMode = el.dataset.sheetmode; statEdit = null; statDraft = null; if (sheetMode === 'task' && !draft) { openEditor(null, false, true); return; } renderSheet(); return; }
   if (el.dataset.statedit){ statEdit = el.dataset.statedit; const s = STATS[statEdit]; statDraft = {name:s.name, blurb:s.blurb, c:s.c, icon:s.icon}; renderSheet(); return; }
