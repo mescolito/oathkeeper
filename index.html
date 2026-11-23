@@ -930,7 +930,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'e3596c7d72';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '41152ec81a';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -2689,7 +2689,7 @@ function drawOutdoor(bg, f, motion, night){
   const P = night ? PB : PW, I = night ? PW : PB, G = 38, t = motion ? f : 0;
   const ink = (x, y, w = 1, h = 1) => px(x, y, w, h, I), paper = (x, y, w = 1, h = 1) => px(x, y, w, h, P);
   const dith = (x0, y0, w, h, fa, col = I) => { ctx.fillStyle = col; for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++){ const a = fa(x, y); if (a > 0 && lit(x, y, a)) ctx.fillRect(x, y, 1, 1); } };
-  const ridge = (base, amp, per, ph, dens, col = I) => { for (let x = 0; x < SW; x++){ const top = Math.round(base - amp * (0.6 * Math.sin(x / per + ph) + 0.4 * Math.sin(x / (per * 0.43) + ph * 2))); const fade = Math.min(1, Math.max(0, (Math.abs(x - 32) - 10) / 10)); if (fade > 0.2) px(x, top, 1, 1, col); dith(x, top + 1, 1, G - top - 1, () => dens * fade, col); } };
+  const ridge = (base, amp, per, ph, dens, col = I) => { for (let x = 0; x < SW; x++){ const top = Math.round(base - amp * (0.6 * Math.sin(x / per + ph) + 0.4 * Math.sin(x / (per * 0.43) + ph * 2))); const fade = Math.min(1, Math.max(0, (Math.abs(x - 32) - 10) / 10)); if (fade > 0.2) px(x, top, 1, 1, col); } };
   paper(0, 0, SW, SH);
   // sky
   if (night){
@@ -2706,9 +2706,8 @@ function drawOutdoor(bg, f, motion, night){
   if (!night && bg !== 'snowfield') for (let i = 0; i < 2; i++){ const bx = ((t >> 1) + i * 37) % 90 - 12, by = 10 + i * 5 + Math.round(Math.sin((t + i * 9) * 0.2)); if (bx > -3 && bx < SW){ ink(bx, by); ink(bx + 1, by + 1); ink(bx + 2, by); if ((t >> 2) % 2) { ink(bx - 1, by - 1); ink(bx + 3, by - 1); } } }
   // far hills, two layers of haze
   if (bg === 'snowfield'){
-    for (const [cx, w, h] of [[10, 18, 16], [32, 22, 12], [54, 18, 18]]) for (let y = 0; y < h; y++){ const hw = Math.round(w * y / h / 2); for (let x = cx - hw; x <= cx + hw; x++){ const edge = x === cx - hw || x === cx + hw; if (y < h * 0.35 ? edge : true) px(x, G - h + y, 1, 1, y < h * 0.35 ? I : (lit(x, y, 0.35) ? I : P)); } }
+    for (const [cx, w, h] of [[10, 18, 16], [32, 22, 12], [54, 18, 18]]) for (let y = 0; y < h; y++){ const hw = Math.round(w * y / h / 2); for (let x = cx - hw; x <= cx + hw; x++){ const edge = x === cx - hw || x === cx + hw, snowLine = y === Math.round(h * 0.4) + ((x & 1) ? 1 : 0); if (edge || snowLine) px(x, G - h + y, 1, 1, I); } }
   } else {
-    ridge(27, 3, 7, 0.5, 0.18); ridge(31, 2, 5, 2.1, 0.38);
   }
   // ground
   if (bg === 'snowfield'){ paper(0, G, SW, SH - G); ink(0, G, SW, 1); for (let x = 0; x < SW; x += 4) ink(x + ((x >> 2) & 1), G + 3); }
@@ -2718,9 +2717,9 @@ function drawOutdoor(bg, f, motion, night){
     ink(x, 14, 3, G - 14); for (let y = 16; y < G; y += 3) paper(x + 1, y, 1, 1); ink(x - 2, G - 2, 7, 2);
     for (const [cx, cy, r] of [[x + 1 + dir * 2, 9, 7], [x + 1 - dir * 3, 13, 5], [x + 1 + dir * 4, 15, 5]]) for (let y = -r; y <= r; y++) for (let xx = -r; xx <= r; xx++) if (xx * xx + y * y <= r * r){ const X = cx + xx, Y = cy + y; px(X, Y, 1, 1, ((X * 5 + Y * 3) % 13 === 0 || (xx * xx + y * y > (r - 1) * (r - 1) && (X + Y) % 3 === 0)) ? P : I); }
   };
-  const pine = (x, h, snow) => { ink(x, G - 4, 2, 4); for (let k = 0; k < 4; k++){ const top = G - h + k * (h / 5), w2 = 3 + k * 2; for (let y = 0; y < h / 4; y++){ const hw = Math.round(w2 * (y + 1) / (h / 4)); ink(x + 1 - hw, top + y, hw * 2, 1); if (snow && y === 0) paper(x + 1 - hw + 1, top + y, Math.max(1, hw * 2 - 2), 1); } if (snow) paper(x + 1 - w2, top + h / 4 - 1, 2, 1); } };
+  const pine = (x, h, snow) => { ink(x, G - 4, 2, 4); for (let k = 0; k < 4; k++){ const top = G - h + k * (h / 5), w2 = 3 + k * 2; for (let y = 0; y < h / 4; y++){ const hw = Math.round(w2 * (y + 1) / (h / 4)); ink(x + 1 - hw, top + y, hw * 2, 1); if (snow && y === 0) paper(x + 1 - hw + 1, top + y, Math.max(1, hw * 2 - 2), 1); } } };
   if (bg === 'dawn' || !bg){
-    for (let x = 0; x < 15; x++){ if (x % 5 === 0) ink(x, G - 7, 2, 7); } ink(0, G - 6, 15, 1); ink(0, G - 3, 15, 1);   // a fence
+    for (const x of [0, 5, 10, 15]){ ink(x, G - 7, 3, 7); ink(x + 1, G - 8); paper(x + 1, G - 6, 1, 5); } ink(0, G - 5, 18, 1); ink(0, G - 2, 18, 1);   // a picket fence
     const mx = 56, my = 22; ink(mx - 1, my, 3, G - my); ink(mx - 2, G - 3, 5, 3);                                   // a windmill
     for (let k = 0; k < 4; k++){ const a = t * 0.08 + k * Math.PI / 2; wline(mx, my, Math.round(mx + Math.cos(a) * 6), Math.round(my + Math.sin(a) * 6), I); }
     for (const [x, h] of [[18, 3], [46, 4], [50, 3], [62, 5]]) tuft(x, G, h, I);
@@ -2741,20 +2740,25 @@ function drawOutdoor(bg, f, motion, night){
     if (night) for (let i = 0; i < 6; i++){ const fx = (i * 19 + Math.round(Math.sin((t + i * 11) * 0.05) * 4)) % SW, fy = 22 + (i * 7) % 14; if ((fx < 16 || fx > 48) && (t + i * 5) % 20 < 12) px(fx, fy, 1, 1, '#eeb7d8'); }   // fireflies
   }
   else if (bg === 'harvest'){
-    const pumpkin = (x, r) => { for (let y = -r; y <= r - 1; y++) for (let xx = -r - 1; xx <= r + 1; xx++) if ((xx * xx) / ((r + 1) * (r + 1)) + (y * y) / (r * r) <= 1) ink(x + xx, G - r + y); for (const dx of [-Math.ceil(r / 2), Math.ceil(r / 2)]) paper(x + dx, G - r - 1, 1, r); ink(x, G - 2 * r - 2, 1, 2); ink(x + 1, G - 2 * r - 2, 2, 1); };
-    for (const [x, r] of [[6, 4], [15, 3], [51, 3], [59, 4]]) pumpkin(x, r);
-    ink(61, 18, 1, 20); ink(57, 21, 9, 1); ink(59, 15, 5, 5); paper(60, 16, 1, 1); paper(62, 16, 1, 1); ink(58, 14, 7, 1); ink(60, 12, 3, 2); ink(59, 22, 5, 7);   // a scarecrow
-    for (let k = 0; k < 3; k++){ const cx = 2 + k * 3; ink(cx, 18 + k, 1, G - 18 - k); ink(cx + 1, 21 + k, 2, 1); ink(cx - 2, 25 + k, 2, 1); }   // corn stalks
+    const pumpkin = (x, w, h) => { const cy = G - h / 2, inE = (X, Y) => ((X - x) / (w / 2)) ** 2 + ((Y - cy) / (h / 2)) ** 2 <= 1;
+      for (let Y = G - h; Y < G; Y++) for (let X = x - w; X <= x + w; X++) if (inE(X + 0.5, Y + 0.5)) px(X, Y, 1, 1, !inE(X - 0.5, Y + 0.5) || !inE(X + 1.5, Y + 0.5) || !inE(X + 0.5, Y - 0.5) || !inE(X + 0.5, Y + 1.5) ? I : P);
+      for (const k of [-1, 1]) for (let Y = G - h + 1; Y < G - 1; Y++) ink(x + k * Math.round(w / 4 * Math.sqrt(Math.max(0, 1 - ((Y + 0.5 - cy) / (h / 2)) ** 2))), Y);
+      ink(x, G - h - 2, 1, 2); ink(x + 1, G - h - 2, 2, 1); };   // pumpkins
+    ink(58, 18, 1, G - 18); ink(53, 21, 11, 1); ink(52, 22); ink(64, 22); ink(53, 23); ink(63, 23);   // a scarecrow: post, arms with straw
+    ink(56, 14, 5, 5); paper(57, 15, 3, 3); ink(57, 16); ink(59, 16); ink(55, 13, 7, 1); ink(57, 10, 3, 3);     // sack head and hat
+    ink(56, 22, 5, 6); paper(57, 24, 1, 1); paper(59, 23, 1, 2);                                                  // patched shirt
+    for (const [x, w, h] of [[7, 11, 7], [17, 8, 5], [48, 8, 6], [57, 10, 7]]) pumpkin(x, w, h);
     for (let i = 0; i < 2; i++){ const cx = ((t >> 1) + i * 41) % 80 - 8, cy = 8 + i * 6; if (cx > -3 && cx < SW){ ink(cx, cy, 3, 1); ink(cx + 1, cy - 1); if ((t >> 2) % 2) { ink(cx - 1, cy - 1); ink(cx + 3, cy - 1); } } }   // crows
   }
   else if (bg === 'snowfield'){
-    for (const x of [3, 59]) pine(x, 20, true);
-    paper(9, G - 9, 7, 9); disc(12, G - 5, 3, P); disc(12, G - 11, 2, P);                                               // a snowman
-    for (const [dx, dy] of [[-3, -5], [3, -5], [-2, -2], [2, -2], [-2, -8], [2, -8]]) {} ink(9, G - 8); ink(15, G - 8); ink(9, G - 3); ink(15, G - 3); ink(10, G - 13); ink(14, G - 13);
-    ink(11, G - 12); ink(13, G - 12); ink(12, G - 10); ink(10, G - 9, 5, 1); px(14, G - 9, 3, 1, '#eeb7d8'); ink(12, G - 6); ink(12, G - 4);
-    ink(6, G - 8, 3, 1); ink(5, G - 9); ink(16, G - 8, 3, 1); ink(19, G - 9);
-    for (let i = 0; i < 34; i++){ const hx = hash('snow' + i), x = (hx % SW + (t >> 2)) % SW, y = ((hx >>> 8) % G + (t >> 1)) % G; ink(x, y); if (i % 4 === 0){ ink(x - 1, y); ink(x + 1, y); } }
-    for (let x = 22; x < 42; x += 5) { ink(x, G + 2, 2, 1); ink(x + 2, G + 4, 2, 1); }                                // footprints
+    for (const x of [2, 60]) pine(x, 20, true);
+    ctx.save(); ctx.translate(7, 0);
+    disc(12, G - 4, 4, I); disc(12, G - 4, 3, P); disc(12, G - 10, 3, I); disc(12, G - 10, 2, P);                                               // a snowman
+    ink(11, G - 11); ink(13, G - 11); px(13, G - 10, 2, 1, '#eeb7d8'); ink(9, G - 7, 7, 1); ink(14, G - 6, 1, 2);   // face, carrot, scarf
+    ink(12, G - 5); ink(12, G - 3); wline(8, G - 5, 5, G - 8, I); wline(16, G - 5, 19, G - 8, I); ink(4, G - 9); ink(20, G - 9);   // buttons, stick arms
+    ink(10, G - 14, 5, 1); ink(11, G - 17, 3, 3);   // a little top hat
+    ctx.restore();
+    for (let i = 0; i < 34; i++){ const hx = hash('snow' + i), x = (hx % SW + (t >> 2)) % SW, y = ((hx >>> 8) % G + (t >> 1)) % G; ink(x, y); }
   }
 }
 function drawBg(bg, f, motion, night){
@@ -2800,7 +2804,7 @@ function drawIndoor(bg, f, motion, night){
     for (let y = 0; y < 38; y += 6){ for (let x = 0; x < SW; x += 2) W_(x, y); for (let x = ((y / 6) % 2) * 6; x < SW; x += 12) W_(x, y + 2, 1, 2); }
     B_(18, 4, 28, 14); for (let x = 18; x < 46; x++){ W_(x, 4); W_(x, 17); } for (let y = 4; y < 18; y++){ W_(18, y); W_(45, y); }   // a long mirror
     for (const [x, y] of [[22, 7], [24, 9], [38, 6], [41, 8]]) W_(x, y, 1, 3);
-    W_(1, 12, 2, 26); W_(9, 12, 2, 26); for (const y of [16, 24, 32]){ W_(1, y, 10, 1); W_(0, y - 3, 3, 6); W_(9, y - 3, 3, 6); B_(1, y - 1, 1, 2); B_(10, y - 1, 1, 2); }   // plate rack
+    B_(0, 12, 13, 26); W_(1, 13, 1, 25); W_(11, 13, 1, 25); for (const y of [20, 28, 36]){ W_(1, y, 11, 1); W_(3, y - 3, 2, 3); W_(5, y - 2, 2, 1); W_(7, y - 3, 2, 3); }   // a dumbbell rack
     W_(48, 30, 14, 2); W_(50, 32, 2, 6); W_(58, 32, 2, 6); W_(47, 22, 16, 1); for (const x of [46, 61]) { W_(x - 1, 19, 3, 7); B_(x, 21, 1, 3); } W_(52, 23, 1, 7); W_(56, 23, 1, 7);   // bench and loaded bar
     W_(13, 32, 5, 5); B_(14, 33, 3, 3); W_(14, 30, 3, 2); B_(15, 31, 1, 1);                                       // kettlebell
     W_(24, 2, 16, 1); for (let x = 25; x < 39; x += 3) W_(x, 1, 1, 1);
@@ -2816,7 +2820,7 @@ function drawIndoor(bg, f, motion, night){
   for (const x of [5, 9]) for (let y = 0; y < 14; y += 2) W_(x + ((y / 2) % 2), y, 1, 1); W_(4, 14, 3, 2); W_(8, 14, 3, 2);   // chains
   for (const x of [57, 61]) for (let y = 0; y < 10; y += 2) W_(x + ((y / 2) % 2), y, 1, 1);
   B_(0, 38, SW, SH - 38); for (let x = 0; x < SW; x++) W_(x, 38); for (let x = 0; x < SW; x += 6) W_(x + 2, 41, 3, 1);
-  W_(4, 35, 5, 3); B_(5, 36, 1, 1); B_(7, 36, 1, 1); W_(10, 37, 4, 1); W_(55, 36, 6, 1); W_(56, 35, 1, 1); W_(60, 35, 1, 1);   // a skull and bones
+  B_(2, 32, 9, 6); W_(4, 33, 5, 3); W_(5, 36, 3, 1); B_(5, 34, 1, 1); B_(7, 34, 1, 1); B_(6, 36, 1, 1);   // a skull
   const dy = (t >> 1) % 14; W_(40, 2 + dy, 1, 1); if (dy > 12) { W_(39, 37); W_(41, 37); }                     // a drip
 
 }
