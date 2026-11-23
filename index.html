@@ -474,6 +474,8 @@ html[data-mode="dark"] .drawerpanel{background:#1b1a18}
 .dritem:hover,.dritem:active,.dritem.on{background:var(--track)}
 .dritem svg{flex:none;opacity:.85}
 .dritem em{margin-left:auto;font-style:normal;font-size:12px;font-weight:700;color:#171614;background:var(--pink);border-radius:999px;padding:3px 9px}
+.drgroup{display:flex;flex-direction:column;gap:2px}
+.drgroup + .drgroup{border-top:1px solid var(--line);margin-top:10px;padding-top:10px}
 .drfoot{border-top:1px solid var(--line);padding-top:10px;margin-top:10px;display:flex;flex-direction:column;gap:2px}
 @property --g1{syntax:'<color>';inherits:true;initial-value:#3d2f55}
 @property --g2{syntax:'<color>';inherits:true;initial-value:#1b1724}
@@ -850,7 +852,7 @@ html[data-mode="dark"] .edpill:not(.primary){background:var(--track)}
 <nav class="nav" aria-label="Sections"><div class="navin" id="tabs">
   <button data-tab="today" aria-label="Today"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16M8.5 3v4M15.5 3v4"/></svg>Today</button>
   <button data-tab="battle" aria-label="Battle"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 4l-9.5 9.5M6.5 13.5l4 4M4 20l3.5-3.5"/></svg>Battle</button>
-  <button class="fab" data-plus="task" aria-label="Add a task, view stats or open your inventory"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+  <button class="fab" data-plus="task" aria-label="Add a task"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
   <button data-tab="todo" aria-label="To-do lists"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg>To-dos</button>
   <button data-tab="shop" aria-label="Shop"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8a3 3 0 016 0"/></svg>Shop</button>
 </div></nav>
@@ -869,7 +871,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '874df3e8c0';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '4ffbdfd3e3';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -3258,6 +3260,8 @@ const ICON = {
   calendar:'<rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16M8.5 3v4M15.5 3v4"/>',
   timer:'<path d="M10 2h4M12 14l3-3"/><circle cx="12" cy="14" r="8"/>',
   menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
+  bag:'<rect x="4" y="8" width="16" height="12" rx="2"/><path d="M4 13h16M10 13v2h4v-2M8 8V6.5A2.5 2.5 0 0110.5 4h3A2.5 2.5 0 0116 6.5V8"/>',
+  bars:'<path d="M5 20V11M12 20V5M19 20v-7"/>',
   clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
   sunrise:'<path d="M3 18h18M7.5 18a4.5 4.5 0 019 0M12 5v3M4.6 10.6l2 2M19.4 10.6l-2 2M2.5 14.5h2M19.5 14.5h2"/>',
   sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>',
@@ -3301,7 +3305,8 @@ function daysText(days){
   const run = idx.every((v,i) => i===0 || v === idx[i-1]+1);
   return run && s.length > 2 ? `${DOW[s[0]]}–${DOW[s[s.length-1]]}` : s.map(d => DOW[d]).join(', ');
 }
-const TITLES = {today:'Today', battle:'Battle', todo:'To-dos', shop:'Shop', settings:'Settings', focus:'Focus'};
+const TITLES = {today:'Today', battle:'Battle', todo:'To-dos', shop:'Shop', settings:'Settings', focus:'Focus', stats:'Stats', skills:'Skill tree', inv:'Inventory'};
+const PAGE_TABS = ['settings', 'focus', 'stats', 'skills', 'inv'];   // full pages opened from the side menu, with a back button
 function renderHeader(){
   const d = parseKey(D.today).toLocaleDateString('en-US', {weekday:'long', month:'short', day:'numeric'});
   document.body.classList.toggle('focusmode', tab === 'focus'); document.documentElement.classList.toggle('focusmode', tab === 'focus'); document.body.dataset.pomo = pomoState();
@@ -3309,7 +3314,7 @@ function renderHeader(){
     document.getElementById('top').innerHTML = `<button class="fpill" data-back aria-label="Back to ${TITLES[prevTab] || 'Today'}">${svg('back',20,2.4)} Back</button><span class="row" style="gap:8px">${musicBtn()}<span class="fpill" aria-label="${D.balance} gold"><i class="gdot"></i>${D.balance} G</span></span>`;
     return;
   }
-  if (tab === 'settings'){
+  if (tab === 'settings' || tab === 'stats' || tab === 'skills' || tab === 'inv'){
     document.getElementById('top').innerHTML = `<div class="row" style="gap:10px;align-items:center"><button class="iconbtn sm" data-back aria-label="Back to ${TITLES[prevTab] || 'Today'}">${svg('back',22,2.4)}</button><h1>${TITLES[tab]}</h1></div>
       <button class="btn ghost" data-back>Done</button>`;
     return;
@@ -3320,7 +3325,14 @@ function renderHeader(){
 }
 /* ---------- side menu: slides in from the right. Add a feature by adding a line to DRAWER_ITEMS ---------- */
 const DRAWER_ITEMS = [
-  {tab: 'focus', label: 'Focus Mode', icon: 'timer', status: () => S.pomo.run && !S.pomo.run.idle ? (S.pomo.run.pauseAt ? 'Paused' : 'Running') : ''},
+  [   // features
+    {tab: 'focus', label: 'Focus Mode', icon: 'timer', status: () => S.pomo.run && !S.pomo.run.idle ? (S.pomo.run.pauseAt ? 'Paused' : 'Running') : ''},
+  ],
+  [   // your character
+    {tab: 'inv', label: 'Inventory', icon: 'bag'},
+    {tab: 'stats', label: 'Stats', icon: 'bars'},
+    {tab: 'skills', label: 'Skill tree', icon: 'bolt', status: () => D.points ? `${D.points} point${D.points === 1 ? '' : 's'}` : ''},
+  ],
 ];
 const DRAWER_FOOT = [
   {tab: 'settings', label: 'Settings', icon: 'gear'},
@@ -3328,7 +3340,7 @@ const DRAWER_FOOT = [
 function renderDrawer(){
   const row = it => { const st = it.status ? it.status() : ''; return `<button class="dritem ${tab === it.tab ? 'on' : ''}" data-tab="${it.tab}">${svg(it.icon, 20, 2)}<span>${it.label}</span>${st ? `<em>${st}</em>` : ''}</button>`; };
   document.getElementById('drawerpanel').innerHTML = `<div class="drhead"><h2>Menu</h2><button class="iconbtn sm" data-drawerclose aria-label="Close menu">${svg('x',20,2.4)}</button></div>
-    <nav class="drlist">${DRAWER_ITEMS.map(row).join('')}</nav>
+    <nav class="drlist">${DRAWER_ITEMS.map(g => `<div class="drgroup">${g.map(row).join('')}</div>`).join('')}</nav>
     <div class="drfoot">${DRAWER_FOOT.map(row).join('')}</div>`;
 }
 let drawerWant = false;
@@ -3472,6 +3484,13 @@ function timerRow(tm){
     ${ask ? `<div class="tmask"><span>Goal reached! Keep it going?</span><span class="row" style="gap:6px;flex-wrap:wrap"><button class="btn sm" data-tmfinish="${esc(tm.id)}">Finish</button><button class="btn sm" data-tmkeep="${esc(tm.id)}">Keep counting</button><button class="btn sm primary" data-tmnewgoal="${esc(tm.id)}">New goal</button></span></div>` : ''}
   </div>`;
 }
+// a skill point waiting: a card that takes you straight to the skill tree
+function skillNote(){
+  if (!D.points) return '';
+  const canGrow = SKILLS.some(sk => { const l = D.skills[sk.id].l; return l ? (S.skillEq || []).includes(sk.id) && l < SKILL_MAX && sk.cost(l + 1) <= D.C.maxMP : D.lv.level >= sk.unlock && skillStatOk(sk, D.statLv) && sk.cost(1) <= D.C.maxMP; });
+  if (!canGrow) return '';
+  return `<div class="mystery skillnote">${svg('bolt',18,2)} <span class="ntext"><b>${D.points} skill point${D.points === 1 ? '' : 's'} to spend.</b> Learn a new skill or level one up.</span><button class="btn sm" data-tab="skills">Open skills</button></div>`;
+}
 function timerAskNote(){
   if (todayTab === 'timer') return '';
   const t = timersLive().find(x => x.done && !x.finished); if (!t) return '';
@@ -3536,6 +3555,7 @@ function renderToday(){
   ${myst && !dismissed('myst') ? notice('myst', `Daily check-in bonus: <b>+${myst.xp ? myst.xp + ' XP' : myst.gold + ' G'}</b>`) : ''}
   ${slumpNote()}
   ${smogNote()}
+  ${skillNote()}
   ${timerAskNote()}
   ${lullNote()}
   ${altarCard()}
@@ -4253,7 +4273,7 @@ function statXp(k){ const x = D.stat[k], L = statLevel(x), lo = 15*(L-1)**2, hi 
 const STAT_POWERS = {MGT:'Attack and crit chance', STA:'Max HP', MOB:'Dodge chance', ARM:'How much boss damage you block', HRT:'Max MP'};
 let statsSec = 'stats';
 const skText = (sk, l) => sk.text(l, D.weakLv, effStats(D.statLv, D.fx));
-function renderStatsPanel(){
+function renderStatsPanel(page){   // page: Stats and Skills are separate pages, so no level card or switch on the skills page
   const lv = D.lv, C = D.C;
   const cards = SK.map(k => {
     const s = STATS[k], xp = statXp(k);
@@ -4299,9 +4319,9 @@ function renderStatsPanel(){
     const col = b === 'core' ? 'var(--track)' : STYLES[b].c;
     const shut = clOpen.has('brshut:' + b), nL = list.filter(sk => S.skills[sk.id]).length;
     return `<section class="branch ${leanHas(lean, b) ? 'lean' : ''} ${shut ? 'shut' : ''}" style="--bc:${col}"><button class="bhead" data-clopen="brshut:${b}" aria-expanded="${!shut}"><span class="bdot"></span><b>${name}</b><span class="small muted">${sub} · ${nL}/${list.length} learned</span>${leanHas(lean, b) ? '<span class="leantag">Your build</span>' : ''}<span class="clchev">${svg(shut ? 'down' : 'up',16,2.4)}</span></button>${shut ? '' : `<div class="bnodes">${list.map(row).join('')}</div>`}</section>`; }).join('');
-  return `<div class="card statsum"><div class="bignum"><b>${lv.level}</b><span>level · ${lv.into}/${lv.need} xp</span></div>${bar(100*lv.into/lv.need, 'var(--ink)')}
-    ${pts && statsSec !== 'skills' ? `<button class="btn gold" data-gopoints>You have ${pts} skill point${pts===1?'':'s'} · spend them</button>` : statsSec !== 'skills' ? `<span class="small muted">You get 1 skill point each level.</span>` : ''}</div>
-  <div class="seg wide" role="tablist" aria-label="Stats or skills"><button role="tab" data-ssec="stats" class="${statsSec==='stats'?'on':''}" aria-selected="${statsSec==='stats'}">Stats</button><button role="tab" data-ssec="skills" class="${statsSec==='skills'?'on':''}" aria-selected="${statsSec==='skills'}">Skill tree${pts ? ` · ${pts}` : ''}</button></div>
+  return `${page === 'skills' ? '' : `<div class="card statsum"><div class="bignum"><b>${lv.level}</b><span>level · ${lv.into}/${lv.need} xp</span></div>${bar(100*lv.into/lv.need, 'var(--ink)')}
+    ${pts && statsSec !== 'skills' ? `<button class="btn gold" data-tab="skills">You have ${pts} skill point${pts===1?'':'s'} · spend them</button>` : statsSec !== 'skills' ? `<span class="small muted">You get 1 skill point each level.</span>` : ''}</div>`}
+  ${page ? '' : `<div class="seg wide" role="tablist" aria-label="Stats or skills"><button role="tab" data-ssec="stats" class="${statsSec==='stats'?'on':''}" aria-selected="${statsSec==='stats'}">Stats</button><button role="tab" data-ssec="skills" class="${statsSec==='skills'?'on':''}" aria-selected="${statsSec==='skills'}">Skill tree${pts ? ` · ${pts}` : ''}</button></div>`}
   ${statsSec === 'skills' ? `
   <div class="sec-h" id="ptsH"><h2>Skill points</h2><span class="count">${pts} to spend</span></div>
   <details class="howto"><summary>How the skill tree works</summary><p class="how">1 point per level.</p></details>
@@ -4409,11 +4429,11 @@ function renderInner(){
   if (D.newInnEnds && D.newInnEnds.length){ D.newInnEnds.forEach(x => { if (!x.st.to) x.st.to = x.to; }); save(true); D = derive(); toast('Out of gold, so you checked out of the Inn. The fight is back on.'); }
   renderHeader();
   const v = document.getElementById('view');
-  v.innerHTML = tab === 'today' ? renderToday() : tab === 'battle' ? renderBattle() : tab === 'todo' ? renderTodo() : tab === 'shop' ? renderShop() : tab === 'focus' ? renderFocus() : renderSettings();
+  if (tab === 'stats' || tab === 'skills'){ sheetMode = 'stats'; statsSec = tab; } else if (tab === 'inv') sheetMode = 'inv'; else if (sheetMode === 'stats' || sheetMode === 'inv') sheetMode = null;
+  v.innerHTML = tab === 'today' ? renderToday() : tab === 'battle' ? renderBattle() : tab === 'todo' ? renderTodo() : tab === 'shop' ? renderShop() : tab === 'focus' ? renderFocus() : tab === 'stats' || tab === 'skills' ? `<div class="pagewrap">${renderStatsPanel(tab)}</div>` : tab === 'inv' ? `<div class="pagewrap">${renderInventory()}</div>` : renderSettings();
   document.querySelectorAll('#tabs button[data-tab]').forEach(b => b.setAttribute('aria-current', b.dataset.tab === tab ? 'page' : 'false'));
-  const fab = document.querySelector('.fab'); if (fab) fab.classList.toggle('badge', D.points > 0);
   drawIcons(v);
-  if (sheetMode === 'stats' || sheetMode === 'inv') renderSheet();
+  if ((sheetMode === 'stats' || sheetMode === 'inv') && !document.getElementById('sheet').hidden) renderSheet();
   draw();
   showAward();
 }
@@ -4724,6 +4744,7 @@ function showSheet(label){
   document.querySelectorAll('.app, .nav').forEach(n => n.inert = true);
 }
 function renderSheet(){
+  if ((sheetMode === 'stats' && (tab === 'stats' || tab === 'skills')) || (sheetMode === 'inv' && tab === 'inv')){ render(); return; }   // Stats and Inventory are pages now
   if (sheetMode === 'stats'){
     const body = document.getElementById('sheetBody'), y = body.scrollTop;
     body.innerHTML = `<div class="row between"><span class="d">Your stats</span><button class="btn ghost" data-close>Close</button></div>${sheetSwitch()}${renderStatsPanel()}`; body.scrollTop = y;
@@ -4777,7 +4798,6 @@ function renderEditor(){
   const showDays = !(t.rep && t.rep.unit !== 'week');
   document.getElementById('sheetBody').innerHTML = `
     <div class="edhead"><button class="edx" data-close aria-label="Close without saving">${svg('x',20,2.4)}</button><b>${t.isNew ? (t.pool ? 'New roulette' : 'New task') : 'Edit task'}</b><button class="edok" data-savetask aria-label="Save">${svg('check',20,2.8)}</button></div>
-    ${sheetMode ? sheetSwitch() : ''}
     <div class="ednamewrap"><input class="edname" type="text" id="tName" maxlength="40" value="${esc(t.name)}" placeholder="${t.pool ? 'Name this roulette' : 'What will you do?'}" aria-label="Name"><button type="button" class="edicon" data-pk="t.icon" style="background:${STATS[prim].c}" aria-label="Icon">${tIcon(t, prim, 18)}</button></div>
     ${t.pool ? `<div class="edcard" style="padding:10px 14px;gap:8px"><div class="edhd" style="padding-top:4px">Routines</div>
       ${t.pool.map((o,i) => `<div class="opt">
@@ -5310,7 +5330,7 @@ function onClick(e){
     if (fin.length){ /* finished items move to one hidden archive so their rewards stay */ let A = S.todos.lists.find(x => x.id === 'l_archive'); if (!A){ A = {id:'l_archive', name:'Archive', hidden:true, items:[]}; S.todos.lists.push(A); } A.hidden = true; A.items.push(...fin); }
     S.todos.lists = S.todos.lists.filter(x => x.id !== lid); todoMenu = false; save(); render(); toast('List deleted'); return; }
   if ('back' in el.dataset){ tab = prevTab && prevTab !== 'settings' && prevTab !== 'focus' ? prevTab : 'today'; render(); window.scrollTo(0,0); return; }
-  if (el.dataset.tab){ if ((el.dataset.tab === 'settings' || el.dataset.tab === 'focus') && tab !== 'settings' && tab !== 'focus') prevTab = tab; tab = el.dataset.tab; resetArmed = false; restoreArmed = false; render(); window.scrollTo(0,0); return; }
+  if (el.dataset.tab){ if (PAGE_TABS.includes(el.dataset.tab) && !PAGE_TABS.includes(tab)) prevTab = tab;  tab = el.dataset.tab; resetArmed = false; restoreArmed = false; render(); window.scrollTo(0,0); return; }
   if (el.dataset.vday){ vday = el.dataset.vday; render(); return; }
   if (el.dataset.toggle){ toggle(el.dataset.toggle, el); return; }
   if ('todoedit' in el.dataset){ todoEdit = !todoEdit; todoMenu = false; todoRename = false; render(); return; }
@@ -5345,7 +5365,7 @@ function onClick(e){
   if (el.dataset.todaytab){ todayTab = ['week', 'timer'].includes(el.dataset.todaytab) ? el.dataset.todaytab : 'day'; try { localStorage.setItem(TODAY_TAB_KEY, todayTab); } catch(e){} render(); return; }
   if ('newtask' in el.dataset){ openEditor(null); const [nc, nt] = (el.dataset.newtask || '').split('|'); if (nc === 'week') draft.cad = 'week'; if (TOD_KEYS.includes(nt)) draft.tod = nt; if (nc === 'week' || nt) renderEditor(); return; }
   if (el.dataset.invtab){ invTab = el.dataset.invtab; if (sheetMode === 'inv' && !document.getElementById('sheet').hidden){ renderSheet(); return; } }
-  if (el.dataset.plus){ if ('gopts' in el.dataset) statsSec = 'skills'; openPlus(el.dataset.plus); return; }
+  if (el.dataset.plus){ if ('gopts' in el.dataset) statsSec = 'skills'; if (el.dataset.plus === 'stats' || el.dataset.plus === 'inv'){ if (!PAGE_TABS.includes(tab)) prevTab = tab; tab = el.dataset.plus === 'inv' ? 'inv' : ('gopts' in el.dataset ? 'skills' : 'stats'); render(); window.scrollTo(0, 0); return; } openPlus(el.dataset.plus); return; }
   if (el.dataset.sheetmode){ if (sheetMode === 'task') readEditorFields(); sheetMode = el.dataset.sheetmode; statEdit = null; statDraft = null; if (sheetMode === 'task' && !draft) { openEditor(null, false, true); return; } renderSheet(); return; }
   if (el.dataset.statedit){ statEdit = el.dataset.statedit; const s = STATS[statEdit]; statDraft = {name:s.name, blurb:s.blurb, c:s.c, icon:s.icon}; renderSheet(); return; }
   if ('statcancel' in el.dataset){ statEdit = null; statDraft = null; renderSheet(); return; }
@@ -5387,7 +5407,7 @@ function onClick(e){
     eq[i] = nw; S.skillEq = eq; S.buys.push({kind:'skilleq', id: nw, ts: Date.now(), g: SKILL_EQ_FEE, date: D.today}); skillSwap = null; save(); render(); toast(`Swapped ${SKILL_BY[old].name} for ${SKILL_BY[nw].name} (${SKILL_EQ_FEE} G)`); return; }
   if (el.dataset.cast){ cast(el.dataset.cast, el); return; }
   if ('gobattle' in el.dataset){ closeEditor(); tab = 'battle'; battleSec = 'skills'; render(); const h = document.getElementById('skillsH'); if (h) h.scrollIntoView({block:'start'}); return; }
-  if ('gopoints' in el.dataset){ statsSec = 'skills'; renderSheet(); const b = document.getElementById('sheetBody'); if (b) b.scrollTop = 0; return; }
+  if ('gopoints' in el.dataset){ statsSec = 'skills'; renderSheet(); const b = document.getElementById('sheetBody'); if (b) b.scrollTop = 0; if (tab === 'stats') window.scrollTo(0, 0); return; }
   if (el.dataset.ssec){ statsSec = el.dataset.ssec === 'skills' ? 'skills' : 'stats'; renderSheet(); return; }
   if (el.dataset.reroll){ const k = vday === 'today' ? D.today : D.yest; const id = el.dataset.reroll;
     const used = (S.rerolls[k] && S.rerolls[k][id]) || 0, price = rerollPrice(used);
