@@ -639,7 +639,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'db32cf7fdc';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '965a79cc96';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -714,7 +714,7 @@ const ROULETTES = [
 ];
 /* Gear: weapons add damage and crits; armor adds defense (less damage from boss attacks) and dodge. */
 /* Play styles: Warrior (Might, attack), Guardian (Defense, HP), Rogue (Mobility, dodge, crits), Caster (Focus, MP, skill damage). */
-const STYLES = {war:{name:'Warrior', c:'#f2d982'}, guard:{name:'Guardian', c:'#a9b97c'}, rogue:{name:'Rogue', c:'#eeb7d8'}, cast:{name:'Caster', c:'#c9b8f0'}, novice:{name:'Novice', c:'#d9d3c3'}};
+const STYLES = {war:{name:'Warrior', c:'#f2d982'}, guard:{name:'Guardian', c:'#a9b97c'}, rogue:{name:'Rogue', c:'#eeb7d8'}, cast:{name:'Caster', c:'#c9b8f0'}, novice:{name:'Novice', c:'#d9d3c3'}, mon:{name:'Master of None', c:'#d9d3c3'}};
 /* Gear comes in tiers so any build can start early: a plain Novice set anyone can wear at level 1, then a set per build
    at level 5 (Early), 15 (Mid), 30 (Late), 45 (Elite, for the Burnout) and 80 (End, to prepare for Leviathan), each with a specialty
    piece for a different take on the build. End gear leans on what the final boss needs: big hits and stopping its healing. */
@@ -1477,9 +1477,14 @@ function setHat(id){ id = id || null; if (S.equip.hat === id) return; S.equip.ha
 /* Build-based skills: stat levels gate learning; your build's lean decides which branch skills you can use in battle.
    Learned skills are never lost: change your gear and a different branch opens up. */
 function buildLean(){ const n = {}; for (const id of [...Object.values(S.gear), S.equip.hat]){ const it = id && (GEAR_BY[id] || ITEM[id]); if (it && it.style) n[it.style] = (n[it.style] || 0) + 1; }
-  const best = Object.entries(n).sort((a, b) => b[1] - a[1]); if (!best.length || best[0][1] < 2 || (best[1] && best[1][1] === best[0][1])) return null; return {style: best[0][0], n: best[0][1]}; }
+  const best = Object.entries(n).sort((a, b) => b[1] - a[1]); if (!best.length || best[0][1] < 2) return null;
+  // Master of None: two pieces each of two class styles. Both branches' skills work (for MON_TAX more MP); no class perks.
+  if (best[1] && best[1][1] === best[0][1]){ const two = [best[0][0], best[1][0]]; return best[0][1] === 2 && !best[2] && two.every(st => BRANCH_STYLES.includes(st)) ? {style:'mon', pair: two, n: 2} : null; }
+  return {style: best[0][0], n: best[0][1]}; }
+const BRANCH_STYLES = ['war', 'guard', 'rogue', 'cast'], MON_TAX = 0.25;
+const leanHas = (L, b) => !!L && (L.style === b || (L.style === 'mon' && L.pair.includes(b)));
 const skillStatOk = (sk, statLv) => Object.entries(sk.needStat || {}).every(([k, v]) => (statLv[k] || 0) >= v);
-const skillGearOk = sk => !sk.branch || sk.branch === 'core' || (buildLean() || {}).style === sk.branch;
+const skillGearOk = sk => !sk.branch || sk.branch === 'core' || leanHas(buildLean(), sk.branch);
 const skillNeedText = sk => [...Object.entries(sk.needStat || {}).map(([k, v]) => `${STATS[k].name} ${v} to learn`), ...(sk.branch && sk.branch !== 'core' ? [`a ${STYLES[sk.branch].name} build to use`] : [])].join(' · ');
 const buffUntil = u => addDays(u.date, (u.buff.days || 1) - 1);
 function buffsAt(ts, d){ return S.skillLog.filter(u => u.buff && u.date && u.date <= d && buffUntil(u) >= d && u.ts <= ts); }
@@ -1863,7 +1868,8 @@ function derive(){
   const weakLv = Math.max(...cur.boss.weak.map(k => statLv[k]));
   const skills = {};
   const effNowStats = effStats(statLv, fxNow);
-  for (const sk of SKILLS){ const l = S.skills[sk.id] || 0; if (!l){ skills[sk.id] = {l:0}; continue; } const cost = sk.cost(l); skills[sk.id] = {l, cost, mp, ready: mp >= cost, power: sk.power ? Math.round(sk.power(l, weakLv, effNowStats) * (1 + (fxNow.spell||0))) : 0}; }
+  const leanNow = buildLean(), monTax = leanNow && leanNow.style === 'mon';
+  for (const sk of SKILLS){ const l = S.skills[sk.id] || 0; if (!l){ skills[sk.id] = {l:0}; continue; } const cost = monTax && sk.branch && sk.branch !== 'core' ? Math.ceil(sk.cost(l) * (1 + MON_TAX)) : sk.cost(l); skills[sk.id] = {l, cost, mp, ready: mp >= cost, power: sk.power ? Math.round(sk.power(l, weakLv, effNowStats) * (1 + (fxNow.spell||0))) : 0}; }
   const readyCount = Object.entries(skills).filter(([id, x]) => x.ready && skillEqd(id)).length;
   const spent = staticSpent + dyn;
   const newDrops = [...drops].filter(id => isDrop(id) && !S.seenDrops.includes(id));
@@ -3285,7 +3291,7 @@ function renderBattle(){
   ${past.length ? `<div class="sec-h"><h2>Past fights</h2></div><div class="list">${past.map(p => `<div class="tl"><span class="pill ${p.status==='won'?'won':'lost'}">${p.status==='won'?'Won':p.boss.rite?'Continues':'Escaped'}</span><span>${esc(p.boss.name)}</span><span class="small muted">${fmt(p.start)}</span></div>`).join('')}</div>` : ''}
   <p class="how">Titans can poison or paralyze you if you miss two dailies in a day; potions cure it. If your HP hits 0 you faint, lose 10% of your gold and wake up at half HP. Your mood quietly helps too: a good streak makes tasks hit harder, and a bad one makes boss hits sting more.</p>` : `
   <details class="howto"><summary>How skills work</summary><p class="how">You can have ${SKILL_SLOTS} skills equipped at a time, and only equipped skills can be used or leveled up. A newly learned skill drops into an empty slot for free; after that, equipping a skill costs ${SKILL_EQ_FEE} G and taking one off is free. Skills spend MP: every finished task adds ${MP_PER_TASK} MP, up to your max. Core skills always work; branch skills work when your build leans that way (2+ equipped items of one style). You never lose a skill you've learned.</p></details>
-  ${(() => { const L = buildLean(); return `<div class="leanline">${L ? `<span class="bdot" style="--bc:${STYLES[L.style].c}"></span> Build: <b>${STYLES[L.style].name}</b>` : 'Build: <b>none yet</b> · equip 2+ items of one style'}</div>`; })()}
+  ${(() => { const L = buildLean(); return `<div class="leanline">${L ? `<span class="bdot" style="--bc:${STYLES[L.style].c}"></span> Build: <b>${STYLES[L.style].name}</b>${L.style === 'mon' ? ` <span class="small muted">(${L.pair.map(x => STYLES[x].name).join(' + ')} skills, +${Math.round(MON_TAX*100)}% MP)</span>` : ''}` : 'Build: <b>none yet</b> · equip 2+ items of one style'}</div>`; })()}
   <button class="card bagrow" data-plus="stats" data-gopts><span><b>Skill tree</b><span class="muted small" style="display:block">${D.points ? `${D.points} skill point${D.points===1?'':'s'} to spend` : 'Learn new skills and level up equipped ones'}</span></span><span class="bagopen">${D.points ? `<span class="ptsdot">${D.points}</span>` : ''}Open ›</span></button>
   ${SKILLS.some(sk => D.skills[sk.id].l) ? skillCards() : `<p class="how">You haven’t learned any skills yet. Spend skill points in Stats to learn your first one.</p>`}`}`;
 }
@@ -3405,7 +3411,7 @@ function renderShop(){
   <div class="filters">
     <div class="catpills" role="group" aria-label="Item type">${SHOP_CATS.map(([v,l]) => `<button class="catpill ${shopCat===v?'on':''}" data-cat="${v}" aria-pressed="${shopCat===v}">${l}</button>`).join('')}</div>
     <div class="catpills fbar" role="group" aria-label="More filters">
-      <label class="catpill fsel ${shopStyle !== 'all' ? 'on' : ''}"><span class="sr">Play style</span><select id="fStyle">${[['all','Any style'], ...Object.entries(STYLES).map(([k,v]) => [k, v.name])].map(([v,l]) => `<option value="${v}" ${shopStyle===v?'selected':''}>${l}</option>`).join('')}</select>${svg('down',14,2.6)}</label>
+      <label class="catpill fsel ${shopStyle !== 'all' ? 'on' : ''}"><span class="sr">Play style</span><select id="fStyle">${[['all','Any style'], ...Object.entries(STYLES).filter(([k]) => k !== 'mon').map(([k,v]) => [k, v.name])].map(([v,l]) => `<option value="${v}" ${shopStyle===v?'selected':''}>${l}</option>`).join('')}</select>${svg('down',14,2.6)}</label>
       <label class="catpill fsel ${shopTier !== 'all' ? 'on' : ''}"><span class="sr">Gear tier</span><select id="fTier">${[['all','Any tier'], ...TIERS.map(t => [t.k, t.k === 'novice' ? t.name : `${t.name} · Lv ${t.lvl}`])].map(([v,l]) => `<option value="${v}" ${shopTier===v?'selected':''}>${l}</option>`).join('')}</select>${svg('down',14,2.6)}</label>
       <button class="catpill ${shopMyLv ? 'on' : ''}" data-shoptog="mylv" aria-pressed="${shopMyLv}" title="Hide items above level ${D.lv.level}">${shopMyLv ? svg('check',14,3) + ' ' : ''}My level</button>
       <button class="catpill ${shopAfford ? 'on' : ''}" data-shoptog="afford" aria-pressed="${shopAfford}" title="Only what you can buy right now">${shopAfford ? svg('check',14,3) + ' ' : ''}Can buy now</button>
@@ -3838,14 +3844,16 @@ function renderStatsPanel(){
   const skillRows = BRANCHES.map(([b, name, sub]) => { const list = SKILLS.filter(sk => (sk.branch || 'core') === b).sort((x, y) => x.unlock - y.unlock); if (!list.length) return '';
     const col = b === 'core' ? 'var(--track)' : STYLES[b].c;
     const shut = clOpen.has('brshut:' + b), nL = list.filter(sk => S.skills[sk.id]).length;
-    return `<section class="branch ${lean && lean.style === b ? 'lean' : ''} ${shut ? 'shut' : ''}" style="--bc:${col}"><button class="bhead" data-clopen="brshut:${b}" aria-expanded="${!shut}"><span class="bdot"></span><b>${name}</b><span class="small muted">${sub} · ${nL}/${list.length} learned</span>${lean && lean.style === b ? '<span class="leantag">Your build</span>' : ''}<span class="clchev">${svg(shut ? 'down' : 'up',16,2.4)}</span></button>${shut ? '' : `<div class="bnodes">${list.map(row).join('')}</div>`}</section>`; }).join('');
+    return `<section class="branch ${leanHas(lean, b) ? 'lean' : ''} ${shut ? 'shut' : ''}" style="--bc:${col}"><button class="bhead" data-clopen="brshut:${b}" aria-expanded="${!shut}"><span class="bdot"></span><b>${name}</b><span class="small muted">${sub} · ${nL}/${list.length} learned</span>${leanHas(lean, b) ? '<span class="leantag">Your build</span>' : ''}<span class="clchev">${svg(shut ? 'down' : 'up',16,2.4)}</span></button>${shut ? '' : `<div class="bnodes">${list.map(row).join('')}</div>`}</section>`; }).join('');
   return `<div class="card statsum"><div class="bignum"><b>${lv.level}</b><span>level · ${lv.into}/${lv.need} xp</span></div>${bar(100*lv.into/lv.need, 'var(--ink)')}
     ${pts && statsSec !== 'skills' ? `<button class="btn gold" data-gopoints>You have ${pts} skill point${pts===1?'':'s'} · spend them</button>` : statsSec !== 'skills' ? `<span class="small muted">You get 1 skill point each level.</span>` : ''}</div>
   <div class="seg wide" role="tablist" aria-label="Stats or skills"><button role="tab" data-ssec="stats" class="${statsSec==='stats'?'on':''}" aria-selected="${statsSec==='stats'}">Stats</button><button role="tab" data-ssec="skills" class="${statsSec==='skills'?'on':''}" aria-selected="${statsSec==='skills'}">Skill tree${pts ? ` · ${pts}` : ''}</button></div>
   ${statsSec === 'skills' ? `
   <div class="sec-h" id="ptsH"><h2>Skill points</h2><span class="count">${pts} to spend</span></div>
   <details class="howto"><summary>How the skill tree works</summary><p class="how">You earn 1 point every level. Spend a point to learn a new skill or make one stronger, then use your skills in Battle (they cost MP). You can only learn or raise a skill if your max MP covers its cost, and only equipped skills (${SKILL_SLOTS} at a time) can be leveled up. Some skills need stat levels to learn or certain gear equipped to use, so your build shapes what you can do.</p></details>
-  ${lean ? `<div class="card leancard" style="--bc:${STYLES[lean.style].c}"><span class="bdot"></span><span><b>Your build leans ${STYLES[lean.style].name}</b><span class="small muted" style="display:block">${lean.n} of your equipped items are ${STYLES[lean.style].name} gear, so that branch's skills work in battle. Keep learning every branch: switch gear later and those skills are ready.</span></span></div>` : `<p class="how">Equip two or more items of one style and your build will lean that way, so that branch's skills work in battle.</p>`}
+  ${lean && lean.style === 'mon' ? `<div class="card leancard" style="--bc:${STYLES.mon.c}"><span class="bdot"></span><span><b>Master of None build</b><span class="small muted" style="display:block">You have 2 ${STYLES[lean.pair[0]].name} and 2 ${STYLES[lean.pair[1]].name} pieces on, so both branches' skills work in battle. They cost ${Math.round(MON_TAX*100)}% more MP, and you get neither class's build perk.</span></span></div>`
+    : `<p class="how">Wear 2 pieces each of two styles and you're a <b>Master of None</b>: both branches' skills work, for ${Math.round(MON_TAX*100)}% more MP and no class perks.</p>`}
+  ${lean && lean.style !== 'mon' ? `<div class="card leancard" style="--bc:${STYLES[lean.style].c}"><span class="bdot"></span><span><b>Your build leans ${STYLES[lean.style].name}</b><span class="small muted" style="display:block">${lean.n} of your equipped items are ${STYLES[lean.style].name} gear, so that branch's skills work in battle. Keep learning every branch: switch gear later and those skills are ready.</span></span></div>` : lean ? '' : `<p class="how">Equip two or more items of one style and your build will lean that way, so that branch's skills work in battle.</p>`}
   <div class="tree">${skillRows}</div>
   <button class="btn" data-gobattle>Use skills in Battle ›</button>` : `
   <div class="card kv combat">
