@@ -928,7 +928,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '1d5b58f139';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '80fcc3d6f5';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -941,7 +941,7 @@ const SK = Object.keys(STATS);
 const STATS_BASE = JSON.parse(JSON.stringify(STATS));
 const ABBR = {MGT:'MGT', STA:'STA', MOB:'MOB', ARM:'DEF', HRT:'FOC'};   // internal keys stay; ARM shows as Defense, HRT as Focus
 SK.forEach(k => { STATS[k].abbr = ABBR[k]; STATS[k].icon = k; STATS_BASE[k].abbr = ABBR[k]; STATS_BASE[k].icon = k; });
-const LOFI_KEYS = ['chill', 'upbeat', 'dreamy', 'afro', 'bloom', 'pulse', 'cafe', 'bossa', 'chip', 'lockin'];   // every Focus song (the last seven come from Riff)
+const LOFI_KEYS = ['chill', 'upbeat', 'dreamy', 'afro', 'bloom', 'pulse', 'lockin', 'cafe', 'bossa', 'chip'];   // every Focus song (the last three come from Riff)
 const STAT_ICONS = ['MGT','STA','MOB','ARM','HRT','wave','flame','leaf','star','book','moon','bolt'];
 // a task's own icon: one of the app's pixel-line icons, or any emoji ("e:" + the emoji)
 const TASK_ICONS = [...STAT_ICONS, 'sword', 'timer', 'bed', 'list', 'gift', 'sun', 'broom'];
@@ -6108,31 +6108,38 @@ const LOFI_PROGS = {
 };
 // focus/break: tempo, swing, chord + lead instruments, bass, beat, how often the lead plays, drum and backdrop levels
 const LOFI_STYLES = {
-  chill: {label: 'Chill', note: 'Dusty Rhodes and a slow boom-bap; rain and a music box on breaks', key: 0, gain: 0.4,
+  chill: {label: 'Chill', note: 'Dusty Rhodes and boom-bap', key: 0, gain: 0.4,
     focus: {bpm: 72, swing: 0.18, chord: 'rhodes', lead: 'rhodes', bass: 'round', beat: 'dusty', lead_p: 0.22, drums: 1, amb: 0.0001, warm: 4200},
     break: {bpm: 60, swing: 0.1, chord: 'pad', lead: 'musicbox', bass: 'round', beat: 'none', lead_p: 0.85, arp: true, drums: 0.0001, amb: 0.18, warm: 3000}, amb: 'rain'},
-  upbeat: {label: 'Upbeat', note: 'Bouncy guitar plucks and claps; a bossa vibraphone and waves on breaks', key: 2, gain: 1.5,
+  upbeat: {label: 'Upbeat', note: 'Guitar plucks and claps', key: 2, gain: 1.5,
     focus: {bpm: 94, swing: 0.12, chord: 'guitar', lead: 'vibes', bass: 'pluck', beat: 'tight', lead_p: 0.3, drums: 1, amb: 0.0001, warm: 5500},
     break: {bpm: 80, swing: 0.08, chord: 'vibes', lead: 'guitar', bass: 'pluck', beat: 'bossa', lead_p: 0.18, drums: 0.7, amb: 0.2, warm: 3600}, amb: 'waves'},
-  dreamy: {label: 'Dreamy', note: 'Warm synths, deep 808 bass and rimshots; kalimba and waves on breaks', key: -3, gain: 0.8,
+  dreamy: {label: 'Dreamy', note: 'Warm synths and deep 808s', key: -3, gain: 0.8,
     focus: {bpm: 82, swing: 0.06, chord: 'synth', lead: 'square', bass: 'sub', beat: 'rim', lead_p: 0.25, drums: 1, amb: 0.0001, warm: 3600},
     break: {bpm: 64, swing: 0.04, chord: 'synth', lead: 'kalimba', bass: 'sub', beat: 'none', lead_p: 0.3, drums: 0.0001, amb: 0.22, warm: 2600}, amb: 'waves'},
-  // the rest come from Riff's stall (price in gold)
-  afro: {label: 'Afro', note: 'Nylon guitar, congas and shakers', price: 450, key: 0, gain: 0.95, vinyl: 0.3, wow: 4,
+  afro: {label: 'Afro', note: 'Nylon guitar, congas and shakers', key: 0, gain: 0.95, vinyl: 0.3, wow: 4,
     progs: {focus: [[[45,55,59,60,64],[50,53,57,60,64],[43,52,55,59,62],[48,52,55,59,64]], [[41,52,57,60,64],[40,50,55,59,62],[45,55,59,60,64],[45,55,57,60,64]], [[50,53,57,60,64],[40,55,59,62,64],[41,55,57,60,64],[40,52,56,59,62]]],
             break: [[[45,55,59,60,64],[41,52,57,60,64],[50,53,57,60,64],[40,52,56,59,62]], [[48,52,55,59,64],[41,52,57,60,64],[48,52,55,59,64],[43,53,55,59,62]]]},
     focus: {bpm: 100, swing: 0.08, chord: 'nylon', pad2: 'rhodes', pad2v: 0.016, lead: 'marimba', oct: 12, lead_p: 0.2, leadv: 0.05, bass: 'afro', bassSnd: 'round', beat: 'afro', drums: 1, amb: 0.0001, warm: 6000},
     break: {bpm: 88, swing: 0.06, chord: 'nylon', lead: 'kalimba', oct: 12, lead_p: 0.3, bass: 'afro', bassSnd: 'round', beat: 'afrosoft', drums: 0.6, amb: 0.14, warm: 4200}, amb: 'rain'},
-  bloom: {label: 'Bloom', note: 'Layered pads and soft mallets', price: 450, key: -1, gain: 0.9, vinyl: 0, wow: 2,
+  bloom: {label: 'Bloom', note: 'Layered pads and soft mallets', key: -1, gain: 0.9, vinyl: 0, wow: 2,
     progs: {focus: [[[36,55,59,62,64],[45,55,59,60,64],[41,55,57,60,64],[43,55,57,62,64]], [[36,52,55,59,62],[40,55,59,62,64],[41,55,57,60,64],[36,55,57,62,67]], [[41,57,60,64,67],[36,55,59,62,64],[45,57,60,64,67],[43,55,59,62,66]]],
             break: [[[36,55,59,62,64],[41,57,60,64,67],[36,55,59,62,64],[43,55,59,62,66]]]},
     focus: {bpm: 96, swing: 0, chord: 'bloompad', lead: 'marimba', oct: 12, lead_p: 0.3, leadv: 0.045, loose: true, bass: 'boom', bassSnd: 'sub', beat: 'bloom', drums: 1, amb: 0.03, warm: 7000},
     break: {bpm: 80, swing: 0, chord: 'bloompad', lead: 'kalimba', oct: 12, lead_p: 0.22, loose: true, bass: 'boom', bassSnd: 'round', beat: 'none', drums: 0.0001, amb: 0.2, warm: 4500}, amb: 'waves'},
-  pulse: {label: 'Pulse', note: 'Deep, steady and dark', price: 450, key: 0, gain: 0.8, vinyl: 0, wow: 1,
+  pulse: {label: 'Pulse', note: 'Deep, steady and dark', key: 0, gain: 0.8, vinyl: 0, wow: 1,
     progs: {focus: [[[36,55,59,62,64],[36,57,60,64,67],[36,55,58,62,65],[36,55,59,62,64]], [[36,52,55,59,62],[36,53,57,60,64],[36,55,59,62,67],[36,53,58,62,65]]],
             break: [[[36,55,59,62,64],[36,53,57,60,64],[36,55,59,62,64],[36,53,58,62,65]]]},
     focus: {bpm: 118, swing: 0, chord: 'pulsepad', lead: 'bell', oct: 12, lead_p: 0.08, leadv: 0.03, bass: 'pulse', bassSnd: 'pulsebass', beat: 'pulse', drums: 1, amb: 0.0001, warm: 3400},
     break: {bpm: 100, swing: 0, chord: 'pulsepad', lead: 'bell', oct: 12, lead_p: 0.14, leadv: 0.03, bass: 'pulsesoft', bassSnd: 'pulsebass', beat: 'pulsesoft', drums: 0.7, amb: 0.12, warm: 2600}, amb: 'waves'},
+  // built from the focus research: no words, no drums or sharp hits, slow legato pads in one bright key, chords that hold ~30 s,
+  // a sparse melody in small steps, quiet overall, and a gentle 16 Hz pulse on the pads' middle range (the one modulation with some evidence)
+  lockin: {label: 'Lock-in', note: 'Built from focus research', key: 2, gain: 1.0, vinyl: 0, wow: 0, am: 0.3,
+    progs: {focus: [[[36,55,59,62,64],[38,54,57,62,64],[40,55,59,62,66],[36,55,59,62,64]], [[36,52,55,59,62],[45,55,59,60,64],[38,54,57,59,64],[36,55,59,62,67]]],
+            break: [[[36,55,59,62,64],[38,54,57,62,64],[36,55,59,62,64],[40,55,59,62,66]]]},
+    focus: {bpm: 120, swing: 0, chord: 'lockpad', hold: 16, lead: 'softpluck', mel: true, lead_p: 0.1, leadv: 0.04, bass: 'none', bassSnd: 'round', beat: 'none', drums: 0.0001, amb: 0.0001, warm: 2600, am: true},
+    break: {bpm: 100, swing: 0, chord: 'lockpad', hold: 12, lead: 'softpluck', mel: true, lead_p: 0.08, leadv: 0.035, bass: 'none', bassSnd: 'round', beat: 'none', drums: 0.0001, amb: 0.1, warm: 2200}, amb: 'waves'},
+  // these three come from Riff's stall (price in gold)
   cafe: {label: 'Café', note: 'Piano trio with brushes', price: 400, key: -2, gain: 1.05, vinyl: 0.45, wow: 5,
     focus: {bpm: 84, swing: 0.2, chord: 'piano', lead: 'piano', oct: 12, lead_p: 0.28, leadv: 0.035, bass: 'walk', bassSnd: 'upright', beat: 'brush', drums: 1, amb: 0.0001, warm: 5200},
     break: {bpm: 70, swing: 0.16, chord: 'piano', lead: 'piano', oct: 24, lead_p: 0.2, leadv: 0.03, bass: 'twofeel', bassSnd: 'upright', beat: 'brushsoft', drums: 0.6, amb: 0.16, warm: 3800}, amb: 'rain'},
@@ -6141,14 +6148,7 @@ const LOFI_STYLES = {
     break: {bpm: 78, swing: 0, chord: 'bossa', lead: 'nylon', oct: 12, lead_p: 0.25, bass: 'bossa', bassSnd: 'upright', beat: 'bossa', drums: 0.6, amb: 0.18, warm: 3800}, amb: 'waves'},
   chip: {label: '8-bit', note: 'Soft chiptune, like an old handheld', price: 400, key: 5, gain: 0.7, vinyl: 0.2, wow: 3,
     focus: {bpm: 88, swing: 0.1, chord: 'chiparp', lead: 'chip', oct: 12, lead_p: 0.3, leadv: 0.03, bass: 'chip', bassSnd: 'tri', beat: 'chip', drums: 1, amb: 0.0001, warm: 3800},
-    break: {bpm: 72, swing: 0.08, chord: 'chiparp', lead: 'musicbox', oct: 24, lead_p: 0.4, bass: 'chip', bassSnd: 'tri', beat: 'none', drums: 0.0001, amb: 0.16, warm: 2800}, amb: 'rain'},
-  // built from the focus research: no words, no drums or sharp hits, slow legato pads in one bright key, chords that hold ~30 s,
-  // a sparse melody in small steps, quiet overall, and a gentle 16 Hz pulse on the pads' middle range (the one modulation with some evidence)
-  lockin: {label: 'Lock-in', note: 'Built from focus research', price: 600, key: 2, gain: 1.0, vinyl: 0, wow: 0, am: 0.3,
-    progs: {focus: [[[36,55,59,62,64],[38,54,57,62,64],[40,55,59,62,66],[36,55,59,62,64]], [[36,52,55,59,62],[45,55,59,60,64],[38,54,57,59,64],[36,55,59,62,67]]],
-            break: [[[36,55,59,62,64],[38,54,57,62,64],[36,55,59,62,64],[40,55,59,62,66]]]},
-    focus: {bpm: 120, swing: 0, chord: 'lockpad', hold: 16, lead: 'softpluck', mel: true, lead_p: 0.1, leadv: 0.04, bass: 'none', bassSnd: 'round', beat: 'none', drums: 0.0001, amb: 0.0001, warm: 2600, am: true},
-    break: {bpm: 100, swing: 0, chord: 'lockpad', hold: 12, lead: 'softpluck', mel: true, lead_p: 0.08, leadv: 0.035, bass: 'none', bassSnd: 'round', beat: 'none', drums: 0.0001, amb: 0.1, warm: 2200}, amb: 'waves'}
+    break: {bpm: 72, swing: 0.08, chord: 'chiparp', lead: 'musicbox', oct: 24, lead_p: 0.4, bass: 'chip', bassSnd: 'tri', beat: 'none', drums: 0.0001, amb: 0.16, warm: 2800}, amb: 'rain'}
 };
 // bass lines: [eighth, semitones from the root ('walk' = a step into the next chord), length in eighths, chance]
 const LOFI_BASS_PAT = {
