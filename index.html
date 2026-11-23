@@ -928,7 +928,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '80fcc3d6f5';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '70d6740683';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -6117,16 +6117,16 @@ const LOFI_STYLES = {
   dreamy: {label: 'Dreamy', note: 'Warm synths and deep 808s', key: -3, gain: 0.8,
     focus: {bpm: 82, swing: 0.06, chord: 'synth', lead: 'square', bass: 'sub', beat: 'rim', lead_p: 0.25, drums: 1, amb: 0.0001, warm: 3600},
     break: {bpm: 64, swing: 0.04, chord: 'synth', lead: 'kalimba', bass: 'sub', beat: 'none', lead_p: 0.3, drums: 0.0001, amb: 0.22, warm: 2600}, amb: 'waves'},
-  afro: {label: 'Afro', note: 'Nylon guitar, congas and shakers', key: 0, gain: 0.95, vinyl: 0.3, wow: 4,
+  afro: {label: 'Afro', note: 'Boom-bap drums, nylon guitar, congas', key: 0, gain: 1.05, vinyl: 0.45, wow: 4,
     progs: {focus: [[[45,55,59,60,64],[50,53,57,60,64],[43,52,55,59,62],[48,52,55,59,64]], [[41,52,57,60,64],[40,50,55,59,62],[45,55,59,60,64],[45,55,57,60,64]], [[50,53,57,60,64],[40,55,59,62,64],[41,55,57,60,64],[40,52,56,59,62]]],
-            break: [[[45,55,59,60,64],[41,52,57,60,64],[50,53,57,60,64],[40,52,56,59,62]], [[48,52,55,59,64],[41,52,57,60,64],[48,52,55,59,64],[43,53,55,59,62]]]},
-    focus: {bpm: 100, swing: 0.08, chord: 'nylon', pad2: 'rhodes', pad2v: 0.016, lead: 'marimba', oct: 12, lead_p: 0.2, leadv: 0.05, bass: 'afro', bassSnd: 'round', beat: 'afro', drums: 1, amb: 0.0001, warm: 6000},
-    break: {bpm: 88, swing: 0.06, chord: 'nylon', lead: 'kalimba', oct: 12, lead_p: 0.3, bass: 'afro', bassSnd: 'round', beat: 'afrosoft', drums: 0.6, amb: 0.14, warm: 4200}, amb: 'rain'},
-  bloom: {label: 'Bloom', note: 'Layered pads and soft mallets', key: -1, gain: 0.9, vinyl: 0, wow: 2,
+            break: [[[41,57,60,64,67],[43,55,59,62,69],[48,55,59,62,64],[48,55,59,62,64]], [[48,52,55,59,64],[41,52,57,60,64],[48,52,55,59,64],[43,53,55,59,62]]]},
+    focus: {bpm: 88, swing: 0.17, chord: 'nylon', pad2: 'rhodes', pad2v: 0.03, lead: 'marimba', oct: 12, lead_p: 0.14, leadv: 0.045, bass: 'afro', bassSnd: 'upright', beat: 'afrohop', drums: 1, amb: 0.0001, warm: 6500},
+    break: {bpm: 72, swing: 0.1, chord: 'warmpad', lead: 'nylon', oct: 12, lead_p: 0.3, leadv: 0.05, bass: 'twofeel', bassSnd: 'upright', beat: 'afrosoft', drums: 0.5, amb: 0.2, warm: 4200}, amb: 'rain'},
+  bloom: {label: 'Bloom', note: 'Plucked guitar, warm pads, soft hand drums', key: -1, gain: 1.2, vinyl: 0.04, wow: 0, bassv: 0.35,
     progs: {focus: [[[36,55,59,62,64],[45,55,59,60,64],[41,55,57,60,64],[43,55,57,62,64]], [[36,52,55,59,62],[40,55,59,62,64],[41,55,57,60,64],[36,55,57,62,67]], [[41,57,60,64,67],[36,55,59,62,64],[45,57,60,64,67],[43,55,59,62,66]]],
-            break: [[[36,55,59,62,64],[41,57,60,64,67],[36,55,59,62,64],[43,55,59,62,66]]]},
-    focus: {bpm: 96, swing: 0, chord: 'bloompad', lead: 'marimba', oct: 12, lead_p: 0.3, leadv: 0.045, loose: true, bass: 'boom', bassSnd: 'sub', beat: 'bloom', drums: 1, amb: 0.03, warm: 7000},
-    break: {bpm: 80, swing: 0, chord: 'bloompad', lead: 'kalimba', oct: 12, lead_p: 0.22, loose: true, bass: 'boom', bassSnd: 'round', beat: 'none', drums: 0.0001, amb: 0.2, warm: 4500}, amb: 'waves'},
+            break: [[[41,57,60,64,69],[36,55,59,62,67],[41,57,60,64,69],[43,55,59,62,66]], [[45,57,60,64,71],[41,57,60,64,69],[36,55,59,62,67],[36,55,59,62,64]]]},
+    focus: {bpm: 96, swing: 0.06, chord: 'bloomarp', pad2: 'warmpad', pad2root: true, pad2v: 0.045, lead: 'steel', oct: 12, lead_p: 0.12, leadv: 0.07, loose: true, bass: 'boom', bassSnd: 'round', bassFloor: 33, beat: 'bloom', drums: 1, amb: 0.0001, warm: 9000},
+    break: {bpm: 74, swing: 0.04, chord: 'warmpad', lead: 'marimba', oct: 12, lead_p: 0.22, leadv: 0.06, loose: true, bass: 'boom', bassSnd: 'round', bassFloor: 33, beat: 'none', drums: 0.0001, amb: 0.24, warm: 5000}, amb: 'waves'},
   pulse: {label: 'Pulse', note: 'Deep, steady and dark', key: 0, gain: 0.8, vinyl: 0, wow: 1,
     progs: {focus: [[[36,55,59,62,64],[36,57,60,64,67],[36,55,58,62,65],[36,55,59,62,64]], [[36,52,55,59,62],[36,53,57,60,64],[36,55,59,62,67],[36,53,58,62,65]]],
             break: [[[36,55,59,62,64],[36,53,57,60,64],[36,55,59,62,64],[36,53,58,62,65]]]},
@@ -6138,14 +6138,14 @@ const LOFI_STYLES = {
     progs: {focus: [[[36,55,59,62,64],[38,54,57,62,64],[40,55,59,62,66],[36,55,59,62,64]], [[36,52,55,59,62],[45,55,59,60,64],[38,54,57,59,64],[36,55,59,62,67]]],
             break: [[[36,55,59,62,64],[38,54,57,62,64],[36,55,59,62,64],[40,55,59,62,66]]]},
     focus: {bpm: 120, swing: 0, chord: 'lockpad', hold: 16, lead: 'softpluck', mel: true, lead_p: 0.1, leadv: 0.04, bass: 'none', bassSnd: 'round', beat: 'none', drums: 0.0001, amb: 0.0001, warm: 2600, am: true},
-    break: {bpm: 100, swing: 0, chord: 'lockpad', hold: 12, lead: 'softpluck', mel: true, lead_p: 0.08, leadv: 0.035, bass: 'none', bassSnd: 'round', beat: 'none', drums: 0.0001, amb: 0.1, warm: 2200}, amb: 'waves'},
+    break: {bpm: 90, swing: 0, chord: 'lockpad', hold: 8, lead: 'marimba', mel: true, lead_p: 0.06, leadv: 0.03, bass: 'none', beat: 'none', drums: 0.0001, amb: 0.26, warm: 2200}, amb: 'waves'},
   // these three come from Riff's stall (price in gold)
   cafe: {label: 'Café', note: 'Piano trio with brushes', price: 400, key: -2, gain: 1.05, vinyl: 0.45, wow: 5,
     focus: {bpm: 84, swing: 0.2, chord: 'piano', lead: 'piano', oct: 12, lead_p: 0.28, leadv: 0.035, bass: 'walk', bassSnd: 'upright', beat: 'brush', drums: 1, amb: 0.0001, warm: 5200},
-    break: {bpm: 70, swing: 0.16, chord: 'piano', lead: 'piano', oct: 24, lead_p: 0.2, leadv: 0.03, bass: 'twofeel', bassSnd: 'upright', beat: 'brushsoft', drums: 0.6, amb: 0.16, warm: 3800}, amb: 'rain'},
+    break: {bpm: 66, swing: 0.12, chord: 'piano', lead: 'piano', oct: 12, lead_p: 0.3, leadv: 0.03, bass: 'none', beat: 'none', drums: 0.0001, amb: 0.24, warm: 3600}, amb: 'rain'},
   bossa: {label: 'Bossa', note: 'Nylon guitar and a soft samba', price: 400, key: 2, gain: 1.1, vinyl: 0.3, wow: 4,
     focus: {bpm: 92, swing: 0, chord: 'bossa', lead: 'vibes', oct: 12, lead_p: 0.2, bass: 'bossa', bassSnd: 'upright', beat: 'bossanova', drums: 1, amb: 0.0001, warm: 5500},
-    break: {bpm: 78, swing: 0, chord: 'bossa', lead: 'nylon', oct: 12, lead_p: 0.25, bass: 'bossa', bassSnd: 'upright', beat: 'bossa', drums: 0.6, amb: 0.18, warm: 3800}, amb: 'waves'},
+    break: {bpm: 70, swing: 0, chord: 'warmpad', lead: 'nylon', oct: 12, lead_p: 0.35, leadv: 0.05, bass: 'twofeel', bassSnd: 'upright', beat: 'none', drums: 0.0001, amb: 0.24, warm: 3800}, amb: 'waves'},
   chip: {label: '8-bit', note: 'Soft chiptune, like an old handheld', price: 400, key: 5, gain: 0.7, vinyl: 0.2, wow: 3,
     focus: {bpm: 88, swing: 0.1, chord: 'chiparp', lead: 'chip', oct: 12, lead_p: 0.3, leadv: 0.03, bass: 'chip', bassSnd: 'tri', beat: 'chip', drums: 1, amb: 0.0001, warm: 3800},
     break: {bpm: 72, swing: 0.08, chord: 'chiparp', lead: 'musicbox', oct: 24, lead_p: 0.4, bass: 'chip', bassSnd: 'tri', beat: 'none', drums: 0.0001, amb: 0.16, warm: 2800}, amb: 'rain'}
@@ -6180,7 +6180,7 @@ function musicSync(){
     const want = lofiWanted();
     if (want && !lofi) lofiStart(want);
     else if (want && lofi.style !== lofiKey()){ lofiStop(); lofiStart(want); }   // switching style: the old one fades as the new one comes in
-    else if (want && lofi.mode !== want) lofiMode(want);
+    else if (want && lofi.mode !== want){ lofiStop(6); lofiStart(want, 2, 6); }   // focus <-> break: the old part fades out over 6 s while the new one fades in
     else if (!want && lofi) lofiStop();
   } catch(e){}
 }
@@ -6205,11 +6205,12 @@ function audioRebuild(){
 }
 ['pointerup', 'click', 'touchend'].forEach(ev => document.addEventListener(ev, () => audioWake(true), {passive: true, capture: true}));
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') audioWake(false); });
-function lofiStart(mode){
+function lofiStart(mode, delay = 0, fadeIn = 2.5){
   sfxInit(); if (!actx) return;
   try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch(e){}   // play even with the iPhone's silent switch on
   const style = lofiKey(), sty = LOFI_STYLES[style], part = sty[mode], now = actx.currentTime;
-  const master = actx.createGain(); master.gain.setValueAtTime(0.0001, now); master.gain.exponentialRampToValueAtTime(sty.gain || 0.8, now + 2.5);
+  const master = actx.createGain(); master.gain.setValueAtTime(0.0001, now); master.gain.setValueAtTime(0.0001, now + delay);
+  if (fadeIn > 3) master.gain.linearRampToValueAtTime(sty.gain || 0.8, now + delay + fadeIn); else master.gain.exponentialRampToValueAtTime(sty.gain || 0.8, now + delay + fadeIn);
   // tape warmth: a gentle soft-clip, then a low-pass that keeps some air
   const sat = actx.createWaveShaper(), curve = new Float32Array(1024); for (let i = 0; i < 1024; i++){ const x = i / 511.5 - 1; curve[i] = Math.tanh(1.6 * x) / Math.tanh(1.6); } sat.curve = curve;
   const warm = actx.createBiquadFilter(); warm.type = 'lowpass'; warm.frequency.value = part.warm; warm.Q.value = 0.3;
@@ -6232,7 +6233,7 @@ function lofiStart(mode){
     const d = part.am ? sty.am : 0; g.gain.value = 1 - d / 2; dep.gain.value = d / 2; lfo.frequency.value = 16; lfo.connect(dep); dep.connect(g.gain); lfo.start(now + 0.15);
     am = {g, dep, lfo};
   } else pump.connect(keys);
-  const bassBus = bus(1, 0.03);   // bass stays dry so the reverb doesn't get muddy
+  const bassBus = bus(1, 0.03), bassIn = actx.createGain(); bassIn.gain.value = sty.bassv || 1; bassIn.connect(bassBus);   // bass stays dry so the reverb doesn't get muddy
   // tape wow: a slow wobble in pitch shared by every melodic note (plus a faster, tiny flutter)
   const wow = actx.createGain(); wow.gain.value = 1;
   const wl = actx.createOscillator(), wg = actx.createGain(); wl.frequency.value = 0.45; wg.gain.value = sty.wow != null ? sty.wow : 9; wl.connect(wg); wg.connect(wow);
@@ -6253,7 +6254,7 @@ function lofiStart(mode){
   if (sty.amb === 'waves'){ const sw = actx.createGain(), lfo = actx.createOscillator(), depth = actx.createGain(); sw.gain.value = 0.55; lfo.frequency.value = 0.11; depth.gain.value = 0.5; lfo.connect(depth); depth.connect(sw.gain); rs.connect(rf); rf.connect(sw); sw.connect(amb); lfo.start(now); srcs.push(lfo); }
   else { rs.connect(rf); rf.connect(amb); }
   rs.start(now);
-  lofi = {mode, style, master, warm, drums, keys: pump, pump, bassBus, wow, amb, noise: nb, srcs, next: now + 0.15, step: 0, bar: 0, bpm: part.bpm, prog: lofiPick(mode, style), swap: false, timer: 0, smp: {}, am};
+  lofi = {mode, style, master, warm, drums, keys: pump, pump, bassBus, bassIn, wow, amb, noise: nb, srcs, next: now + 0.15 + delay, step: 0, bar: 0, bpm: part.bpm, prog: lofiPick(mode, style), swap: false, timer: 0, smp: {}, am};
   lofi.timer = setInterval(lofiSchedule, 200); lofiSchedule();
 }
 // focus <-> break without stopping: buses and filter glide over a few seconds, the new part starts on a fresh bar
@@ -6264,11 +6265,11 @@ function lofiMode(mode){
   glide(L.drums.gain, part.drums); glide(L.amb.gain, part.amb); glide(L.warm.frequency, part.warm);
   if (L.am){ const d = part.am ? LOFI_STYLES[L.style].am : 0; [[L.am.g.gain, 1 - d / 2], [L.am.dep.gain, d / 2]].forEach(([p, v]) => { p.cancelScheduledValues(t); p.setValueAtTime(p.value, t); p.linearRampToValueAtTime(v, t + 5); }); }
 }
-function lofiStop(){
+function lofiStop(fade = 1.2){
   const L = lofi; lofi = null; if (!L) return;
   clearInterval(L.timer);
-  try { const t = actx.currentTime; L.master.gain.cancelScheduledValues(t); L.master.gain.setValueAtTime(Math.max(0.0001, L.master.gain.value), t); L.master.gain.exponentialRampToValueAtTime(0.0001, t + 1.2);
-    setTimeout(() => { try { L.srcs.forEach(x => x.stop()); L.master.disconnect(); } catch(e){} }, 1400); } catch(e){}
+  try { const t = actx.currentTime; L.master.gain.cancelScheduledValues(t); L.master.gain.setValueAtTime(Math.max(0.0001, L.master.gain.value), t); if (fade > 3) L.master.gain.linearRampToValueAtTime(0.0001, t + fade); else L.master.gain.exponentialRampToValueAtTime(0.0001, t + fade);
+    setTimeout(() => { try { L.srcs.forEach(x => x.stop()); L.master.disconnect(); } catch(e){} }, fade * 1000 + 300); } catch(e){}
 }
 // schedules ~1.5s ahead so a backgrounded tab (timers slowed to once a second) doesn't leave gaps
 function lofiSchedule(){
@@ -6288,12 +6289,15 @@ function lofiSchedule(){
       const cur = L.mel || cands[Math.floor(cands.length / 2)], near = cands.filter(n => n !== cur && Math.abs(n - cur) <= 3);
       L.mel = near[Math.floor(Math.random() * near.length)] || cur; lofiInst(part.lead, L, L.mel, t, eighth * 8, part.leadv || 0.03); }
     // chords: once a bar, except the guitar, which comps in a syncopated rhythm
-    if (part.pad2 && st === 0) tones.forEach((m, i) => lofiInst(part.pad2, L, m, t + i * 0.01, eighth * 8, part.pad2v || 0.018));
+    if (part.pad2 && st === 0) (part.pad2root ? [root + 12, ...tones] : tones).forEach((m, i) => lofiInst(part.pad2, L, m, t + i * 0.01, eighth * 8, part.pad2v || 0.018));
     if (part.chord === 'nylon'){   // highlife-style picking: one string per eighth, sometimes a quick sixteenth after it
       const idx = [0, 2, 1, 3, 2, 1, 3, 2][st]; lofiInst('nylon', L, tones[idx % tones.length], t, eighth * 3, st % 2 ? 0.05 : 0.065);
       if (Math.random() < 0.3) lofiInst('nylon', L, tones[(idx + 1) % tones.length] + (Math.random() < 0.3 ? 12 : 0), t + eighth / 2, eighth * 2, 0.035); }
     else if (part.chord === 'bossa'){ const hits = L.bar % 2 ? [1, 4, 6] : [0, 3, 5]; if (hits.includes(st)) tones.forEach((m, i) => lofiInst('nylon', L, m, t + i * 0.014, eighth * 2, 0.04)); }
     else if (part.chord === 'piano'){ if (st === 0 || (st === 3 && Math.random() < 0.55) || (st === 6 && Math.random() < 0.25)) tones.forEach((m, i) => lofiInst('piano', L, m, t + i * 0.008, eighth * (st ? 2.5 : 4), st ? 0.03 : 0.042)); }
+    else if (part.chord === 'bloomarp'){   // a guitarist picking through the chord, never quite on the same pattern twice
+      if (st === 0) lofiInst('steel', L, tones[0], t, eighth * 4, 0.1);
+      else if (Math.random() < 0.32){ const n = tones[Math.floor(Math.random() * tones.length)] + (Math.random() < 0.25 ? 12 : 0); lofiInst('steel', L, n, t + Math.random() * 0.02, eighth * 3, 0.06 + Math.random() * 0.04); } }
     else if (part.chord === 'chiparp'){ for (let k = 0; k < 2; k++) lofiInst('chip', L, tones[(st * 2 + k) % tones.length] + 12, t + k * eighth / 2, eighth * 0.45, 0.016); }
     else if (part.chord === 'guitar'){ if (st === 0 || st === 3 || (st === 6 && Math.random() < 0.5)) tones.forEach((m, i) => lofiInst('guitar', L, m, t + i * 0.018, eighth * 1.2, 0.05)); }
     else if (part.chord === 'vibes'){ if (st === 0 || st === 5) tones.forEach(m => lofiInst('vibes', L, m, t, eighth * 2, 0.032)); }
@@ -6301,7 +6305,7 @@ function lofiSchedule(){
     // bass
     const bp = LOFI_BASS_PAT[part.bass], nextRoot = L.prog[(L.bar + 1) % 4][0] + sty.key;
     if (bp){ for (const [s0, semi, len, pr] of bp) if (s0 === st && (pr == null || Math.random() < pr)){
-      const n = semi === 'walk' ? nextRoot + (Math.random() < 0.5 ? -1 : 1) : root + semi; lofiBass(part.bassSnd || 'round', L, n - 12 + (n - 12 < 28 ? 12 : 0), t, eighth * len); } }
+      const n = semi === 'walk' ? nextRoot + (Math.random() < 0.5 ? -1 : 1) : root + semi; lofiBass(part.bassSnd || 'round', L, n - 12 + (n - 12 < (part.bassFloor || 28) ? 12 : 0), t, eighth * len); } }
     const bassAt = bp ? [] : ({round: [0, 5], pluck: [0, 3, 5], sub: [0, 6]}[part.bass] || [0]);
     if (bassAt.includes(st)) lofiBass(part.bass, L, root - 12 + (root < 40 ? 12 : 0), t, eighth * (part.bass === 'sub' ? (st === 0 ? 5.5 : 2) : part.bass === 'pluck' ? (st === 0 ? 2.5 : 1.8) : st === 0 ? 4.8 : 2.8));
     // lead: an arpeggio walking the chord, or loose melody notes
@@ -6325,6 +6329,13 @@ function lofiBeat(kind, L, st, t){
     if (st === 0 || (st === 5 && Math.random() < 0.5)) lofiKick(L, t, 95, 0.34);
     if (st === 4) lofiNoise(L, t, 0.05, 'bandpass', 2800, 0.12);
     lofiNoise(L, t, 0.07, 'bandpass', 5500, st % 2 ? 0.025 : 0.04);
+  } else if (kind === 'afrohop'){   // boom-bap with an afro lilt: a punchy kick and snare, swung hats, shaker and congas, all slightly loose
+    const e = 60 / L.bpm / 2, j = () => t + (Math.random() - 0.5) * 0.012;
+    if (st === 0 || (st === 3 && Math.random() < 0.6) || (st === 5 && Math.random() < 0.3)) lofiKickBB(L, j(), st ? 0.3 : 0.4);
+    if (st === 2 || st === 6) lofiSnare(L, j(), 0.3); else if (Math.random() < 0.12) lofiSnare(L, j() + e / 2, 0.06);
+    lofiHat(L, j(), st % 2 ? 0.035 : 0.055, st === 7 && Math.random() < 0.35); if (Math.random() < 0.6) lofiHat(L, t + e / 2 + e * 0.17, 0.022);
+    for (let k = 0; k < 2; k++) lofiNoise(L, t + k * e / 2, 0.035, 'bandpass', 7500, k ? 0.016 : 0.01);
+    if (st === 7 && Math.random() < 0.5) lofiConga(L, j(), 330, 0.12, true); if (st === 1 && Math.random() < 0.4) lofiConga(L, j() + e / 2, 220, 0.12);
   } else if (kind === 'afro' || kind === 'afrosoft'){   // tresillo kick, shaker sixteenths, congas, a rim on 2 and 4
     const soft = kind === 'afrosoft', e = 60 / L.bpm / 2;
     if (!soft && (st === 0 || st === 3 || st === 6)) lofiKick(L, t, 105, st ? 0.26 : 0.32);
@@ -6332,11 +6343,12 @@ function lofiBeat(kind, L, st, t){
     for (let k = 0; k < 2; k++) lofiNoise(L, t + k * e / 2, 0.04, 'highpass', 6500, (k ? 0.035 : 0.02) * (soft ? 0.7 : 1));
     if (st === 5 || (st === 1 && Math.random() < 0.6)) lofiConga(L, t + (st === 1 ? e / 2 : 0), 330, soft ? 0.12 : 0.17, st === 1);
     if (st === 7 || (st === 6 && Math.random() < 0.4)) lofiConga(L, t + (st === 6 ? e / 2 : 0), 220, soft ? 0.12 : 0.18);
-  } else if (kind === 'bloom'){   // a soft low tom, now and then a wooden tick
-    if (st === 0 || (st === 5 && Math.random() < 0.35)) lofiTom(L, t, st ? 0.16 : 0.22);
-    if (Math.random() < 0.12) lofiNoise(L, t, 0.025, 'bandpass', 2300, 0.05);
-    if (st === 0 && L.bar % 2 === 0) lofiNoise(L, t, 2.2, 'bandpass', 6000, 0.02);
-    if (Math.random() < 0.18) lofiInst('kalimba', L, [74, 76, 79, 81, 83, 86][Math.floor(Math.random() * 6)] + LOFI_STYLES[L.style].key, t + Math.random() * 0.1, 0.5, 0.012);
+  } else if (kind === 'bloom'){   // hand percussion: a felted low drum, a soft shaker, a rim click, a hand drum answering
+    const e = 60 / L.bpm / 2, j = () => t + (Math.random() - 0.5) * 0.014;
+    if (st === 0 || (st === 5 && Math.random() < 0.45) || (st === 3 && Math.random() < 0.2)) lofiKickBB(L, j(), st ? 0.13 : 0.19, true);
+    for (let k = 0; k < 2; k++) lofiNoise(L, j() + k * e / 2, 0.05, 'bandpass', 5500, (k ? 0.13 : 0.08) * (0.7 + Math.random() * 0.6));
+    if ((st === 2 || st === 6) && Math.random() < 0.7) lofiNoise(L, j(), 0.035, 'bandpass', 2800, 0.16);
+    if ((st === 7 || st === 4) && Math.random() < 0.3) lofiConga(L, j(), st === 7 ? 200 : 260, 0.1);
   } else if (kind === 'pulse' || kind === 'pulsesoft'){   // a felt kick that makes everything breathe, ticks on the beat
     const soft = kind === 'pulsesoft';
     if (st === 0 || st === 4){ if (soft) lofiPump(L, t); else lofiKick(L, t, 70, 0.22); }
@@ -6398,10 +6410,10 @@ function lofiInst(kind, L, m, t, dur, vol){
     const a = osc('square', f), vib = osc('sine', 5), vg = actx.createGain(); vg.gain.value = 4; vib.connect(vg); vg.connect(a.frequency); a.connect(lp);
     out.gain.setValueAtTime(0.0001, t); out.gain.exponentialRampToValueAtTime(vol * 0.5, t + 0.03); out.gain.exponentialRampToValueAtTime(vol * 0.3, t + 0.3); out.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.2);
     run([a, vib], t + dur + 0.3);
-  } else if (kind === 'nylon' || kind === 'piano' || kind === 'marimba'){   // rendered once per note (plucked string, hammered string, struck bar), then reused
+  } else if (kind === 'nylon' || kind === 'piano' || kind === 'marimba' || kind === 'steel'){   // rendered once per note (plucked string, hammered string, struck bar), then reused
     const s = actx.createBufferSource(); s.buffer = lofiSample(L, kind, m); if (s.detune) L.wow.connect(s.detune); s.connect(out);
     const ring = kind === 'piano' ? Math.max(dur, 0.6) + 0.4 : s.buffer.duration;
-    out.gain.setValueAtTime(vol * (kind === 'marimba' ? 1.6 : 1.4), t); if (kind === 'piano'){ out.gain.setValueAtTime(vol * 1.4, t + ring - 0.35); out.gain.linearRampToValueAtTime(0.0001, t + ring); }
+    out.gain.setValueAtTime(vol * (kind === 'marimba' ? 1.6 : 1.4) * (0.85 + Math.random() * 0.3), t); if (kind === 'piano'){ out.gain.setValueAtTime(vol * 1.4, t + ring - 0.35); out.gain.linearRampToValueAtTime(0.0001, t + ring); }
     s.start(t); s.stop(t + Math.min(ring, s.buffer.duration) + 0.02);
   } else if (kind === 'bloompad'){   // layered: two detuned saws breathing through a filter, a sine an octave down, a little air on top
     const lp = actx.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 0.4; lp.frequency.setValueAtTime(1400, t); lp.frequency.linearRampToValueAtTime(3200, t + dur * 0.5); lp.frequency.linearRampToValueAtTime(1600, t + dur + 2); lp.connect(out);
@@ -6409,6 +6421,11 @@ function lofiInst(kind, L, m, t, dur, vol){
     a.connect(lp); b.connect(lp); sub.connect(sg); sg.connect(out); air.connect(ag); ag.connect(out);
     out.gain.setValueAtTime(0.0001, t); out.gain.exponentialRampToValueAtTime(vol, t + 1.4); out.gain.setValueAtTime(vol, t + dur); out.gain.exponentialRampToValueAtTime(0.0001, t + dur + 2.6);
     run([a, b, sub, air], t + dur + 2.7);
+  } else if (kind === 'warmpad'){   // soft and round, like strings far off: a few quiet harmonics, each doubled a hair apart, slow in and out
+    const lp = actx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2200; lp.Q.value = 0.3; lp.connect(out); const nodes = [];
+    for (const [h, a] of [[1, 1], [2, 0.32], [3, 0.12], [4, 0.05]]) for (const d of [-5, 5]){ const o = osc('sine', f * h, d), g = actx.createGain(); g.gain.value = a * 0.5; o.connect(g); g.connect(lp); nodes.push(o); }
+    out.gain.setValueAtTime(0.0001, t); out.gain.exponentialRampToValueAtTime(vol, t + 1.6); out.gain.setValueAtTime(vol, t + dur); out.gain.exponentialRampToValueAtTime(0.0001, t + dur + 2.5);
+    run(nodes, t + dur + 2.6);
   } else if (kind === 'lockpad'){   // very slow, smooth pad: sine and soft triangle, with a filter that drifts over half a minute
     const lp = actx.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 0.3; lp.frequency.setValueAtTime(900, t); lp.frequency.linearRampToValueAtTime(1600, t + dur * 0.5); lp.frequency.linearRampToValueAtTime(1000, t + dur + 6); lp.connect(out);
     const a = osc('sine', f), b = osc('triangle', f, 5), c = osc('triangle', f, -5); a.connect(out); b.connect(lp); c.connect(lp);
@@ -6441,7 +6458,7 @@ function lofiInst(kind, L, m, t, dur, vol){
   }
 }
 function lofiBass(kind, L, m, t, dur){
-  const o = actx.createOscillator(), g = actx.createGain(); g.connect(L.bassBus);
+  const o = actx.createOscillator(), g = actx.createGain(); g.connect(L.bassIn || L.bassBus);
   if (kind === 'pluck'){   // a bouncy picked bass
     const lp = actx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.setValueAtTime(900, t); lp.frequency.exponentialRampToValueAtTime(220, t + 0.2);
     o.type = 'sawtooth'; o.frequency.value = midiHz(m); o.connect(lp); lp.connect(g);
@@ -6480,6 +6497,16 @@ function lofiNoise(L, t, dur, type, freq, vol){
   n.connect(f); f.connect(g); g.connect(L.drums); n.start(t, Math.random() * 0.5); n.stop(t + dur + 0.02);
 }
 
+function lofiKickBB(L, t, vol, felt){   // a hip-hop kick: a body that drops in pitch, a click on top, ducking the music a little
+  const o = actx.createOscillator(), g = actx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(felt ? 120 : 160, t); o.frequency.exponentialRampToValueAtTime(felt ? 62 : 46, t + 0.11);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.004); g.gain.exponentialRampToValueAtTime(vol * 0.4, t + 0.12); g.gain.exponentialRampToValueAtTime(0.0001, t + (felt ? 0.38 : 0.5));
+  o.connect(g); g.connect(L.drums); o.start(t); o.stop(t + 0.55); if (!felt) lofiNoise(L, t, 0.012, 'highpass', 2500, vol * 0.25);
+  for (const pg of [L.pump.gain, L.bassBus.gain]){ pg.setValueAtTime(1, t); pg.linearRampToValueAtTime(felt ? 0.85 : 0.65, t + 0.02); pg.linearRampToValueAtTime(1, t + 0.3); } }
+function lofiSnare(L, t, vol){   // a snare: a short tone for the shell, a burst of filtered noise for the wires
+  const o = actx.createOscillator(), g = actx.createGain(); o.type = 'triangle'; o.frequency.setValueAtTime(220, t); o.frequency.exponentialRampToValueAtTime(170, t + 0.06);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol * 0.5, t + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.12); o.connect(g); g.connect(L.drums); o.start(t); o.stop(t + 0.15);
+  lofiNoise(L, t, 0.2, 'bandpass', 1900, vol * 0.55); lofiNoise(L, t, 0.09, 'highpass', 5000, vol * 0.3); }
+function lofiHat(L, t, vol, open){ lofiNoise(L, t, open ? 0.28 : 0.035, 'highpass', 7500, vol); }
 function lofiPump(L, t){ for (const pg of [L.pump.gain, L.bassBus.gain]){ pg.setValueAtTime(1, t); pg.linearRampToValueAtTime(0.7, t + 0.03); pg.linearRampToValueAtTime(1, t + 0.4); } }
 function lofiConga(L, t, hz, vol, slap){   // a hand drum: a pitched thump that bends down a little, with a slap on top for the high one
   const o = actx.createOscillator(), g = actx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(hz * 1.15, t); o.frequency.exponentialRampToValueAtTime(hz, t + 0.03);
@@ -6490,8 +6517,13 @@ function lofiTom(L, t, vol){ const o = actx.createOscillator(), g = actx.createG
 // real-sounding instruments, worked out sample by sample the first time a note is needed
 function lofiSample(L, kind, m){
   const key = kind + m; if (L.smp[key]) return L.smp[key];
-  const sr = actx.sampleRate, f = midiHz(m), len = Math.floor(sr * ({piano: 2.6, upright: 1.6, marimba: 1.1, nylon: 1.8}[kind])), b = actx.createBuffer(1, len, sr), y = b.getChannelData(0);
-  if (kind === 'nylon' || kind === 'upright'){   // Karplus-Strong: a burst of noise circulating through a damped delay the length of one period
+  const sr = actx.sampleRate, f = midiHz(m), len = Math.floor(sr * ({piano: 2.6, upright: 1.6, marimba: 1.1, nylon: 1.8, steel: 2.4}[kind])), b = actx.createBuffer(1, len, sr), y = b.getChannelData(0);
+  if (kind === 'steel'){   // a steel-string acoustic: two bright plucked strings a few cents apart, longer ring
+    for (const det of [1, 1.0018]){ const ff = f * det, d = sr / ff - 0.5, N = Math.ceil(d) + 2, decay = Math.pow(0.5, 1 / (ff * 1.6)), tmp = new Float32Array(len); let lp = 0;
+      for (let i = 0; i < N && i < len; i++){ lp += 0.75 * ((Math.random() * 2 - 1) - lp); tmp[i] = lp; }
+      for (let i = N; i < len; i++){ const p = i - d, i0 = Math.floor(p), fr = p - i0; tmp[i] = decay * 0.5 * ((tmp[i0] * (1 - fr) + tmp[i0 + 1] * fr) + (tmp[i0 - 1] * (1 - fr) + tmp[i0] * fr)); }
+      for (let i = 0; i < len; i++) y[i] += tmp[i]; }
+  } else if (kind === 'nylon' || kind === 'upright'){   // Karplus-Strong: a burst of noise circulating through a damped delay the length of one period
     const d = sr / f - 0.5, N = Math.ceil(d) + 2, decay = kind === 'upright' ? 0.992 : Math.pow(0.5, 1 / (f * 1.1)), bright = kind === 'upright' ? 0.18 : 0.42; let lp = 0;
     for (let i = 0; i < N && i < len; i++){ lp += bright * ((Math.random() * 2 - 1) - lp); y[i] = lp; }
     for (let i = N; i < len; i++){ const p = i - d, i0 = Math.floor(p), fr = p - i0; y[i] = decay * 0.5 * ((y[i0] * (1 - fr) + y[i0 + 1] * fr) + (y[i0 - 1] * (1 - fr) + y[i0] * fr)); }
