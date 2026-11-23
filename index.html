@@ -928,7 +928,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '414ce97789';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '938205771e';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -6088,6 +6088,7 @@ async function goUpdate(v, manual){
 async function checkForUpdate(opts = {}){
   if (!PAGES || BUILD.startsWith('/*') || recoveryMode) return;
   const sh = document.getElementById('sheet'); if (!opts.manual && sh && !sh.hidden) return;   // never reload while you're editing something; it checks again next time
+  if (!opts.manual && updateBusy()){ updateWaiting = true; return; }   // never reload in the middle of a focus session, music or Sleep Mode; it loads once they're done
   try {
     const r = await fetch('version.json?t=' + Date.now(), {cache:'no-store'}); if (!r.ok) return;
     const v = (await r.json()).build;
@@ -6097,7 +6098,9 @@ async function checkForUpdate(opts = {}){
     else if (opts.manual) toast('You’re on the newest version.');
   } catch(e){}
 }
-if (PAGES){ setInterval(checkForUpdate, 30 * 60 * 1000); setTimeout(checkForUpdate, 3000); }
+var updateWaiting = false;
+function updateBusy(){ try { return !!(lofi || (typeof sleepRun !== 'undefined' && sleepRun) || (S.pomo && S.pomo.run && !S.pomo.run.idle)); } catch(e){ return false; } }
+if (PAGES){ setInterval(checkForUpdate, 30 * 60 * 1000); setTimeout(checkForUpdate, 3000); setInterval(() => { if (updateWaiting && !updateBusy()){ updateWaiting = false; checkForUpdate(); } }, 15000); }
 if (PAGES){ document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { checkForUpdate(); gistPull(); } }); window.addEventListener('online', () => gistPull()); if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {}); }
 initCloud().finally(() => { if (migratedNow){ migratedNow = false; save(); render(); } });
 
