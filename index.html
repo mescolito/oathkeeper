@@ -740,17 +740,23 @@ html[data-mode="dark"] .pkcard{background:rgba(48,46,43,.94);box-shadow:0 14px 4
 .pkgrid button{aspect-ratio:1;border:0;border-radius:12px;background:var(--track);color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer;font:inherit;font-size:11px;font-weight:700}
 .pkgrid button.on{background:var(--ink);color:var(--inv)}
 html .pkemoji{border:0 !important;background:var(--track) !important;width:auto;margin:2px 4px 6px;border:0;border-radius:12px;background:var(--track);font:inherit;font-size:15px;color:var(--ink);padding:9px 12px}
-.qa{position:fixed;inset:0;z-index:35;background:rgba(15,14,12,.3)}
+.qa{position:fixed;inset:0;z-index:35;background:rgba(15,14,12,.28);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 .qa[hidden]{display:none}
-.qabar{position:fixed;left:0;right:0;bottom:0;margin:0 auto;max-width:460px;background:var(--card);border-radius:22px 22px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;box-shadow:0 -10px 30px rgba(0,0,0,.18)}
-html[data-mode="dark"] .qabar{background:#23211e}
-.qabar input{border:0;background:transparent;font:inherit;font-size:17px;padding:4px 2px;color:var(--ink);outline:none;width:100%}
-.qarow{display:flex;align-items:center;gap:8px}
-.qachips{display:flex;gap:6px;overflow-x:auto;flex:1;scrollbar-width:none}
+/* quick add: a floating rounded card that rides on top of the keyboard, Tiimo style */
+.qabar{position:fixed;left:10px;right:10px;bottom:10px;margin:0 auto;max-width:460px;background:rgba(255,252,246,.96);border-radius:34px;padding:22px 20px 18px 24px;display:flex;flex-direction:column;gap:20px;box-shadow:0 10px 40px rgba(0,0,0,.25);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+html[data-mode="dark"] .qabar{background:rgba(44,42,39,.94);box-shadow:0 10px 40px rgba(0,0,0,.55)}
+html .qabar input[type=text]{border:0;background:transparent;border-radius:0;font-family:'Fraunces',Georgia,serif;font-size:24px;font-weight:500;letter-spacing:-.01em;padding:0;color:var(--ink);outline:none;width:100%;box-shadow:none}
+html .qabar input[type=text]::placeholder{color:var(--muted);opacity:.75}
+.qarow{display:flex;align-items:center;gap:12px}
+.qarow input{flex:1;min-width:0}
+.qachips{display:flex;gap:7px;align-items:center;overflow-x:auto;scrollbar-width:none}
 .qachips::-webkit-scrollbar{display:none}
-.qachip{flex:none;display:inline-flex;align-items:center;gap:5px;border:0;border-radius:999px;background:var(--track);color:var(--ink);font:inherit;font-size:11px;font-weight:700;letter-spacing:.04em;padding:7px 10px;cursor:pointer;white-space:nowrap}
-.qachip.more{padding:7px 9px}
-.qasend{flex:none;width:36px;height:36px;border-radius:50%;border:0;background:var(--ink);color:var(--inv);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.qachip{flex:none;display:inline-flex;align-items:center;gap:7px;border:0;border-radius:999px;background:var(--track);color:var(--ink);font:inherit;font-size:12.5px;font-weight:700;letter-spacing:.05em;padding:0 14px;height:42px;cursor:pointer;white-space:nowrap}
+html[data-mode="dark"] .qachip{background:#1c1b19}
+.qachip.more{padding:0 13px}
+.qachip.stat{padding:0;width:42px;height:42px;justify-content:center;background:var(--sc) !important;color:#171614}
+.qasend{flex:none;width:48px;height:48px;border-radius:50%;border:0;background:var(--ink);color:var(--inv);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:opacity .15s}
+.qasend:disabled{opacity:.3;cursor:default}
 .sheet.full{align-items:stretch}
 .sheet.full .panel{max-height:100%;height:100%;border-radius:0;padding-top:calc(10px + env(safe-area-inset-top));padding-bottom:0;gap:12px}
 .sheet.full .panel > :last-child:not(.edfoot){margin-bottom:28px}
@@ -843,7 +849,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '5261de800a';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '879c37759f';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -3204,7 +3210,7 @@ const ICON = {
   move:'<rect x="3" y="5" width="13" height="14" rx="2.5"/><path d="M12 12h9M18 9l3 3-3 3"/>',
   trash:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12M9 7V4h6v3"/>',
   dots:'<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>',
-  up:'<path d="M12 19V5M6 11l6-6 6 6"/>',
+  send:'<path d="M12 20V4M5 11l7-7 7 7"/>',
   note:'<path d="M5 4h14v16H5z"/><path d="M9 9h6M9 13h6M9 17h3"/>',
   MGT:'<path d="M6 8v8M18 8v8M3 10v4M21 10v4M6 12h12"/>',
   STA:'<path d="M3 12h4l2-4 3 8 2-4h7"/>',
@@ -3730,7 +3736,6 @@ function renderTodo(){
   }).join('');
   const left = L.items.filter(it => !it.doneOn).length;
   const menu = todoMenu ? `<div class="card tdmenu">
-      <button class="btn" data-todoedit>${todoEdit ? 'Done editing' : 'Edit to-dos (add or remove steps)'}</button>
       ${todoRename ? `<form class="addrow" data-renamelist="${esc(L.id)}"><input type="text" id="renameList" maxlength="40" value="${esc(L.name)}" aria-label="List name"><button class="btn primary" type="submit">Save</button></form>` : `<button class="btn" data-todorename>Rename list</button>`}
       <div class="row" style="gap:8px"><button class="btn" data-todomove="-1" ${vis[0] === L ? 'disabled' : ''}>Move left</button><button class="btn" data-todomove="1" ${vis[vis.length-1] === L ? 'disabled' : ''}>Move right</button></div>
       <button class="btn danger" data-dellist="${esc(L.id)}">${todoDelArm === L.id ? 'Tap again to delete this list' : 'Delete list'}</button>
@@ -5088,22 +5093,22 @@ const mainStatGuess = () => { const n = {}; for (const t of S.tasks) if (!t.arch
 function openQuickAdd(spec){
   const [kind, a, b] = spec.split('|');
   qaCtx = kind === 'todo' ? {kind, lid: a, pri: PRI.some(p => p[0] === b) ? b : 'none'} : {kind, cad: a === 'week' ? 'week' : 'day', tod: TOD_KEYS.includes(b) ? b : 'any', rep: 'day', target: 3, stat: qaCtx && qaCtx.stat || mainStatGuess()};
-  renderQuickAdd(''); setTimeout(() => { const i = document.getElementById('qaText'); if (i) i.focus(); }, 30);
+  renderQuickAdd(''); const i = document.getElementById('qaText'); if (i) i.focus({preventScroll: true});   // focus inside the tap so the keyboard comes up
 }
 function renderQuickAdd(text){
   const qa = document.getElementById('qa'); if (!qaCtx){ qa.hidden = true; return; }
-  const c = qaCtx, chip = (k, icon, label) => `<button type="button" class="qachip" data-pk="qa.${k}">${icon ? svg(icon, 14, 2.2) : ''}<span>${label}</span>${svg('down', 12, 2.6)}</button>`;
+  const c = qaCtx, chip = (k, icon, label) => `<button type="button" class="qachip" data-pk="qa.${k}">${icon ? svg(icon, 16, 2.2) : ''}<span>${label}</span></button>`;
   let chips = '', ph = '';
   if (c.kind === 'todo'){ const L = S.todos.lists.find(x => x.id === c.lid), p = PRI.find(x => x[0] === c.pri);
     ph = `Add to ${L ? L.name : 'list'}`; chips = chip('pri', null, `${p[2] ? p[2] + ' ' : ''}${p[0] === 'none' ? 'TO-DO' : p[1].toUpperCase()}`); }
   else { const g = TODS.find(x => x.k === c.tod);
     ph = c.cad === 'week' ? 'A habit to build' : "What's next?";
-    chips = (c.cad === 'day' ? chip('tod', g.icon, g.label.toUpperCase()) + chip('rep', 'reroll', QA_REP.find(r => r[0] === c.rep)[1].toUpperCase()) : chip('target', 'reroll', `${c.target}× A WEEK`)) + chip('stat', null, `★ ${esc(STATS[c.stat].name).toUpperCase()}`); }
-  qa.innerHTML = `<form class="qabar" data-qasubmit autocomplete="off"><input type="text" id="qaText" maxlength="${c.kind === 'todo' ? 80 : 40}" placeholder="${esc(ph)}" value="${esc(text || '')}" aria-label="${esc(ph)}">
-    <div class="qarow"><div class="qachips">${chips}<button type="button" class="qachip more" data-qamore aria-label="More settings">${svg('dots', 16, 2.4)}</button></div><button type="submit" class="qasend" aria-label="Add">${svg('up', 18, 2.8)}</button></div></form>`;
+    chips = (c.cad === 'day' ? chip('tod', g.icon, g.label.toUpperCase()) + chip('rep', 'reroll', ({day: 'DAILY', weekdays: 'WEEKDAYS', weekends: 'WEEKENDS'})[c.rep]) : chip('target', 'reroll', `${c.target}× A WEEK`)) + `<button type="button" class="qachip stat" data-pk="qa.stat" style="--sc:${STATS[c.stat].c}" aria-label="Trains ${esc(STATS[c.stat].name)}">${svg(c.stat, 16, 2.2)}</button>`; }
+  qa.innerHTML = `<form class="qabar" data-qasubmit autocomplete="off"><div class="qarow"><input type="text" id="qaText" maxlength="${c.kind === 'todo' ? 80 : 40}" placeholder="${esc(ph)}" value="${esc(text || '')}" aria-label="${esc(ph)}"><button type="submit" class="qasend" aria-label="Add" ${(text || '').trim() ? '' : 'disabled'}>${svg('send', 22, 2.4)}</button></div>
+    <div class="qachips">${chips}<button type="button" class="qachip more" data-qamore aria-label="More settings">${svg('dots', 16, 2.4)}</button></div></form>`;
   qa.hidden = false; qaPlace();
 }
-function qaPlace(){ const bar = document.querySelector('#qa .qabar'); if (!bar) return; const vv = window.visualViewport; const off = vv ? Math.max(0, innerHeight - vv.height - vv.offsetTop) : 0; bar.style.bottom = off + 'px'; }
+function qaPlace(){ const bar = document.querySelector('#qa .qabar'); if (!bar) return; const vv = window.visualViewport; const off = vv ? Math.max(0, innerHeight - vv.height - vv.offsetTop) : 0; bar.style.bottom = (off + 10) + 'px'; }
 if (window.visualViewport){ visualViewport.addEventListener('resize', qaPlace); visualViewport.addEventListener('scroll', qaPlace); }
 function closeQuickAdd(){ qaCtx = null; document.getElementById('qa').hidden = true; }
 function qaToDraft(name, c = qaCtx){ const d = {id: 't' + Date.now().toString(36), name, stats: [c.stat], cad: c.cad, target: c.target || 3, created: D.today, isNew: true, days: [0,1,2,3,4,5,6]};
@@ -5528,6 +5533,8 @@ document.addEventListener('keydown', e => { if (e.key !== 'Escape') return; if (
 document.getElementById('qm').addEventListener('click', e => { if (e.target.id === 'qm') closeQuick(); });
 document.getElementById('qa').addEventListener('click', e => { if (e.target.id === 'qa' && !pkCtx) closeQuickAdd(); });
 document.getElementById('pk').addEventListener('click', e => { if (e.target.id === 'pk') closePick(); });
+// the quick-add send button stays gray until there's a title
+document.getElementById('qa').addEventListener('input', e => { if (e.target.id !== 'qaText') return; const b = document.querySelector('#qa .qasend'); if (b) b.disabled = !e.target.value.trim(); });
 // the emoji box inside the icon picker
 document.getElementById('pk').addEventListener('input', e => { if (e.target.id !== 'pkEmoji') return;
   const tmr = pkCtx && pkCtx.key === 'tm.icon', dr = tmr ? mdraft : draft; if (!dr) return; if (tmr) readTimerFields(); else readEditorFields(); const v = e.target.value.trim();
