@@ -643,6 +643,22 @@ html[data-mode="dark"] .pill.rite{background:#f1eee4;color:#171614}
 .tdplus svg{width:14px;height:14px}
 .clhead{min-height:34px;padding:4px 18px 4px 10px;font-size:12px}
 .cl .clitem{font-size:13.5px}
+/* checklist inside a task card: stays within the card, steps line up under the name, boxes centre under the check circle */
+.trow .check,.tditem .check{width:26px;height:26px;justify-self:center}
+.trow .check svg,.tditem .check svg{width:13px;height:13px}
+.cl{margin:6px 0 -2px;border-top:1px solid var(--line);border-radius:0;overflow:visible}
+.cllist{padding:4px 0 0}
+.trow .cl .clitem{grid-template-columns:1fr 30px;gap:10px;min-height:42px;padding-left:44px}
+.cl .clcheck{width:22px;height:22px;margin:0;border-radius:6px;border-width:1.75px;justify-self:center}
+.cl .clcheck svg{width:12px;height:12px}
+.clhead{display:grid;grid-template-columns:34px auto 1fr 30px;gap:10px;align-items:center;min-height:34px;padding:6px 0 2px}
+.clhead .pbar{width:34px;height:6px;flex:none}
+.clhead .cln{justify-self:start}
+.clhead .clchev{grid-column:4;justify-self:center;margin:0}
+.tditem .cl .clitem.td{padding-left:29px}
+.tditem .cl .clitem.td.grab{padding-left:0}
+.cl .clitem.td .clcheck{margin:0 4px 0 6px}
+.tditem .stepadd{padding-left:29px}
 .rr{gap:8px;margin-top:4px}
 .rrbtn{padding:5px 10px;font-size:11.5px;min-height:0}
 .rrmore{font-size:11.5px;min-height:0;padding:4px 2px}
@@ -789,7 +805,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '7e9671676f';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'cd12129bf8';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
