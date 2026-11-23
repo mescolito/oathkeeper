@@ -229,7 +229,7 @@ html[data-mode="dark"] .statlv .plus{color:#b9d98a}
 html[data-mode="dark"]{--bg:#141312;--card:#1f1d1a;--ink:#f1ede4;--muted:#a59f92;--line:#2d2a26;--track:#34312c;--inv:#171614;--hpc:#e98a9a;color-scheme:dark}
 html[data-mode="dark"] .navin{background:#141312;box-shadow:0 0 0 1px #2d2a26,0 12px 30px rgba(0,0,0,.5)}
 html[data-mode="dark"] .navin button[aria-current="page"]{color:#fff}
-html[data-mode="dark"] .navin .fab{box-shadow:0 0 0 6px var(--bg)}
+html[data-mode="dark"] .navin .fab{box-shadow:0 0 0 6px var(--bg);color:var(--bg)}
 html[data-mode="dark"] .goldpill,html[data-mode="dark"] .seg,html[data-mode="dark"] .count,html[data-mode="dark"] .btn.primary,html[data-mode="dark"] .chip-weak,html[data-mode="dark"] .float,html[data-mode="dark"] .toast,html[data-mode="dark"] .assist .pillbtn,html[data-mode="dark"] .catpill.on,html[data-mode="dark"] .iconpick.on{color:var(--inv)}
 html[data-mode="dark"] .seg button{color:#77716a}
 html[data-mode="dark"] .seg button.on{background:var(--bg);color:var(--ink)}
@@ -660,6 +660,9 @@ html[data-mode="dark"] .pill.rite{background:#f1eee4;color:#171614}
 .mystery.tmnote{background:var(--pink)}
 .mystery.tmnote .ntext{flex:1 1 calc(100% - 34px)}
 .pkcustom{display:flex;gap:6px;padding:4px 4px 6px}
+.pkswatch{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;padding:2px 6px 8px}
+.pkswatch button{aspect-ratio:1;border:0;border-radius:50%;cursor:pointer}
+.pkswatch button.on{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--ink)}
 .pkcard.cal{width:min(300px,calc(100vw - 24px))}
 .pkcal{padding:2px 6px 6px}
 .pkcalh{display:flex;align-items:center;justify-content:space-between;padding:2px 2px 8px}
@@ -838,7 +841,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'ac57bf3cfa';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '55af85e4cf';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1530,7 +1533,7 @@ function sanitize(s, created){
     { const ev = t.every != null ? int(t.every, 0, 100000, 0) : (Array.isArray(t.miles) && t.miles.length ? Math.min(...t.miles.map(m => int(m, 1, 100000, 1))) : 0); if (ev > 0) o.every = ev; }   // older timers kept a list of milestones: the shortest becomes the interval
     if (num(t.done, 0) > 0) o.done = num(t.done, 0); if (t.finished) o.finished = true;
     if (Array.isArray(t.won)) o.won = t.won.filter(w => obj(w)).map(w => ({goal: int(w.goal, 1, 100000, 1), at: num(w.at, 0)})).slice(-50); if (num(t.deleted, 0) > 0) o.deleted = num(t.deleted, 0); if (num(t.edited, 0) > 0) o.edited = num(t.edited, 0);
-    if (typeof t.icon === 'string' && taskIconOk(t.icon)) o.icon = t.icon; if (typeof t.note === 'string' && t.note.trim()) o.note = t.note.slice(0, 500);
+    if (typeof t.icon === 'string' && taskIconOk(t.icon)) o.icon = t.icon; if (STAT_COLORS.includes(t.color)) o.color = t.color; if (typeof t.note === 'string' && t.note.trim()) o.note = t.note.slice(0, 500);
     return o; });
   out.timerLog = (Array.isArray(s.timerLog) ? s.timerLog : []).filter(x => obj(x) && typeof x.tid === 'string' && typeof x.key === 'string').map(x => { const o = {tid: str(x.tid, 40), key: str(x.key, 60), ts: num(x.ts, 0), kind: ['mile', 'goal', 'reset'].includes(x.kind) ? x.kind : 'mile'};
     if (o.kind === 'reset'){ o.cost = int(x.cost, 0, 100000, 0); o.hp = int(x.hp, 0, 100000, 0); } else { o.xp = int(x.xp, 0, 100000, 0); o.g = int(x.g, 0, 100000, 0); if (num(x.at, 0)) o.at = num(x.at, 0); if (LEGENDARY_GEAR.includes(x.leg) || x.leg === LEGENDARY_PET) o.leg = x.leg; }
@@ -3415,11 +3418,11 @@ function timerRow(tm){
   const ask = tm.done && !tm.finished;
   const icon = tm.icon ? (tm.icon.startsWith('e:') ? `<span class="temoji" aria-hidden="true">${esc(tm.icon.slice(2))}</span>` : svg(tm.icon, 17, 2)) : svg('timer', 17, 2);
   return `<div class="trow tmrow ${tm.done ? 'tmdone' : ''}" data-qm="m|${esc(tm.id)}" ${nx ? `data-tnext="${nx.at}"` : ''}>
-    <span class="ticon" style="background:var(--pink)">${icon}</span>
+    <span class="ticon" style="background:${tm.color || 'var(--pink)'}">${icon}</span>
     <span class="tbody"><span class="tname">${esc(tm.name)}${tm.note ? ` <span class="notedot" aria-label="Has notes">${svg('note',12,2.2)}</span>` : ''}</span><span class="tmeta">${meta}</span></span>
     <span class="tmbadge" aria-hidden="true">${tm.done ? svg('check', 14, 3) : ''}</span>
     <div class="tmclock" data-tstart="${tm.start}" data-tend="${tm.done || 0}">${clockHTML(el)}</div>
-    ${tm.goal ? `<div class="wk tmwk">${bar(pct, 'var(--pink)')}<span class="wkn"><b>${Math.floor(Math.min(el, tm.goal * DAY_MS) / DAY_MS)}</b> of ${tm.goal} days</span></div>` : ''}
+    ${tm.goal ? `<div class="wk tmwk">${bar(pct, tm.color || 'var(--pink)')}<span class="wkn"><b>${Math.floor(Math.min(el, tm.goal * DAY_MS) / DAY_MS)}</b> of ${tm.goal} days</span></div>` : ''}
     ${ask ? `<div class="tmask"><span>Goal reached! Keep it counting?</span><span class="row" style="gap:6px"><button class="btn sm" data-tmfinish="${esc(tm.id)}">Finish</button><button class="btn sm primary" data-tmkeep="${esc(tm.id)}">Keep counting</button></span></div>` : ''}
   </div>`;
 }
@@ -4845,7 +4848,7 @@ function pickOpts(key){
     if (k === 'goal') return {title: 'Goal (days)', num: {val: t.goal || '', ph: 'Days, like 75'}, opts: [pkOpt(0, 'None', !t.goal, null, {sub: 'Counts up forever'})]};
     if (k === 'every') return {title: 'Milestone every', num: {val: t.every || '', ph: 'Days, like 7'}, opts: [pkOpt(0, 'None', !t.every, null, {sub: 'No milestone rewards'})]};
     if (k === 'start') return {title: 'Started', cal: {sel: calKey(t.start), max: calKey(Date.now()), today: calKey(Date.now()), time: true}};   // timers run on the clock, not the day rollover
-    if (k === 'icon') return {title: 'Icon', grid: true}; }
+    if (k === 'icon') return {title: 'Icon', grid: true, colors: true}; }
   return null;
 }
 function renderPick(){
@@ -4855,6 +4858,7 @@ function renderPick(){
   let html = `<div class="pkh">${esc(P.title)}</div>`;
   if (P.grid){ const tmr = pkCtx.key === 'tm.icon', t = tmr ? mdraft : draft, pre = tmr ? 'tm.icon' : 't.icon';
     html += `<div class="pkgrid"><button data-pick="${pre}|" class="${!t.icon ? 'on' : ''}" aria-pressed="${!t.icon}" aria-label="${tmr ? 'Use the timer icon' : "Use the main stat's icon"}">Auto</button>${TASK_ICONS.map(ic => `<button data-pick="${pre}|${ic}" class="${t.icon === ic ? 'on' : ''}" aria-pressed="${t.icon === ic}" aria-label="Icon ${ic}">${svg(ic, 18, 2)}</button>`).join('')}</div>
+      ${P.colors ? `<div class="pkh sec">Color</div><div class="pkswatch">${STAT_COLORS.map(c => `<button data-pick="tm.color|${c}" class="${(mdraft.color || '#eeb7d8') === c ? 'on' : ''}" style="background:${c}" aria-label="Color ${c}" aria-pressed="${(mdraft.color || '#eeb7d8') === c}"></button>`).join('')}</div>` : ''}
       <input class="pkemoji" type="text" id="pkEmoji" maxlength="16" autocomplete="off" value="${t.icon && t.icon.startsWith('e:') ? esc(t.icon.slice(2)) : ''}" placeholder="Or type an emoji 🙂" aria-label="Emoji icon">`; }
   else for (const o of (P.opts || [])){
     if (o.h){ html += `<div class="pkh sec">${esc(o.h)}</div>`; continue; }
@@ -4904,6 +4908,7 @@ function applyPick(key, v){
     if (k === 'every'){ const n = parseInt(v) || 0; if (n > 0) mdraft.every = clamp(n, 1, 100000); else delete mdraft.every; }
     if (k === 'goal'){ const n = parseInt(v) || 0; if (n > 0) mdraft.goal = clamp(n, 1, 100000); else delete mdraft.goal; }
     if (k === 'icon') mdraft.icon = TASK_ICONS.includes(v) ? v : undefined;
+    if (k === 'color'){ if (STAT_COLORS.includes(v)) mdraft.color = v; renderTimerEditor(); renderPick(); return; }
     if (k === 'start' && /^\d{4}-\d{2}-\d{2}$/.test(v)){ const o = new Date(mdraft.start), [yy, mm, dd] = v.split('-').map(Number); mdraft.start = Math.min(Date.now(), new Date(yy, mm - 1, dd, o.getHours(), o.getMinutes()).getTime()); renderTimerEditor(); renderPick(); return; }
     closePick(); renderTimerEditor(); return; }
   if (ns === 't' && draft){
@@ -4976,7 +4981,7 @@ function renderTimerEditor(){
   const resets = tm && tm.resets && tm.resets.length ? tm.resets : null;
   document.getElementById('sheetBody').innerHTML = `
     <div class="edhead"><button class="edx" data-close aria-label="Close without saving">${svg('x',20,2.4)}</button><b>${t.isNew ? 'New timer' : 'Edit timer'}</b><button class="edok" data-savetimer aria-label="Save">${svg('check',20,2.8)}</button></div>
-    <div class="ednamewrap"><input class="edname" type="text" id="tmName" maxlength="40" value="${esc(t.name)}" placeholder="What are you counting?" aria-label="Name"><button type="button" class="edicon" data-pk="tm.icon" style="background:var(--pink)" aria-label="Icon">${icon}</button></div>
+    <div class="ednamewrap"><input class="edname" type="text" id="tmName" maxlength="40" value="${esc(t.name)}" placeholder="What are you counting?" aria-label="Name"><button type="button" class="edicon" data-pk="tm.icon" style="background:${t.color || 'var(--pink)'}" aria-label="Icon">${icon}</button></div>
     <div class="edcard">
       ${edRow('tm.start', 'Started', `${fmt(calKey(t.start))}${new Date(t.start).getFullYear() !== new Date().getFullYear() ? ' ' + new Date(t.start).getFullYear() : ''} · ${new Date(t.start).toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit'})}`, 'calendar')}
       ${edRow('tm.every', 'Milestones', t.every ? `Every ${t.every} day${t.every === 1 ? '' : 's'}` : 'None', 'gift')}
@@ -4992,7 +4997,7 @@ function saveTimerDraft(){
   readTimerFields(); const t = mdraft, name = (t.name || '').trim().slice(0, 40), now = Date.now();
   if (!name){ document.getElementById('tmErr').textContent = 'Give the timer a name first.'; return; }
   const base = {name, start: t.start, edited: now};
-  if (t.goal) base.goal = t.goal; if (t.every) base.every = t.every; if (taskIconOk(t.icon)) base.icon = t.icon; if (t.note && t.note.trim()) base.note = t.note.slice(0, 500);
+  if (t.goal) base.goal = t.goal; if (t.every) base.every = t.every; if (taskIconOk(t.icon)) base.icon = t.icon; if (t.note && t.note.trim()) base.note = t.note.slice(0, 500); if (STAT_COLORS.includes(t.color)) base.color = t.color;
   if (t.isNew){ S.timers.push({id: t.id, ...base, created: now, payFrom: now, resets: []}); }
   else { const tm = S.timers.find(x => x.id === t.id); if (!tm) return closeEditor();
     const moved = tm.start !== base.start;
