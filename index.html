@@ -648,20 +648,43 @@ html[data-mode="dark"] .pill.rite{background:#f1eee4;color:#171614}
 .rrmore{font-size:11.5px;min-height:0;padding:4px 2px}
 
 /* ---- quick menu, quick add, full-screen editors ---- */
-.qm{position:fixed;inset:0;z-index:40;background:rgba(15,14,12,.35);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.qm{position:fixed;inset:0;z-index:40;background:rgba(15,14,12,.38);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);animation:qmfade .2s ease}
 .qm[hidden]{display:none}
-.qmcard{position:fixed;background:var(--card);border-radius:20px;padding:6px;box-shadow:0 14px 40px rgba(0,0,0,.28);display:flex;flex-direction:column}
-html[data-mode="dark"] .qmcard{background:#23211e;box-shadow:0 14px 40px rgba(0,0,0,.6)}
-.qmhead{font-size:12px;font-weight:700;color:var(--muted);padding:8px 12px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.qmitem{display:flex;align-items:center;gap:12px;width:100%;border:0;background:none;color:var(--ink);font:inherit;font-size:15px;font-weight:500;text-align:left;padding:11px 12px;border-radius:14px;cursor:pointer}
+.qmcard{position:fixed;left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));margin:0 auto;max-width:460px;background:var(--card);border-radius:28px;padding:8px 8px 10px;box-shadow:0 -6px 40px rgba(0,0,0,.25);display:flex;flex-direction:column;animation:qmup .32s cubic-bezier(.2,.9,.25,1)}
+html[data-mode="dark"] .qmcard{background:#242220;box-shadow:0 -6px 40px rgba(0,0,0,.6)}
+.qm.closing{animation:qmfadeout .2s ease forwards;pointer-events:none}
+.qm.closing .qmcard{animation:qmdown .2s ease-in forwards}
+@keyframes qmfade{from{opacity:0}to{opacity:1}}
+@keyframes qmfadeout{to{opacity:0}}
+@keyframes qmup{from{transform:translateY(105%)}to{transform:none}}
+@keyframes qmdown{to{transform:translateY(105%)}}
+.qmgrab{width:36px;height:4px;border-radius:2px;background:var(--line);margin:2px auto 6px}
+.qmhead{font-size:12px;font-weight:700;color:var(--muted);padding:2px 14px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qmitem{display:flex;align-items:center;gap:14px;width:100%;border:0;background:none;color:var(--ink);font:inherit;font-size:15.5px;font-weight:500;text-align:left;padding:13px 14px;border-radius:16px;cursor:pointer}
+.qmitem svg{flex:none;opacity:.85}
 .qmitem:active,.qmitem:hover{background:var(--track)}
-.qmitem.sm{font-size:14px;padding:9px 12px}
 .qmitem.danger{color:#c4495a}
 html[data-mode="dark"] .qmitem.danger{color:#f0939d}
-.qmitem.on{font-weight:700}
-.qmgap{display:inline-block;width:16px}
-.qmsub{display:flex;flex-direction:column;padding:4px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:2px 0}
-.qmsubh{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:6px 12px 2px}
+/* floating picker: one style for every choice (editor rows, quick-add chips, move to list) */
+.pk{position:fixed;inset:0;z-index:45;background:rgba(15,14,12,.12)}
+html[data-mode="dark"] .pk{background:rgba(0,0,0,.25)}
+.pk[hidden]{display:none}
+.pkcard{position:fixed;width:min(250px,calc(100vw - 24px));max-height:min(420px,70vh);overflow-y:auto;background:rgba(255,253,248,.94);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border-radius:20px;padding:6px;box-shadow:0 12px 40px rgba(0,0,0,.22),0 0 0 1px rgba(0,0,0,.04);display:flex;flex-direction:column;transform-origin:var(--pko,top right);animation:pkpop .18s cubic-bezier(.2,.9,.3,1.2)}
+html[data-mode="dark"] .pkcard{background:rgba(48,46,43,.94);box-shadow:0 14px 44px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.05)}
+@keyframes pkpop{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:none}}
+.pkh{font-size:12px;color:var(--muted);padding:6px 10px 4px 34px}
+.pkh.sec{border-top:1px solid var(--line);margin-top:4px;padding-top:9px}
+.pkopt{display:grid;grid-template-columns:16px 20px 1fr;align-items:center;gap:6px;width:100%;border:0;background:none;color:var(--ink);font:inherit;font-size:15px;text-align:left;padding:9px 10px 9px 8px;border-radius:12px;cursor:pointer}
+.pkopt.noic{grid-template-columns:16px 1fr}
+.pkopt:active,.pkopt:hover{background:var(--track)}
+.pkopt:disabled{opacity:.35;cursor:default}
+.pkopt .pkchk{color:var(--ink);display:flex}
+.pkopt svg{opacity:.85}
+.pkopt small{display:block;font-size:11.5px;color:var(--muted)}
+.pkgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:2px 4px 6px}
+.pkgrid button{aspect-ratio:1;border:0;border-radius:12px;background:var(--track);color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer;font:inherit;font-size:11px;font-weight:700}
+.pkgrid button.on{background:var(--ink);color:var(--inv)}
+.pkemoji{margin:2px 4px 6px;border:0;border-radius:12px;background:var(--track);font:inherit;font-size:15px;color:var(--ink);padding:9px 12px}
 .qa{position:fixed;inset:0;z-index:35;background:rgba(15,14,12,.3)}
 .qa[hidden]{display:none}
 .qabar{position:fixed;left:0;right:0;bottom:0;margin:0 auto;max-width:460px;background:var(--card);border-radius:22px 22px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;box-shadow:0 -10px 30px rgba(0,0,0,.18)}
@@ -674,30 +697,51 @@ html[data-mode="dark"] .qabar{background:#23211e}
 .qachip.more{padding:7px 9px}
 .qasend{flex:none;width:36px;height:36px;border-radius:50%;border:0;background:var(--ink);color:var(--inv);display:flex;align-items:center;justify-content:center;cursor:pointer}
 .sheet.full{align-items:stretch}
-.sheet.full .panel{max-height:100%;height:100%;border-radius:0;padding-top:calc(10px + env(safe-area-inset-top));gap:12px}
+.sheet.full .panel{max-height:100%;height:100%;border-radius:0;padding-top:calc(10px + env(safe-area-inset-top));padding-bottom:0;gap:12px}
+.sheet.full .panel > :last-child:not(.edfoot){margin-bottom:28px}
 .edhead{display:grid;grid-template-columns:40px 1fr 40px;align-items:center;position:sticky;top:calc(-10px - env(safe-area-inset-top));z-index:3;background:var(--bg);margin:-10px -18px 0;padding:10px 18px 8px}
 .edhead b{text-align:center;font-size:16px}
 .edx,.edok{width:40px;height:40px;border-radius:50%;border:0;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .edx{background:var(--track);color:var(--ink)}
 .edok{background:var(--ink);color:var(--inv)}
 .edname{font:inherit;font-size:18px;font-weight:600;border:0;border-radius:16px;background:var(--card);color:var(--ink);padding:14px 16px;width:100%;box-sizing:border-box}
-.edcard{background:var(--card);border-radius:18px;padding:4px 14px;display:flex;flex-direction:column}
-.edrow{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:46px;font-size:15px}
+.edcard{background:var(--card);border-radius:18px;padding:2px 14px;display:flex;flex-direction:column}
+.edrow{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:46px;font-size:15px;color:var(--ink)}
+button.edrow{border:0;background:none;font:inherit;font-size:15px;width:100%;padding:0;text-align:left;cursor:pointer}
 .edrow + .edrow{border-top:1px solid var(--line)}
-.edrow.top{min-height:40px}
-.edrow select{border:0;background:transparent;font:inherit;font-size:15px;color:var(--ink);text-align:right;max-width:60%}
-.seg.mini{display:flex;background:var(--track);border-radius:999px;padding:3px;gap:2px}
-.seg.mini button{border:0;background:transparent;border-radius:999px;padding:6px 9px;font:inherit;font-size:12px;font-weight:600;color:var(--ink);cursor:pointer}
-.seg.mini button.on{background:var(--ink);color:var(--inv)}
-.edsteps{display:flex;flex-direction:column;gap:6px;padding-bottom:4px}
-.edstep{display:grid;grid-template-columns:20px 1fr 26px;align-items:center;gap:8px;background:var(--bg);border-radius:12px;padding:4px 6px 4px 10px}
-.edstep input{border:0;background:transparent;font:inherit;font-size:14px;color:var(--ink);padding:6px 0;min-width:0}
-.edstepdot{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--muted);display:flex;align-items:center;justify-content:center}
-.edstep.on .edstepdot{background:var(--ink);border-color:var(--ink);color:var(--inv)}
-.edadd{align-self:center;display:inline-flex;align-items:center;gap:6px;border:0;background:none;color:var(--muted);font:inherit;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:10px;cursor:pointer}
+.edrow.top{min-height:40px;font-size:13px;font-weight:600;color:var(--muted)}
+.edval{display:inline-flex;align-items:center;gap:6px;color:var(--ink);font-size:14.5px;text-align:right;max-width:62%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.edval svg{flex:none;opacity:.8}
+.edrow input[type=date]{border:0;background:transparent;font:inherit;font-size:14.5px;color:var(--ink);text-align:right}
+.edsub{font-size:12px;color:var(--muted);display:block;font-weight:400}
+.ednamewrap{position:relative}
+.ednamewrap .edname{padding-right:60px}
+.edicon{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:50%;border:0;background:var(--accent);color:#171614;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px}
+.edsteps{display:flex;flex-direction:column}
+.edstep{display:grid;grid-template-columns:22px 1fr 30px;align-items:center;gap:10px;min-height:44px;border-radius:14px;padding:0 2px}
+.edstep input{border:0;background:transparent;font:inherit;font-size:14.5px;font-weight:600;color:var(--ink);padding:8px 0;min-width:0;outline:none}
+.edstepdot{width:20px;height:20px;border-radius:50%;background:var(--track);display:flex;align-items:center;justify-content:center}
+.edstep.on .edstepdot{background:var(--ink);color:var(--inv)}
+.edstep .sgrip{padding:10px 8px;justify-self:end}
+.edstep .edtrash{display:none;justify-self:end;border:0;background:none;color:#c4495a;cursor:pointer;padding:6px;align-items:center}
+html[data-mode="dark"] .edstep .edtrash{color:#f0939d}
+.edstep.editing{box-shadow:inset 0 0 0 1.5px var(--line);background:var(--bg)}
+.edstep.editing .sgrip{display:none}
+.edstep.editing .edtrash{display:flex}
+.edadd{align-self:stretch;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);border-radius:14px;background:none;color:var(--muted);font:inherit;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:9px;margin:6px 0 10px;cursor:pointer}
+.edadd .plusdot{width:16px;height:16px;border-radius:50%;border:1px solid currentColor;display:inline-flex;align-items:center;justify-content:center}
 .ednote{font:inherit;font-size:15px;border:0;border-radius:18px;background:var(--card);color:var(--ink);padding:14px 16px;resize:vertical;min-height:90px;width:100%;box-sizing:border-box}
-.edfoot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:4px}
+.edfoot{display:flex;align-items:center;justify-content:space-between;gap:10px;position:sticky;bottom:0;margin:auto -18px 0;padding:18px 18px calc(14px + env(safe-area-inset-bottom));background:linear-gradient(to bottom,transparent,var(--bg) 35%);z-index:3}
 .edfoot .btn{display:inline-flex;align-items:center;gap:6px}
+.edtrashbtn{width:44px;height:44px;border-radius:50%;border:0;background:var(--card);color:#c4495a;display:flex;align-items:center;justify-content:center;cursor:pointer;font:inherit;font-size:12px;font-weight:700}
+html[data-mode="dark"] .edtrashbtn{color:#f0939d}
+.edtrashbtn.armed{width:auto;padding:0 14px;gap:6px;border-radius:999px;background:#c4495a;color:#fff}
+.tog{appearance:none;-webkit-appearance:none;flex:none;width:46px;height:28px;border-radius:999px;background:var(--track);position:relative;cursor:pointer;margin:0;transition:background .2s}
+.tog::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s}
+.tog:checked{background:var(--accent)}
+.tog:checked::after{transform:translateX(18px)}
+.edpill{border:0;border-radius:999px;background:var(--card);color:var(--ink);font:inherit;font-size:14px;font-weight:600;padding:12px 18px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.edpill.primary{background:var(--ink);color:var(--inv)}
 .notedot{display:inline-flex;vertical-align:-1px;color:var(--muted)}
 .trow,.tditem{cursor:pointer}
 .edmore{background:var(--card);border-radius:18px;padding:4px 14px}
@@ -724,6 +768,7 @@ html[data-mode="dark"] .qabar{background:#23211e}
 
 <div class="sheet" id="sheet" hidden><div class="panel" id="sheetBody" role="dialog" aria-modal="true" aria-label="Edit task"></div></div>
 <div class="qm" id="qm" hidden><div class="qmcard" id="qmcard" role="menu"></div></div>
+<div class="pk" id="pk" hidden><div class="pkcard" id="pkcard" role="menu"></div></div>
 <div class="qa" id="qa" hidden></div>
 <div class="award" id="award" hidden></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -734,7 +779,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'df7799b5c9';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'd4317156f1';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -4416,44 +4461,69 @@ function openEditor(t, roulette, fromPlus){
   archArm = false; renderEditor(); showSheet(draft.isNew ? (draft.pool ? 'New roulette' : 'New task') : 'Edit task'); sheetFull(true);
   setTimeout(() => { const n = document.getElementById('tName'); if (n) n.focus(); }, 30);
 }
+// the editor's repeat choice, as one value: day / weekdays / weekends / custom / week / xday / xweek / xmonth
+function repeatOf(t){
+  if (t.rep) return {day:'xday', week:'xweek', month:'xmonth'}[t.rep.unit];
+  if (t.cad === 'week') return 'week';
+  const d = (t.days || []).slice().sort().join('');
+  return d === '0123456' ? 'day' : d === '12345' ? 'weekdays' : d === '06' ? 'weekends' : 'custom';
+}
+const REPEAT_OPTS = [['day', 'Every day'], ['weekdays', 'Weekdays'], ['weekends', 'Weekends'], ['custom', 'Custom days'], ['week', 'Times per week'], ['xday', 'Every few days'], ['xweek', 'Every few weeks'], ['xmonth', 'Every few months']];
+function repeatLabel(t){ const v = repeatOf(t), u = t.rep && t.rep.unit, n = t.rep && t.rep.every;
+  if (u) return n === 1 ? `Every ${u}` : `Every ${n} ${u}s`;
+  return REPEAT_OPTS.find(o => o[0] === v)[1]; }
+const daysLabel = days => days.length >= 7 ? 'Every day' : DOW_ORDER.filter(d => days.includes(d)).map(d => DOW[d]).join(', ');
+function setRepeat(v){
+  const unit = {xday:'day', xweek:'week', xmonth:'month'}[v];
+  if (unit){ draft.cad = 'day'; const old = draft.rep && draft.rep.unit === unit ? draft.rep : null;
+    draft.rep = {unit, every: old ? old.every : 2, ...(unit === 'month' ? {dom: old ? old.dom : parseKey(D.today).getDate()} : {}), ...(old && old.first ? {first: old.first} : {})};
+    if (unit === 'week' && !old && (!draft.days || draft.days.length >= 7)) draft.days = [parseKey(D.today).getDay()];
+    return; }
+  if (draft.rep && draft.rep.unit === 'week') draft.days = [0,1,2,3,4,5,6];
+  draft.rep = null;
+  if (v === 'week'){ draft.cad = 'week'; return; }
+  draft.cad = 'day';
+  if (v === 'day') draft.days = [0,1,2,3,4,5,6];
+  if (v === 'weekdays') draft.days = [1,2,3,4,5];
+  if (v === 'weekends') draft.days = [0,6];
+}
+// a tappable editor row: label on the left, value on the right, opens a floating picker
+const edRow = (pk, label, val, icon) => `<button type="button" class="edrow" data-pk="${pk}"><span>${label}</span><span class="edval">${icon ? svg(icon, 15, 2.2) : ''}<span>${val}</span></span></button>`;
+const edGrip = '<span class="sgrip" data-sdrag aria-hidden="true"><i></i><i></i><i></i><i></i></span>';
+const edAdd = attr => `<button type="button" class="edadd" ${attr}>Add new <span class="plusdot">${svg('plus',10,3)}</span></button>`;
 function renderEditor(){
-  const t = draft;
+  const t = draft, prim = t.stats[0] || 'MGT', rv = repeatOf(t), tod = TODS.find(g => g.k === (t.tod || 'any')) || TODS[0];
+  const showDays = !(t.rep && t.rep.unit !== 'week');
   document.getElementById('sheetBody').innerHTML = `
     <div class="edhead"><button class="edx" data-close aria-label="Close without saving">${svg('x',20,2.4)}</button><b>${t.isNew ? (t.pool ? 'New roulette' : 'New task') : 'Edit task'}</b><button class="edok" data-savetask aria-label="Save">${svg('check',20,2.8)}</button></div>
     ${sheetMode ? sheetSwitch() : ''}
-    <input class="edname" type="text" id="tName" maxlength="40" value="${esc(t.name)}" placeholder="${t.pool ? 'Name this roulette' : 'What will you do?'}" aria-label="Name">
-    ${t.pool ? `<div class="f" style="display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;font-weight:600;color:var(--muted)">Routines (each trains its own stats; ★ is main)</span>
+    <div class="ednamewrap"><input class="edname" type="text" id="tName" maxlength="40" value="${esc(t.name)}" placeholder="${t.pool ? 'Name this roulette' : 'What will you do?'}" aria-label="Name"><button type="button" class="edicon" data-pk="t.icon" style="background:${STATS[prim].c}" aria-label="Icon">${tIcon(t, prim, 18)}</button></div>
+    ${t.pool ? `<div class="edcard" style="padding:10px 14px;gap:8px"><span class="edrow top" style="min-height:0">Routines (each trains its own stats; ★ is main)</span>
       ${t.pool.map((o,i) => `<div class="opt">
         <div class="row"><input type="text" id="oName${i}" maxlength="40" value="${esc(o.name)}" placeholder="Routine ${i+1}" aria-label="Routine ${i+1} name"><button class="btn danger" data-odel="${i}" ${t.pool.length<=2?'disabled':''} aria-label="Remove routine ${i+1}">✕</button></div>
         <div class="chips">${SK.map(k => { const j = o.stats.indexOf(k); return `<button class="chip ${j>=0?'on':''}" data-ostat="${i}:${k}" style="${j>=0?`background:${STATS[k].c};border-color:${STATS[k].c}`:''}" aria-pressed="${j>=0}">${j===0?'★ ':''}${esc(STATS[k].abbr)}</button>`; }).join('')}</div>
       </div>`).join('')}
-      <button class="btn" data-oadd ${t.pool.length>=8?'disabled':''}>+ Add routine</button></div>`
-    : `<div class="f" style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:600;color:var(--muted)">Trains (pick 1–2; ★ is main)</span>
-      <div class="chips">${SK.map(k => { const i = t.stats.indexOf(k); return `<button class="chip ${i>=0?'on':''}" data-stat="${k}" style="${i>=0?`background:${STATS[k].c};border-color:${STATS[k].c};color:#171614`:''}" aria-pressed="${i>=0}">${i===0?'★ ':''}${esc(STATS[k].name)}</button>`; }).join('')}</div></div>`}
-    ${t.cad === 'week' ? (() => { const hb = !t.isNew && D.habits.lv[t.id]; return `<p class="how small">Habits are grouped by how far along they are: ${HABIT_LV.map(g => g.name).join(' → ')}. ${hb ? `This one is <b>${HABIT_LV[hb.lv].name}</b> with ${hb.shown} point${hb.shown === 1 ? '' : 's'}${hb.next != null ? ` (${HABIT_LV[hb.lv + 1].name} at ${hb.next})` : ''}.` : 'New ones start as New Habit.'} The check-offs that reach your weekly goal are worth ${HABIT_WEEK} points in total, so a once-a-week habit grows as fast as a daily one, and extra check-offs add a little more. Hitting the week's goal adds ${HABIT_HIT} more plus 1 per week of your streak, and hitting the bonus goal adds ${HABIT_BONUS} more. A missed week takes away ${HABIT_MISS}. Mastery adds stats.</p>`; })() : `<div class="f" style="display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;font-weight:600;color:var(--muted)">Time of day</span>
-      <div class="seg wide todpick" role="group" aria-label="Time of day">${TODS.map(g => `<button type="button" class="${(t.tod || 'any') === g.k ? 'on' : ''}" data-ttod="${g.k}" aria-pressed="${(t.tod || 'any') === g.k}">${g.label}</button>`).join('')}</div></div>`}
-    <label class="f" for="tCad">How often<select id="tCad"><option value="day" ${t.cad==='day' && !t.rep?'selected':''}>Every day (daily)</option><option value="week" ${t.cad==='week'?'selected':''}>Times per week</option><option value="xday" ${t.rep && t.rep.unit==='day'?'selected':''}>Every few days</option><option value="xweek" ${t.rep && t.rep.unit==='week'?'selected':''}>Every few weeks</option><option value="xmonth" ${t.rep && t.rep.unit==='month'?'selected':''}>Every few months</option></select></label>
-    ${t.rep ? `<div class="row"><label class="f" for="tEvery" style="flex:1">Every how many ${t.rep.unit === 'day' ? 'days' : t.rep.unit === 'week' ? 'weeks' : 'months'}<input type="number" id="tEvery" min="1" max="${REP_MAX[t.rep.unit]}" value="${t.rep.every}"></label>
-      ${t.rep.unit === 'month' ? `<label class="f" for="tDom" style="flex:1.4">On the<select id="tDom">${[...Array(31)].map((_, i) => `<option value="${i+1}" ${t.rep.dom === i+1 ? 'selected' : ''}>${ordinal(i+1)}</option>`).join('')}<option value="last" ${t.rep.dom === 'last' ? 'selected' : ''}>Last day</option></select></label>` : ''}</div>
-      <label class="f" for="tStart">Starts on<input type="date" id="tStart" min="${D.today}" value="${t.rep.first && t.rep.first >= D.today ? t.rep.first : D.today}"></label>
-      <p class="how small">${t.rep.unit === 'month' ? 'Months without that date use their last day. ' : ''}It first comes up on the start date or the next matching day after it. On the days it comes up it works like a daily: same reward, and missing it lets the boss hit you that night. It only shows on Today when it's due.</p>` : ''}
-    ${t.cad==='week' ? `<div class="row"><label class="f" for="tTarget" style="flex:1">Target per week<input type="number" id="tTarget" min="1" max="7" value="${t.target||1}"></label><label class="f" for="tBonus" style="flex:1">Bonus goal (optional)<input type="number" id="tBonus" min="0" max="7" value="${t.bonus||''}"></label></div>` : ''}
-    ${t.rep && t.rep.unit !== 'week' ? '' : `<div class="f" style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:600;color:var(--muted)">${t.rep ? 'Which day of the week' : 'Days it shows up'}</span>
-      <div class="chips">${DOW_ORDER.map(d => `<button class="chip ${t.days.includes(d)?'on':''}" data-day="${d}" style="${t.days.includes(d)?'background:var(--ink);color:var(--inv)':''}" aria-pressed="${t.days.includes(d)}">${DOW[d]}</button>`).join('')}</div></div>`}
-    <div class="f" style="display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;font-weight:600;color:var(--muted)">Checklist (optional): finishing every step completes the task. If you only get partway, each ticked step pays 1–2 G at the end of the day (up to ${STEP_CAP} G)</span>
-      <div class="steplist" data-sdlist="editor">${(t.checklist || []).map((c,i) => `<div class="row steprow" data-sid="${esc(c.id)}"><span class="sgrip" data-sdrag aria-hidden="true"><i></i><i></i><i></i><i></i></span><input type="text" id="clText${i}" maxlength="60" value="${esc(c.text)}" placeholder="Step ${i+1}" aria-label="Step ${i+1}"><button class="btn danger" data-cldel="${i}" aria-label="Remove step ${i+1}">✕</button></div>`).join('')}</div>
-      <button class="btn" data-cladd ${(t.checklist || []).length >= CHECK_MAX ? 'disabled' : ''}>+ Add step</button></div>
+      <button class="btn" data-oadd ${t.pool.length>=8?'disabled':''}>+ Add routine</button></div>` : ''}
+    <div class="edcard">
+      ${t.pool ? '' : edRow('t.stat', 'Trains', t.stats.map((k, i) => (i === 0 && t.stats.length > 1 ? '★ ' : '') + esc(STATS[k].name)).join(' · '), prim)}
+      ${t.cad === 'week' ? '' : edRow('t.tod', 'Time of day', tod.label, tod.icon)}
+      ${edRow('t.repeat', 'Repeat', repeatLabel(t), 'reroll')}
+      ${t.cad === 'week' ? edRow('t.target', 'Weekly goal', `${t.target || 1}× a week`) + edRow('t.bonus', 'Bonus goal', t.bonus ? `${t.bonus}× a week` : 'None') : ''}
+      ${t.rep ? edRow('t.every', 'Every', `${t.rep.every} ${t.rep.unit}${t.rep.every === 1 ? '' : 's'}`)
+        + (t.rep.unit === 'month' ? edRow('t.dom', 'On the', t.rep.dom === 'last' ? 'Last day' : ordinal(t.rep.dom)) : '')
+        + `<label class="edrow" for="tStart"><span>Starts on</span><input type="date" id="tStart" min="${D.today}" value="${t.rep.first && t.rep.first >= D.today ? t.rep.first : D.today}"></label>` : ''}
+      ${showDays ? edRow('t.days', t.rep ? 'Day of the week' : 'Days', daysLabel(t.days), 'calendar') : ''}
+      <label class="edrow" for="tRandom"><span>Roulette<span class="edsub">Pick one routine at random each time</span></span><input type="checkbox" class="tog" id="tRandom" ${t.pool?'checked':''}></label>
+    </div>
+    ${t.cad === 'week' ? (() => { const hb = !t.isNew && D.habits.lv[t.id]; return `<p class="how small">Habits are grouped by how far along they are: ${HABIT_LV.map(g => g.name).join(' → ')}. ${hb ? `This one is <b>${HABIT_LV[hb.lv].name}</b> with ${hb.shown} point${hb.shown === 1 ? '' : 's'}${hb.next != null ? ` (${HABIT_LV[hb.lv + 1].name} at ${hb.next})` : ''}.` : 'New ones start as New Habit.'} The check-offs that reach your weekly goal are worth ${HABIT_WEEK} points in total, so a once-a-week habit grows as fast as a daily one, and extra check-offs add a little more. Hitting the week's goal adds ${HABIT_HIT} more plus 1 per week of your streak, and hitting the bonus goal adds ${HABIT_BONUS} more. A missed week takes away ${HABIT_MISS}. Mastery adds stats.</p>`; })() : ''}
+    ${t.rep ? `<p class="how small">${t.rep.unit === 'month' ? 'Months without that date use their last day. ' : ''}It first comes up on the start date or the next matching day after it. On the days it comes up it works like a daily: same reward, and missing it lets the boss hit you that night. It only shows on Today when it's due.</p>` : ''}
+    <div class="edcard"><div class="edrow top"><span>Steps<span class="edsub">Finish every step to complete the task. Partway, each ticked step pays 1–2 G at day's end (up to ${STEP_CAP} G).</span></span></div>
+      <div class="edsteps" data-sdlist="editor">${(t.checklist || []).map((c,i) => `<div class="edstep" data-sid="${esc(c.id)}"><span class="edstepdot"></span><input type="text" id="clText${i}" maxlength="60" value="${esc(c.text)}" placeholder="Step" aria-label="Step ${i+1}">${edGrip}<button type="button" class="edtrash" data-cldel="${i}" aria-label="Remove step ${i+1}">${svg('trash',16,2.2)}</button></div>`).join('')}</div>
+      ${(t.checklist || []).length < CHECK_MAX ? edAdd('data-cladd') : ''}</div>
     <textarea class="ednote" id="tNote" maxlength="500" rows="3" placeholder="Write your notes here…" aria-label="Notes">${esc(t.note || '')}</textarea>
-    <details class="edmore" ${t.pool || t.icon ? 'open' : ''}><summary>Icon and roulette</summary>
-    <div class="f" style="display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;font-weight:600;color:var(--muted)">Icon</span>
-      <div class="swatches"><button class="iconpick ${!t.icon ? 'on' : ''}" data-ticon="" aria-pressed="${!t.icon}" aria-label="Use the main stat's icon" style="font-size:12px;font-weight:700">Auto</button>${TASK_ICONS.map(ic => `<button class="iconpick ${t.icon === ic ? 'on' : ''}" data-ticon="${ic}" aria-pressed="${t.icon === ic}" aria-label="Icon ${ic}">${svg(ic,18,2)}</button>`).join('')}</div>
-      <div class="emojirow"><input type="text" id="tEmoji" maxlength="16" inputmode="text" autocomplete="off" value="${t.icon && t.icon.startsWith('e:') ? esc(t.icon.slice(2)) : ''}" placeholder="Or type an emoji 🙂" aria-label="Emoji icon"></div>
-      <p class="how small">On iPhone, tap the box and switch to the emoji keyboard (🌐 or 🙂). On a Mac, press Control‑Command‑Space.</p></div>
-    <label class="checkrow" for="tRandom"><input type="checkbox" id="tRandom" ${t.pool?'checked':''}> Roulette: pick one routine at random each time it comes up</label>
-    </details>
-    ${!t.isNew ? '<p class="how small">Changes to days or how often start tomorrow, so today stays as it was. Archiving removes the task now if it’s done today; otherwise it stays until tonight, so it can’t be used to skip a daily.</p>' : ''}
+    ${!t.isNew ? '<p class="how small">Changes to days or how often start tomorrow, so today stays as it was. Deleting removes the task now if it’s done today; otherwise it stays until tonight, so it can’t be used to skip a daily.</p>' : ''}
     <p class="how small" id="edErr" role="alert"></p>
-    <div class="edfoot">${t.isNew ? '<span></span>' : `<button class="btn danger" data-archive>${svg('trash',16,2.2)} ${archArm ? 'Tap again to delete' : 'Delete'}</button>`}<span class="row" style="gap:8px">${t.isNew ? '' : `<button class="btn" data-copytask>${svg('copy',16,2.2)} Copy</button>`}<button class="btn primary" data-savetask>Save</button></span></div>`;
+    <div class="edfoot">${t.isNew ? '<span></span>' : `<button type="button" class="edtrashbtn ${archArm ? 'armed' : ''}" data-archive aria-label="Delete task">${svg('trash',18,2.2)}${archArm ? '<span>Tap again to delete</span>' : ''}</button>`}<span class="row" style="gap:8px">${t.isNew ? '' : `<button type="button" class="edpill" data-copytask>${svg('copy',15,2.2)} Copy</button>`}<button type="button" class="edpill primary" data-savetask>Save</button></span></div>`;
 }
 function readEditorFields(){
   if (document.getElementById('sheet').hidden) return;   // nothing on screen to read (e.g. saving straight from quick add)
@@ -4470,8 +4540,6 @@ function readEditorFields(){
   const bn = document.getElementById('tBonus'); if (bn) { const v = parseInt(bn.value)||0; draft.bonus = v > draft.target ? clamp(v,1,7) : undefined; }
   if (draft.pool) draft.pool.forEach((o,i) => { const el = document.getElementById('oName'+i); if (el) o.name = el.value; });
   if (draft.checklist) draft.checklist.forEach((c,i) => { const el = document.getElementById('clText'+i); if (el) c.text = el.value; });
-  const em = document.getElementById('tEmoji');
-  if (em){ const v = em.value.trim(); if (v){ const e = cleanEmoji(v); if (e) draft.icon = 'e:' + e; } else if (draft.icon && draft.icon.startsWith('e:')) draft.icon = undefined; }
 }
 function readStatFields(){ if (!statDraft) return; const n = document.getElementById('stName'), b = document.getElementById('stBlurb'); if (n) statDraft.name = n.value; if (b) statDraft.blurb = b.value; }
 function closeEditor(){ document.getElementById('sheet').hidden = true; sheetFull(false); tdraft = null; archArm = false; draft = null; sheetMode = null; statEdit = null; statDraft = null; document.querySelectorAll('.app, .nav').forEach(n => n.inert = false); showAward(); }
@@ -4488,31 +4556,112 @@ function openQuick(spec, rowEl){
   const [kind, a, b] = spec.split('|');
   if (kind === 't' && !S.tasks.find(t => t.id === a)) return;
   if (kind === 'd' && !todoFind(a, b).it) return;
-  qmCtx = {kind, id: a, lid: a, iid: b, del: false, move: false, rect: rowEl.getBoundingClientRect()};
+  qmCtx = {kind, id: a, lid: a, iid: b, del: false};
   renderQuick();
 }
-function placeCard(card, rect, above){
-  const W = Math.min(270, innerWidth - 24); card.style.width = W + 'px';
-  const h = card.offsetHeight, spaceBelow = innerHeight - rect.bottom - 96;
-  const top = !above && spaceBelow > h + 8 ? rect.bottom + 6 : Math.max(12, rect.top - h - 6);
-  const left = Math.min(Math.max(12, rect.left + (above ? 0 : 36)), innerWidth - W - 12);
-  card.style.top = top + 'px'; card.style.left = left + 'px';
-}
+// the task / to-do menu: a sheet that slides up from the bottom
 function renderQuick(){
   const qm = document.getElementById('qm'), card = document.getElementById('qmcard'); if (!qmCtx){ qm.hidden = true; return; }
-  const item = (act, icon, label, cls = '') => `<button class="qmitem ${cls}" data-qmact="${act}" role="menuitem">${svg(icon, 18, 2)}<span>${label}</span></button>`;
+  const item = (act, icon, label, cls = '') => `<button class="qmitem ${cls}" data-qmact="${act}" role="menuitem">${svg(icon, 19, 2)}<span>${label}</span></button>`;
   let html = '';
   if (qmCtx.kind === 't'){ const t = S.tasks.find(x => x.id === qmCtx.id);
-    html = `<div class="qmhead">${esc(t.name)}</div>${item('edit', 'pencil', 'Edit task')}${item('copy', 'copy', 'Make a copy')}${item('del', 'trash', qmCtx.del ? 'Tap again to delete' : 'Delete task', 'danger')}`; }
-  else if (qmCtx.kind === 'd'){ const {L, it} = todoFind(qmCtx.lid, qmCtx.iid);
-    const others = S.todos.lists.filter(x => !x.hidden && x.id !== L.id && !(it.doneOn && (x.kind === 'plain') !== (L.kind === 'plain')));
-    html = `<div class="qmhead">${esc(it.text)}</div>${item('edit', 'pencil', L.kind === 'plain' ? 'Edit item' : 'Edit to-do')}${item('copy', 'copy', 'Make a copy')}`
-      + (others.length ? (qmCtx.move ? `<div class="qmsub"><span class="qmsubh">Move to list</span>${others.map(x => `<button class="qmitem sm" data-qmmove="${esc(x.id)}">${esc(x.name)}</button>`).join('')}</div>` : item('move', 'move', 'Move to list')) : '')
-      + (todoDeletable(L, it) ? item('del', 'trash', qmCtx.del ? 'Tap again to delete' : (L.kind === 'plain' ? 'Delete item' : 'Delete to-do'), 'danger') : ''); }
-  else if (qmCtx.kind === 'chip'){ html = qmCtx.opts.map(([v, l, on]) => `<button class="qmitem sm ${on ? 'on' : ''}" data-qaset="${qmCtx.chip}|${v}">${on ? svg('check', 16, 2.6) : '<span class="qmgap"></span>'}<span>${l}</span></button>`).join(''); }
-  card.innerHTML = html; qm.hidden = false; placeCard(card, qmCtx.rect, qmCtx.kind === 'chip');
+    html = `<div class="qmhead">${esc(t.name)}</div>${item('copy', 'copy', 'Make a copy')}${item('edit', 'pencil', 'Edit task')}${item('del', 'trash', qmCtx.del ? 'Tap again to delete' : 'Delete task', 'danger')}`; }
+  else { const {L, it} = todoFind(qmCtx.lid, qmCtx.iid), plain = L.kind === 'plain';
+    html = `<div class="qmhead">${esc(it.text)}</div>${item('copy', 'copy', 'Make a copy')}${moveTargets(L, it).length ? item('move', 'move', 'Move to list') : ''}${item('edit', 'pencil', plain ? 'Edit item' : 'Edit to-do')}`
+      + (todoDeletable(L, it) ? item('del', 'trash', qmCtx.del ? 'Tap again to delete' : (plain ? 'Delete item' : 'Delete to-do'), 'danger') : ''); }
+  card.innerHTML = `<div class="qmgrab" aria-hidden="true"></div>${html}`;
+  clearTimeout(qmHideT); qm.classList.remove('closing'); qm.hidden = false;
 }
-function closeQuick(){ qmCtx = null; document.getElementById('qm').hidden = true; }
+let qmHideT = 0;
+function closeQuick(){ qmCtx = null; const qm = document.getElementById('qm'); if (qm.hidden) return;
+  qm.classList.add('closing'); clearTimeout(qmHideT); qmHideT = setTimeout(() => { if (!qmCtx) qm.hidden = true; qm.classList.remove('closing'); }, 190); }
+const moveTargets = (L, it) => S.todos.lists.filter(x => !x.hidden && x.id !== L.id && !(it.doneOn && (x.kind === 'plain') !== (L.kind === 'plain')));
+
+/* ---------- floating picker: the one menu style for every choice ---------- */
+// rows in the editors, the quick-add chips and "Move to list" all open this card next to what was tapped
+let pkCtx = null;
+function openPick(key, el){ pkCtx = {key, el, align: el.classList.contains('qachip') ? 'left' : 'right'}; renderPick(); }
+function closePick(){ pkCtx = null; document.getElementById('pk').hidden = true; }
+const pkOpt = (v, l, on, icon, more) => ({v: String(v), l, on: !!on, icon, ...(more || {})});
+function pickOpts(key){
+  const [ns, k] = key.split('.');
+  if (ns === 'qa' && qaCtx){ const c = qaCtx;
+    if (k === 'pri') return {title: 'Priority', opts: PRI.map(([g, l, m]) => pkOpt(g, `${m ? m + ' ' : ''}${g === 'none' ? 'No priority' : l}`, c.pri === g))};
+    if (k === 'tod') return {title: 'Time of day', opts: TODS.map(g => pkOpt(g.k, g.label, c.tod === g.k, g.icon))};
+    if (k === 'rep') return {title: 'Repeat', opts: QA_REP.map(([v, l]) => pkOpt(v, l, c.rep === v))};
+    if (k === 'target') return {title: 'Weekly goal', opts: [1,2,3,4,5,6,7].map(n => pkOpt(n, `${n}× a week`, c.target === n))};
+    if (k === 'stat') return {title: 'Trains', opts: SK.map(s2 => pkOpt(s2, STATS[s2].name, c.stat === s2, s2))}; }
+  if (ns === 'm' && qmCtx && qmCtx.kind === 'd'){ const {L, it} = todoFind(qmCtx.lid, qmCtx.iid); if (!it) return null;
+    return {title: 'Move to list', opts: moveTargets(L, it).map(x => pkOpt(x.id, x.name, false, x.kind === 'plain' ? 'note' : 'list'))}; }
+  if (ns === 'd' && tdraft){ const t = tdraft, from = S.todos.lists.find(x => x.id === t.lid);
+    if (k === 'list') return {title: 'List', opts: S.todos.lists.filter(x => !x.hidden).map(x => pkOpt(x.id, x.name, x.id === t.toLid, x.kind === 'plain' ? 'note' : 'list', {sub: x.kind === 'plain' ? 'Simple list' : '', dis: t.done && (x.kind === 'plain') !== (from.kind === 'plain')}))};
+    if (k === 'pri') return {title: 'Priority', opts: PRI.map(([g, l, m]) => pkOpt(g, `${m ? m + ' ' : ''}${g === 'none' ? 'No priority' : l}`, t.pri === g))}; }
+  if (ns === 't' && draft){ const t = draft;
+    if (k === 'stat') return {title: 'Trains: pick 1 or 2, first is main', multi: true, opts: SK.map(s2 => pkOpt(s2, STATS[s2].name, t.stats.includes(s2), s2, {sub: t.stats[0] === s2 && t.stats.length > 1 ? '★ Main' : ''}))};
+    if (k === 'tod') return {title: 'Time of day', opts: TODS.map(g => pkOpt(g.k, g.label, (t.tod || 'any') === g.k, g.icon))};
+    if (k === 'repeat'){ const rv = repeatOf(t); return {title: 'Repeat', opts: [...REPEAT_OPTS.slice(0, 4).map(([v, l]) => pkOpt(v, l, rv === v)), {h: 'Habit'}, pkOpt('week', 'Times per week', rv === 'week', null, {sub: 'Lives on the Habits tab'}), {h: 'Every few'}, ...REPEAT_OPTS.slice(5).map(([v, l]) => pkOpt(v, l.replace('Every few ', '').replace(/^./, m => m.toUpperCase()), rv === v))]}; }
+    if (k === 'days') return {title: t.rep ? 'Day of the week' : 'Days it shows up', multi: true, opts: DOW_ORDER.map(d => pkOpt(d, ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d], t.days.includes(d)))};
+    if (k === 'target') return {title: 'Weekly goal', opts: [1,2,3,4,5,6,7].map(n => pkOpt(n, `${n}× a week`, (t.target || 1) === n))};
+    if (k === 'bonus') return {title: 'Bonus goal', opts: [pkOpt(0, 'None', !t.bonus), ...[1,2,3,4,5,6,7].filter(n => n > (t.target || 1)).map(n => pkOpt(n, `${n}× a week`, t.bonus === n))]};
+    if (k === 'every' && t.rep){ const u = t.rep.unit, mx = REP_MAX[u]; let ns2 = u === 'day' ? [...Array(30)].map((_, i) => i + 1).concat([45, 60, 90, 120, 180, 365]) : [...Array(mx)].map((_, i) => i + 1);
+      if (!ns2.includes(t.rep.every)) ns2 = ns2.concat(t.rep.every).sort((a, b) => a - b);
+      return {title: 'Every', opts: ns2.filter(n => n <= mx).map(n => pkOpt(n, `${n} ${u}${n === 1 ? '' : 's'}`, t.rep.every === n))}; }
+    if (k === 'dom' && t.rep) return {title: 'On the', opts: [...[...Array(31)].map((_, i) => pkOpt(i + 1, ordinal(i + 1), t.rep.dom === i + 1)), pkOpt('last', 'Last day', t.rep.dom === 'last')]};
+    if (k === 'icon') return {title: 'Icon', grid: true}; }
+  return null;
+}
+function renderPick(){
+  const pk = document.getElementById('pk'), card = document.getElementById('pkcard'); if (!pkCtx){ pk.hidden = true; return; }
+  const P = pickOpts(pkCtx.key); if (!P){ closePick(); return; }
+  const fresh = document.querySelector(`[data-pk="${pkCtx.key}"]`); if (fresh) pkCtx.el = fresh;
+  let html = `<div class="pkh">${esc(P.title)}</div>`;
+  if (P.grid){ const t = draft;
+    html += `<div class="pkgrid"><button data-pick="t.icon|" class="${!t.icon ? 'on' : ''}" aria-pressed="${!t.icon}" aria-label="Use the main stat's icon">Auto</button>${TASK_ICONS.map(ic => `<button data-pick="t.icon|${ic}" class="${t.icon === ic ? 'on' : ''}" aria-pressed="${t.icon === ic}" aria-label="Icon ${ic}">${svg(ic, 18, 2)}</button>`).join('')}</div>
+      <input class="pkemoji" type="text" id="pkEmoji" maxlength="16" autocomplete="off" value="${t.icon && t.icon.startsWith('e:') ? esc(t.icon.slice(2)) : ''}" placeholder="Or type an emoji 🙂" aria-label="Emoji icon">`; }
+  else for (const o of P.opts){
+    if (o.h){ html += `<div class="pkh sec">${esc(o.h)}</div>`; continue; }
+    html += `<button class="pkopt ${o.icon ? '' : 'noic'}" data-pick="${pkCtx.key}|${esc(o.v)}" role="${P.multi ? 'menuitemcheckbox' : 'menuitemradio'}" aria-checked="${o.on}" ${o.dis ? 'disabled' : ''}><span class="pkchk">${o.on ? svg('check', 14, 2.8) : ''}</span>${o.icon ? svg(o.icon, 17, 2) : ''}<span>${esc(o.l)}${o.sub ? `<small>${esc(o.sub)}</small>` : ''}</span></button>`; }
+  const keepScroll = !pk.hidden && card.dataset.key === pkCtx.key ? card.scrollTop : null;
+  card.innerHTML = html; card.dataset.key = pkCtx.key; pk.hidden = false; placePick(card);
+  if (keepScroll != null) card.scrollTop = keepScroll;
+  else { const on = card.querySelector('[aria-checked="true"]'); if (on && on.offsetTop + on.offsetHeight > card.clientHeight) card.scrollTop = on.offsetTop - card.clientHeight / 2; }
+}
+function placePick(card){
+  const el = pkCtx.el, r = el && document.body.contains(el) ? el.getBoundingClientRect() : (pkCtx.rect || {top: 100, bottom: 140, left: 12, right: innerWidth - 12});
+  pkCtx.rect = r;
+  const vv = window.visualViewport, vh = vv ? vv.height + vv.offsetTop : innerHeight;
+  card.style.maxHeight = Math.max(160, Math.min(420, vh - 24)) + 'px';
+  const W = card.offsetWidth, h = card.offsetHeight;
+  const left = clamp(pkCtx.align === 'left' ? r.left : r.right - W, 12, innerWidth - W - 12);
+  let top, below;
+  if (pkCtx.align === 'left'){ below = r.bottom + 6 + h < vh - 8; top = below ? r.bottom + 6 : r.top - h - 6; }   // chips: just above (or below) the chip
+  else { below = r.top + h < vh - 12; top = below ? r.top : r.bottom - h; }   // rows: lay over the row, like a menu dropping from its value
+  card.style.top = clamp(top, 12, Math.max(12, vh - h - 8)) + 'px'; card.style.left = left + 'px';
+  card.style.setProperty('--pko', `${below ? 'top' : 'bottom'} ${pkCtx.align === 'left' ? 'left' : 'right'}`);
+}
+function applyPick(key, v){
+  const [ns, k] = key.split('.');
+  if (ns === 'qa' && qaCtx){ const txt = (document.getElementById('qaText') || {}).value || ''; closePick();
+    if (k === 'target') qaCtx.target = clamp(parseInt(v) || 3, 1, 7); else qaCtx[k] = v;
+    renderQuickAdd(txt); const i = document.getElementById('qaText'); if (i) i.focus(); return; }
+  if (ns === 'm'){ const c = qmCtx; closePick(); if (!c) return; const {L, it} = todoFind(c.lid, c.iid), to = S.todos.lists.find(x => x.id === v); closeQuick();
+    if (it && to && moveTodo(it, L, to)){ save(); render(); toast(`Moved to ${to.name}`); } return; }
+  if (ns === 'd' && tdraft){ readTodoFields(); if (k === 'list' && S.todos.lists.some(x => x.id === v)) tdraft.toLid = v; if (k === 'pri' && PRI.some(p => p[0] === v)) tdraft.pri = v; closePick(); renderTodoEditor(); return; }
+  if (ns === 't' && draft){
+    if (k === 'stat'){ runAction({stat: v}); renderPick(); return; }   // pick up to two, so it stays open
+    if (k === 'days'){ runAction({day: v}); renderPick(); return; }
+    if (k === 'icon'){ runAction({ticon: v}); closePick(); return; }
+    if (k === 'tod'){ closePick(); runAction({ttod: v}); return; }
+    readEditorFields();
+    if (k === 'repeat') setRepeat(v);
+    if (k === 'target'){ draft.target = clamp(parseInt(v) || 1, 1, 7); if (draft.bonus && draft.bonus <= draft.target) draft.bonus = undefined; }
+    if (k === 'bonus'){ const n = parseInt(v) || 0; draft.bonus = n > draft.target ? clamp(n, 1, 7) : undefined; }
+    if (k === 'every' && draft.rep) draft.rep.every = clamp(parseInt(v) || 1, 1, REP_MAX[draft.rep.unit]);
+    if (k === 'dom' && draft.rep) draft.rep.dom = v === 'last' ? 'last' : clamp(parseInt(v) || 1, 1, 31);
+    closePick(); renderEditor();
+    if (k === 'repeat' && v === 'custom'){ const el = document.querySelector('[data-pk="t.days"]'); if (el) openPick('t.days', el); }
+  }
+}
 function quickAct(act){
   const c = qmCtx;
   if (c.kind === 't'){ const t = S.tasks.find(x => x.id === c.id); if (!t) return closeQuick();
@@ -4522,7 +4671,7 @@ function quickAct(act){
   if (c.kind === 'd'){ const {L, it} = todoFind(c.lid, c.iid); if (!it) return closeQuick();
     if (act === 'edit'){ closeQuick(); openTodoEditor(L.id, it.id); return; }
     if (act === 'copy'){ closeQuick(); openTodoEditor(L.id, it.id, true); return; }
-    if (act === 'move'){ c.move = true; renderQuick(); return; }
+    if (act === 'move'){ const b = document.querySelector('#qmcard [data-qmact="move"]'); if (b) openPick('m.move', b); return; }
     if (act === 'del'){ if (!todoDeletable(L, it)) return closeQuick(); if (!c.del){ c.del = true; renderQuick(); return; } closeQuick(); L.items = L.items.filter(x => x.id !== it.id); save(); render(); toast('Deleted'); return; } }
 }
 function insertTodo(L, it){
@@ -4553,26 +4702,25 @@ function readTodoFields(){
   if (!tdraft) return;
   const n = document.getElementById('tdName'); if (n) tdraft.text = n.value;
   const no = document.getElementById('tdNote'); if (no) tdraft.note = no.value;
-  const ls = document.getElementById('tdList'); if (ls) tdraft.toLid = ls.value;
   tdraft.steps.forEach((x, i) => { const el = document.getElementById('tdStep' + i); if (el) x.text = el.value; });
 }
 function renderTodoEditor(){
   const t = tdraft, to = S.todos.lists.find(x => x.id === t.toLid) || S.todos.lists.find(x => x.id === t.lid), from = S.todos.lists.find(x => x.id === t.lid);
-  const plain = to.kind === 'plain', vis = S.todos.lists.filter(x => !x.hidden);
+  const plain = to.kind === 'plain', p = PRI.find(x => x[0] === t.pri) || PRI[3];
   const canDel = !t.isNew && (!t.done || from.kind === 'plain');
   document.getElementById('sheetBody').innerHTML = `
     <div class="edhead"><button class="edx" data-close aria-label="Close without saving">${svg('x',20,2.4)}</button><b>${t.isNew ? (plain ? 'New item' : 'New to-do') : (plain ? 'Edit item' : 'Edit to-do')}</b><button class="edok" data-savetodo aria-label="Save">${svg('check',20,2.8)}</button></div>
     <input class="edname" type="text" id="tdName" maxlength="80" value="${esc(t.text)}" placeholder="${plain ? 'Item' : 'What needs doing?'}" aria-label="Name">
     <div class="edcard">
-      <label class="edrow" for="tdList"><span>List</span><select id="tdList">${vis.map(x => `<option value="${esc(x.id)}" ${x.id === to.id ? 'selected' : ''} ${t.done && (x.kind === 'plain') !== (from.kind === 'plain') ? 'disabled' : ''}>${esc(x.name)}${x.kind === 'plain' ? ' (simple)' : ''}</option>`).join('')}</select></label>
-      ${plain ? '' : `<div class="edrow"><span>Priority</span><div class="seg mini" role="group" aria-label="Priority">${PRI.map(([g, label, mark]) => `<button type="button" class="${t.pri === g ? 'on' : ''}" data-tdpri="${g}" aria-pressed="${t.pri === g}">${mark ? mark + ' ' : ''}${g === 'none' ? 'None' : label}</button>`).join('')}</div></div>`}
+      ${edRow('d.list', 'List', esc(to.name), plain ? 'note' : 'list')}
+      ${plain ? '' : edRow('d.pri', 'Priority', `${p[2] ? p[2] + ' ' : ''}${p[0] === 'none' ? 'None' : p[1]}`)}
     </div>
-    <div class="edcard"><div class="edrow top"><span>Steps</span><span class="small muted">${t.steps.length ? `${t.steps.filter(x => x.done).length}/${t.steps.length} done` : ''}</span></div>
-      <div class="edsteps">${t.steps.map((x, i) => `<div class="edstep ${x.done ? 'on' : ''}"><span class="edstepdot">${x.done ? svg('check',12,3) : ''}</span><input type="text" id="tdStep${i}" maxlength="60" value="${esc(x.text)}" placeholder="Step ${i + 1}" aria-label="Step ${i + 1}"><button class="xbtn" data-tdstepdel="${i}" aria-label="Remove step ${i + 1}">${svg('x',14,2.4)}</button></div>`).join('')}</div>
-      ${t.steps.length < CHECK_MAX ? `<button class="edadd" data-tdstepadd>Add step ${svg('plus',14,2.6)}</button>` : ''}</div>
+    <div class="edcard"><div class="edrow top"><span>Steps</span><span>${t.steps.length ? `${t.steps.filter(x => x.done).length}/${t.steps.length} done` : ''}</span></div>
+      <div class="edsteps" data-sdlist="tded">${t.steps.map((x, i) => `<div class="edstep ${x.done ? 'on' : ''}" data-sid="${esc(x.id)}"><span class="edstepdot">${x.done ? svg('check',12,3) : ''}</span><input type="text" id="tdStep${i}" maxlength="60" value="${esc(x.text)}" placeholder="Step" aria-label="Step ${i + 1}">${edGrip}<button type="button" class="edtrash" data-tdedel="${i}" aria-label="Remove step ${i + 1}">${svg('trash',16,2.2)}</button></div>`).join('')}</div>
+      ${t.steps.length < CHECK_MAX ? edAdd('data-tdstepadd') : ''}</div>
     <textarea class="ednote" id="tdNote" maxlength="500" rows="4" placeholder="Write your notes here…" aria-label="Notes">${esc(t.note)}</textarea>
     <p class="how small" id="tdErr" role="alert"></p>
-    <div class="edfoot">${canDel ? `<button class="btn danger" data-tddel>${svg('trash',16,2.2)} ${tdDelArm ? 'Tap again to delete' : 'Delete'}</button>` : '<span></span>'}${t.isNew ? '' : `<button class="btn" data-tdcopy>${svg('copy',16,2.2)} Make a copy</button>`}</div>`;
+    <div class="edfoot">${canDel ? `<button type="button" class="edtrashbtn ${tdDelArm ? 'armed' : ''}" data-tddel aria-label="Delete">${svg('trash',18,2.2)}${tdDelArm ? '<span>Tap again to delete</span>' : ''}</button>` : '<span></span>'}<span class="row" style="gap:8px">${t.isNew ? '' : `<button type="button" class="edpill" data-tdcopy>${svg('copy',15,2.2)} Copy</button>`}<button type="button" class="edpill primary" data-savetodo>Save</button></span></div>`;
 }
 function saveTodoDraft(){
   readTodoFields(); const t = tdraft, text = t.text.trim().slice(0, 80);
@@ -4608,7 +4756,7 @@ function openQuickAdd(spec){
 }
 function renderQuickAdd(text){
   const qa = document.getElementById('qa'); if (!qaCtx){ qa.hidden = true; return; }
-  const c = qaCtx, chip = (k, icon, label) => `<button type="button" class="qachip" data-qachip="${k}">${icon ? svg(icon, 14, 2.2) : ''}<span>${label}</span>${svg('down', 12, 2.6)}</button>`;
+  const c = qaCtx, chip = (k, icon, label) => `<button type="button" class="qachip" data-pk="qa.${k}">${icon ? svg(icon, 14, 2.2) : ''}<span>${label}</span>${svg('down', 12, 2.6)}</button>`;
   let chips = '', ph = '';
   if (c.kind === 'todo'){ const L = S.todos.lists.find(x => x.id === c.lid), p = PRI.find(x => x[0] === c.pri);
     ph = `Add to ${L ? L.name : 'list'}`; chips = chip('pri', null, `${p[2] ? p[2] + ' ' : ''}${p[0] === 'none' ? 'TO-DO' : p[1].toUpperCase()}`); }
@@ -4622,15 +4770,6 @@ function renderQuickAdd(text){
 function qaPlace(){ const bar = document.querySelector('#qa .qabar'); if (!bar) return; const vv = window.visualViewport; const off = vv ? Math.max(0, innerHeight - vv.height - vv.offsetTop) : 0; bar.style.bottom = off + 'px'; }
 if (window.visualViewport){ visualViewport.addEventListener('resize', qaPlace); visualViewport.addEventListener('scroll', qaPlace); }
 function closeQuickAdd(){ qaCtx = null; document.getElementById('qa').hidden = true; }
-function qaChipMenu(k, el){
-  const c = qaCtx; let opts = [];
-  if (k === 'pri') opts = PRI.map(([g, l, m]) => [g, `${m ? m + ' ' : ''}${g === 'none' ? 'To-do (no priority)' : l}`, c.pri === g]);
-  if (k === 'tod') opts = TODS.map(g => [g.k, g.label, c.tod === g.k]);
-  if (k === 'rep') opts = QA_REP.map(([v, l]) => [v, l, c.rep === v]);
-  if (k === 'target') opts = [1,2,3,4,5,6,7].map(n => [String(n), `${n}× a week`, c.target === n]);
-  if (k === 'stat') opts = SK.map(s2 => [s2, STATS[s2].name, c.stat === s2]);
-  qmCtx = {kind: 'chip', chip: k, opts, rect: el.getBoundingClientRect()}; renderQuick();
-}
 function qaToDraft(name, c = qaCtx){ const d = {id: 't' + Date.now().toString(36), name, stats: [c.stat], cad: c.cad, target: c.target || 3, created: D.today, isNew: true, days: [0,1,2,3,4,5,6]};
   if (c.cad === 'day'){ if (c.rep === 'weekdays') d.days = [1,2,3,4,5]; if (c.rep === 'weekends') d.days = [0,6]; if (c.tod !== 'any') d.tod = c.tod; }
   return d;
@@ -4642,18 +4781,15 @@ function onClick(e){
   if (!e.target.closest('button, input, select, textarea, a, form, .tdgrip, .sgrip, .cl') && e.target.closest('[data-qm]') && !recoveryMode){ const q = e.target.closest('[data-qm]'); openQuick(q.dataset.qm, q); return; }
   const el = e.target.closest('button'); if (!el) return;
   if (el.dataset.qmact){ quickAct(el.dataset.qmact); return; }
-  if (el.dataset.qmmove){ const c = qmCtx, {L, it} = todoFind(c.lid, c.iid), to = S.todos.lists.find(x => x.id === el.dataset.qmmove); closeQuick(); if (it && to && moveTodo(it, L, to)){ save(); render(); toast(`Moved to ${to.name}`); } return; }
-  if (el.dataset.qaset){ const [k, v] = el.dataset.qaset.split('|'); const txt = (document.getElementById('qaText') || {}).value || ''; closeQuick();
-    if (k === 'target') qaCtx.target = clamp(parseInt(v) || 3, 1, 7); else qaCtx[k] = v; renderQuickAdd(txt); const i = document.getElementById('qaText'); if (i) i.focus(); return; }
-  if (el.dataset.qachip){ qaChipMenu(el.dataset.qachip, el); return; }
+  if (el.dataset.pick !== undefined){ const i = el.dataset.pick.indexOf('|'); applyPick(el.dataset.pick.slice(0, i), el.dataset.pick.slice(i + 1)); return; }
+  if (el.dataset.pk){ if (pkCtx && pkCtx.key === el.dataset.pk){ closePick(); return; } openPick(el.dataset.pk, el); return; }
   if ('qamore' in el.dataset){ const txt = ((document.getElementById('qaText') || {}).value || '').trim(), c = qaCtx; closeQuickAdd();
     if (c.kind === 'todo'){ openTodoEditor(c.lid, null, false, {text: txt, pri: c.pri}); return; }
     openEditor(null); draft = qaToDraft(txt, c); renderEditor(); setTimeout(() => { const n = document.getElementById('tName'); if (n){ n.focus(); n.setSelectionRange(n.value.length, n.value.length); } }, 40); return; }
   if (el.dataset.qadd){ openQuickAdd(el.dataset.qadd); return; }
   if ('savetodo' in el.dataset){ saveTodoDraft(); return; }
-  if (el.dataset.tdpri){ readTodoFields(); tdraft.pri = el.dataset.tdpri; renderTodoEditor(); return; }
-  if ('tdstepadd' in el.dataset){ readTodoFields(); tdraft.steps.push({id: 's' + Date.now().toString(36), text: ''}); renderTodoEditor(); const inp = document.getElementById('tdStep' + (tdraft.steps.length - 1)); if (inp) inp.focus(); return; }
-  if (el.dataset.tdstepdel){ readTodoFields(); tdraft.steps.splice(parseInt(el.dataset.tdstepdel), 1); renderTodoEditor(); return; }
+  if ('tdstepadd' in el.dataset && tdraft){ readTodoFields(); tdraft.steps.push({id: 's' + Date.now().toString(36), text: ''}); renderTodoEditor(); const inp = document.getElementById('tdStep' + (tdraft.steps.length - 1)); if (inp) inp.focus(); return; }
+  if (el.dataset.tdedel && tdraft){ readTodoFields(); tdraft.steps.splice(parseInt(el.dataset.tdedel), 1); renderTodoEditor(); return; }
   if ('tdcopy' in el.dataset){ readTodoFields(); const t = tdraft, n = Date.now().toString(36); tdraft = {...t, iid: null, isNew: true, done: false, text: (t.text.trim() + ' copy').slice(0, 80), steps: t.steps.map((x, i) => ({id: 's' + n + i, text: x.text}))}; renderTodoEditor(); toast('Copied. Edit it and save to add it.'); return; }
   if ('tddel' in el.dataset){ const {L, it} = todoFind(tdraft.lid, tdraft.iid); if (!todoDeletable(L, it)) return; if (!tdDelArm){ tdDelArm = true; readTodoFields(); renderTodoEditor(); return; } L.items = L.items.filter(x => x.id !== it.id); save(); closeEditor(); render(); toast('Deleted'); return; }
   if (sellArm && !el.dataset.sell){ sellArm = null; if (!Object.keys(el.dataset).length){ render(); return; } }
@@ -5035,10 +5171,19 @@ document.addEventListener('change', e => {
   if (e.target.id === 'petName'){ const v = e.target.value.trim().slice(0,16); if (v && v !== S.petName){ S.petName = v; save(); render(); } }
 });
 document.getElementById('sheet').addEventListener('click', e => { if (e.target.id === 'sheet') closeEditor(); });
-document.addEventListener('keydown', e => { if (e.key !== 'Escape') return; if (qmCtx){ closeQuick(); return; } if (qaCtx){ closeQuickAdd(); return; } if (draft || tdraft) closeEditor(); });
+document.addEventListener('keydown', e => { if (e.key !== 'Escape') return; if (pkCtx){ closePick(); return; } if (qmCtx){ closeQuick(); return; } if (qaCtx){ closeQuickAdd(); return; } if (draft || tdraft) closeEditor(); });
 // tapping the dimmed backdrop closes the quick menu or the quick-add bar
 document.getElementById('qm').addEventListener('click', e => { if (e.target.id === 'qm') closeQuick(); });
-document.getElementById('qa').addEventListener('click', e => { if (e.target.id === 'qa' && !qmCtx) closeQuickAdd(); });
+document.getElementById('qa').addEventListener('click', e => { if (e.target.id === 'qa' && !pkCtx) closeQuickAdd(); });
+document.getElementById('pk').addEventListener('click', e => { if (e.target.id === 'pk') closePick(); });
+// the emoji box inside the icon picker
+document.getElementById('pk').addEventListener('input', e => { if (e.target.id !== 'pkEmoji' || !draft) return; readEditorFields(); const v = e.target.value.trim();
+  if (v){ const em = cleanEmoji(v); if (em) draft.icon = 'e:' + em; } else if (draft.icon && draft.icon.startsWith('e:')) draft.icon = undefined;
+  renderEditor(); document.querySelectorAll('#pkcard .pkgrid button').forEach(b => b.classList.toggle('on', !draft.icon && b.dataset.pick === 't.icon|')); });
+// a step being typed in shows its trash can instead of the drag handle
+document.addEventListener('focusin', e => { const r = e.target.closest && e.target.closest('.edstep'); document.querySelectorAll('.edstep.editing').forEach(x => { if (x !== r) x.classList.remove('editing'); }); if (r) r.classList.add('editing'); });
+document.addEventListener('focusout', e => { const r = e.target.closest && e.target.closest('.edstep'); if (r) setTimeout(() => { if (!r.contains(document.activeElement)) r.classList.remove('editing'); }, 300); });
+window.addEventListener('resize', () => { if (pkCtx) placePick(document.getElementById('pkcard')); });
 
 render();
 
@@ -5166,6 +5311,7 @@ function sdragEnd(){
     // inputs moved with their rows, so read each one's text by its row before re-rendering
     d.list.querySelectorAll(':scope > [data-sid]').forEach(r => { const inp = r.querySelector('input'); if (inp && byId[r.dataset.sid]) byId[r.dataset.sid].text = inp.value; });
     draft.checklist = sortBy(draft.checklist); renderEditor(); return; }
+  if (kind === 'tded' && tdraft){ readTodoFields(); tdraft.steps = sortBy(tdraft.steps); renderTodoEditor(); return; }
   if (kind.startsWith('td|')){ const [, lid, iid] = kind.split('|'); const L = S.todos.lists.find(x => x.id === lid); const it = L && L.items.find(x => x.id === iid);
     if (it && it.steps && !it.doneOn && todoEdit){ const next = sortBy(it.steps); if (next.some((x, i) => x !== it.steps[i])){ it.steps = next; save(); } } render(); }
 }
@@ -5270,7 +5416,24 @@ function musicSync(){
 // tapping anywhere outside the Lo-fi menu closes it
 document.addEventListener('pointerdown', e => { if (musicMenu && !(e.target.closest && e.target.closest('.lofimenu, [data-musicmenu]'))){ musicMenu = false; setTimeout(render, 0); } }, {passive: true});
 // a timer restored after a reload can't start sound until you touch the page; the first tap wakes it
-document.addEventListener('pointerdown', () => { try { if (lofi && actx && actx.state === 'suspended') actx.resume(); } catch(e){} }, {passive: true});
+// iPhone can also leave it "interrupted" (a call, Siri, another app's audio, locking the screen) or closed. Taps count as a go-ahead
+// for sound only on release, so wake it on pointerup/click; if it's stuck, build a fresh one right there, inside the tap.
+function audioWake(gesture){
+  try {
+    if (!actx || !(lofi || lofiWanted())) return;
+    if (actx.state === 'running'){ if (!lofi) musicSync(); return; }
+    if (gesture && (actx.state === 'closed' || actx.state === 'interrupted' || audioWake.tries >= 2)){ audioRebuild(); return; }
+    if (actx.state !== 'closed'){ audioWake.tries = (audioWake.tries || 0) + (gesture ? 1 : 0); const p = actx.resume(); if (p && p.then) p.then(() => { if (actx && actx.state === 'running'){ audioWake.tries = 0; if (!lofi) musicSync(); } }, () => {}); }
+  } catch(e){}
+}
+function audioRebuild(){
+  const old = actx; audioWake.tries = 0;
+  if (lofi){ clearInterval(lofi.timer); lofi = null; }
+  actx = null; try { if (old && old.state !== 'closed') old.close().catch(() => {}); } catch(e){}
+  musicSync();   // makes a new context and starts the music again
+}
+['pointerup', 'click', 'touchend'].forEach(ev => document.addEventListener(ev, () => audioWake(true), {passive: true, capture: true}));
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') audioWake(false); });
 function lofiStart(mode){
   sfxInit(); if (!actx) return;
   try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch(e){}   // play even with the iPhone's silent switch on
@@ -5331,6 +5494,7 @@ function lofiStop(){
 function lofiSchedule(){
   const L = lofi; if (!L || !actx) return;
   const sty = LOFI_STYLES[L.style];
+  if (L.next < actx.currentTime - 0.25) L.next = actx.currentTime + 0.05;   // after time away, pick up from now instead of firing a backlog
   while (L.next < actx.currentTime + 1.5){
     const part = sty[L.mode];
     L.bpm += Math.max(-0.5, Math.min(0.5, part.bpm - L.bpm));   // tempo drifts, it doesn't jump
