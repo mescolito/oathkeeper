@@ -617,6 +617,95 @@ html[data-mode="dark"] .pill.rite{background:#f1eee4;color:#171614}
 
 .leanline{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
 .leanline b{color:var(--ink)}
+
+/* ---- compact lists (Tiimo-sized rows) ---- */
+.list,.tdlist{gap:7px}
+.tdgroup{gap:8px}
+.trow{grid-template-columns:34px 1fr 30px;gap:10px;padding:8px 10px;border-radius:18px}
+.ticon{width:34px;height:34px;min-width:34px}
+.ticon svg{width:17px;height:17px}
+.tname{font-size:14.5px;line-height:1.2}
+.tkick{font-size:11px}
+.tmeta{font-size:11.5px;gap:3px 5px}
+.chip-s{font-size:9.5px;padding:1px 6px}
+.check{width:30px;height:30px;border-width:1.75px}
+.check svg{width:15px;height:15px}
+.wk{gap:8px}
+.tditem{grid-template-columns:20px 1fr auto 30px;gap:9px;padding:8px 10px 8px 8px;border-radius:18px}
+.tditem.done{grid-template-columns:20px 1fr 30px}
+.tditem.plain.done{grid-template-columns:20px 1fr auto 30px}
+.tdgrip{width:20px;height:30px;grid-template-columns:repeat(2,4px);gap:3px}
+.tdgrip i{width:4px;height:4px}
+.xbtn{width:26px;height:30px}
+.xbtn svg{width:14px;height:14px}
+.tdpill{padding:6px 12px;min-height:32px;font-size:11.5px;gap:8px}
+.tdplus{width:30px;height:30px}
+.tdplus svg{width:14px;height:14px}
+.clhead{min-height:34px;padding:4px 18px 4px 10px;font-size:12px}
+.cl .clitem{font-size:13.5px}
+.rr{gap:8px;margin-top:4px}
+.rrbtn{padding:5px 10px;font-size:11.5px;min-height:0}
+.rrmore{font-size:11.5px;min-height:0;padding:4px 2px}
+
+/* ---- quick menu, quick add, full-screen editors ---- */
+.qm{position:fixed;inset:0;z-index:40;background:rgba(15,14,12,.35);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.qm[hidden]{display:none}
+.qmcard{position:fixed;background:var(--card);border-radius:20px;padding:6px;box-shadow:0 14px 40px rgba(0,0,0,.28);display:flex;flex-direction:column}
+html[data-mode="dark"] .qmcard{background:#23211e;box-shadow:0 14px 40px rgba(0,0,0,.6)}
+.qmhead{font-size:12px;font-weight:700;color:var(--muted);padding:8px 12px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qmitem{display:flex;align-items:center;gap:12px;width:100%;border:0;background:none;color:var(--ink);font:inherit;font-size:15px;font-weight:500;text-align:left;padding:11px 12px;border-radius:14px;cursor:pointer}
+.qmitem:active,.qmitem:hover{background:var(--track)}
+.qmitem.sm{font-size:14px;padding:9px 12px}
+.qmitem.danger{color:#c4495a}
+html[data-mode="dark"] .qmitem.danger{color:#f0939d}
+.qmitem.on{font-weight:700}
+.qmgap{display:inline-block;width:16px}
+.qmsub{display:flex;flex-direction:column;padding:4px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:2px 0}
+.qmsubh{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:6px 12px 2px}
+.qa{position:fixed;inset:0;z-index:35;background:rgba(15,14,12,.3)}
+.qa[hidden]{display:none}
+.qabar{position:fixed;left:0;right:0;bottom:0;margin:0 auto;max-width:460px;background:var(--card);border-radius:22px 22px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;box-shadow:0 -10px 30px rgba(0,0,0,.18)}
+html[data-mode="dark"] .qabar{background:#23211e}
+.qabar input{border:0;background:transparent;font:inherit;font-size:17px;padding:4px 2px;color:var(--ink);outline:none;width:100%}
+.qarow{display:flex;align-items:center;gap:8px}
+.qachips{display:flex;gap:6px;overflow-x:auto;flex:1;scrollbar-width:none}
+.qachips::-webkit-scrollbar{display:none}
+.qachip{flex:none;display:inline-flex;align-items:center;gap:5px;border:0;border-radius:999px;background:var(--track);color:var(--ink);font:inherit;font-size:11px;font-weight:700;letter-spacing:.04em;padding:7px 10px;cursor:pointer;white-space:nowrap}
+.qachip.more{padding:7px 9px}
+.qasend{flex:none;width:36px;height:36px;border-radius:50%;border:0;background:var(--ink);color:var(--inv);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.sheet.full{align-items:stretch}
+.sheet.full .panel{max-height:100%;height:100%;border-radius:0;padding-top:calc(10px + env(safe-area-inset-top));gap:12px}
+.edhead{display:grid;grid-template-columns:40px 1fr 40px;align-items:center;position:sticky;top:calc(-10px - env(safe-area-inset-top));z-index:3;background:var(--bg);margin:-10px -18px 0;padding:10px 18px 8px}
+.edhead b{text-align:center;font-size:16px}
+.edx,.edok{width:40px;height:40px;border-radius:50%;border:0;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.edx{background:var(--track);color:var(--ink)}
+.edok{background:var(--ink);color:var(--inv)}
+.edname{font:inherit;font-size:18px;font-weight:600;border:0;border-radius:16px;background:var(--card);color:var(--ink);padding:14px 16px;width:100%;box-sizing:border-box}
+.edcard{background:var(--card);border-radius:18px;padding:4px 14px;display:flex;flex-direction:column}
+.edrow{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:46px;font-size:15px}
+.edrow + .edrow{border-top:1px solid var(--line)}
+.edrow.top{min-height:40px}
+.edrow select{border:0;background:transparent;font:inherit;font-size:15px;color:var(--ink);text-align:right;max-width:60%}
+.seg.mini{display:flex;background:var(--track);border-radius:999px;padding:3px;gap:2px}
+.seg.mini button{border:0;background:transparent;border-radius:999px;padding:6px 9px;font:inherit;font-size:12px;font-weight:600;color:var(--ink);cursor:pointer}
+.seg.mini button.on{background:var(--ink);color:var(--inv)}
+.edsteps{display:flex;flex-direction:column;gap:6px;padding-bottom:4px}
+.edstep{display:grid;grid-template-columns:20px 1fr 26px;align-items:center;gap:8px;background:var(--bg);border-radius:12px;padding:4px 6px 4px 10px}
+.edstep input{border:0;background:transparent;font:inherit;font-size:14px;color:var(--ink);padding:6px 0;min-width:0}
+.edstepdot{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--muted);display:flex;align-items:center;justify-content:center}
+.edstep.on .edstepdot{background:var(--ink);border-color:var(--ink);color:var(--inv)}
+.edadd{align-self:center;display:inline-flex;align-items:center;gap:6px;border:0;background:none;color:var(--muted);font:inherit;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:10px;cursor:pointer}
+.ednote{font:inherit;font-size:15px;border:0;border-radius:18px;background:var(--card);color:var(--ink);padding:14px 16px;resize:vertical;min-height:90px;width:100%;box-sizing:border-box}
+.edfoot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:4px}
+.edfoot .btn{display:inline-flex;align-items:center;gap:6px}
+.notedot{display:inline-flex;vertical-align:-1px;color:var(--muted)}
+.trow,.tditem{cursor:pointer}
+.edmore{background:var(--card);border-radius:18px;padding:4px 14px}
+.edmore > summary{cursor:pointer;font-size:15px;min-height:44px;display:flex;align-items:center;list-style:none}
+.edmore > summary::-webkit-details-marker{display:none}
+.edmore > summary::after{content:'›';margin-left:auto;color:var(--muted);font-size:18px;transform:rotate(90deg)}
+.edmore[open] > summary::after{transform:rotate(-90deg)}
+.edmore[open]{padding-bottom:12px;display:flex;flex-direction:column;gap:10px}
 </style>
 </head>
 <body>
@@ -634,6 +723,8 @@ html[data-mode="dark"] .pill.rite{background:#f1eee4;color:#171614}
 </div></nav>
 
 <div class="sheet" id="sheet" hidden><div class="panel" id="sheetBody" role="dialog" aria-modal="true" aria-label="Edit task"></div></div>
+<div class="qm" id="qm" hidden><div class="qmcard" id="qmcard" role="menu"></div></div>
+<div class="qa" id="qa" hidden></div>
 <div class="award" id="award" hidden></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -643,7 +734,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'e4ead0bdb5';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'df7799b5c9';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1239,6 +1330,7 @@ function sanitize(s, created){
     if (taskIconOk(t.icon)) o.icon = t.icon;
     if (TOD_KEYS.includes(t.tod)) o.tod = t.tod;   // time of day it's grouped under on Today; no value means Anytime
     // optional checklist of steps (like Tiimo subtasks); steps are just progress, the task itself gives the reward
+    if (typeof t.note === 'string' && t.note.trim()) o.note = t.note.slice(0, 500);
     if (Array.isArray(t.checklist)){ const cl = t.checklist.filter(obj).map(c => ({id: str(c.id, 20, ''), text: str(c.text, 60, '').trim()})).filter((c, i, a) => c.id && c.text && a.findIndex(x => x.id === c.id) === i).slice(0, CHECK_MAX); if (cl.length) o.checklist = cl; }
     return o;
   });
@@ -1272,7 +1364,7 @@ function sanitize(s, created){
   out.runeBuys = (Array.isArray(s.runeBuys) ? s.runeBuys : []).filter(r => obj(r) && RUNE_BY[r.id] && isDate(r.date)).map(r => { const o = {id: r.id, ts: num(r.ts, 0), date: r.date, g: int(r.g, 0, 100000, 0)}; if (r.token) o.token = true; if (r.bag){ o.bag = true; o.g = 0; delete o.token; } return o; });
   if (obj(s.todos) && Array.isArray(s.todos.lists)){
     // generous caps; finished items are never dropped, because their rewards are part of history
-    const cleanItem = it => { const o = {id: it.id.slice(0,40), text: it.text.slice(0,80)}; if (isDate(it.createdOn)) o.createdOn = it.createdOn; if (it.pri === 'high' || it.pri === 'med' || it.pri === 'low') o.pri = it.pri; if (isDate(it.doneOn)){ o.doneOn = it.doneOn; o.doneTs = num(it.doneTs, 0); }
+    const cleanItem = it => { const o = {id: it.id.slice(0,40), text: it.text.slice(0,80)}; if (typeof it.note === 'string' && it.note.trim()) o.note = it.note.slice(0, 500); if (isDate(it.createdOn)) o.createdOn = it.createdOn; if (it.pri === 'high' || it.pri === 'med' || it.pri === 'low') o.pri = it.pri; if (isDate(it.doneOn)){ o.doneOn = it.doneOn; o.doneTs = num(it.doneTs, 0); }
       // optional sub-checklist; steps never give a reward of their own
       if (Array.isArray(it.steps)){ const st = it.steps.filter(obj).map(x => ({id: str(x.id, 20, ''), text: str(x.text, 60, '').trim(), ...(x.done ? {done: true} : {})})).filter((x, i, a) => x.id && x.text && a.findIndex(y => y.id === x.id) === i).slice(0, CHECK_MAX); if (st.length) o.steps = st; }
       return o; };
@@ -2911,6 +3003,13 @@ function drawBoss(canvas, boss, f, motion, hurt, dead){
   if (hurt){ ctx.globalCompositeOperation = 'difference'; ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,BW,BH); ctx.globalCompositeOperation = 'source-over'; }
 }
 const ICON = {
+  pencil:'<path d="M4 20l1-5L15.5 4.5a2.1 2.1 0 013 3L8 18z"/><path d="M13.5 6.5l3 3"/>',
+  copy:'<rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2"/>',
+  move:'<rect x="3" y="5" width="13" height="14" rx="2.5"/><path d="M12 12h9M18 9l3 3-3 3"/>',
+  trash:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12M9 7V4h6v3"/>',
+  dots:'<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>',
+  up:'<path d="M12 19V5M6 11l6-6 6 6"/>',
+  note:'<path d="M5 4h14v16H5z"/><path d="M9 9h6M9 13h6M9 17h3"/>',
   MGT:'<path d="M6 8v8M18 8v8M3 10v4M21 10v4M6 12h12"/>',
   STA:'<path d="M3 12h4l2-4 3 8 2-4h7"/>',
   MOB:'<circle cx="12" cy="5" r="2"/><path d="M4 18c3-7 13-7 16 0M12 9v4"/>',
@@ -3045,9 +3144,9 @@ function taskRow(t, k){
     const ro = clOpen.has('rr:' + t.id);
     rr = `<div class="rr"><button class="rrbtn" data-reroll="${esc(t.id)}" ${canRoll ? '' : 'disabled'} aria-label="Reroll for ${price} gold">${svg('reroll',14,2.4)} Reroll · ${price} G</button><button class="rrmore" data-clopen="rr:${esc(t.id)}" aria-expanded="${ro}">1 of ${t.pool.length} routines<span class="clchev">${svg(ro ? 'up' : 'down',14,2.4)}</span></button>${ro ? `<span class="rrlist">${t.pool.map(o => esc(o.name)).join(' · ')}</span>` : ''}</div>`;
   }
-  return `<div class="trow ${isD?'done':''} ${rested?'rested':''} ${closed?'closed':''}">
+  return `<div class="trow ${isD?'done':''} ${rested?'rested':''} ${closed?'closed':''}" data-qm="t|${esc(t.id)}">
     <span class="ticon" style="background:${STATS[prim].c}">${tIcon(t, prim)}</span>
-    <div class="tbody">${isPool || t.archived ? `<span class="tkick">${isPool ? esc(t.name) : ''}${t.archived ? (isPool ? ' · ' : '') + (k === D.today ? 'Archived · last day today' : 'Archived') : ''}</span>` : ''}<span class="tname">${esc(name)}</span>${isD ? '' : wk}
+    <div class="tbody">${isPool || t.archived ? `<span class="tkick">${isPool ? esc(t.name) : ''}${t.archived ? (isPool ? ' · ' : '') + (k === D.today ? 'Archived · last day today' : 'Archived') : ''}</span>` : ''}<span class="tname">${esc(name)}${t.note ? ` <span class="notedot" aria-label="Has notes">${svg('note',12,2.2)}</span>` : ''}</span>${isD ? '' : wk}
       <span class="tmeta">${isD ? `<span>Done${cad === 'week' ? ` · ${weekCount(t.id,k)} of ${effTarget(t,k)} this week` : ''}</span>` : `${stats.map(chipS).join('')}${weak ? '<span class="chip-weak">2× dmg</span>' : ''}<span>${esc(meta)}</span>`}</span>${rr}</div>
     <button class="check" data-toggle="${esc(t.id)}" aria-pressed="${isD}" aria-label="${isD ? 'Undo' : 'Complete'} ${esc(name)}" ${disabled?'disabled':''}>${svg('check',18,2.8)}</button>
     ${checklistBlock(t, k, disabled || closed)}
@@ -3092,7 +3191,7 @@ function todGroups(all, cad, k){
     const rows = list.filter(t => ((D.habits.lv[t.id] || {}).lv || 0) === gi), key = 'shut:hab-' + g.k, shut = clOpen.has(key);
     const open = rows.filter(t => weekCount(t.id,k) < effTarget(t,k)).length;
     return `<div class="tdgroup todgrp ${rows.length ? '' : 'empty'}" data-hab="${g.k}">
-      <div class="tdhead"><button class="tdpill hab-${g.k}" data-clopen="${key}" aria-expanded="${!shut}">${svg(g.icon,16,2.2)} ${g.name.toUpperCase()} (${rows.length})<span class="chev ${shut ? 'up' : ''}">${svg('back',14,2.6)}</span></button>${gi === 0 ? `<button class="tdplus" data-newtask="week" aria-label="Add a habit">${svg('plus',16,2.4)}</button>` : ''}</div>
+      <div class="tdhead"><button class="tdpill hab-${g.k}" data-clopen="${key}" aria-expanded="${!shut}">${svg(g.icon,16,2.2)} ${g.name.toUpperCase()} (${rows.length})<span class="chev ${shut ? 'up' : ''}">${svg('back',14,2.6)}</span></button>${gi === 0 ? `<button class="tdplus" data-qadd="task|week" aria-label="Add a habit">${svg('plus',16,2.4)}</button>` : ''}</div>
       ${shut || !rows.length ? '' : `<div class="list">${rows.map(t => taskRow(t,k)).join('')}</div>`}
     </div>`;
   }).join('') + rest;
@@ -3100,7 +3199,7 @@ function todGroups(all, cad, k){
     const rows = list.filter(t => (t.tod || 'any') === g.k), key = 'shut:' + cad + '-' + g.k, shut = clOpen.has(key);
     const open = rows.filter(t => cad === 'day' ? isDue(t,k) && !done(k,t.id) : weekCount(t.id,k) < effTarget(t,k)).length;
     return `<div class="tdgroup todgrp" data-tod="${g.k}">
-      <div class="tdhead"><button class="tdpill tod-${g.k}" data-clopen="${key}" aria-expanded="${!shut}">${svg(g.icon,16,2.2)} ${g.label.toUpperCase()} (${open})<span class="chev ${shut ? 'up' : ''}">${svg('back',14,2.6)}</span></button><button class="tdplus" data-newtask="${cad}|${g.k}" aria-label="Add a ${g.label.toLowerCase()} ${cad === 'day' ? 'daily' : 'weekly goal'}">${svg('plus',16,2.4)}</button></div>
+      <div class="tdhead"><button class="tdpill tod-${g.k}" data-clopen="${key}" aria-expanded="${!shut}">${svg(g.icon,16,2.2)} ${g.label.toUpperCase()} (${open})<span class="chev ${shut ? 'up' : ''}">${svg('back',14,2.6)}</span></button><button class="tdplus" data-qadd="task|${cad}|${g.k}" aria-label="Add a ${g.label.toLowerCase()} ${cad === 'day' ? 'daily' : 'habit'}">${svg('plus',16,2.4)}</button></div>
       ${shut || !rows.length ? '' : `<div class="list">${rows.map(t => taskRow(t,k)).join('')}</div>`}
     </div>`;
   }).join('') + rest;
@@ -3335,9 +3434,9 @@ function renderTodo(){
   if (!L) return `${tabs}${newList || `<p class="how">No lists yet. Tap + to make one.</p>`}`;
   const itemRow = it => { const isD = !!it.doneOn, canUndo = isD && it.doneOn === D.today, g = priOf(it);
     const meta = isD ? `Done ${it.doneOn === D.today ? 'today' : fmt(it.doneOn)}${D.todoPaid.has(it.id) ? '' : ' · no bonus'}` : it.createdOn === D.today ? 'Bonus starts tomorrow' : todoLeft > 0 ? '+8 XP, +6 G' : 'Daily to-do bonus used up';
-    return `<div class="tditem pri-${g} ${isD ? 'done' : ''}" data-item="${esc(it.id)}">
+    return `<div class="tditem pri-${g} ${isD ? 'done' : ''}" data-item="${esc(it.id)}" data-qm="d|${esc(L.id)}|${esc(it.id)}">
       <span class="tdgrip pri-${g}" ${isD ? '' : `data-drag="${esc(it.id)}"`} aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-      <span class="tbody"><span class="tname">${esc(it.text)}</span><span class="tmeta">${meta}${todoEdit && !isD && !(it.steps && it.steps.length) && !clOpen.has('td:' + it.id) ? `<button class="addsteps" data-clopen="td:${esc(it.id)}">+ Steps</button>` : ''}</span></span>
+      <span class="tbody"><span class="tname">${esc(it.text)}${it.note ? ` <span class="notedot" aria-label="Has notes">${svg('note',12,2.2)}</span>` : ''}</span><span class="tmeta">${meta}${todoEdit && !isD && !(it.steps && it.steps.length) && !clOpen.has('td:' + it.id) ? `<button class="addsteps" data-clopen="td:${esc(it.id)}">+ Steps</button>` : ''}</span></span>
       ${!isD ? `<button class="xbtn" data-delitem="${esc(L.id)}|${esc(it.id)}" aria-label="Delete ${esc(it.text)}">${svg('x',16,2.4)}</button>` : ''}
       <button class="check round" data-todo="${esc(L.id)}|${esc(it.id)}" aria-pressed="${isD}" aria-label="${isD ? 'Undo' : 'Complete'} ${esc(it.text)}" ${isD && !canUndo ? 'disabled' : ''}>${svg('check',18,2.8)}</button>
       ${todoSteps(L, it)}
@@ -3345,9 +3444,9 @@ function renderTodo(){
   const groups = PRI.map(([g, label, mark]) => {
     const all = L.items.filter(it => priOf(it) === g), items = hide ? all.filter(it => !it.doneOn) : all;
     const open = all.filter(it => !it.doneOn).length, col = todoCollapsed.has(g);
-    if (!all.length && g !== 'none' && todoAdd !== g) return `<div class="tdgroup empty" data-group="${g}"><div class="tdhead"><span class="tdpill pri-${g}">${mark ? `<b>${mark}</b>` : ''}${label.toUpperCase()} (0)</span><button class="tdplus" data-todoadd="${g}" aria-label="Add a ${label.toLowerCase()} priority item">${svg('plus',16,2.4)}</button></div><div class="tdlist" data-group="${g}"></div></div>`;
+    if (!all.length && g !== 'none' && todoAdd !== g) return `<div class="tdgroup empty" data-group="${g}"><div class="tdhead"><span class="tdpill pri-${g}">${mark ? `<b>${mark}</b>` : ''}${label.toUpperCase()} (0)</span><button class="tdplus" data-qadd="todo|${esc(L.id)}|${g}" aria-label="Add a ${label.toLowerCase()} priority item">${svg('plus',16,2.4)}</button></div><div class="tdlist" data-group="${g}"></div></div>`;
     return `<div class="tdgroup" data-group="${g}">
-      <div class="tdhead"><button class="tdpill pri-${g}" data-todocol="${g}" aria-expanded="${!col}">${mark ? `<b>${mark}</b>` : ''}${label.toUpperCase()} (${open})<span class="chev ${col ? 'up' : ''}">${svg('back',14,2.6)}</span></button><button class="tdplus" data-todoadd="${g}" aria-label="Add a ${label.toLowerCase()} priority item">${svg('plus',16,2.4)}</button></div>
+      <div class="tdhead"><button class="tdpill pri-${g}" data-todocol="${g}" aria-expanded="${!col}">${mark ? `<b>${mark}</b>` : ''}${label.toUpperCase()} (${open})<span class="chev ${col ? 'up' : ''}">${svg('back',14,2.6)}</span></button><button class="tdplus" data-qadd="todo|${esc(L.id)}|${g}" aria-label="Add a ${label.toLowerCase()} priority item">${svg('plus',16,2.4)}</button></div>
       ${todoAdd === g ? `<form class="addrow" data-additem="${esc(L.id)}" data-pri="${g}"><input type="text" id="add-${esc(L.id)}" maxlength="80" placeholder="Add to ${esc(label)}" aria-label="New ${esc(label)} item"><button class="btn primary" type="submit">Add</button></form>` : ''}
       <div class="tdlist" data-group="${g}">${col ? '' : items.map(itemRow).join('')}</div>
     </div>`;
@@ -3368,9 +3467,9 @@ function renderTodo(){
 // a simple list: no priorities, no rewards; checked items sink to the bottom and can be cleared
 function plainList(L, vis){
   const open = L.items.filter(it => !it.doneOn), done = L.items.filter(it => it.doneOn);
-  const row = it => `<div class="tditem plain ${it.doneOn ? 'done' : ''}" data-item="${esc(it.id)}">
+  const row = it => `<div class="tditem plain ${it.doneOn ? 'done' : ''}" data-item="${esc(it.id)}" data-qm="d|${esc(L.id)}|${esc(it.id)}">
       <span class="tdgrip pri-none" ${it.doneOn ? '' : `data-drag="${esc(it.id)}"`} aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-      <span class="tbody"><span class="tname">${esc(it.text)}</span></span>
+      <span class="tbody"><span class="tname">${esc(it.text)}${it.note ? ` <span class="notedot" aria-label="Has notes">${svg('note',12,2.2)}</span>` : ''}</span></span>
       <button class="xbtn" data-delitem="${esc(L.id)}|${esc(it.id)}" aria-label="Delete ${esc(it.text)}">${svg('x',16,2.4)}</button>
       <button class="check round" data-todo="${esc(L.id)}|${esc(it.id)}" aria-pressed="${!!it.doneOn}" aria-label="${it.doneOn ? 'Uncheck' : 'Check off'} ${esc(it.text)}">${svg('check',18,2.8)}</button>
     </div>`;
@@ -4284,13 +4383,13 @@ function cast(id, el){
 }
 
 /* ---------- task editor sheet ---------- */
-let draft = null;
+let draft = null, archArm = false;
 function sheetSwitch(){ return `<div class="seg wide" role="group" aria-label="Panel"><button data-sheetmode="task" class="${sheetMode==='task'?'on':''}">Add task</button><button data-sheetmode="stats" class="${sheetMode==='stats'?'on':''}">Stats</button><button data-sheetmode="inv" class="${sheetMode==='inv'?'on':''}">Inventory</button></div>`; }
 let statDraft = null;
 function openPlus(mode){
   sheetMode = mode; statEdit = null; statDraft = null;
   if (mode === 'task') openEditor(null, false, true);
-  else { draft = null; renderSheet(); showSheet(mode === 'inv' ? 'Inventory' : 'Stats'); }
+  else { draft = null; renderSheet(); showSheet(mode === 'inv' ? 'Inventory' : 'Stats'); sheetFull(false); }
 }
 function showSheet(label){
   document.getElementById('sheet').hidden = false;
@@ -4305,23 +4404,24 @@ function renderSheet(){
     const body = document.getElementById('sheetBody'), y = body.scrollTop;
     body.innerHTML = `<div class="row between"><span class="d">Inventory</span><span class="row" style="gap:8px"><span class="goldpill sm">${D.balance} G</span><button class="btn ghost" data-close>Close</button></span></div>${sheetSwitch()}${renderInventory()}`;
     drawIcons(body); body.scrollTop = y;
-  } else renderEditor();
+  } else if (sheetMode === 'todo') renderTodoEditor();
+  else renderEditor();
+  sheetFull(sheetMode !== 'stats' && sheetMode !== 'inv');
 }
 function openEditor(t, roulette, fromPlus){
   if (!fromPlus) sheetMode = null;
   draft = t ? clone(t) : {id:'t'+Date.now().toString(36), name:'', stats:['MGT'], cad:'day', target:3, created:D.today, isNew:true};
   if (!t && roulette) draft.pool = [{name:'', stats:['MGT']}, {name:'', stats:['MOB']}];
   if (!draft.days || !draft.days.length) draft.days = [0,1,2,3,4,5,6];
-  renderEditor(); showSheet(draft.isNew ? (draft.pool ? 'New roulette' : 'New task') : 'Edit task');
+  archArm = false; renderEditor(); showSheet(draft.isNew ? (draft.pool ? 'New roulette' : 'New task') : 'Edit task'); sheetFull(true);
   setTimeout(() => { const n = document.getElementById('tName'); if (n) n.focus(); }, 30);
 }
 function renderEditor(){
   const t = draft;
   document.getElementById('sheetBody').innerHTML = `
-    <div class="row between"><span class="d">${t.isNew ? (t.pool ? 'New roulette' : 'New task') : 'Edit task'}</span><button class="btn ghost" data-close>Close</button></div>
+    <div class="edhead"><button class="edx" data-close aria-label="Close without saving">${svg('x',20,2.4)}</button><b>${t.isNew ? (t.pool ? 'New roulette' : 'New task') : 'Edit task'}</b><button class="edok" data-savetask aria-label="Save">${svg('check',20,2.8)}</button></div>
     ${sheetMode ? sheetSwitch() : ''}
-    <label class="f" for="tName">Name<input type="text" id="tName" maxlength="40" value="${esc(t.name)}" placeholder="${t.pool ? 'e.g. Weekday strength roulette' : 'e.g. Hip mobility flow'}"></label>
-    <label class="checkrow" for="tRandom"><input type="checkbox" id="tRandom" ${t.pool?'checked':''}> Roulette: pick one routine at random each time it comes up</label>
+    <input class="edname" type="text" id="tName" maxlength="40" value="${esc(t.name)}" placeholder="${t.pool ? 'Name this roulette' : 'What will you do?'}" aria-label="Name">
     ${t.pool ? `<div class="f" style="display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;font-weight:600;color:var(--muted)">Routines (each trains its own stats; ★ is main)</span>
       ${t.pool.map((o,i) => `<div class="opt">
         <div class="row"><input type="text" id="oName${i}" maxlength="40" value="${esc(o.name)}" placeholder="Routine ${i+1}" aria-label="Routine ${i+1} name"><button class="btn danger" data-odel="${i}" ${t.pool.length<=2?'disabled':''} aria-label="Remove routine ${i+1}">✕</button></div>
@@ -4330,10 +4430,6 @@ function renderEditor(){
       <button class="btn" data-oadd ${t.pool.length>=8?'disabled':''}>+ Add routine</button></div>`
     : `<div class="f" style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:600;color:var(--muted)">Trains (pick 1–2; ★ is main)</span>
       <div class="chips">${SK.map(k => { const i = t.stats.indexOf(k); return `<button class="chip ${i>=0?'on':''}" data-stat="${k}" style="${i>=0?`background:${STATS[k].c};border-color:${STATS[k].c};color:#171614`:''}" aria-pressed="${i>=0}">${i===0?'★ ':''}${esc(STATS[k].name)}</button>`; }).join('')}</div></div>`}
-    <div class="f" style="display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;font-weight:600;color:var(--muted)">Icon</span>
-      <div class="swatches"><button class="iconpick ${!t.icon ? 'on' : ''}" data-ticon="" aria-pressed="${!t.icon}" aria-label="Use the main stat's icon" style="font-size:12px;font-weight:700">Auto</button>${TASK_ICONS.map(ic => `<button class="iconpick ${t.icon === ic ? 'on' : ''}" data-ticon="${ic}" aria-pressed="${t.icon === ic}" aria-label="Icon ${ic}">${svg(ic,18,2)}</button>`).join('')}</div>
-      <div class="emojirow"><input type="text" id="tEmoji" maxlength="16" inputmode="text" autocomplete="off" value="${t.icon && t.icon.startsWith('e:') ? esc(t.icon.slice(2)) : ''}" placeholder="Or type an emoji 🙂" aria-label="Emoji icon"></div>
-      <p class="how small">On iPhone, tap the box and switch to the emoji keyboard (🌐 or 🙂). On a Mac, press Control‑Command‑Space.</p></div>
     ${t.cad === 'week' ? (() => { const hb = !t.isNew && D.habits.lv[t.id]; return `<p class="how small">Habits are grouped by how far along they are: ${HABIT_LV.map(g => g.name).join(' → ')}. ${hb ? `This one is <b>${HABIT_LV[hb.lv].name}</b> with ${hb.shown} point${hb.shown === 1 ? '' : 's'}${hb.next != null ? ` (${HABIT_LV[hb.lv + 1].name} at ${hb.next})` : ''}.` : 'New ones start as New Habit.'} The check-offs that reach your weekly goal are worth ${HABIT_WEEK} points in total, so a once-a-week habit grows as fast as a daily one, and extra check-offs add a little more. Hitting the week's goal adds ${HABIT_HIT} more plus 1 per week of your streak, and hitting the bonus goal adds ${HABIT_BONUS} more. A missed week takes away ${HABIT_MISS}. Mastery adds stats.</p>`; })() : `<div class="f" style="display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;font-weight:600;color:var(--muted)">Time of day</span>
       <div class="seg wide todpick" role="group" aria-label="Time of day">${TODS.map(g => `<button type="button" class="${(t.tod || 'any') === g.k ? 'on' : ''}" data-ttod="${g.k}" aria-pressed="${(t.tod || 'any') === g.k}">${g.label}</button>`).join('')}</div></div>`}
     <label class="f" for="tCad">How often<select id="tCad"><option value="day" ${t.cad==='day' && !t.rep?'selected':''}>Every day (daily)</option><option value="week" ${t.cad==='week'?'selected':''}>Times per week</option><option value="xday" ${t.rep && t.rep.unit==='day'?'selected':''}>Every few days</option><option value="xweek" ${t.rep && t.rep.unit==='week'?'selected':''}>Every few weeks</option><option value="xmonth" ${t.rep && t.rep.unit==='month'?'selected':''}>Every few months</option></select></label>
@@ -4342,18 +4438,27 @@ function renderEditor(){
       <label class="f" for="tStart">Starts on<input type="date" id="tStart" min="${D.today}" value="${t.rep.first && t.rep.first >= D.today ? t.rep.first : D.today}"></label>
       <p class="how small">${t.rep.unit === 'month' ? 'Months without that date use their last day. ' : ''}It first comes up on the start date or the next matching day after it. On the days it comes up it works like a daily: same reward, and missing it lets the boss hit you that night. It only shows on Today when it's due.</p>` : ''}
     ${t.cad==='week' ? `<div class="row"><label class="f" for="tTarget" style="flex:1">Target per week<input type="number" id="tTarget" min="1" max="7" value="${t.target||1}"></label><label class="f" for="tBonus" style="flex:1">Bonus goal (optional)<input type="number" id="tBonus" min="0" max="7" value="${t.bonus||''}"></label></div>` : ''}
+    ${t.rep && t.rep.unit !== 'week' ? '' : `<div class="f" style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:600;color:var(--muted)">${t.rep ? 'Which day of the week' : 'Days it shows up'}</span>
+      <div class="chips">${DOW_ORDER.map(d => `<button class="chip ${t.days.includes(d)?'on':''}" data-day="${d}" style="${t.days.includes(d)?'background:var(--ink);color:var(--inv)':''}" aria-pressed="${t.days.includes(d)}">${DOW[d]}</button>`).join('')}</div></div>`}
     <div class="f" style="display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;font-weight:600;color:var(--muted)">Checklist (optional): finishing every step completes the task. If you only get partway, each ticked step pays 1–2 G at the end of the day (up to ${STEP_CAP} G)</span>
       <div class="steplist" data-sdlist="editor">${(t.checklist || []).map((c,i) => `<div class="row steprow" data-sid="${esc(c.id)}"><span class="sgrip" data-sdrag aria-hidden="true"><i></i><i></i><i></i><i></i></span><input type="text" id="clText${i}" maxlength="60" value="${esc(c.text)}" placeholder="Step ${i+1}" aria-label="Step ${i+1}"><button class="btn danger" data-cldel="${i}" aria-label="Remove step ${i+1}">✕</button></div>`).join('')}</div>
       <button class="btn" data-cladd ${(t.checklist || []).length >= CHECK_MAX ? 'disabled' : ''}>+ Add step</button></div>
-    ${t.rep && t.rep.unit !== 'week' ? '' : `<div class="f" style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:600;color:var(--muted)">${t.rep ? 'Which day of the week' : 'Days it shows up'}</span>
-      <div class="chips">${DOW_ORDER.map(d => `<button class="chip ${t.days.includes(d)?'on':''}" data-day="${d}" style="${t.days.includes(d)?'background:var(--ink);color:var(--inv)':''}" aria-pressed="${t.days.includes(d)}">${DOW[d]}</button>`).join('')}</div></div>`}
+    <textarea class="ednote" id="tNote" maxlength="500" rows="3" placeholder="Write your notes here…" aria-label="Notes">${esc(t.note || '')}</textarea>
+    <details class="edmore" ${t.pool || t.icon ? 'open' : ''}><summary>Icon and roulette</summary>
+    <div class="f" style="display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;font-weight:600;color:var(--muted)">Icon</span>
+      <div class="swatches"><button class="iconpick ${!t.icon ? 'on' : ''}" data-ticon="" aria-pressed="${!t.icon}" aria-label="Use the main stat's icon" style="font-size:12px;font-weight:700">Auto</button>${TASK_ICONS.map(ic => `<button class="iconpick ${t.icon === ic ? 'on' : ''}" data-ticon="${ic}" aria-pressed="${t.icon === ic}" aria-label="Icon ${ic}">${svg(ic,18,2)}</button>`).join('')}</div>
+      <div class="emojirow"><input type="text" id="tEmoji" maxlength="16" inputmode="text" autocomplete="off" value="${t.icon && t.icon.startsWith('e:') ? esc(t.icon.slice(2)) : ''}" placeholder="Or type an emoji 🙂" aria-label="Emoji icon"></div>
+      <p class="how small">On iPhone, tap the box and switch to the emoji keyboard (🌐 or 🙂). On a Mac, press Control‑Command‑Space.</p></div>
+    <label class="checkrow" for="tRandom"><input type="checkbox" id="tRandom" ${t.pool?'checked':''}> Roulette: pick one routine at random each time it comes up</label>
+    </details>
     ${!t.isNew ? '<p class="how small">Changes to days or how often start tomorrow, so today stays as it was. Archiving removes the task now if it’s done today; otherwise it stays until tonight, so it can’t be used to skip a daily.</p>' : ''}
     <p class="how small" id="edErr" role="alert"></p>
-    ${t.isNew ? '' : '<button class="btn" data-copytask>Copy as new task</button>'}
-    <div class="row between">${t.isNew ? '<span></span>' : '<button class="btn danger" data-archive>Archive</button>'}<button class="btn primary" data-savetask>Save task</button></div>`;
+    <div class="edfoot">${t.isNew ? '<span></span>' : `<button class="btn danger" data-archive>${svg('trash',16,2.2)} ${archArm ? 'Tap again to delete' : 'Delete'}</button>`}<span class="row" style="gap:8px">${t.isNew ? '' : `<button class="btn" data-copytask>${svg('copy',16,2.2)} Copy</button>`}<button class="btn primary" data-savetask>Save</button></span></div>`;
 }
 function readEditorFields(){
+  if (document.getElementById('sheet').hidden) return;   // nothing on screen to read (e.g. saving straight from quick add)
   const n = document.getElementById('tName'); if (n) draft.name = n.value;
+  const no = document.getElementById('tNote'); if (no) draft.note = no.value;
   const c = document.getElementById('tCad');
   if (c){ const v = c.value, unit = {xday:'day', xweek:'week', xmonth:'month'}[v];
     if (unit){ draft.cad = 'day'; const old = draft.rep && draft.rep.unit === unit ? draft.rep : null; draft.rep = {unit, every: old ? old.every : 2, ...(unit === 'month' ? {dom: old ? old.dom : parseKey(D.today).getDate()} : {})}; if (unit === 'week' && !old && (!draft.days || draft.days.length >= 7)) draft.days = [parseKey(D.today).getDay()]; }
@@ -4369,12 +4474,188 @@ function readEditorFields(){
   if (em){ const v = em.value.trim(); if (v){ const e = cleanEmoji(v); if (e) draft.icon = 'e:' + e; } else if (draft.icon && draft.icon.startsWith('e:')) draft.icon = undefined; }
 }
 function readStatFields(){ if (!statDraft) return; const n = document.getElementById('stName'), b = document.getElementById('stBlurb'); if (n) statDraft.name = n.value; if (b) statDraft.blurb = b.value; }
-function closeEditor(){ document.getElementById('sheet').hidden = true; draft = null; sheetMode = null; statEdit = null; statDraft = null; document.querySelectorAll('.app, .nav').forEach(n => n.inert = false); showAward(); }
+function closeEditor(){ document.getElementById('sheet').hidden = true; sheetFull(false); tdraft = null; archArm = false; draft = null; sheetMode = null; statEdit = null; statDraft = null; document.querySelectorAll('.app, .nav').forEach(n => n.inert = false); showAward(); }
 
+
+/* ---------- quick menu, to-do editor and quick add ---------- */
+// run a button action without a button on screen (reuses the existing handlers)
+function runAction(attrs){ const b = document.createElement('button'); for (const [k, v] of Object.entries(attrs)) b.dataset[k] = v; onClick({target: b}); }
+function sheetFull(on){ document.getElementById('sheet').classList.toggle('full', !!on); }
+let qmCtx = null;
+const todoFind = (lid, iid) => { const L = S.todos.lists.find(x => x.id === lid); return {L, it: L && L.items.find(x => x.id === iid)}; };
+const todoDeletable = (L, it) => !!it && (!it.doneOn || L.kind === 'plain');
+function openQuick(spec, rowEl){
+  const [kind, a, b] = spec.split('|');
+  if (kind === 't' && !S.tasks.find(t => t.id === a)) return;
+  if (kind === 'd' && !todoFind(a, b).it) return;
+  qmCtx = {kind, id: a, lid: a, iid: b, del: false, move: false, rect: rowEl.getBoundingClientRect()};
+  renderQuick();
+}
+function placeCard(card, rect, above){
+  const W = Math.min(270, innerWidth - 24); card.style.width = W + 'px';
+  const h = card.offsetHeight, spaceBelow = innerHeight - rect.bottom - 96;
+  const top = !above && spaceBelow > h + 8 ? rect.bottom + 6 : Math.max(12, rect.top - h - 6);
+  const left = Math.min(Math.max(12, rect.left + (above ? 0 : 36)), innerWidth - W - 12);
+  card.style.top = top + 'px'; card.style.left = left + 'px';
+}
+function renderQuick(){
+  const qm = document.getElementById('qm'), card = document.getElementById('qmcard'); if (!qmCtx){ qm.hidden = true; return; }
+  const item = (act, icon, label, cls = '') => `<button class="qmitem ${cls}" data-qmact="${act}" role="menuitem">${svg(icon, 18, 2)}<span>${label}</span></button>`;
+  let html = '';
+  if (qmCtx.kind === 't'){ const t = S.tasks.find(x => x.id === qmCtx.id);
+    html = `<div class="qmhead">${esc(t.name)}</div>${item('edit', 'pencil', 'Edit task')}${item('copy', 'copy', 'Make a copy')}${item('del', 'trash', qmCtx.del ? 'Tap again to delete' : 'Delete task', 'danger')}`; }
+  else if (qmCtx.kind === 'd'){ const {L, it} = todoFind(qmCtx.lid, qmCtx.iid);
+    const others = S.todos.lists.filter(x => !x.hidden && x.id !== L.id && !(it.doneOn && (x.kind === 'plain') !== (L.kind === 'plain')));
+    html = `<div class="qmhead">${esc(it.text)}</div>${item('edit', 'pencil', L.kind === 'plain' ? 'Edit item' : 'Edit to-do')}${item('copy', 'copy', 'Make a copy')}`
+      + (others.length ? (qmCtx.move ? `<div class="qmsub"><span class="qmsubh">Move to list</span>${others.map(x => `<button class="qmitem sm" data-qmmove="${esc(x.id)}">${esc(x.name)}</button>`).join('')}</div>` : item('move', 'move', 'Move to list')) : '')
+      + (todoDeletable(L, it) ? item('del', 'trash', qmCtx.del ? 'Tap again to delete' : (L.kind === 'plain' ? 'Delete item' : 'Delete to-do'), 'danger') : ''); }
+  else if (qmCtx.kind === 'chip'){ html = qmCtx.opts.map(([v, l, on]) => `<button class="qmitem sm ${on ? 'on' : ''}" data-qaset="${qmCtx.chip}|${v}">${on ? svg('check', 16, 2.6) : '<span class="qmgap"></span>'}<span>${l}</span></button>`).join(''); }
+  card.innerHTML = html; qm.hidden = false; placeCard(card, qmCtx.rect, qmCtx.kind === 'chip');
+}
+function closeQuick(){ qmCtx = null; document.getElementById('qm').hidden = true; }
+function quickAct(act){
+  const c = qmCtx;
+  if (c.kind === 't'){ const t = S.tasks.find(x => x.id === c.id); if (!t) return closeQuick();
+    if (act === 'edit'){ closeQuick(); openEditor(t); return; }
+    if (act === 'copy'){ closeQuick(); openEditor(t); runAction({copytask: ''}); return; }
+    if (act === 'del'){ if (!c.del){ c.del = true; renderQuick(); return; } closeQuick(); const stays = !done(D.today, t.id) && isDue(t, D.today) && schedAt(t, D.today).cad === 'day'; draft = clone(t); runAction({archive: '1', confirmed: '1'}); toast(stays ? `Deleted ${t.name}. It stays on today's list until tonight so it can't skip a daily.` : `Deleted ${t.name}`); return; } }
+  if (c.kind === 'd'){ const {L, it} = todoFind(c.lid, c.iid); if (!it) return closeQuick();
+    if (act === 'edit'){ closeQuick(); openTodoEditor(L.id, it.id); return; }
+    if (act === 'copy'){ closeQuick(); openTodoEditor(L.id, it.id, true); return; }
+    if (act === 'move'){ c.move = true; renderQuick(); return; }
+    if (act === 'del'){ if (!todoDeletable(L, it)) return closeQuick(); if (!c.del){ c.del = true; renderQuick(); return; } closeQuick(); L.items = L.items.filter(x => x.id !== it.id); save(); render(); toast('Deleted'); return; } }
+}
+function insertTodo(L, it){
+  if (L.kind === 'plain'){ delete it.pri; L.items.push(it); return; }
+  const g = priOf(it); let at = -1; L.items.forEach((x, i) => { if (priOf(x) === g) at = i; });
+  if (at < 0){ const order = PRI.map(p => p[0]); L.items.forEach((x, i) => { if (order.indexOf(priOf(x)) < order.indexOf(g)) at = i; }); }
+  L.items.splice(at + 1, 0, it);
+}
+function moveTodo(it, from, to){
+  if (it.doneOn && (from.kind === 'plain') !== (to.kind === 'plain')){ toast("Finished items can't move between a to-do list and a simple list"); return false; }
+  if (to.items.filter(x => !x.doneOn).length >= TODO_OPEN && !it.doneOn){ toast(`${to.name} is full`); return false; }
+  from.items = from.items.filter(x => x.id !== it.id); insertTodo(to, it); return true;
+}
+
+// the full-screen to-do editor: name, list, priority, steps, notes, delete
+let tdraft = null, tdDelArm = false;
+function openTodoEditor(lid, iid, copy, preset){
+  const {L, it} = iid ? todoFind(lid, iid) : {L: S.todos.lists.find(x => x.id === lid), it: null};
+  if (!L) return;
+  const n = Date.now().toString(36);
+  tdraft = it ? {lid: L.id, iid: copy ? null : it.id, toLid: L.id, text: copy ? (it.text + ' copy').slice(0, 80) : it.text, pri: priOf(it), note: it.note || '',
+      steps: (it.steps || []).map((x, i) => copy ? {id: 's' + n + i, text: x.text} : {...x}), isNew: !!copy, done: !copy && !!it.doneOn}
+    : {lid: L.id, iid: null, toLid: L.id, text: '', pri: 'none', note: '', steps: [], isNew: true, done: false, ...(preset || {})};
+  tdDelArm = false; sheetMode = 'todo'; renderTodoEditor(); showSheet(tdraft.isNew ? 'New to-do' : 'Edit to-do'); sheetFull(true);
+  setTimeout(() => { const nm = document.getElementById('tdName'); if (nm && tdraft.isNew){ nm.focus(); if (copy) nm.select(); } }, 30);
+}
+function readTodoFields(){
+  if (!tdraft) return;
+  const n = document.getElementById('tdName'); if (n) tdraft.text = n.value;
+  const no = document.getElementById('tdNote'); if (no) tdraft.note = no.value;
+  const ls = document.getElementById('tdList'); if (ls) tdraft.toLid = ls.value;
+  tdraft.steps.forEach((x, i) => { const el = document.getElementById('tdStep' + i); if (el) x.text = el.value; });
+}
+function renderTodoEditor(){
+  const t = tdraft, to = S.todos.lists.find(x => x.id === t.toLid) || S.todos.lists.find(x => x.id === t.lid), from = S.todos.lists.find(x => x.id === t.lid);
+  const plain = to.kind === 'plain', vis = S.todos.lists.filter(x => !x.hidden);
+  const canDel = !t.isNew && (!t.done || from.kind === 'plain');
+  document.getElementById('sheetBody').innerHTML = `
+    <div class="edhead"><button class="edx" data-close aria-label="Close without saving">${svg('x',20,2.4)}</button><b>${t.isNew ? (plain ? 'New item' : 'New to-do') : (plain ? 'Edit item' : 'Edit to-do')}</b><button class="edok" data-savetodo aria-label="Save">${svg('check',20,2.8)}</button></div>
+    <input class="edname" type="text" id="tdName" maxlength="80" value="${esc(t.text)}" placeholder="${plain ? 'Item' : 'What needs doing?'}" aria-label="Name">
+    <div class="edcard">
+      <label class="edrow" for="tdList"><span>List</span><select id="tdList">${vis.map(x => `<option value="${esc(x.id)}" ${x.id === to.id ? 'selected' : ''} ${t.done && (x.kind === 'plain') !== (from.kind === 'plain') ? 'disabled' : ''}>${esc(x.name)}${x.kind === 'plain' ? ' (simple)' : ''}</option>`).join('')}</select></label>
+      ${plain ? '' : `<div class="edrow"><span>Priority</span><div class="seg mini" role="group" aria-label="Priority">${PRI.map(([g, label, mark]) => `<button type="button" class="${t.pri === g ? 'on' : ''}" data-tdpri="${g}" aria-pressed="${t.pri === g}">${mark ? mark + ' ' : ''}${g === 'none' ? 'None' : label}</button>`).join('')}</div></div>`}
+    </div>
+    <div class="edcard"><div class="edrow top"><span>Steps</span><span class="small muted">${t.steps.length ? `${t.steps.filter(x => x.done).length}/${t.steps.length} done` : ''}</span></div>
+      <div class="edsteps">${t.steps.map((x, i) => `<div class="edstep ${x.done ? 'on' : ''}"><span class="edstepdot">${x.done ? svg('check',12,3) : ''}</span><input type="text" id="tdStep${i}" maxlength="60" value="${esc(x.text)}" placeholder="Step ${i + 1}" aria-label="Step ${i + 1}"><button class="xbtn" data-tdstepdel="${i}" aria-label="Remove step ${i + 1}">${svg('x',14,2.4)}</button></div>`).join('')}</div>
+      ${t.steps.length < CHECK_MAX ? `<button class="edadd" data-tdstepadd>Add step ${svg('plus',14,2.6)}</button>` : ''}</div>
+    <textarea class="ednote" id="tdNote" maxlength="500" rows="4" placeholder="Write your notes here…" aria-label="Notes">${esc(t.note)}</textarea>
+    <p class="how small" id="tdErr" role="alert"></p>
+    <div class="edfoot">${canDel ? `<button class="btn danger" data-tddel>${svg('trash',16,2.2)} ${tdDelArm ? 'Tap again to delete' : 'Delete'}</button>` : '<span></span>'}${t.isNew ? '' : `<button class="btn" data-tdcopy>${svg('copy',16,2.2)} Make a copy</button>`}</div>`;
+}
+function saveTodoDraft(){
+  readTodoFields(); const t = tdraft, text = t.text.trim().slice(0, 80);
+  if (!text){ document.getElementById('tdErr').textContent = 'Give it a name first.'; return; }
+  const to = S.todos.lists.find(x => x.id === t.toLid); if (!to) return;
+  const steps = t.steps.map(x => ({id: x.id, text: x.text.trim().slice(0, 60), ...(x.done ? {done: true} : {})})).filter(x => x.text).slice(0, CHECK_MAX);
+  let it;
+  if (t.isNew){
+    if (to.items.filter(x => !x.doneOn).length >= TODO_OPEN){ toast(`${to.name} is full`); return; }
+    it = {id: 'i' + Date.now().toString(36) + Math.floor(Math.random() * 1e4), text, createdOn: D.today};
+    if (!to.kind && ['high','med','low'].includes(t.pri)) it.pri = t.pri;
+    if (steps.length) it.steps = steps; if (t.note.trim()) it.note = t.note.slice(0, 500);
+    insertTodo(to, it); todoList = to.id;
+  } else {
+    const {L, it: cur} = todoFind(t.lid, t.iid); if (!cur) return closeEditor();
+    if (to !== L && !moveTodo(cur, L, to)) return;
+    cur.text = text; if (t.note.trim()) cur.note = t.note.slice(0, 500); else delete cur.note;
+    if (steps.length) cur.steps = steps; else delete cur.steps;
+    if (to.kind === 'plain') delete cur.pri; else if (['high','med','low'].includes(t.pri)) cur.pri = t.pri; else delete cur.pri;
+    it = cur;
+  }
+  save(); closeEditor(); render(); toast(t.isNew ? `Added to ${to.name}` : 'Saved');
+}
+
+// quick add: a bar at the bottom with a few chips, and ••• for the full editor
+let qaCtx = null;
+const QA_REP = [['day', 'Every day'], ['weekdays', 'Weekdays'], ['weekends', 'Weekends']];
+const mainStatGuess = () => { const n = {}; for (const t of S.tasks) if (!t.archived && t.stats && t.stats[0]) n[t.stats[0]] = (n[t.stats[0]] || 0) + 1; return Object.entries(n).sort((a, b) => b[1] - a[1]).map(x => x[0])[0] || 'MGT'; };
+function openQuickAdd(spec){
+  const [kind, a, b] = spec.split('|');
+  qaCtx = kind === 'todo' ? {kind, lid: a, pri: PRI.some(p => p[0] === b) ? b : 'none'} : {kind, cad: a === 'week' ? 'week' : 'day', tod: TOD_KEYS.includes(b) ? b : 'any', rep: 'day', target: 3, stat: qaCtx && qaCtx.stat || mainStatGuess()};
+  renderQuickAdd(''); setTimeout(() => { const i = document.getElementById('qaText'); if (i) i.focus(); }, 30);
+}
+function renderQuickAdd(text){
+  const qa = document.getElementById('qa'); if (!qaCtx){ qa.hidden = true; return; }
+  const c = qaCtx, chip = (k, icon, label) => `<button type="button" class="qachip" data-qachip="${k}">${icon ? svg(icon, 14, 2.2) : ''}<span>${label}</span>${svg('down', 12, 2.6)}</button>`;
+  let chips = '', ph = '';
+  if (c.kind === 'todo'){ const L = S.todos.lists.find(x => x.id === c.lid), p = PRI.find(x => x[0] === c.pri);
+    ph = `Add to ${L ? L.name : 'list'}`; chips = chip('pri', null, `${p[2] ? p[2] + ' ' : ''}${p[0] === 'none' ? 'TO-DO' : p[1].toUpperCase()}`); }
+  else { const g = TODS.find(x => x.k === c.tod);
+    ph = c.cad === 'week' ? 'A habit to build' : "What's next?";
+    chips = (c.cad === 'day' ? chip('tod', g.icon, g.label.toUpperCase()) + chip('rep', 'reroll', QA_REP.find(r => r[0] === c.rep)[1].toUpperCase()) : chip('target', 'reroll', `${c.target}× A WEEK`)) + chip('stat', null, `★ ${esc(STATS[c.stat].name).toUpperCase()}`); }
+  qa.innerHTML = `<form class="qabar" data-qasubmit autocomplete="off"><input type="text" id="qaText" maxlength="${c.kind === 'todo' ? 80 : 40}" placeholder="${esc(ph)}" value="${esc(text || '')}" aria-label="${esc(ph)}">
+    <div class="qarow"><div class="qachips">${chips}<button type="button" class="qachip more" data-qamore aria-label="More settings">${svg('dots', 16, 2.4)}</button></div><button type="submit" class="qasend" aria-label="Add">${svg('up', 18, 2.8)}</button></div></form>`;
+  qa.hidden = false; qaPlace();
+}
+function qaPlace(){ const bar = document.querySelector('#qa .qabar'); if (!bar) return; const vv = window.visualViewport; const off = vv ? Math.max(0, innerHeight - vv.height - vv.offsetTop) : 0; bar.style.bottom = off + 'px'; }
+if (window.visualViewport){ visualViewport.addEventListener('resize', qaPlace); visualViewport.addEventListener('scroll', qaPlace); }
+function closeQuickAdd(){ qaCtx = null; document.getElementById('qa').hidden = true; }
+function qaChipMenu(k, el){
+  const c = qaCtx; let opts = [];
+  if (k === 'pri') opts = PRI.map(([g, l, m]) => [g, `${m ? m + ' ' : ''}${g === 'none' ? 'To-do (no priority)' : l}`, c.pri === g]);
+  if (k === 'tod') opts = TODS.map(g => [g.k, g.label, c.tod === g.k]);
+  if (k === 'rep') opts = QA_REP.map(([v, l]) => [v, l, c.rep === v]);
+  if (k === 'target') opts = [1,2,3,4,5,6,7].map(n => [String(n), `${n}× a week`, c.target === n]);
+  if (k === 'stat') opts = SK.map(s2 => [s2, STATS[s2].name, c.stat === s2]);
+  qmCtx = {kind: 'chip', chip: k, opts, rect: el.getBoundingClientRect()}; renderQuick();
+}
+function qaToDraft(name, c = qaCtx){ const d = {id: 't' + Date.now().toString(36), name, stats: [c.stat], cad: c.cad, target: c.target || 3, created: D.today, isNew: true, days: [0,1,2,3,4,5,6]};
+  if (c.cad === 'day'){ if (c.rep === 'weekdays') d.days = [1,2,3,4,5]; if (c.rep === 'weekends') d.days = [0,6]; if (c.tod !== 'any') d.tod = c.tod; }
+  return d;
+}
 /* ---------- events ---------- */
 document.addEventListener('click', e => { try { onClick(e); } catch(err){ console.error(err); enterRecovery(String(err && err.message || err)); showRecovery(); } });
 function onClick(e){
+  // tapping a task or to-do anywhere but its buttons opens its quick menu
+  if (!e.target.closest('button, input, select, textarea, a, form, .tdgrip, .sgrip, .cl') && e.target.closest('[data-qm]') && !recoveryMode){ const q = e.target.closest('[data-qm]'); openQuick(q.dataset.qm, q); return; }
   const el = e.target.closest('button'); if (!el) return;
+  if (el.dataset.qmact){ quickAct(el.dataset.qmact); return; }
+  if (el.dataset.qmmove){ const c = qmCtx, {L, it} = todoFind(c.lid, c.iid), to = S.todos.lists.find(x => x.id === el.dataset.qmmove); closeQuick(); if (it && to && moveTodo(it, L, to)){ save(); render(); toast(`Moved to ${to.name}`); } return; }
+  if (el.dataset.qaset){ const [k, v] = el.dataset.qaset.split('|'); const txt = (document.getElementById('qaText') || {}).value || ''; closeQuick();
+    if (k === 'target') qaCtx.target = clamp(parseInt(v) || 3, 1, 7); else qaCtx[k] = v; renderQuickAdd(txt); const i = document.getElementById('qaText'); if (i) i.focus(); return; }
+  if (el.dataset.qachip){ qaChipMenu(el.dataset.qachip, el); return; }
+  if ('qamore' in el.dataset){ const txt = ((document.getElementById('qaText') || {}).value || '').trim(), c = qaCtx; closeQuickAdd();
+    if (c.kind === 'todo'){ openTodoEditor(c.lid, null, false, {text: txt, pri: c.pri}); return; }
+    openEditor(null); draft = qaToDraft(txt, c); renderEditor(); setTimeout(() => { const n = document.getElementById('tName'); if (n){ n.focus(); n.setSelectionRange(n.value.length, n.value.length); } }, 40); return; }
+  if (el.dataset.qadd){ openQuickAdd(el.dataset.qadd); return; }
+  if ('savetodo' in el.dataset){ saveTodoDraft(); return; }
+  if (el.dataset.tdpri){ readTodoFields(); tdraft.pri = el.dataset.tdpri; renderTodoEditor(); return; }
+  if ('tdstepadd' in el.dataset){ readTodoFields(); tdraft.steps.push({id: 's' + Date.now().toString(36), text: ''}); renderTodoEditor(); const inp = document.getElementById('tdStep' + (tdraft.steps.length - 1)); if (inp) inp.focus(); return; }
+  if (el.dataset.tdstepdel){ readTodoFields(); tdraft.steps.splice(parseInt(el.dataset.tdstepdel), 1); renderTodoEditor(); return; }
+  if ('tdcopy' in el.dataset){ readTodoFields(); const t = tdraft, n = Date.now().toString(36); tdraft = {...t, iid: null, isNew: true, done: false, text: (t.text.trim() + ' copy').slice(0, 80), steps: t.steps.map((x, i) => ({id: 's' + n + i, text: x.text}))}; renderTodoEditor(); toast('Copied. Edit it and save to add it.'); return; }
+  if ('tddel' in el.dataset){ const {L, it} = todoFind(tdraft.lid, tdraft.iid); if (!todoDeletable(L, it)) return; if (!tdDelArm){ tdDelArm = true; readTodoFields(); renderTodoEditor(); return; } L.items = L.items.filter(x => x.id !== it.id); save(); closeEditor(); render(); toast('Deleted'); return; }
   if (sellArm && !el.dataset.sell){ sellArm = null; if (!Object.keys(el.dataset).length){ render(); return; } }
   if (recoveryMode){
     if ('reload' in el.dataset){ location.reload(); return; }
@@ -4606,6 +4887,7 @@ function onClick(e){
     if (i >= 0){ if (draft.stats.length > 1) draft.stats.splice(i,1); } else { draft.stats.push(k); if (draft.stats.length > 2) draft.stats.shift(); }
     renderEditor(); return; }
   if (el.dataset.day !== undefined && draft){ readEditorFields(); const d = +el.dataset.day, i = draft.days.indexOf(d); if (i >= 0){ if (draft.days.length > 1) draft.days.splice(i,1); } else draft.days.push(d); renderEditor(); return; }
+  if ('archive' in el.dataset && !el.dataset.confirmed && !archArm){ archArm = true; el.innerHTML = `${svg('trash',16,2.2)} Tap again to delete`; return; }
   if ('archive' in el.dataset){ const t = S.tasks.find(t => t.id === draft.id); if (t){ t.archived = true; (t.off || (t.off = [])).push([addDays(D.today,1), null]); save(); } closeEditor(); render(); return; }
   // a copy starts as a brand-new task with the same settings and steps; nothing is saved until you press Save
   if ('copytask' in el.dataset){
@@ -4641,6 +4923,7 @@ function onClick(e){
     if (cl.length) out.checklist = cl;
     if (taskIconOk(draft.icon)) out.icon = draft.icon;
     if (TOD_KEYS.includes(draft.tod)) out.tod = draft.tod;
+    if (draft.note && draft.note.trim()) out.note = draft.note.slice(0, 500);
     const i = S.tasks.findIndex(t => t.id === out.id), old = i >= 0 ? S.tasks[i] : null;
     let relock = [];
     const entry = {from: old ? addDays(D.today,1) : D.today, cad: out.cad, days: out.days || null};
@@ -4752,7 +5035,10 @@ document.addEventListener('change', e => {
   if (e.target.id === 'petName'){ const v = e.target.value.trim().slice(0,16); if (v && v !== S.petName){ S.petName = v; save(); render(); } }
 });
 document.getElementById('sheet').addEventListener('click', e => { if (e.target.id === 'sheet') closeEditor(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && draft) closeEditor(); });
+document.addEventListener('keydown', e => { if (e.key !== 'Escape') return; if (qmCtx){ closeQuick(); return; } if (qaCtx){ closeQuickAdd(); return; } if (draft || tdraft) closeEditor(); });
+// tapping the dimmed backdrop closes the quick menu or the quick-add bar
+document.getElementById('qm').addEventListener('click', e => { if (e.target.id === 'qm') closeQuick(); });
+document.getElementById('qa').addEventListener('click', e => { if (e.target.id === 'qa' && !qmCtx) closeQuickAdd(); });
 
 render();
 
@@ -4785,6 +5071,11 @@ document.addEventListener('submit', e => {
   if (recoveryMode) return;
   const f = e.target;
   try {
+    if ('qasubmit' in f.dataset){ const inp = document.getElementById('qaText'); const text = (inp.value || '').trim(); if (!text || !qaCtx) return; const c = qaCtx;
+      if (c.kind === 'todo'){ const L = S.todos.lists.find(x => x.id === c.lid); if (!L) return closeQuickAdd(); if (L.items.filter(x => !x.doneOn).length >= TODO_OPEN){ toast(`${L.name} is full`); return; }
+        const it = {id: 'i' + Date.now().toString(36) + Math.floor(Math.random() * 1e4), text: text.slice(0, 80), createdOn: D.today}; if (['high','med','low'].includes(c.pri) && !L.kind) it.pri = c.pri;
+        insertTodo(L, it); save(); render(); renderQuickAdd(''); const n = document.getElementById('qaText'); if (n) n.focus(); return; }   // stays open for the next item
+      draft = qaToDraft(text.slice(0, 40)); closeQuickAdd(); document.getElementById('sheetBody').innerHTML = ''; runAction({savetask: ''}); return; }
     if ('addlist' in f.dataset){ const inp = document.getElementById('newList'); const name = (inp.value || '').trim().slice(0,40); if (!name) return; if (S.todos.lists.filter(L => !L.hidden).length >= TODO_LISTS){ toast(`You can have up to ${TODO_LISTS} lists`); return; } const nid = 'l' + Date.now().toString(36); S.todos.lists.push({id:nid, name, items:[], ...(newListKind === 'plain' ? {kind:'plain'} : {})}); todoList = nid; todoAdd = null; newListKind = 'pri'; save(); render(); setTimeout(() => { const a = document.getElementById('add-' + nid); if (a && S.todos.lists.find(x => x.id === nid).kind === 'plain') a.focus(); }, 30); return; }
     if (f.dataset.renamelist){ const L = S.todos.lists.find(x => x.id === f.dataset.renamelist && !x.hidden); const name = (document.getElementById('renameList').value || '').trim().slice(0,40); if (!L || !name) return; L.name = name; todoRename = false; todoMenu = false; save(); render(); return; }
     if (f.dataset.addstep){ const [lid, iid] = f.dataset.addstep.split('|'); const L = S.todos.lists.find(x => x.id === lid); const it = L && L.items.find(x => x.id === iid); if (!it || it.doneOn) return;
