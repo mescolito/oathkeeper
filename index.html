@@ -928,7 +928,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'a4bc32c99e';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '2d27332515';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -941,7 +941,7 @@ const SK = Object.keys(STATS);
 const STATS_BASE = JSON.parse(JSON.stringify(STATS));
 const ABBR = {MGT:'MGT', STA:'STA', MOB:'MOB', ARM:'DEF', HRT:'FOC'};   // internal keys stay; ARM shows as Defense, HRT as Focus
 SK.forEach(k => { STATS[k].abbr = ABBR[k]; STATS[k].icon = k; STATS_BASE[k].abbr = ABBR[k]; STATS_BASE[k].icon = k; });
-const LOFI_KEYS = ['chill', 'upbeat', 'dreamy', 'afro', 'bloom', 'pulse', 'lockin', 'cafe', 'bossa', 'chip', 'glade'];   // every Focus song (the ones after Lock-in come from Riff)
+const LOFI_KEYS = ['chill', 'upbeat', 'dreamy', 'afro', 'bloom', 'pulse', 'lockin', 'cafe', 'bossa', 'chip', 'glade', 'palmwine'];   // every Focus song (the ones after Lock-in come from Riff)
 const STAT_ICONS = ['MGT','STA','MOB','ARM','HRT','wave','flame','leaf','star','book','moon','bolt'];
 // a task's own icon: one of the app's pixel-line icons, or any emoji ("e:" + the emoji)
 const TASK_ICONS = [...STAT_ICONS, 'sword', 'timer', 'bed', 'list', 'gift', 'sun', 'broom'];
@@ -6117,11 +6117,14 @@ const LOFI_STYLES = {
   dreamy: {label: 'Dreamy', note: 'Warm synths and deep 808s', key: -3, gain: 0.8,
     focus: {bpm: 82, swing: 0.06, chord: 'synth', lead: 'square', bass: 'sub', beat: 'rim', lead_p: 0.25, drums: 1, amb: 0.0001, warm: 3600},
     break: {bpm: 64, swing: 0.04, chord: 'synth', lead: 'kalimba', bass: 'sub', beat: 'none', lead_p: 0.3, drums: 0.0001, amb: 0.22, warm: 2600}, amb: 'waves'},
-  afro: {label: 'Afro', note: 'Boom-bap drums, nylon guitar, congas', key: 0, gain: 1.05, vinyl: 0.45, wow: 4, bassv: 0.35,
-    progs: {focus: [[[45,55,59,60,64],[50,53,57,60,64],[43,52,55,59,62],[48,52,55,59,64]], [[41,52,57,60,64],[40,50,55,59,62],[45,55,59,60,64],[45,55,57,60,64]], [[50,53,57,60,64],[40,55,59,62,64],[41,55,57,60,64],[40,52,56,59,62]]],
-            break: [[[41,57,60,64,67],[43,55,59,62,69],[48,55,59,62,64],[48,55,59,62,64]], [[48,52,55,59,64],[41,52,57,60,64],[48,52,55,59,64],[43,53,55,59,62]]]},
-    focus: {bpm: 88, swing: 0.17, chord: 'nylon', pad2: 'rhodes', pad2v: 0.03, lead: 'marimba', oct: 12, lead_p: 0.14, leadv: 0.045, bass: 'hiphop', bassSnd: 'round', beat: 'afrohop', drums: 1, amb: 0.0001, warm: 6500},
-    break: {bpm: 72, swing: 0.1, chord: 'warmpad', lead: 'nylon', oct: 12, lead_p: 0.3, leadv: 0.05, bass: 'twofeel', bassSnd: 'round', beat: 'afrosoft', drums: 0.5, amb: 0.2, warm: 4200}, amb: 'rain'},
+  // modeled on the Afro Lofi example: 68 BPM (each engine bar here is half a real bar, so a step is a sixteenth), C# minor,
+  // a chord every two beats over a four-bar loop, deep 808 kicks that choke a held sub bass, a crisp snare on 2 and 4,
+  // tight sixteenth hats, dark held keys and now and then a soft sustained lead
+  afro: {label: 'Afro', note: 'Deep 808s, crisp hats, dark keys', key: 0, gain: 0.7, vinyl: 0.12, wow: 2, bassv: 0.22,
+    progs: {focus: [[[49,52,56,59,63],[42,54,57,61,64],[47,54,57,59,61],[44,54,57,60,63],[44,54,56,59,63],[49,52,56,59,63],[40,56,59,63,64],[42,56,57,61,64]]],
+            break: [[[49,52,56,59,63],[45,52,57,61,64],[42,54,57,61,64],[44,54,57,60,63]]]},
+    focus: {bpm: 136, swing: 0.1, chord: 'held', padSnd: 'darkkeys', padv: 0.055, lead: 'flute', oct: 12, leadFrom: 59, lead_p: 0.035, leadv: 0.05, long: true, bass: 'eightoh', bassSnd: 'eightoh', bassFloor: 30, beat: 'lofitrap', drums: 1, amb: 0.0001, warm: 11000},
+    break: {bpm: 104, swing: 0.08, chord: 'held', padSnd: 'darkkeys', padv: 0.075, hold: 2, lead: 'flute', oct: 12, leadFrom: 59, lead_p: 0.05, leadv: 0.03, long: true, bass: 'eightoh', bassSnd: 'eightoh', bassFloor: 30, beat: 'lofitrapsoft', drums: 0.5, amb: 0.22, warm: 6000}, amb: 'rain'},
   // modeled on the Headspace example: a wide held pad in B major (chords change every two bars over an 8-bar loop), a plucked bass line
   // over a B pedal, a half-time beat (soft kick on 1, a roomy snare on 3), and the odd bell note up high
   bloom: {label: 'Bloom', note: 'A wide warm pad, half-time beat, bell notes', key: 0, gain: 1.1, vinyl: 0.03, wow: 0, bassv: 0.45, drumVerb: 0.35,
@@ -6142,6 +6145,11 @@ const LOFI_STYLES = {
     focus: {bpm: 120, swing: 0, chord: 'lockpad', hold: 16, lead: 'softpluck', mel: true, lead_p: 0.1, leadv: 0.04, bass: 'none', bassSnd: 'round', beat: 'none', drums: 0.0001, amb: 0.0001, warm: 2600, am: true},
     break: {bpm: 90, swing: 0, chord: 'lockpad', hold: 8, lead: 'marimba', mel: true, lead_p: 0.06, leadv: 0.03, bass: 'none', beat: 'none', drums: 0.0001, amb: 0.26, warm: 2200}, amb: 'waves'},
   // these come from Riff's stall (price in gold)
+  palmwine: {label: 'Palm Wine', note: 'Boom-bap drums, nylon guitar, congas', price: 400, key: 0, gain: 1.05, vinyl: 0.45, wow: 4, bassv: 0.35,
+    progs: {focus: [[[45,55,59,60,64],[50,53,57,60,64],[43,52,55,59,62],[48,52,55,59,64]], [[41,52,57,60,64],[40,50,55,59,62],[45,55,59,60,64],[45,55,57,60,64]], [[50,53,57,60,64],[40,55,59,62,64],[41,55,57,60,64],[40,52,56,59,62]]],
+            break: [[[41,57,60,64,67],[43,55,59,62,69],[48,55,59,62,64],[48,55,59,62,64]], [[48,52,55,59,64],[41,52,57,60,64],[48,52,55,59,64],[43,53,55,59,62]]]},
+    focus: {bpm: 88, swing: 0.17, chord: 'nylon', pad2: 'rhodes', pad2v: 0.03, lead: 'marimba', oct: 12, lead_p: 0.14, leadv: 0.045, bass: 'hiphop', bassSnd: 'round', beat: 'afrohop', drums: 1, amb: 0.0001, warm: 6500},
+    break: {bpm: 72, swing: 0.1, chord: 'warmpad', lead: 'nylon', oct: 12, lead_p: 0.3, leadv: 0.05, bass: 'twofeel', bassSnd: 'round', beat: 'afrosoft', drums: 0.5, amb: 0.2, warm: 4200}, amb: 'rain'},
   glade: {label: 'Glade', note: 'Plucked guitar, warm pads, soft hand drums', price: 400, key: -1, gain: 1.2, vinyl: 0.04, wow: 0, bassv: 0.35,
     progs: {focus: [[[36,55,59,62,64],[45,55,59,60,64],[41,55,57,60,64],[43,55,57,62,64]], [[36,52,55,59,62],[40,55,59,62,64],[41,55,57,60,64],[36,55,57,62,67]], [[41,57,60,64,67],[36,55,59,62,64],[45,57,60,64,67],[43,55,59,62,66]]],
             break: [[[41,57,60,64,69],[36,55,59,62,67],[41,57,60,64,69],[43,55,59,62,66]], [[45,57,60,64,71],[41,57,60,64,69],[36,55,59,62,67],[36,55,59,62,64]]]},
@@ -6161,6 +6169,7 @@ const LOFI_STYLES = {
 const LOFI_BASS_PAT = {
   afro: [[0, 0, 2], [3, 0, 1.4], [5, 7, 1, 0.6], [6, 12, 1.4]],
   hiphop: [[0, 0, 3.6], [4, 7, 1.8], [6, 0, 1.6, 0.5]],
+  eightoh: [[0, 0, 7.8]],
   hsbass: [[0, 0, 2.2], [3, 0, 1.2, 0.6], [5, 12, 1, 0.35], [6, 7, 1.6, 0.5]],
   boom: [[0, 0, 7.5]],
   pulse: [[0, 0, 0.9], [1, 0, 0.9], [2, 0, 0.9], [3, 12, 0.9], [4, 0, 0.9], [5, 0, 0.9], [6, 0, 0.9], [7, 12, 0.9]],
@@ -6289,9 +6298,9 @@ function lofiSchedule(){
     const part = sty[L.mode];
     L.bpm += Math.max(-0.5, Math.min(0.5, part.bpm - L.bpm));   // tempo drifts, it doesn't jump
     const eighth = 60 / L.bpm / 2, st = L.step % 8, t = L.next + (st % 2 ? eighth * part.swing : 0);
-    const hold = part.hold || 1, cyc = 4 * hold;   // 'hold' keeps each chord for that many bars
+    const hold = part.hold || 1, cyc = L.prog.length * hold;   // 'hold' keeps each chord for that many bars
     if (st === 0 && (L.swap ? L.bar % (hold > 1 ? hold : 2) === 0 : (L.bar % cyc === 0 && L.bar && Math.random() < 0.35))){ L.prog = lofiPick(L.mode, L.style); L.swap = false; L.bar = 0; }
-    const ch = L.prog[Math.floor(L.bar / hold) % 4].map(m => m + sty.key), root = ch[0], tones = ch.slice(1);
+    const ch = L.prog[Math.floor(L.bar / hold) % L.prog.length].map(m => m + sty.key), root = ch[0], tones = ch.slice(1);
     if (part.chord === 'lockpad'){ if (st === 0 && L.bar % hold === 0) [root + 12, ...tones].forEach((m, i) => lofiInst('lockpad', L, m, t + i * 0.3, eighth * 8 * hold, i ? 0.03 : 0.022)); }
     if (part.mel && Math.random() < part.lead_p){   // a melody that only moves a few semitones at a time, in the major pentatonic
       const pent = [0, 2, 4, 7, 9], cands = []; for (let n = 64; n <= 79; n++) if (pent.includes(((n - sty.key) % 12 + 12) % 12)) cands.push(n);
@@ -6314,7 +6323,7 @@ function lofiSchedule(){
     else if (part.chord === 'vibes'){ if (st === 0 || st === 5) tones.forEach(m => lofiInst('vibes', L, m, t, eighth * 2, 0.032)); }
     else if (st === 0) tones.forEach((m, i) => lofiInst(part.chord, L, m, t + i * (part.chord === 'rhodes' ? 0.012 : 0), eighth * 8, part.chord === 'rhodes' ? 0.05 : 0.026));
     // bass
-    const bp = LOFI_BASS_PAT[part.bass], nextRoot = L.prog[(L.bar + 1) % 4][0] + sty.key;
+    const bp = LOFI_BASS_PAT[part.bass], nextRoot = L.prog[(Math.floor(L.bar / hold) + 1) % L.prog.length][0] + sty.key;
     if (bp){ for (const [s0, semi, len, pr] of bp) if (s0 === st && (pr == null || Math.random() < pr)){
       const n = semi === 'walk' ? nextRoot + (Math.random() < 0.5 ? -1 : 1) : root + semi; lofiBass(part.bassSnd || 'round', L, n - 12 + (n - 12 < (part.bassFloor || 28) ? 12 : 0), t, eighth * len); } }
     const bassAt = bp ? [] : ({round: [0, 5], pluck: [0, 3, 5], sub: [0, 6]}[part.bass] || [0]);
@@ -6322,7 +6331,7 @@ function lofiSchedule(){
     // lead: an arpeggio walking the chord, or loose melody notes
     if (part.mel){}
     else if (part.arp){ const walk = [0, 1, 2, 3, 2, 1, 3, 1][st]; if (Math.random() < part.lead_p) lofiInst(part.lead, L, tones[walk % tones.length] + (part.oct != null ? part.oct : 12), t, eighth * 2, (st % 2 ? 0.035 : 0.05) * (part.leadv ? part.leadv / 0.04 : 1)); }
-    else if (st % 2 === 0 && Math.random() < part.lead_p) lofiInst(part.lead, L, (pool => pool[Math.floor(Math.random() * pool.length)])(part.leadFrom ? tones.filter(m => m >= part.leadFrom) : tones) + (part.oct != null ? part.oct : part.lead === 'guitar' ? 12 : 24), t + (part.loose ? Math.random() * eighth * 0.3 : 0), eighth * (1.5 + Math.random() * 2), part.leadv || 0.04);
+    else if (st % 2 === 0 && Math.random() < part.lead_p) lofiInst(part.lead, L, (pool => pool[Math.floor(Math.random() * pool.length)])(part.leadFrom ? tones.filter(m => m >= part.leadFrom) : tones) + (part.oct != null ? part.oct : part.lead === 'guitar' ? 12 : 24), t + (part.loose ? Math.random() * eighth * 0.3 : 0), eighth * (part.long ? 6 + Math.random() * 6 : 1.5 + Math.random() * 2), part.leadv || 0.04);
     lofiBeat(part.beat, L, st, t);
     L.next += eighth; L.step++; if (L.step % 8 === 0) L.bar++;
   }
@@ -6340,6 +6349,12 @@ function lofiBeat(kind, L, st, t){
     if (st === 0 || (st === 5 && Math.random() < 0.5)) lofiKick(L, t, 95, 0.34);
     if (st === 4) lofiNoise(L, t, 0.05, 'bandpass', 2800, 0.12);
     lofiNoise(L, t, 0.07, 'bandpass', 5500, st % 2 ? 0.025 : 0.04);
+  } else if (kind === 'lofitrap' || kind === 'lofitrapsoft'){   // each engine bar = half a bar at 68 BPM: steps are sixteenths
+    const soft = kind === 'lofitrapsoft', half = L.bar % 2, j = () => t + (Math.random() - 0.5) * 0.008;
+    const kicks = half ? [[2, 0.85], [5, 0.45], [7, 0.35]] : [[0, 1], [6, 0.75], [7, 0.2]];
+    if (!soft) for (const [k, pr] of kicks) if (st === k && Math.random() < pr) lofi808Kick(L, j(), k === 0 ? 0.42 : 0.34);
+    if (st === 4 && !soft) lofiClapSnare(L, j(), 0.6);
+    lofiNoise(L, j(), 0.035, 'highpass', 5000, (st % 2 ? 0.09 : 0.15) * (soft ? 0.6 : 1) * (0.8 + Math.random() * 0.4));
   } else if (kind === 'halftime'){   // half-time: a soft kick on 1 (and sometimes the and of 3), a roomy snare on 3, a whisper of shaker
     const e = 60 / L.bpm / 2, j = () => t + (Math.random() - 0.5) * 0.01;
     if (st === 0 || (st === 5 && Math.random() < 0.4) || (st === 7 && Math.random() < 0.15)) lofiKickBB(L, j(), st ? 0.2 : 0.28, true);
@@ -6436,6 +6451,18 @@ function lofiInst(kind, L, m, t, dur, vol){
     a.connect(lp); b.connect(lp); sub.connect(sg); sg.connect(out); air.connect(ag); ag.connect(out);
     out.gain.setValueAtTime(0.0001, t); out.gain.exponentialRampToValueAtTime(vol, t + 1.4); out.gain.setValueAtTime(vol, t + dur); out.gain.exponentialRampToValueAtTime(0.0001, t + dur + 2.6);
     run([a, b, sub, air], t + dur + 2.7);
+  } else if (kind === 'darkkeys'){   // muffled electric-piano chords: a soft tine attack, then warm held tones with the highs rolled off
+    const lp = actx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.setValueAtTime(1600, t); lp.frequency.exponentialRampToValueAtTime(900, t + 0.6); lp.Q.value = 0.3; lp.connect(out); const nodes = [];
+    for (const [h, a] of [[1, 1], [2, 0.25], [3, 0.06]]) for (const d of [-4, 4]){ const o = osc('sine', f * h, d), g = actx.createGain(); g.gain.value = a * 0.5; o.connect(g); g.connect(lp); nodes.push(o); }
+    const tine = osc('sine', f * 4.01), tg = actx.createGain(); tg.gain.setValueAtTime(0.18, t); tg.gain.exponentialRampToValueAtTime(0.0001, t + 0.25); tine.connect(tg); tg.connect(lp); nodes.push(tine);
+    out.gain.setValueAtTime(0.0001, t); out.gain.exponentialRampToValueAtTime(vol, t + 0.02); out.gain.exponentialRampToValueAtTime(vol * 0.75, t + 0.5); out.gain.setValueAtTime(vol * 0.75, t + dur); out.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.8);
+    run(nodes, t + dur + 0.9);
+  } else if (kind === 'flute'){   // a soft, breathy sustained lead with a gentle vibrato that comes in late
+    const a = osc('sine', f), b = osc('sine', f * 2), bg = actx.createGain(), vib = osc('sine', 5), vg = actx.createGain(); bg.gain.value = 0.12;
+    vg.gain.setValueAtTime(0, t); vg.gain.linearRampToValueAtTime(f * 0.006, t + 0.6); vib.connect(vg); vg.connect(a.frequency); vg.connect(b.frequency); a.connect(out); b.connect(bg); bg.connect(out);
+    const n = actx.createBufferSource(), nf = actx.createBiquadFilter(), ng = actx.createGain(); n.buffer = L.noise; n.loop = true; nf.type = 'bandpass'; nf.frequency.value = f * 2; nf.Q.value = 2; ng.gain.value = 0.15; n.connect(nf); nf.connect(ng); ng.connect(out);
+    out.gain.setValueAtTime(0.0001, t); out.gain.exponentialRampToValueAtTime(vol, t + 0.18); out.gain.setValueAtTime(vol, t + dur); out.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.6);
+    run([a, b, vib, n], t + dur + 0.7);
   } else if (kind === 'glow'){   // the Headspace-style pad: steady, pure tones with a little 2nd and 3rd harmonic, each doubled a hair apart; long swell in, long fade out
     const lp = actx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 6000; lp.Q.value = 0.2; lp.connect(out); const nodes = [];
     for (const [h, a] of [[1, 1], [2, 0.3], [3, 0.12], [4, 0.06], [5, 0.03]]) for (const d of [-3, 3]){ const o = osc('sine', f * h, d), g = actx.createGain(); g.gain.value = a * 0.5; o.connect(g); g.connect(lp); nodes.push(o); }
@@ -6486,6 +6513,10 @@ function lofiBass(kind, L, m, t, dur){
   } else if (kind === 'sub'){   // a deep 808: drops into the note and rings
     o.type = 'sine'; o.frequency.setValueAtTime(midiHz(m + 5), t); o.frequency.exponentialRampToValueAtTime(midiHz(m), t + 0.08); o.connect(g);
     g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.22, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  } else if (kind === 'eightoh'){   // a held 808 sub: a sine with a touch of 2nd harmonic so phones can hear it
+    o.type = 'sine'; o.frequency.value = midiHz(m); o.connect(g);
+    const o2 = actx.createOscillator(), g2 = actx.createGain(); o2.type = 'sine'; o2.frequency.value = midiHz(m) * 2; g2.gain.value = 0.18; o2.connect(g2); g2.connect(g); o2.start(t); o2.stop(t + dur + 0.05);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.2, t + 0.02); g.gain.setValueAtTime(0.18, t + dur * 0.85); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
   } else if (kind === 'upright'){   // a plucked upright bass, rendered once per note
     const sb = actx.createBufferSource(); sb.buffer = lofiSample(L, 'upright', m); sb.connect(g);
     g.gain.setValueAtTime(0.45, t); g.gain.setValueAtTime(0.45, t + dur * 0.85); g.gain.linearRampToValueAtTime(0.0001, t + dur + 0.06); sb.start(t); sb.stop(t + dur + 0.1); return;
@@ -6526,6 +6557,16 @@ function lofiSnare(L, t, vol){   // a snare: a short tone for the shell, a burst
   const o = actx.createOscillator(), g = actx.createGain(); o.type = 'triangle'; o.frequency.setValueAtTime(190, t); o.frequency.exponentialRampToValueAtTime(150, t + 0.06);
   g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol * 0.5, t + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.12); o.connect(g); g.connect(L.drums); o.start(t); o.stop(t + 0.15);
   lofiNoise(L, t, 0.24, 'bandpass', 1500, vol * 0.5); lofiNoise(L, t, 0.12, 'highpass', 4000, vol * 0.18); }
+function lofi808Kick(L, t, vol){   // a deep 808 kick: falls from 130 Hz to about 48 Hz with a long tail, and chokes the bass under it
+  const o = actx.createOscillator(), g = actx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(130, t); o.frequency.exponentialRampToValueAtTime(54, t + 0.14);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.004); g.gain.exponentialRampToValueAtTime(vol * 0.5, t + 0.2); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.7);
+  o.connect(g); g.connect(L.drums); o.start(t); o.stop(t + 0.75); lofiNoise(L, t, 0.006, 'bandpass', 2500, vol * 0.08);
+  const bg = L.bassBus.gain; bg.setValueAtTime(1, t); bg.linearRampToValueAtTime(0.15, t + 0.01); bg.linearRampToValueAtTime(1, t + 0.42);
+  const pg = L.pump.gain; pg.setValueAtTime(1, t); pg.linearRampToValueAtTime(0.82, t + 0.02); pg.linearRampToValueAtTime(1, t + 0.35); }
+function lofiClapSnare(L, t, vol){   // a crisp snare/clap: three fast noise slaps, a wide noise tail up to the top, a little body
+  for (let k = 0; k < 3; k++) lofiNoise(L, t + k * 0.009, 0.03, 'bandpass', 1600, vol * 0.5);
+  lofiNoise(L, t + 0.018, 0.2, 'bandpass', 3000, vol * 0.9); lofiNoise(L, t + 0.01, 0.1, 'bandpass', 1500, vol * 0.4); lofiNoise(L, t, 0.16, 'highpass', 4000, vol * 0.55);
+  const o = actx.createOscillator(), g = actx.createGain(); o.type = 'triangle'; o.frequency.setValueAtTime(210, t); o.frequency.exponentialRampToValueAtTime(170, t + 0.05); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol * 0.35, t + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.1); o.connect(g); g.connect(L.drums); o.start(t); o.stop(t + 0.12); }
 function lofiRoomSnare(L, t, vol){   // a soft snare that rings in two resonances (around 1.2 and 2 kHz), sent into the room
   lofiNoise(L, t, 0.16, 'highpass', 3500, vol * 0.6);
   for (const [fq, a] of [[1200, 1], [2000, 0.8]]){ const n = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain(); n.buffer = L.noise; f.type = 'bandpass'; f.frequency.value = fq; f.Q.value = 3;
