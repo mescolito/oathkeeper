@@ -263,6 +263,9 @@ html[data-mode="dark"] .trow.done .check{color:var(--inv)}
 .chip-streak{background:var(--yellow);color:#171614;border-radius:999px;padding:3px 10px;font-weight:700;font-size:12px}
 .chips.small{gap:6px}
 .mystery{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--yellow);color:#171614;border-radius:18px;padding:10px 14px;font-size:14px}
+.weathercard{display:flex;align-items:center;gap:12px;padding:12px 14px}
+.weathercard .tbody{flex:1;display:flex;flex-direction:column;min-width:0}
+.weathercard canvas{width:40px;height:40px;border-radius:10px;image-rendering:pixelated;flex:none}
 .mystery.smognote{background:#cfc9bc;align-items:flex-start}
 .mystery.smognote .ntext{flex:1 1 calc(100% - 34px)}
 .smognote .btn{flex:none;white-space:nowrap;margin-left:26px}
@@ -897,7 +900,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'ac00c0bc89';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'a2e2730bb4';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1551,7 +1554,7 @@ function sanitize(s, created){
   out.skillLog = (Array.isArray(s.skillLog) ? s.skillLog : []).filter(u => obj(u) && SKILL_BY[u.id]).map(u => { const o = {id: u.id, ts: num(u.ts, 0), date: isDate(u.date) ? u.date : null}; if (u.dmg != null) o.dmg = int(u.dmg, 0, 5000, 0); if (u.cost != null) o.cost = int(u.cost, 0, 1000, 0); if (typeof u.task === 'string') o.task = u.task.slice(0,40);
     if (SKILL_BY[u.id].kind === 'buff' && obj(u.buff) && obj(u.buff.st)){ const st = {}; for (const k of SK) if (u.buff.st[k] != null) st[k] = int(u.buff.st[k], 0, 20, 0); o.buff = {st, days: int(u.buff.days, 1, 7, 2)}; }
     return o; });
-  out.buys = (Array.isArray(s.buys) ? s.buys : []).filter(b => obj(b) && (b.kind === 'reroll' || b.kind === 'skilleq' || b.kind === 'weather')).map(b => { const o = {kind: b.kind, id: str(b.id, 40), ts: num(b.ts, 0), g: int(b.g, 0, 100000, 0)}; if (isDate(b.date)) o.date = b.date; return o; });
+  out.buys = (Array.isArray(s.buys) ? s.buys : []).filter(b => obj(b) && (b.kind === 'reroll' || b.kind === 'skilleq' || b.kind === 'weather' || b.kind === 'weatherbuy' || b.kind === 'weatheruse')).map(b => { const o = {kind: b.kind, id: str(b.id, 40), ts: num(b.ts, 0), g: int(b.g, 0, 100000, 0)}; if (isDate(b.date)) o.date = b.date; return o; });
   out.potions = (Array.isArray(s.potions) ? s.potions : []).filter(p => obj(p) && POTION_BY[p.id] && isDate(p.date)).map(p => { const o = {id: p.id, ts: num(p.ts, 0), date: p.date, g: int(p.g, 0, 100000, 0)}; if (p.bag){ o.bag = true; o.g = 0; } return o; });
   out.runeBuys = (Array.isArray(s.runeBuys) ? s.runeBuys : []).filter(r => obj(r) && RUNE_BY[r.id] && isDate(r.date)).map(r => { const o = {id: r.id, ts: num(r.ts, 0), date: r.date, g: int(r.g, 0, 100000, 0)}; if (r.token) o.token = true; if (r.bag){ o.bag = true; o.g = 0; delete o.token; } return o; });
   if (obj(s.todos) && Array.isArray(s.todos.lists)){
@@ -2078,7 +2081,7 @@ function derive(){
         if (id === 'pot_remedy' || id === 'pot_elixir') status.para = null;
         if (id === 'pot_elixir'){ hp = C.maxHP; mp = C.maxMP; }
       } else if (e.k === 'rune'){ dyn += e.r.g || 0; }
-      else if (e.k === 'buy'){ dyn += e.b.g || 0; if (e.b.kind === 'weather') smog = 0; }
+      else if (e.k === 'buy'){ dyn += e.b.g || 0; if (e.b.kind === 'weather' || e.b.kind === 'weatheruse') smog = 0; }
       else if (e.k === 'sell'){ dyn += e.x.cost; gold += e.x.g; }
       else if (e.k === 'tlog'){ if (e.x.kind === 'reset'){ dyn += e.x.cost || 0; hp = Math.max(1, hp - (e.x.hp || 0)); } else { xp += e.x.xp || 0; gold += e.x.g || 0; lvUp(fx); } }
     }
@@ -2199,7 +2202,8 @@ function derive(){
   const spent = staticSpent + dyn;
   const newDrops = [...drops].filter(id => isDrop(id) && !S.seenDrops.includes(id));
   const nextRite = riteForL(levelInfo(xp).level, ritesWon);
-  return {smog: {pts: smog, log: smogLog, last: smogLog[yest] || null, on: smogOn(today), price: weatherPrice(levelInfo(xp).level)}, slump: {on: !!slump, from: slump ? slump.from : null, back: slump ? slump.back : 0, emptyRun, bites: slumpBites, taken: slumpTaken, todayActive: actDay.has(today)}, newSlump, habits: HAB, nextRite, ritesWon, pomo: pomoInfo, inn: innNowD(), newInnEnds, innPaid: (() => { const o = innNowD(); return o && (o.paid || o.from) < today ? o : null; })(), innSpent, innFee: innFee(levelInfo(xp).level), statBonus: fxNow.st, bag, newDrops, newResults, newFaints, newLegends: pomoInfo.rolls.filter(r => !r.kept), todoPaid, partial, altar: {keys: keysAll.filter(k => !(S.altarUsed || {})[k.key]).map(k => k.key), all: new Set(keysAll.map(k => k.key)), got: altarInfo.got, wins: altarInfo.wins, won: altarInfo.won}, freezeBefore, points, skills, readyCount, weakLv, today, yest, xp, lv, gold, spent, lost, balance: gold - spent - lost, stat, statLv, fx: fxNow, C, hp, mp, status: statusNow, attacks, lastAttack: attacks[yest] || null, faints, lastFaint: faints.length ? faints[faints.length-1] : null, mood: face, moodKey: moodToday, statusText, streak: lastCheck && lastCheck >= prevActiveD(today) ? streak : 0, checkedToday: lastCheck === today, mystery, tokens, perfectWeeks, castDeficit, fights, cur, drops, weeks, T, activeRunes: runesAt(nowMs, today), activeBuffs: buffsAt(nowMs, today)};
+  const wb = S.buys || [], weatherOwned = Math.max(0, wb.filter(b => b.kind === 'weatherbuy').length - wb.filter(b => b.kind === 'weatheruse').length);   // you can hold one Weather Machine
+  return {smog: {pts: smog, log: smogLog, last: smogLog[yest] || null, on: smogOn(today), price: weatherPrice(levelInfo(xp).level), owned: weatherOwned}, slump: {on: !!slump, from: slump ? slump.from : null, back: slump ? slump.back : 0, emptyRun, bites: slumpBites, taken: slumpTaken, todayActive: actDay.has(today)}, newSlump, habits: HAB, nextRite, ritesWon, pomo: pomoInfo, inn: innNowD(), newInnEnds, innPaid: (() => { const o = innNowD(); return o && (o.paid || o.from) < today ? o : null; })(), innSpent, innFee: innFee(levelInfo(xp).level), statBonus: fxNow.st, bag, newDrops, newResults, newFaints, newLegends: pomoInfo.rolls.filter(r => !r.kept), todoPaid, partial, altar: {keys: keysAll.filter(k => !(S.altarUsed || {})[k.key]).map(k => k.key), all: new Set(keysAll.map(k => k.key)), got: altarInfo.got, wins: altarInfo.wins, won: altarInfo.won}, freezeBefore, points, skills, readyCount, weakLv, today, yest, xp, lv, gold, spent, lost, balance: gold - spent - lost, stat, statLv, fx: fxNow, C, hp, mp, status: statusNow, attacks, lastAttack: attacks[yest] || null, faints, lastFaint: faints.length ? faints[faints.length-1] : null, mood: face, moodKey: moodToday, statusText, streak: lastCheck && lastCheck >= prevActiveD(today) ? streak : 0, checkedToday: lastCheck === today, mystery, tokens, perfectWeeks, castDeficit, fights, cur, drops, weeks, T, activeRunes: runesAt(nowMs, today), activeBuffs: buffsAt(nowMs, today)};
 }
 
 /* ---------- persistence ---------- */
@@ -3025,6 +3029,8 @@ Object.assign(GEAR_ART, {
 function drawIcon(canvas, kind, id){
   ctx = canvas.getContext('2d'); ctx.imageSmoothingEnabled = false;
   const S2 = canvas.width; B_(0,0,S2,S2);
+  if (kind === 'weather'){ const art = ['........................','..........#.#.#.........','...........###..........','..........##.##.........','...........###..........','..........#.#.#.........','............#...........','............#...........','.......##########.......','.......#........#.......','.......#.######.#.......','.......#.#....#.#.......','.......#.#.##.#.#.......','.......#.#....#.#.......','.......#.######.#.......','.......#........#.......','.......#.#.##.#.#.......','.......#........#.......','.......##########.......','........#......#........','........#......#........','.......###....###.......','........................','........................'];   // a little weather machine with a sun on its antenna
+    const sc = Math.max(1, Math.floor(S2 / 24)), ox = Math.floor((S2 - 24 * sc) / 2); art.forEach((r, y) => [...r].forEach((c, x) => { if (c === '#') W_(ox + x * sc, ox + y * sc, sc, sc); })); return; }
   if (kind === 'hat'){
     const tmp = document.createElement('canvas'); tmp.width = 40; tmp.height = 40; const keep = ctx; ctx = tmp.getContext('2d');
     B_(0,0,40,40); drawHat(id, 20, 30, id === 'horns' ? 5 : 7, 6, 0, false);
@@ -3701,7 +3707,14 @@ function smogNote(){
   const lastTxt = last && !last.shield && (last.hp || last.mp) ? ` Last night −${last.hp} HP, −${last.mp} MP${last.status ? `, ${STATUS[last.status].name.toLowerCase()}` : ''}.` : '';
   const can = D.balance >= sm.price;
   return `<div class="mystery smognote">${svg('wave',18,2)} <span class="ntext"><b>Toxic air: ${sm.pts}</b>.${lastTxt} Tonight −${hpN} HP, −${mpN} MP. Each finished daily or to-do clears 1.</span>
-    <button class="btn sm ${weatherArm ? 'danger' : ''}" data-weather ${can ? '' : 'disabled'}>${weatherArm ? `Buy for ${sm.price} G?` : `Weather Machine · ${sm.price} G`}</button></div>`;
+    ${sm.owned ? `<button class="btn sm primary" data-weatheruse>Use Weather Machine</button>` : `<button class="btn sm ${weatherArm ? 'danger' : ''}" data-weather ${can ? '' : 'disabled'}>${weatherArm ? `Buy for ${sm.price} G?` : `Weather Machine · ${sm.price} G`}</button>`}</div>`;
+}
+// the Weather Machine in the shop: buy one ahead and keep it in your bag (you can hold one)
+function weatherShopCard(){
+  const sm = D.smog; if (!sm) return '';
+  const can = !sm.owned && D.balance >= sm.price;
+  return `<div class="card weathercard"><canvas class="icon sm" width="24" height="24" data-icon="weather:weather" aria-hidden="true"></canvas><span class="tbody"><span class="tname">Weather Machine</span><span class="small muted">Clears toxic air. Hold 1.</span></span>
+    <button class="btn sm ${weatherArm === 'shop' ? 'danger' : 'gold'}" data-weatherbuy ${can ? '' : 'disabled'}>${sm.owned ? 'In your bag' : weatherArm === 'shop' ? `Buy for ${sm.price} G?` : `${sm.price} G`}</button></div>`;
 }
 function slumpNote(){
   const sl = D.slump; if (!sl || D.inn) return '';
@@ -3905,6 +3918,7 @@ function renderShop(){
   return `<div class="bignum"><b>${D.balance}</b><span>gold to spend</span></div>
   <button class="card bagrow" data-plus="inv"><span><b>Inventory</b><span class="muted small" style="display:block">Equip gear, drink potions and set runes (${D.activeRunes.length}/${RUNE_SLOTS} active)</span></span><span class="bagopen">Open ›</span></button>
   ${smogNote()}
+  ${weatherShopCard()}
   ${D.tokens && !dismissed('tokens') ? notice('tokens', `${D.tokens} free rune${D.tokens===1?'':'s'} in your inventory`) : ''}
   <div class="filters">
     <div class="catpills" role="group" aria-label="Item type">${SHOP_CATS.map(([v,l]) => `<button class="catpill ${shopCat===v?'on':''}" data-cat="${v}" aria-pressed="${shopCat===v}">${l}</button>`).join('')}</div>
@@ -3959,7 +3973,8 @@ function renderInventory(){
   } else if (invTab === 'potion'){
     const mine = POTIONS.filter(p => D.bag[p.id]);
     list = mine.map(p => { const ps = potionState(p); return row({...p, kind:'potion'}, `${D.bag[p.id]} in bag · ${esc(p.text)}`, `<button class="btn gold sm" data-usepot="${p.id}" ${ps.ok ? '' : 'disabled'}>${ps.ok ? 'Drink' : esc(ps.why)}</button>`); }).join('');
-    if (!mine.length) list = `<p class="how">No potions.</p>`;
+    if (D.smog.owned) list += row({id: 'weather', name: 'Weather Machine', kind: 'weather'}, 'Clears toxic air', `<button class="btn gold sm" data-weatheruse ${D.smog.pts ? '' : 'disabled'}>${D.smog.pts ? 'Use' : 'Air is clear'}</button>`);
+    if (!mine.length && !D.smog.owned) list = `<p class="how">No potions.</p>`;
   } else if (invTab === 'rune'){
     const mine = RUNES.filter(r => D.bag[r.id]), eqL = gearAt(Date.now()).lrune;
     const legends = LEGEND_RUNES.filter(r => D.altar.got.includes(r.id)).map(r => row({...r, kind:'lrune'}, `Legendary · ${esc(r.text)} · never runs out`, `<button class="btn ${eqL === r.id ? 'ghost' : 'primary'} sm" data-lrune="${r.id}">${eqL === r.id ? 'Take off' : 'Equip'}</button>`)).join('');
@@ -5239,6 +5254,11 @@ function onClick(e){
   if ('weather' in el.dataset){ const sm = D.smog; if (!sm || !sm.pts || D.balance < sm.price) return;
     if (!weatherArm){ weatherArm = true; render(); return; }
     weatherArm = false; S.buys.push({kind: 'weather', id: 'weather', ts: Date.now(), g: sm.price, date: D.today}); save(); render(); toast(`The Weather Machine cleared the air. −${sm.price} G`); return; }
+  if ('weatherbuy' in el.dataset){ const sm = D.smog; if (!sm || sm.owned || D.balance < sm.price) return;
+    if (weatherArm !== 'shop'){ weatherArm = 'shop'; render(); return; }
+    weatherArm = false; S.buys.push({kind: 'weatherbuy', id: 'weather', ts: Date.now(), g: sm.price, date: D.today}); save(); render(); toast(`Weather Machine is in your bag. −${sm.price} G`); return; }
+  if ('weatheruse' in el.dataset){ const sm = D.smog; if (!sm || !sm.owned || !sm.pts) return;
+    S.buys.push({kind: 'weatheruse', id: 'weather', ts: Date.now(), g: 0, date: D.today}); save(); render(); toast('The Weather Machine cleared the air.'); return; }
   if (weatherArm){ weatherArm = false; render(); }
   if (sellArm && !el.dataset.sell){ sellArm = null; if (!Object.keys(el.dataset).length){ render(); return; } }
   if (recoveryMode){
