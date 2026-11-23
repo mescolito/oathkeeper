@@ -838,7 +838,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '6a21fb1339';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'ac57bf3cfa';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -3394,6 +3394,7 @@ function todGroups(all, cad, k){
   }).join('') + rest;
 }
 /* ---------- Timers: count up from a start date, Days Since style ---------- */
+const calKey = ts => dkey(new Date(ts));
 const timersLive = () => (S.timers || []).filter(t => !t.deleted);
 function clockParts(ms){ ms = Math.max(0, ms); const d = Math.floor(ms / DAY_MS), h = Math.floor(ms % DAY_MS / 3600000), m = Math.floor(ms % 3600000 / 60000), sc = Math.floor(ms % 60000 / 1000); return [d, h, m, sc]; }
 const clockHTML = (ms) => { const [d, h, m, sc] = clockParts(ms); return [[d, d === 1 ? 'Day' : 'Days'], [h, h === 1 ? 'Hour' : 'Hours'], [m, 'Min'], [sc, 'Sec']].map(([v, l]) => `<span class="tmcell"><b>${v}</b><i>${l}</i></span>`).join(''); };
@@ -3408,7 +3409,7 @@ function timerRow(tm){
   const pct = tm.goal ? Math.min(100, 100 * el / (tm.goal * DAY_MS)) : 0;
   let meta;
   const wonTxt = tm.won && tm.won.length ? `${tm.won[tm.won.length - 1].goal}-day goal ✓ · ` : '';
-  if (tm.done) meta = `Goal reached ${fmt(todayKeyAt(tm.done))}`;
+  if (tm.done) meta = `Goal reached ${fmt(calKey(tm.done))}`;
   else if (nx){ const r = nx.goal ? timerReward(tm.goal, D.lv.level, true) : timerReward(tm.every, D.lv.level); meta = `${wonTxt}${nx.goal ? 'Goal' : 'Next'}: day ${nx.m} in ${daysIn(nx.at - now)} · +${r.xp} XP`; }
   else meta = wonTxt + 'Counting up';
   const ask = tm.done && !tm.finished;
@@ -4843,7 +4844,7 @@ function pickOpts(key){
   if (ns === 'tm' && mdraft){ const t = mdraft, lv = D.lv.level;
     if (k === 'goal') return {title: 'Goal (days)', num: {val: t.goal || '', ph: 'Days, like 75'}, opts: [pkOpt(0, 'None', !t.goal, null, {sub: 'Counts up forever'})]};
     if (k === 'every') return {title: 'Milestone every', num: {val: t.every || '', ph: 'Days, like 7'}, opts: [pkOpt(0, 'None', !t.every, null, {sub: 'No milestone rewards'})]};
-    if (k === 'start') return {title: 'Started', cal: {sel: todayKeyAt(t.start), max: D.today, time: true}};
+    if (k === 'start') return {title: 'Started', cal: {sel: calKey(t.start), max: calKey(Date.now()), today: calKey(Date.now()), time: true}};   // timers run on the clock, not the day rollover
     if (k === 'icon') return {title: 'Icon', grid: true}; }
   return null;
 }
@@ -4872,7 +4873,7 @@ function calHTML(c){
   const name = first.toLocaleDateString('en-US', {month: 'long', year: 'numeric'}), cells = [];
   for (let i = 0; i < first.getDay(); i++) cells.push('<span></span>');
   for (let d = 1; d <= days; d++){ const k = `${ym}-${String(d).padStart(2, '0')}`, off = (c.min && k < c.min) || (c.max && k > c.max);
-    cells.push(`<button type="button" class="${k === c.sel ? 'on' : ''} ${k === D.today ? 'today' : ''}" data-pick="${pkCtx.key}|${k}" ${off ? 'disabled' : ''} aria-label="${k}">${d}</button>`); }
+    cells.push(`<button type="button" class="${k === c.sel ? 'on' : ''} ${k === (c.today || D.today) ? 'today' : ''}" data-pick="${pkCtx.key}|${k}" ${off ? 'disabled' : ''} aria-label="${k}">${d}</button>`); }
   const t = mdraft && pkCtx.key === 'tm.start' ? new Date(mdraft.start) : null;
   return `<div class="pkcal"><div class="pkcalh"><b>${name}</b><span><button type="button" data-calnav="-1" aria-label="Previous month">${svg('back', 16, 2.6)}</button><button type="button" data-calnav="1" aria-label="Next month" style="transform:scaleX(-1)">${svg('back', 16, 2.6)}</button></span></div>
     <div class="pkcalg">${['S','M','T','W','T','F','S'].map(x => `<i>${x}</i>`).join('')}${cells.join('')}</div>
@@ -4970,19 +4971,19 @@ function renderTimerEditor(){
     mr ? `<div class="edrow"><span>Every ${t.every} day${t.every === 1 ? '' : 's'}</span><span class="edval plain">+${mr.xp} XP, +${mr.g} G each</span></div>` : '',
     mr && nx && !nx.goal ? `<div class="edrow"><span>Next milestone</span><span class="edval plain">Day ${nx.m}, in ${daysIn(nx.at - now)}</span></div>` : '',
     mr && paidN ? `<div class="edrow"><span>Paid so far</span><span class="edval plain">${svg('check', 13, 3)} ${paidN} time${paidN === 1 ? '' : 's'}</span></div>` : '',
-    ...((sameRun && tm.won) || []).map(w => `<div class="edrow"><span>Goal · ${w.goal} days</span><span class="edval plain">${svg('check', 13, 3)} Completed ${fmt(todayKeyAt(w.at))}</span></div>`),
+    ...((sameRun && tm.won) || []).map(w => `<div class="edrow"><span>Goal · ${w.goal} days</span><span class="edval plain">${svg('check', 13, 3)} Completed ${fmt(calKey(w.at))}</span></div>`),
     gr ? `<div class="edrow"><span>Goal · ${t.goal} days</span><span class="edval plain">${goalPaid ? `${svg('check', 13, 3)} Paid${(() => { const e = (S.timerLog || []).find(x => x.tid === t.id && x.key === t.start + '|goal|' + t.goal); return e && e.leg ? ' + legendary!' : ''; })()}` : goalAt <= now ? (sameRun && goalAt < (tm.payFrom || 0) ? 'Passed before this start' : 'Reached') : `In ${daysIn(goalAt - now)} · +${gr.xp} XP, +${gr.g} G, 1 in ${Math.round(LEG_GEAR_ODDS / timerLegDiv(t.goal)).toLocaleString()} legendary roll`}</span></div>` : ''].join('');
   const resets = tm && tm.resets && tm.resets.length ? tm.resets : null;
   document.getElementById('sheetBody').innerHTML = `
     <div class="edhead"><button class="edx" data-close aria-label="Close without saving">${svg('x',20,2.4)}</button><b>${t.isNew ? 'New timer' : 'Edit timer'}</b><button class="edok" data-savetimer aria-label="Save">${svg('check',20,2.8)}</button></div>
     <div class="ednamewrap"><input class="edname" type="text" id="tmName" maxlength="40" value="${esc(t.name)}" placeholder="What are you counting?" aria-label="Name"><button type="button" class="edicon" data-pk="tm.icon" style="background:var(--pink)" aria-label="Icon">${icon}</button></div>
     <div class="edcard">
-      ${edRow('tm.start', 'Started', `${fmt(todayKeyAt(t.start))}${new Date(t.start).getFullYear() !== new Date().getFullYear() ? ' ' + new Date(t.start).getFullYear() : ''} · ${new Date(t.start).toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit'})}`, 'calendar')}
+      ${edRow('tm.start', 'Started', `${fmt(calKey(t.start))}${new Date(t.start).getFullYear() !== new Date().getFullYear() ? ' ' + new Date(t.start).getFullYear() : ''} · ${new Date(t.start).toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit'})}`, 'calendar')}
       ${edRow('tm.every', 'Milestones', t.every ? `Every ${t.every} day${t.every === 1 ? '' : 's'}` : 'None', 'gift')}
       ${edRow('tm.goal', 'Goal', t.goal ? `${t.goal} days` : 'None', 'star')}
     </div>
     ${rewardRows ? `<div class="edcard"><div class="edhd">Rewards <span class="small muted" style="font-weight:500">at level ${lv}</span></div>${rewardRows}</div>` : ''}
-    ${resets ? `<div class="edcard"><div class="edrow"><span>Resets</span><span class="edval plain">${resets.length} · last ${fmt(todayKeyAt(resets[resets.length - 1].at))}</span></div></div>` : ''}
+    ${resets ? `<div class="edcard"><div class="edrow"><span>Resets</span><span class="edval plain">${resets.length} · last ${fmt(calKey(resets[resets.length - 1].at))}</span></div></div>` : ''}
     <textarea class="ednote" id="tmNote" maxlength="500" rows="3" placeholder="Write your notes here…" aria-label="Notes">${esc(t.note || '')}</textarea>
     <p class="how small" id="tmErr" role="alert"></p>
     <div class="edfoot">${t.isNew ? '<span></span>' : `<button type="button" class="edtrashbtn ${tmDelArm ? 'armed' : ''}" data-tmdel aria-label="Delete timer">${svg('trash',18,2.2)}${tmDelArm ? '<span>Tap again to delete</span>' : ''}</button>`}<button type="button" class="edpill primary" data-savetimer>Save</button></div>`;
