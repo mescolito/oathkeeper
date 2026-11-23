@@ -928,7 +928,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'aecec55178';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'd0fb187015';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -6082,7 +6082,7 @@ setInterval(() => { try {
 
 /* ---------- focus timer sounds (made on the fly, no files) and vibration ---------- */
 let actx = null;
-function sfxInit(){ try { if (!actx){ const AC = window.AudioContext || window.webkitAudioContext; if (AC) actx = new AC(); } if (actx && actx.state === 'suspended') actx.resume(); } catch(e){} }
+function sfxInit(){ try { if (!actx){ const AC = window.AudioContext || window.webkitAudioContext; if (AC){ actx = new AC(); const me = actx; actx.onstatechange = () => { if (actx === me && me.state === 'suspended' && lofi) setTimeout(() => { try { if (actx === me && me.state === 'suspended' && lofi){ const p = me.resume(); if (p && p.catch) p.catch(() => {}); } } catch(e){} }, 300); }; } } if (actx && actx.state === 'suspended') actx.resume(); } catch(e){} }
 function tone(freq, t0, dur, vol){
   const o = actx.createOscillator(), g = actx.createGain(), o2 = actx.createOscillator(), g2 = actx.createGain();
   o.type = 'sine'; o.frequency.value = freq; o2.type = 'triangle'; o2.frequency.value = freq * 2; g2.gain.value = 0.15;
@@ -6283,7 +6283,14 @@ function lofiStart(mode, delay = 0, fadeIn = 2.5){
   else { rs.connect(rf); rf.connect(amb); }
   rs.start(now);
   lofi = {mode, style, master, warm, drums, keys: pump, pump, bassBus, bassIn, wow, amb, noise: nb, srcs, next: now + 0.15 + delay, step: 0, bar: 0, bpm: part.bpm, prog: lofiPick(mode, style), swap: false, timer: 0, smp: {}, am};
-  lofi.timer = setInterval(lofiSchedule, 200); lofiSchedule();
+  lofi.timer = setInterval(lofiSchedule, 200); lofiSchedule(); lofiClock(lofi);
+}
+// a second clock that runs on the audio itself: a background tab's timers can be slowed to once a minute, but this keeps ticking
+function lofiClock(L){
+  try { if (lofi !== L || !actx || actx.state === 'closed') return;
+    const s = actx.createConstantSource ? actx.createConstantSource() : actx.createOscillator(), g = actx.createGain(); g.gain.value = 0; s.connect(g); g.connect(actx.destination);
+    s.onended = () => { try { s.disconnect(); g.disconnect(); } catch(e){} if (lofi === L){ lofiSchedule(); lofiClock(L); } };
+    const t = actx.currentTime; s.start(t); s.stop(t + 0.5); } catch(e){}
 }
 // focus <-> break without stopping: buses and filter glide over a few seconds, the new part starts on a fresh bar
 function lofiMode(mode){
