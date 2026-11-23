@@ -306,6 +306,7 @@ html[data-mode="dark"] .trow.done .check{color:var(--inv)}
 .nav{position:fixed;left:0;right:0;bottom:14px;display:flex;justify-content:center;z-index:5;pointer-events:none}
 /* fades the page out behind the tab bar, in the background colour of the current mode */
 .nav::before{content:'';position:absolute;left:0;right:0;bottom:-14px;height:132px;background:linear-gradient(to bottom, transparent, var(--bg) 62%);z-index:-1;pointer-events:none}
+body.focusmode .nav::before{background:linear-gradient(to bottom, transparent, #0b0a0d 62%)}
 .navin{pointer-events:auto;width:min(420px,calc(100% - 28px));background:var(--ink);border-radius:30px;display:grid;grid-template-columns:repeat(5,1fr);align-items:center;padding:8px 6px;box-shadow:0 12px 30px rgba(23,22,20,.25)}
 .navin button{background:none;border:0;color:#a8a194;height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;font-size:10.5px;font-weight:600}
 .navin button[aria-current="page"]{color:#fff}
@@ -500,13 +501,9 @@ body.focusmode .top{align-items:center}
 body.focusmode.sleepmode,body.focusmode.sleepmode[data-pomo]{--g1:#1d2347;--g2:#0f1122}
 .nightwrap{width:clamp(130px, calc(100vh - 560px), min(64vw, 240px));width:clamp(130px, calc(100dvh - 560px), min(64vw, 240px));aspect-ratio:1;margin:10px 0 8px;border-radius:50%;box-shadow:0 0 0 10px rgba(241,238,228,.06)}
 #nightCv{width:100%;height:100%;border-radius:50%;image-rendering:pixelated;background:#141312;display:block}
-.slbelow{gap:10px;margin-top:22px}
-.slbelow h3{font-size:16px;margin:10px 0 0;color:#bdb6c8;font-weight:600}
-.slsnds{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.slsnd{background:rgba(241,238,228,.08);box-shadow:inset 0 0 0 1px rgba(241,238,228,.14);padding:12px}
-.slchips{display:flex;flex-wrap:wrap;gap:8px}
-.slchip{border:0;border-radius:999px;padding:9px 15px;min-height:40px;background:rgba(241,238,228,.08);box-shadow:inset 0 0 0 1px rgba(241,238,228,.14);color:#f1eee4;font:inherit;font-size:15px;font-weight:600;cursor:pointer;font-variant-numeric:tabular-nums}
-.slchip.on{background:rgba(241,238,228,.92);color:#141312;box-shadow:none}
+.slcard{margin-top:22px;--card:rgba(241,238,228,.07);--ink:#f1eee4;--line:rgba(241,238,228,.1);--track:rgba(241,238,228,.12)}
+body.sleepmode #pk{--ink:#f1eee4;--muted:#a9a3b8;--line:rgba(241,238,228,.1);--track:rgba(241,238,228,.1)}
+body.sleepmode .pkcard{background:rgba(38,41,66,.96);box-shadow:0 14px 44px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06)}
 .fpill{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:999px;padding:11px 18px;min-height:46px;background:rgba(255,255,255,.12);color:#f1eee4;font:inherit;font-size:16px;font-weight:600;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
 .fpill .gdot{width:10px;height:10px;border-radius:50%;background:var(--gold)}
 .space{display:flex;flex-direction:column;align-items:center;gap:8px;color:#f1eee4;padding:4px 0 4px}
@@ -918,7 +915,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '5fc189956c';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'd2ba4469b2';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -4337,7 +4334,6 @@ function renderSleep(){
   const sub = !r ? (cfg.hrs ? `Plays for ${cfg.hrs} hours` : 'Plays until you stop it') : r.busy && !r.paused ? 'Mixing the noise…' : r.paused ? 'Paused' : r.end ? `Until ${tfmt(r.end)}` : 'Playing until you stop it';
   const playIc = on ? '<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>' : '<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
   const main = !r ? 'data-sleep="start" aria-label="Start the noise"' : on ? 'data-sleep="pause" aria-label="Pause"' : 'data-sleep="resume" aria-label="Resume"';
-  const chip = (k, v, label, cur) => `<button class="slchip ${cur ? 'on' : ''}" data-${k}="${v}" aria-pressed="${cur}">${label}</button>`;
   return `<section class="space" aria-label="Sleep Mode">
     <h2 class="ptitle">Sleep</h2>
     <div class="psub">${sub}</div>
@@ -4347,14 +4343,13 @@ function renderSleep(){
       <button class="pmain" ${main}>${playIc}</button>
       <button class="ptext" ${r ? 'data-sleep="stop"' : 'disabled'}>Stop</button>
     </div>
+    <button class="psetbtn" data-clopen="sleepset" aria-expanded="${clOpen.has('sleepset')}">${svg('gear',16,2)} Sleep settings<span class="clchev">${svg(clOpen.has('sleepset') ? 'up' : 'down',16,2.4)}</span></button>
   </section>
-  <section class="pbelow slbelow">
-    <div class="slsnds" role="group" aria-label="Sound">${Object.entries(SLEEP_SOUNDS).map(([k, sn]) => `<button class="lofiopt slsnd ${cfg.snd === k ? 'on' : ''}" data-sleepsnd="${k}" aria-pressed="${cfg.snd === k}"><b>${sn.label}</b><span>${sn.note}</span></button>`).join('')}</div>
-    <h3>Timer</h3>
-    <div class="slchips" role="group" aria-label="Timer">${SLEEP_HRS.map(h => chip('sleephrs', h, h ? `${h} h` : 'No limit', cfg.hrs === h)).join('')}</div>
-    <h3>Volume</h3>
-    <div class="slchips" role="group" aria-label="Volume">${SLEEP_VOLS.map(v => chip('sleepvol', v, `${v}%`, cfg.vol === v)).join('')}</div>
-  </section>`;
+  ${!clOpen.has('sleepset') ? '' : `<div class="edcard slcard" id="sleepset">
+    ${edRow('sl.snd', 'Sound', SLEEP_SOUNDS[cfg.snd].label, 'wave')}
+    ${edRow('sl.hrs', 'Timer', cfg.hrs ? `${cfg.hrs} hours` : 'No limit', 'clock')}
+    ${edRow('sl.vol', 'Volume', `${cfg.vol}%`, 'bars')}
+  </div>`}`;
 }
 // the pet asleep under the stars, a crescent moon overhead
 function drawNight(cv){
@@ -5110,6 +5105,10 @@ function pickOpts(key){
     if (k === 'dom' && t.rep) return {title: 'On the', opts: [...[...Array(31)].map((_, i) => pkOpt(i + 1, ordinal(i + 1), t.rep.dom === i + 1)), pkOpt('last', 'Last day', t.rep.dom === 'last')]};
     if (k === 'start') return {title: 'Starts on', cal: {sel: (t.rep ? t.rep.first : t.start) > D.today ? (t.rep ? t.rep.first : t.start) : D.today, min: D.today}};
     if (k === 'icon') return {title: 'Icon', grid: true}; }
+  if (ns === 'sl'){ const c = sleepCfg();
+    if (k === 'snd') return {title: 'Sound', opts: Object.entries(SLEEP_SOUNDS).map(([v, sn]) => pkOpt(v, sn.label, c.snd === v, null, {sub: sn.note}))};
+    if (k === 'hrs') return {title: 'Timer', opts: SLEEP_HRS.map(h => pkOpt(h, h ? `${h} hours` : 'No limit', c.hrs === h))};
+    if (k === 'vol') return {title: 'Volume', opts: SLEEP_VOLS.map(v => pkOpt(v, `${v}%`, c.vol === v))}; }
   if (ns === 'tm' && mdraft){ const t = mdraft, lv = D.lv.level;
     if (k === 'goal'){ const past = Math.floor((Date.now() - t.start) / DAY_MS); return {title: 'Goal (days)', num: {val: t.goal || '', ph: past > 0 ? `More than ${past}` : 'Days, like 75'}, opts: [pkOpt(0, 'None', !t.goal, null, {sub: 'Counts up forever'})]}; }
     if (k === 'every') return {title: 'Milestone every', num: {val: t.every || '', ph: 'Days, like 7'}, opts: [pkOpt(0, 'None', !t.every, null, {sub: 'No milestone rewards'})]};
@@ -5169,6 +5168,11 @@ function applyPick(key, v){
     renderQuickAdd(txt); const i = document.getElementById('qaText'); if (i) i.focus(); return; }
   if (ns === 'm'){ const c = qmCtx; closePick(); if (!c) return; const {L, it} = todoFind(c.lid, c.iid), to = S.todos.lists.find(x => x.id === v); closeQuick();
     if (it && to && moveTodo(it, L, to)){ save(); render(); toast(`Moved to ${to.name}`); } return; }
+  if (ns === 'sl'){ closePick(); const c = S.pomo.cfg;
+    if (k === 'snd' && SLEEP_SOUNDS[v]){ c.sleepSnd = v; save(); render(); sleepRetune(); return; }
+    if (k === 'vol' && SLEEP_VOLS.includes(+v)){ c.sleepVol = +v; save(); render(); sleepRetune(); return; }
+    if (k === 'hrs' && SLEEP_HRS.includes(+v)){ const h = +v; c.sleepHrs = h; if (sleepRun){ sleepRun.end = h ? (sleepRun.paused || Date.now()) + h * 3600000 : 0; if (sleepRun.fading){ sleepRun.fading = false; if (sleepCtx) sleepLevel(sleepGainOf(sleepCfg().vol), 1); } } save(); render(); }
+    return; }
   if (ns === 'd' && tdraft){ readTodoFields(); if (k === 'list' && S.todos.lists.some(x => x.id === v)) tdraft.toLid = v; if (k === 'pri' && PRI.some(p => p[0] === v)) tdraft.pri = v; closePick(); renderTodoEditor(); return; }
   if (ns === 'tm' && mdraft){ readTimerFields();
     if (k === 'every'){ const n = parseInt(v) || 0; if (n > 0) mdraft.every = clamp(n, 1, 100000); else delete mdraft.every; }
@@ -5517,8 +5521,6 @@ function onClick(e){
     save(); render(); toast('Checked out. The fight is back on.'); return; }
   if ('musicmenu' in el.dataset){ musicMenu = !musicMenu; sfxInit(); render(); return; }
   if (el.dataset.sleep){ sleepCmd(el.dataset.sleep); return; }
-  if (el.dataset.sleepsnd || el.dataset.sleepvol){ const c = S.pomo.cfg; if (el.dataset.sleepsnd) c.sleepSnd = el.dataset.sleepsnd; else c.sleepVol = +el.dataset.sleepvol; save(); render(); sleepRetune(); return; }
-  if (el.dataset.sleephrs != null){ const h = +el.dataset.sleephrs; S.pomo.cfg.sleepHrs = h; if (sleepRun){ sleepRun.end = h ? (sleepRun.paused || Date.now()) + h * 3600000 : 0; sleepRun.fading = false; try { sleepEl().volume = 1; } catch(e){} } save(); render(); return; }
   if (el.dataset.lofi){ const v = el.dataset.lofi; musicMenu = false; sfxInit();
     if (v === 'off') S.pomo.cfg.music = false; else if (LOFI_STYLES[v]){ S.pomo.cfg.music = true; S.pomo.cfg.lofi = v; }
     save(); render(); return; }
@@ -6275,7 +6277,7 @@ var SLEEP_CURVE = [[20,-29.9],[22.4,-24.8],[25.2,-16.9],[28.3,-9.6],[31.7,-5.1],
 var SLEEP_SOUNDS = {orange: {label: 'Orange', note: 'Warm and low', tilt: 0, from: 0}, deeper: {label: 'Deeper', note: 'Smoother', tilt: 3, from: 90}, deepest: {label: 'Deepest', note: 'A low rumble', tilt: 5, from: 70}};
 var SLEEP_HRS = [8, 10, 12, 0], SLEEP_VOLS = [20, 40, 60, 80, 100], SLEEP_SR = 22050, SLEEP_N = 1 << 20;   // a 47-second loop that repeats seamlessly
 var sleepCfg = () => { const c = S.pomo.cfg; return {snd: SLEEP_SOUNDS[c.sleepSnd] ? c.sleepSnd : 'orange', hrs: SLEEP_HRS.includes(c.sleepHrs) ? c.sleepHrs : 8, vol: SLEEP_VOLS.includes(c.sleepVol) ? c.sleepVol : 60}; };
-var sleepRun = null, sleepAud = null, sleepUrl = null, sleepUrlKey = '', sleepFadeT = null;
+var sleepRun = null;
 var sleepPcm = {};
 function sleepFFT(re, im){ const n = re.length;
   for (let i = 1, j = 0; i < n; i++){ let b = n >> 1; for (; j & b; b >>= 1) j ^= b; j ^= b; if (i < j){ let t = re[i]; re[i] = re[j]; re[j] = t; t = im[i]; im[i] = im[j]; im[j] = t; } }
@@ -6298,59 +6300,77 @@ function sleepMake(kind){
   const g = 0.2 / Math.sqrt(ss / N), out = new Float32Array(N);   // the same loudness as the recording, with soft peaks
   for (let i = 0; i < N; i++){ const x = re[i] * g, ax = Math.abs(x); out[i] = ax < 0.8 ? x : Math.sign(x) * (0.8 + 0.19 * Math.tanh((ax - 0.8) / 0.19)); }
   return (sleepPcm[kind] = out); }
-// iPhones ignore an audio element's volume, so the level is baked into the file
-function sleepWav(pcm, vol){
-  const n = pcm.length, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf), w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+// playback runs through Web Audio: the loop is sample-exact (an <audio loop> element re-buffers at the wrap and skips).
+// A near-silent <audio> element plays alongside so the phone treats it as media: it keeps going locked and shows lock-screen controls.
+var sleepCtx = null, sleepOut = null, sleepSrc = null, sleepKeep = null, sleepBufs = {};
+const sleepGainOf = vol => Math.pow(vol / 100, 2);   // even-feeling steps: 20% is quiet, 100% is the recording's level
+function sleepGraph(){
+  if (!sleepCtx || sleepCtx.state === 'closed'){ const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
+    sleepCtx = new AC(); sleepBufs = {}; sleepSrc = null; sleepOut = sleepCtx.createGain(); sleepOut.gain.value = 0; sleepOut.connect(sleepCtx.destination); }
+  return sleepCtx; }
+function sleepKeeper(){
+  if (sleepKeep) return sleepKeep;
+  const n = SLEEP_SR * 2, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf), w = (o, t) => { for (let i = 0; i < t.length; i++) v.setUint8(o + i, t.charCodeAt(i)); };
   w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, SLEEP_SR, true); v.setUint32(28, SLEEP_SR * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
-  const g = vol / 100 * 32767; for (let i = 0; i < n; i++) v.setInt16(44 + i * 2, Math.max(-32767, Math.min(32767, Math.round(pcm[i] * g))), true);
-  return URL.createObjectURL(new Blob([buf], {type: 'audio/wav'})); }
-var SLEEP_SILENT = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YQQAAAAAAAAA';
-function sleepEl(){
-  if (sleepAud) return sleepAud;
-  const a = sleepAud = new Audio(); a.loop = true; a.preload = 'auto'; a.setAttribute('playsinline', '');
-  // the lock screen's play/pause (or an interruption, like a call) changes the run too
-  a.addEventListener('pause', () => { if (sleepRun && !sleepRun.paused && !sleepRun.busy){ sleepRun.paused = Date.now(); sleepRefresh(); } });
-  a.addEventListener('play', () => { if (sleepRun && sleepRun.paused){ if (sleepRun.end) sleepRun.end += Date.now() - sleepRun.paused; sleepRun.paused = 0; sleepRefresh(); } });
+  for (let i = 0; i < n; i++) v.setInt16(44 + i * 2, (i & 1) ? 1 : -1, true);   // inaudible, but not digital silence
+  const a = sleepKeep = new Audio(URL.createObjectURL(new Blob([buf], {type: 'audio/wav'}))); a.loop = true; a.setAttribute('playsinline', '');
+  // the lock screen's play/pause (or a call) lands here
+  a.addEventListener('pause', () => { if (sleepRun && !sleepRun.paused && !sleepRun.quiet) sleepCmd('pause'); });
+  a.addEventListener('play', () => { if (sleepRun && sleepRun.paused && !sleepRun.quiet) sleepCmd('resume'); });
   return a; }
-function sleepRefresh(){ if (tab === 'sleep') render(); else renderHeader(); }
-function sleepLoad(cfg){
-  const key = cfg.snd + '|' + cfg.vol, a = sleepEl(); if (key === sleepUrlKey && a.src === sleepUrl) return false;
-  const at = a.currentTime || 0, old = sleepUrl; sleepUrl = sleepWav(sleepMake(cfg.snd), cfg.vol); sleepUrlKey = key; a.src = sleepUrl;
-  try { a.currentTime = at % (SLEEP_N / SLEEP_SR); } catch(e){}
-  if (old) setTimeout(() => URL.revokeObjectURL(old), 2000);
-  return true; }
+function sleepBuf(kind){
+  if (sleepBufs[kind]) return sleepBufs[kind];
+  const pcm = sleepMake(kind), b = sleepCtx.createBuffer(1, pcm.length, SLEEP_SR); b.getChannelData(0).set(pcm);
+  return (sleepBufs[kind] = b); }
+// start a sound; switching sounds crossfades over two seconds so there's no click
+function sleepPlay(kind){
+  const c = sleepCtx, t = c.currentTime, s = c.createBufferSource(), g = c.createGain(); s.buffer = sleepBuf(kind); s.loop = true; s.connect(g); g.connect(sleepOut);
+  const old = sleepSrc;
+  if (old){ g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(1, t + 2); old.g.gain.setValueAtTime(old.g.gain.value, t); old.g.gain.linearRampToValueAtTime(0, t + 2); try { old.s.stop(t + 2.1); } catch(e){} }
+  s.start(t); sleepSrc = {s, g, kind}; }
+function sleepLevel(to, secs){ const p = sleepOut.gain, t = sleepCtx.currentTime; p.cancelScheduledValues(t); p.setValueAtTime(p.value, t); p.linearRampToValueAtTime(to, t + secs); }
 function sleepMedia(cfg){
   if (!('mediaSession' in navigator)) return;
   try { navigator.mediaSession.metadata = new MediaMetadata({title: `${SLEEP_SOUNDS[cfg.snd].label} noise`, artist: 'Oathkeeper', album: 'Sleep Mode'});
     navigator.mediaSession.setActionHandler('play', () => sleepCmd('resume'));
     navigator.mediaSession.setActionHandler('pause', () => sleepCmd('pause'));
-    navigator.mediaSession.setActionHandler('stop', () => sleepCmd('stop')); } catch(e){} }
-function sleepFade(to, ms, then){ const a = sleepEl(); clearInterval(sleepFadeT); const from = a.volume, t0 = Date.now();
-  sleepFadeT = setInterval(() => { const k = Math.min(1, (Date.now() - t0) / ms); try { a.volume = from + (to - from) * k; } catch(e){} if (k >= 1){ clearInterval(sleepFadeT); if (then) then(); } }, 100); }
+    navigator.mediaSession.setActionHandler('stop', () => sleepCmd('stop'));
+    navigator.mediaSession.playbackState = sleepRun && !sleepRun.paused ? 'playing' : 'paused'; } catch(e){} }
+function sleepRefresh(){ if (tab === 'sleep') render(); else renderHeader(); }
+const sleepQuiet = fn => { if (sleepRun) sleepRun.quiet = true; try { fn(); } catch(e){} setTimeout(() => { if (sleepRun) sleepRun.quiet = false; }, 300); };
 function sleepCmd(cmd){
-  const cfg = sleepCfg(), a = sleepEl();
+  const cfg = sleepCfg();
   if (cmd === 'start'){
     try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch(e){}   // keep playing with the silent switch on
-    // unlock playback inside the tap (iPhones need that), then mix the noise and start it
+    const c = sleepGraph(); if (!c){ toast('Sound isn’t available here'); return; }
+    // inside the tap: wake the audio and the media keeper (phones only allow this on a tap), then mix the noise
     sleepRun = {start: Date.now(), end: cfg.hrs ? Date.now() + cfg.hrs * 3600000 : 0, paused: 0, busy: true};
-    if (a.paused){ a.src = SLEEP_SILENT; sleepUrlKey = ''; const p = a.play(); if (p && p.catch) p.catch(() => {}); }
+    try { c.resume(); } catch(e){} sleepQuiet(() => { const p = sleepKeeper().play(); if (p && p.catch) p.catch(() => {}); });
     sleepRefresh();
-    setTimeout(() => { if (!sleepRun) return; sleepLoad(cfg); try { a.volume = 0; } catch(e){} const p = a.play();
-      const ok = () => { if (!sleepRun) return; sleepRun.busy = false; sleepMedia(cfg); sleepFade(1, 6000); sleepRefresh(); };
-      if (p && p.then) p.then(ok, () => { sleepRun = null; sleepRefresh(); toast('Tap play again to start the noise'); }); else ok(); }, 30);
+    setTimeout(() => { if (!sleepRun) return;
+      if (sleepSrc){ try { sleepSrc.s.stop(); } catch(e){} sleepSrc = null; }
+      sleepOut.gain.cancelScheduledValues(0); sleepOut.gain.value = 0; sleepPlay(cfg.snd); sleepLevel(sleepGainOf(cfg.vol), 6);
+      sleepRun.busy = false; sleepMedia(cfg); sleepRefresh(); }, 30);
     return; }
-  if (!sleepRun) return;
-  if (cmd === 'pause'){ sleepRun.busy = true; a.pause(); sleepRun.busy = false; if (!sleepRun.paused) sleepRun.paused = Date.now(); sleepRefresh(); return; }
-  if (cmd === 'resume'){ const p = a.play(); if (sleepRun.paused){ sleepRun.end = sleepRun.end ? sleepRun.end + Date.now() - sleepRun.paused : 0; sleepRun.paused = 0; } if (p && p.catch) p.catch(() => {}); sleepRefresh(); return; }
-  if (cmd === 'stop'){ sleepRun.busy = true; clearInterval(sleepFadeT); a.pause(); sleepRun = null; try { if (navigator.mediaSession) navigator.mediaSession.playbackState = 'none'; } catch(e){} sleepRefresh(); return; }
+  if (!sleepRun || !sleepCtx) return;
+  if (cmd === 'pause'){ if (sleepRun.paused) return; sleepRun.paused = Date.now(); try { sleepCtx.suspend(); } catch(e){} sleepQuiet(() => sleepKeeper().pause()); sleepMedia(cfg); sleepRefresh(); return; }
+  if (cmd === 'resume'){ if (!sleepRun.paused) return; if (sleepRun.end) sleepRun.end += Date.now() - sleepRun.paused; sleepRun.paused = 0;
+    try { sleepCtx.resume(); } catch(e){} sleepQuiet(() => { const p = sleepKeeper().play(); if (p && p.catch) p.catch(() => {}); }); sleepMedia(cfg); sleepRefresh(); return; }
+  if (cmd === 'stop'){ const src = sleepSrc; sleepSrc = null; sleepRun = null;
+    try { sleepLevel(0, 0.4); if (src) src.s.stop(sleepCtx.currentTime + 0.45); setTimeout(() => { if (!sleepRun && sleepCtx) sleepCtx.suspend(); }, 600); } catch(e){}
+    try { sleepKeeper().pause(); } catch(e){} try { if (navigator.mediaSession) navigator.mediaSession.playbackState = 'none'; } catch(e){} sleepRefresh(); return; }
 }
-// a new sound or level while it plays swaps the loop in place
-function sleepRetune(){ if (!sleepRun || sleepRun.busy) return; const a = sleepEl(), was = !a.paused; sleepRun.busy = true;
-  setTimeout(() => { if (!sleepRun) return; sleepLoad(sleepCfg()); sleepMedia(sleepCfg()); if (was){ const p = a.play(); if (p && p.catch) p.catch(() => {}); } setTimeout(() => { if (sleepRun) sleepRun.busy = false; }, 400); }, 30); }
+// a new sound crossfades in; a new volume glides there
+function sleepRetune(){ if (!sleepRun || sleepRun.busy || !sleepCtx) return; const cfg = sleepCfg();
+  if (!sleepSrc || sleepSrc.kind !== cfg.snd){ sleepRun.busy = true; setTimeout(() => { if (!sleepRun) return; sleepPlay(cfg.snd); sleepRun.busy = false; sleepMedia(cfg); }, 30); }
+  if (!sleepRun.fading) sleepLevel(sleepGainOf(cfg.vol), 0.8); }
+// a call or the system can pause the audio; pick it back up when the page is back or on the next tap
+const sleepWake = () => { if (sleepRun && !sleepRun.paused && sleepCtx && sleepCtx.state !== 'running'){ try { sleepCtx.resume(); } catch(e){} } };
+document.addEventListener('visibilitychange', sleepWake); ['pointerup', 'touchend'].forEach(ev => document.addEventListener(ev, sleepWake, {passive: true, capture: true}));
 // the timer: fade out over the last minute, then stop
 setInterval(() => { if (!sleepRun || sleepRun.paused || sleepRun.busy || !sleepRun.end) return; const left = sleepRun.end - Date.now();
   if (left <= 0){ sleepCmd('stop'); return; }
-  if (left < 60000 && !sleepRun.fading){ sleepRun.fading = true; sleepFade(0, left); } }, 1000);
+  if (left < 60000 && !sleepRun.fading){ sleepRun.fading = true; sleepLevel(0, left / 1000); } }, 1000);
 </script>
 </body>
 </html>
