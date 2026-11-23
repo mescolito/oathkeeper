@@ -930,7 +930,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'bb69e9671d';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '91984eb99f';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -3382,7 +3382,24 @@ Object.assign(GEAR_ART, {
   tideknife: () => { th2(4,22,9,15); W_(8,14,3,2); for (let i=0;i<22;i++){ const a = Math.PI*1.15*i/21 - 0.35, r = 6.5; disc(Math.round(14+Math.cos(a)*r), Math.round(9-Math.sin(a)*r), i < 16 ? 1 : 0, PW); } spark(21,18); },
 });
 /* Shop icons: just the item, centered on a 24×24 black tile. */
+/* Every item icon gets the same finish: a dithered shadow inside its lower-right edges for volume,
+   and top-tier gear a small pink glint, so the art reads with depth instead of as flat cut-outs. */
 function drawIcon(canvas, kind, id){
+  drawIconBase(canvas, kind, id);
+  if (kind === 'color' || kind === 'weather') return;
+  const S2 = canvas.width, c2 = canvas.getContext('2d'), img = c2.getImageData(0, 0, S2, S2), d = img.data;
+  const wh = (x, y) => x >= 0 && y >= 0 && x < S2 && y < S2 && d[(y * S2 + x) * 4] > 200 && d[(y * S2 + x) * 4 + 1] > 200 && d[(y * S2 + x) * 4 + 2] > 190;
+  const sc = Math.max(1, Math.floor(S2 / 24)), shade = [];
+  for (let y = 0; y < S2; y++) for (let x = 0; x < S2; x++){
+    if (!wh(x, y) || !wh(x - sc, y) || !wh(x, y - sc) || !wh(x + sc, y) || !wh(x, y + sc)) continue;   // interior only
+    const nearBR = !wh(x + 2 * sc, y) || !wh(x, y + 2 * sc) || !wh(x + 2 * sc, y + 2 * sc), farTL = wh(x - 2 * sc, y - 2 * sc);
+    if (nearBR && farTL && !lit(Math.floor(x / sc), Math.floor(y / sc), 0.5)) shade.push([x, y]);
+  }
+  c2.fillStyle = PB; for (const [x, y] of shade) c2.fillRect(x, y, 1, 1);
+  const g = (typeof GEAR_BY !== 'undefined' && GEAR_BY[id]) || null;
+  if (g && (g.tier === 'elite' || g.tier === 'end' || g.legendary)){ ctx = c2; const K = (x, y) => px(x * sc, y * sc, sc, sc, '#eeb7d8'); K(21, 2); K(20, 3); K(22, 3); K(21, 4); K(21, 3); if (g.tier === 'end' || g.legendary){ K(3, 20); } }
+}
+function drawIconBase(canvas, kind, id){
   ctx = canvas.getContext('2d'); ctx.imageSmoothingEnabled = false;
   const S2 = canvas.width; B_(0,0,S2,S2);
   if (kind === 'weather'){ const art = ['........................','..........#.#.#.........','...........###..........','..........##.##.........','...........###..........','..........#.#.#.........','............#...........','............#...........','.......##########.......','.......#........#.......','.......#.######.#.......','.......#.#....#.#.......','.......#.#.##.#.#.......','.......#.#....#.#.......','.......#.######.#.......','.......#........#.......','.......#.#.##.#.#.......','.......#........#.......','.......##########.......','........#......#........','........#......#........','.......###....###.......','........................','........................'];   // a little weather machine with a sun on its antenna
