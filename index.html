@@ -930,7 +930,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '49f61031e3';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'b32aacb613';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -3459,72 +3459,228 @@ function drawBoss(canvas, boss, f, motion, hurt, dead){
   const tl = (x0,y0,x1,y1,w=2) => { const n = Math.max(Math.abs(x1-x0), Math.abs(y1-y0)) || 1; for (let i=0;i<=n;i++){ const cx = Math.round(x0+(x1-x0)*i/n), cy = Math.round(y0+(y1-y0)*i/n); for (let j=0;j<w;j++) for (let k=0;k<w;k++) mk(cx+j-(w>>1), cy+k-(w>>1)); } };   // thick line
   const grid = (rows, ox, oy) => { const ws = []; rows.forEach((r, y) => { for (let x = 0; x < r.length; x++){ if (r[x] === '.') continue; mk(ox+x, oy+y); if (r[x] === 'w') ws.push([ox+x, oy+y]); } }); details.push(() => ws.forEach(([x,y]) => W_(x,y))); };   // pixel-art sprite
   const eyePts = [];
+  // texture inside a body (never within 2px of its edge), so big shapes aren't empty: fur, scale, cloth, stone, spots
+  const tex = (kind, x0, y0, x1, y1) => details.push(() => { const M = (x, y) => x >= 0 && y >= 0 && x < BW && y < BH && m[y*BW+x];
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++){ if (!M(x,y) || !M(x-2,y) || !M(x+2,y) || !M(x,y-2) || !M(x,y+2)) continue;
+      const h = (x * 73856093 ^ y * 19349663) >>> 0;
+      if (kind === 'fur' && h % 11 === 0){ W_(x,y); if (M(x+1,y+1)) W_(x+1,y+1); }
+      else if (kind === 'scale' && y % 4 === 0 && (x + (y / 4 % 2) * 2) % 4 === 0){ W_(x,y); W_(x+1,y+1); W_(x-1,y+1); }
+      else if (kind === 'cloth' && x % 4 === 0 && (h % 9) > 2) W_(x,y);
+      else if (kind === 'stone' && h % 23 === 0){ W_(x,y); W_(x + (h % 2 ? 1 : -1), y + 1); }
+      else if (kind === 'spots' && h % 29 === 0){ W_(x,y,2,1); } } });
+  // white line art behind the creature (only where its body isn't), e.g. furniture it sits on
+  const back = (x, y, w, h) => details.push(() => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++){ const X = x + i, Y = y + j; if (X >= 0 && Y >= 0 && X < BW && Y < BH && !m[Y*BW+X]) W_(X, Y); } });
+  const glare = (x, y, flip) => { eyePts.push([x, y, 3]); details.push(() => { const P = (dx, dy, w) => W_(flip ? x + 4 - dx - w : x + dx, y + dy, w, 1); P(0,0,2); P(0,1,4); P(1,2,3); B_(flip ? x + 1 : x + 2, y + 1); }); };   // a mean slanted eye
   const eyes = (pts, s=3) => { pts.forEach(([x,y]) => eyePts.push([x,y,s])); details.push(() => { for (const [x,y] of pts){ W_(x,y,s,s); B_(x+s-2,y+1,1,s-1); W_(x,y,1,1); } }); };
   switch (boss.shape){
-    case 'kraken':
-      ell(32,20,14,12);
-      for (let i=0;i<5;i++){ const bx = 15 + i*7; for (let y=28;y<46;y++){ const o = Math.round(Math.sin((y + fm*0.7 + i*2)/3)*1.5); rect(bx+o, y, y > 40 ? 2 : 3, 1); } }
-      eyes([[24,17],[36,17]],4); details.push(() => { W_(30,25,1,1); W_(31,26,2,1); W_(33,25,1,1); });
-      break;
-    case 'gremlin':
-      ell(32,30,13,12); poly([[13,10],[24,22],[19,27]]); poly([[51,10],[40,22],[45,27]]); rect(24,41,5,5); rect(35,41,5,5);
-      eyes([[25,26],[36,26]],4); details.push(() => { for (let x=28;x<37;x+=2) W_(x,35,1,2); });
-      break;
-    case 'hunch':
-      ell(34,31,16,12); ell(19,33,8,7); for (let i=0;i<4;i++) ell(27+i*5, 20 - Math.round(Math.sin(i/3*Math.PI)*2), 2, 2); rect(17,39,3,7); rect(44,40,3,6);
-      eyes([[14,31],[21,31]],3);
-      break;
-    case 'golem':
-      rect(22,8,20,10); rect(17,18,30,10); rect(19,28,26,9); rect(10,19,7,13); rect(47,19,7,13); rect(24,37,6,8); rect(34,37,6,8);
-      eyes([[25,11],[34,11]],4); details.push(() => { for (const y of [18,28]) for (let x=19;x<46;x+=2) W_(x,y); });
-      break;
-    case 'sloth':
-      ell(32,26,14,13); rect(14,20,5,22); rect(45,20,5,22);
-      details.push(() => { dfill(23,19,19,12,(x,y) => (Math.hypot((x-32)/9, (y-24)/5.5) < 1) ? 0.45 : 0); W_(26,23,4,2); W_(34,23,4,2); B_(27,24,2,1); B_(35,24,2,1); for (const x of [14,16,18,45,47,49]) W_(x,42,1,3); });
-      break;
-    case 'wraith':
-      ell(32,15,6,6);
-      for (const s of [1,-1]){ const X = x => 32 + s*(x-32); line(X(29),11,X(24),3); line(X(26),7,X(21),5); line(X(25),4,X(27),1); }
-      poly([[26,20],[38,20],[46,44],[18,44]]); poly([[27,22],[11,31],[13,34],[28,27]]); poly([[37,22],[53,31],[51,34],[36,27]]);
-      for (let x=18;x<=46;x++){ if ((x*13)%3 === 0) continue; const len = 1 + (x*7)%5 + ((motion && (x+f)%9 === 0) ? 1 : 0); rect(x,44,1,len); }
-      details.push(() => { W_(29,14,2,2); W_(33,14,2,2); });
-      break;
-    case 'eel': { // The Undertow: a sea serpent coiling out of the deep
-      for (let i=0;i<34;i++){ const t = i/33, x = 12 + t*36, y = 44 - t*22 + Math.sin(t*Math.PI*2 + fm*0.25)*6; ell(x, y, 4 - t*0.6, 4 - t*0.6); }
-      ell(50,15,7,6); poly([[50,17],[61,21],[50,22]]);
-      for (let i=0;i<6;i++){ const t = (i+1)/8, x = 12 + t*36, y = 44 - t*22 + Math.sin(t*Math.PI*2 + fm*0.25)*6; poly([[x-2,y-3],[x,y-9],[x+2,y-3]]); }
-      eyes([[50,12]],3); details.push(() => { for (const x of [53,56,59]) W_(x,20,1,2); });
+    case 'titan': { // The Doldrums: a stone sea-titan risen from a dead-flat sea, a becalmed ship at its feet, an anchor on a chain
+      ell(32,12,8,8); for (const [x0,x1,top] of [[24,28,1],[29,33,0],[34,38,1],[26,30,3],[36,40,3]]) poly([[x0,6],[(x0+x1)/2|0,top],[x1,6]]);   // crown of stone spikes
+      poly([[8,23],[56,23],[50,41],[14,41]]); ell(14,24,7,5); ell(50,24,7,5);                                // shoulders and chest
+      tl(10,26,6,40,5); tl(54,26,58,34,5); tl(58,34,57,38,3);                                                 // arms
+      line(57,38,57,44); line(52,44,62,44); line(52,44,52,42); line(62,44,62,42);                             // anchor on its chain
+      rect(0,41,64,7);                                                                                        // flat water
+      poly([[0,37],[12,37],[10,41],[2,41]]); line(6,37,6,27);                                                 // becalmed ship
+      glare(26,10,0); glare(34,10,1); tex('stone', 9, 22, 55, 41);
+      details.push(() => { for (let x = 1; x < 64; x += 4) W_(x, 43 + ((x >> 2) & 1) * 2, 2, 1);              // still water lines
+        W_(7,28,4,1); W_(7,29,1,7); W_(7,35,4,1);                                                             // the limp sail
+        W_(28,16,8,1); for (let x = 28; x < 36; x += 2) W_(x,17,1,1);                                          // a grim mouth
+        for (const [x,y] of [[15,24],[48,25],[20,30],[44,31],[31,36]]) { W_(x,y,2,2); B_(x,y); }               // barnacles
+        for (let y = 26; y < 38; y += 3) W_(57, y, 1, 2); W_(53,43,1,1); W_(61,43,1,1); });
       break; }
-    case 'giant': { // The Fog Colossus: a towering shape in the mist
-      ell(32,9,6,6); poly([[14,18],[50,18],[46,40],[18,40]]); ell(32,19,18,5);
-      for (const s of [1,-1]){ const X = x => 32 + s*(x-32); poly([[X(14),18],[X(9),20],[X(6),44],[X(11),44],[X(16),26]]); }
+    case 'eel': { // The Undertow: a scaled serpent bursting from a whirlpool, jaws open, fins like knives
+      for (let i = 0; i < 34; i++){ const t = i/33, x = 12 + t*32, y = 42 - t*24 + Math.sin(t*Math.PI*2 + fm*0.25)*5; ell(x, y, 5 - t*1.5, 5 - t*1.5); }
+      for (let i = 0; i < 7; i++){ const t = (i+1)/9, x = 12 + t*32, y = 42 - t*24 + Math.sin(t*Math.PI*2 + fm*0.25)*5; poly([[x-3,y-3],[x+1,y-10],[x+2,y-3]]); }
+      ell(47,15,6,5); poly([[50,11],[61,7],[55,14]]); poly([[50,17],[60,22],[54,18]]); poly([[44,11],[46,5],[48,11]]);
+      for (let x = 0; x < 64; x++){ const w = Math.round(Math.sin(x / 3 + fm * 0.3) * 1); rect(x, 43 + w, 1, 5); }
+      glare(43,12,1); tex('scale', 8, 20, 48, 46);
+      details.push(() => { for (const [x,y] of [[53,12],[56,10],[59,9],[53,17],[56,19],[59,20]]) W_(x,y,1,2); B_(52,14,5,3); W_(46,7,1,3);
+        for (let k = 0; k < 3; k++){ const r = 4 + k * 4, a0 = fm * 0.1 + k; for (let a = 0; a < Math.PI * 1.4; a += 0.25) W_(Math.round(14 + Math.cos(a + a0) * r * 1.6), Math.round(45 + Math.sin(a + a0) * r * 0.35)); } });
+      break; }
+    case 'giant': { // The Fog Colossus: a horned armored giant wading through fog, eyes burning
+      ell(32,10,6,6); poly([[27,7],[20,0],[26,4]]); poly([[37,7],[44,0],[38,4]]);                            // head, horns
+      poly([[14,18],[50,18],[46,40],[18,40]]); ell(32,19,18,5); ell(13,19,6,4); ell(51,19,6,4);               // torso, pauldrons
+      for (const s of [1,-1]){ const X = x => 32 + s*(x-32); poly([[X(12),20],[X(7),22],[X(5),40],[X(10),42],[X(15),27]]); }
       rect(21,40,8,7); rect(35,40,8,7);
-      details.push(() => { W_(29,8,2,2); W_(34,8,2,2); for (let x=0;x<64;x++) for (let y=34;y<48;y++) if (lit(x + (motion ? Math.floor(f/2) : 0), y, 0.18 * (y - 33) / 14)) W_(x,y); });
+      glare(28,8,0); glare(33,8,1); tex('stone', 15, 20, 49, 40);
+      details.push(() => { W_(28,13,8,1); for (let x = 28; x < 36; x += 2) W_(x,14,1,1);
+        for (const y of [24,28,32]) W_(24, y, 16, 1); W_(32,22,1,14);                                       // armored chest plates
+        W_(9,18,8,1); W_(47,18,8,1); W_(4,40,2,1); W_(7,42,2,1); W_(58,40,2,1); W_(55,42,2,1);              // pauldron rims, claws
+        for (let x = 0; x < 64; x++) for (let y = 30; y < 48; y++) if (lit(x + (motion ? Math.floor(f/2) : 0), y, 0.22 * (y - 29) / 18)) W_(x,y); });
       break; }
-    case 'pumpkin': { // The Pumpkin Wraith: a carved head over a tattered cloak
-      ell(32,17,13,11); rect(31,3,3,4); poly([[34,4],[39,2],[38,5]]);
-      poly([[22,25],[42,25],[50,46],[14,46]]);
-      for (let x=14;x<=50;x++){ if (x % 3 === 0) continue; rect(x,46,1,1 + (x*5)%3); }
-      details.push(() => { for (const x of [25,32,39]) for (let y=8;y<27;y++) if (y%2) {} W_(26,24,1,2); W_(38,24,1,2);
-        for (const [x,y] of [[25,13],[36,13]]){ for (let k=0;k<4;k++) W_(x+k-Math.floor(k/2)*0, y+3-k, 4-k, 1); }
-        for (let x=24;x<=40;x+=2) W_(x, 19 + (x%4 === 0 ? 0 : 1), 2, 2); });
+    case 'pumpkin': { // The Pumpkin Wraith: a carved, glowing head on a tattered cloak, a scythe in its fist
+      ell(30,15,12,10); rect(29,2,3,4); poly([[31,3],[37,0],[36,4]]);
+      poly([[20,23],[40,23],[48,46],[12,46]]); tl(40,29,50,27,2);
+      tl(46,46,58,5,2); poly([[58,5],[52,1],[44,3],[40,9],[48,5],[57,8]]);
+      for (let x = 12; x <= 48; x++){ if (x % 3 === 0) continue; rect(x,46,1,1 + (x*5)%3); }
+      eyePts.push([22,11,4],[34,11,4]); tex('cloth', 13, 27, 47, 45);
+      details.push(() => { const glow = !motion || (f >> 2) % 7 ? W_ : (x, y, w = 1, h = 1) => px(x, y, w, h, '#eeb7d8');
+        for (const x of [21,39]) { W_(x, 7, 1, 3); W_(x, 21, 1, 3); } W_(30, 5, 1, 3);                       // ridges
+        glow(22,11,5,1); glow(23,12,4,1); glow(25,13,2,1); glow(34,11,5,1); glow(34,12,4,1); glow(34,13,2,1);   // slanted eyes
+        glow(30,15,1,1); glow(29,16,3,1);                                                                     // nose
+        glow(22,19,17,3); for (const x of [24,28,32,36]) { B_(x,19,2,1); B_(x - 1,21,2,1); }                  // jagged grin
+        W_(31,2,1,4); W_(46,2,8,1); W_(43,4,4,1); W_(41,6,2,1); W_(40,28,8,1); W_(14,46,1,1); });
       break; }
-    case 'turkey': { // The Gobbler: a huge fanned tail and a tiny angry head
-      for (let i=0;i<7;i++){ const a = Math.PI*(0.1 + i*0.8/6); ell(32 - Math.cos(a)*16, 26 - Math.sin(a)*15, 4, 7); }
-      ell(32,32,13,11); ell(32,16,5,5); poly([[36,16],[42,18],[36,19]]); rect(30,20,3,7); rect(26,42,2,5); rect(36,42,2,5);
-      eyes([[30,13]],3); details.push(() => { for (let i=0;i<7;i++){ const a = Math.PI*(0.1 + i*0.8/6); W_(Math.round(32 - Math.cos(a)*16), Math.round(26 - Math.sin(a)*15), 1, 3); } W_(31,21,1,5); });
+    case 'turkey': { // The Gobbler: a monstrous turkey, tail fanned with eyes, carving knife clutched in a talon
+      for (let i = 0; i < 9; i++){ const a = Math.PI*(0.05 + i*0.9/8); tl(32, 30, Math.round(32 - Math.cos(a)*24), Math.round(28 - Math.sin(a)*22), 4); ell(Math.round(32 - Math.cos(a)*24), Math.round(28 - Math.sin(a)*22), 3, 3); }
+      ell(32,33,12,10); ell(33,15,5,5); tl(31,19,31,26,3); poly([[37,13],[45,16],[37,18]]); tl(36,19,37,25,2);  // body, head, beak, wattle
+      tl(27,42,26,46,2); tl(37,42,38,46,2); tl(44,32,52,30,2); line(52,30,59,22); line(53,30,60,22);          // legs, wing, knife
+      glare(31,12,1); tex('scale', 20, 24, 44, 42);
+      details.push(() => { for (let i = 0; i < 9; i++){ const a = Math.PI*(0.05 + i*0.9/8), x = Math.round(32 - Math.cos(a)*24), y = Math.round(28 - Math.sin(a)*22); W_(x-1,y-1,3,3); B_(x,y); }   // eye-spots
+        W_(38,15,6,1); W_(36,20,1,4); W_(56,25,3,1); W_(25,46,1,1); W_(27,46,1,1); W_(37,46,1,1); W_(39,46,1,1); });
       break; }
-    case 'krampus': { // Krampus: horned goat demon dragging chains
-      poly([[24,14],[40,14],[38,30],[26,30]]); ell(32,34,12,10); rect(25,43,5,4); rect(34,43,5,4);
-      for (const s of [1,-1]){ const X = x => 32 + s*(x-32); line(X(26),14,X(20),6); line(X(20),6,X(17),9); line(X(17),9,X(16),4); line(X(25),13,X(19),5); }
-      poly([[30,28],[34,28],[33,36],[31,36]]); poly([[20,30],[10,40],[12,42],[22,34]]); poly([[44,30],[54,40],[52,42],[42,34]]);
-      eyes([[27,18],[34,18]],3); details.push(() => { W_(31,30,2,5); for (let x=12;x<54;x+=3) W_(x, 44 + (x%2), 2, 1); for (let x=12;x<54;x+=6) W_(x, 43, 1, 1); });
+    case 'krampus': { // Krampus: shaggy goat demon, curling horns, lolling tongue, chains and a bundle of switches
+      ell(32,16,7,7); poly([[29,20],[35,20],[33,28],[31,28]]);                                                // head, beard
+      for (const s of [1,-1]){ const X = x => 32 + s*(x-32); tl(X(27),11,X(21),4,2); tl(X(21),4,X(16),7,2); tl(X(16),7,X(17),12,2); tl(X(17),12,X(20),11,1); }
+      poly([[20,24],[44,24],[48,44],[16,44]]); ell(32,26,13,5);                                               // shaggy body
+      tl(20,28,10,38,3); tl(44,28,52,36,3); rect(24,44,5,3); rect(35,44,5,3);
+      for (let i = 0; i < 6; i++) line(52, 36, 58 + (i % 3), 22 + i * 2);                                     // bundle of switches
+      for (let x = 6; x < 58; x++) if (x % 3 !== 1) mk(x, 45 + ((x / 3 | 0) % 2));                             // chain on the ground
+      glare(27,14,0); glare(33,14,1); tex('fur', 17, 24, 47, 44);
+      details.push(() => { W_(31,21,2,6); W_(32,27,1,2);                                                      // the tongue
+        for (let x = 6; x < 58; x += 3) { W_(x, 45 + ((x / 3 | 0) % 2), 2, 1); }
+        W_(24,44,1,1); W_(28,44,1,1); W_(35,44,1,1); W_(39,44,1,1); W_(10,38,1,1); W_(12,39,1,1); W_(53,35,2,1); });
       break; }
-    case 'hourglass': { // Father Time: a living hourglass, sand running out
-      rect(16,4,32,3); rect(16,44,32,3); rect(17,7,2,37); rect(45,7,2,37);
-      poly([[20,7],[44,7],[33,24],[31,24]]); poly([[31,26],[33,26],[44,44],[20,44]]);
-      eyes([[25,10],[35,10]],3);
-      details.push(() => { const k = motion ? f % 6 : 0; for (let y=24;y<34;y+=2) W_(32, y + (k % 2), 1, 1); for (let y=38;y<44;y++) for (let x=32-(y-37)*2; x<=32+(y-37)*2; x++) if ((x+y)%2) W_(x,y); for (let x=27;x<38;x+=2) W_(x,15,1,1); });
+    case 'hourglass': { // Father Time: a hooded, bearded skeleton with a scythe and an hourglass running out
+      poly([[22,14],[32,2],[42,14],[44,22],[20,22]]);                                                         // hood
+      poly([[20,20],[44,20],[50,46],[14,46]]);                                                                // robe
+      poly([[28,16],[36,16],[34,30],[32,33],[30,30]]);                                                        // long beard
+      tl(20,26,12,32,2); tl(44,26,52,30,2);
+      line(9,4,9,46); line(10,4,10,46); poly([[10,4],[24,5],[30,10],[20,7],[10,7]]);                          // scythe
+      rect(50,26,8,2); rect(50,38,8,2); rect(51,28,1,10); rect(56,28,1,10);                                    // hourglass
+      eyePts.push([27,10,3],[33,10,3]); tex('cloth', 15, 24, 49, 45);
+      details.push(() => { B_(26,8,12,7); W_(27,10,3,1); W_(28,11,2,1); W_(34,10,3,1); W_(34,11,2,1);         // eyes deep in the hood
+        for (let y = 17; y < 31; y += 2) W_(31 + (y % 4 ? 1 : 0), y, 2, 1);                                    // beard strands
+        W_(50,26,8,1); W_(50,39,8,1); const k = motion ? (f >> 2) % 4 : 0; W_(53,29,2,2); W_(54,31 + (k % 2),1,1); W_(54,33,1,1); W_(52,36,4,2);   // sand running out
+        W_(11,5,12,1); W_(12,32,1,1); W_(52,30,1,1); });
+      break; }
+    case 'heart': { // The Heartbreaker: a cracked heart on bat wings, a fanged mouth across it, an arrow through it, thorns around it
+      for (const sd of [1,-1]){ const X = x => 32 + sd*(x-32); poly([[X(20),14],[X(4),4],[X(6),11],[X(1),15],[X(7),19],[X(3),25],[X(18),22]]); }   // bat wings behind
+      ell(25,20,9,9); ell(39,20,9,9); poly([[16,22],[48,22],[32,43]]);                                       // the heart
+      line(6,42,58,6); line(7,42,59,6); poly([[56,4],[61,3],[60,8]]);                                         // the arrow
+      glare(21,17,0); glare(39,17,1);
+      details.push(() => { for (const sd of [1,-1]){ const X = x => 32 + sd*(x-32); for (const [x,y] of [[6,11],[1,15],[7,19],[3,25]]) { for (let k = 0; k <= 6; k++) W_(Math.round(X(18) + (X(x) - X(18)) * k / 7), Math.round(18 + (y - 18) * k / 7)); } }   // wing bones
+        for (const [x,y] of [[32,12],[31,14],[33,16],[31,18],[32,20],[33,22],[31,24]]) W_(x,y,1,2);           // the crack
+        W_(23,28,19,2); for (const x of [24,28,32,36,40]) { B_(x,28,2,1); } for (const x of [26,30,34,38]) B_(x,29,2,1);   // fanged mouth
+        for (let k = 0; k < 16; k++){ const a = Math.PI * (0.15 + k / 15 * 0.7), x = Math.round(32 + Math.cos(a) * 16), y = Math.round(31 + Math.sin(a) * 7); W_(x,y); if (k % 3 === 0) W_(x, y + 1); }   // thorns around the point
+        W_(57,4,3,1); W_(59,5,1,2); W_(4,43,3,1); W_(5,41,1,1); W_(5,44,1,1); });
+      break; }
+    case 'hydra': { // Rite I: the Hydra of Someday, five snarling heads on long necks, scaled and clawed
+      ell(32,36,13,9); tl(19,40,12,44,3); poly([[44,38],[60,44],[58,46],[44,42]]);                            // body, tail
+      const heads = [[10,14],[19,6],[32,3],[45,6],[54,14]];
+      heads.forEach(([hx,hy], i) => { const sw = motion ? Math.round(Math.sin(fm * 0.2 + i) * 1.5) : 0; tl(28 + i * 2, 30, hx + sw, hy + 4, 3); ell(hx + sw, hy + 2, 4, 3); poly([[hx + sw + (hx < 32 ? -3 : 3), hy + 1], [hx + sw + (hx < 32 ? -8 : 8), hy + 2], [hx + sw + (hx < 32 ? -3 : 3), hy + 4]]); });
+      rect(22,43,5,4); rect(37,43,5,4);
+      heads.forEach(([hx,hy]) => eyePts.push([hx - 1, hy, 2])); tex('scale', 19, 28, 45, 44);
+      details.push(() => { heads.forEach(([hx,hy], i) => { const sw = motion ? Math.round(Math.sin(fm * 0.2 + i) * 1.5) : 0, x = hx + sw, d = hx < 32 ? -1 : 1;
+          W_(x - 1, hy + 1, 2, 1); B_(x - (d < 0 ? 1 : 0), hy + 1); W_(x + d * 5, hy + 3, 1, 1); W_(x + d * 7, hy + 2, 1, 1); });   // eyes and fangs
+        W_(22,46,1,1); W_(26,46,1,1); W_(37,46,1,1); W_(41,46,1,1); });
+      break; }
+    case 'candle': { // Rite II: the Burnout, a melting wax giant, wick guttering, dripping into its own puddle
+      poly([[20,12],[44,12],[46,40],[18,40]]); rect(30,6,2,6);                                                // the wax body, wick
+      for (const [x,len] of [[20,10],[25,6],[38,9],[44,12],[33,4]]) rect(x, 38, 3, len > 8 ? 8 : len);        // drips
+      tl(20,20,10,32,4); tl(10,32,9,40,3); tl(44,20,54,30,4); tl(54,30,56,38,3);                               // melting arms
+      ell(32,44,22,3);                                                                                        // the puddle
+      glare(25,18,0); glare(35,18,1); tex('spots', 19, 13, 45, 39);
+      details.push(() => { const fl = motion ? (f >> 1) % 3 : 0; const PK = (x, y, w = 1, h = 1) => px(x, y, w, h, '#eeb7d8');
+        PK(30, 1 - (fl === 1 ? 1 : 0), 2, 5); PK(29, 3, 4, 2); PK(31, 0, 1, 1);                             // pink flame
+        B_(25,17,4,4); B_(35,17,4,4); W_(26,18,2,2); W_(36,18,2,2);                                          // hollow burnt eyes
+        for (let x = 25; x < 40; x += 2) W_(x, 26 + (x % 4 ? 1 : 0), 1, 1);                                    // a sagging mouth
+        for (const [x,y] of [[22,15],[42,16],[24,31],[40,33],[31,35]]) W_(x, y, 1, 3);                      // cracks
+        W_(9,40,1,1); W_(56,38,1,1); for (let x = 12; x < 54; x += 5) W_(x, 44, 2, 1); });
+      break; }
+    case 'leviathan': { // Final: the Last Tide. Too big for the frame: a maw of teeth, a ring of eyes, horns and coils
+      ell(32,30,38,26); poly([[2,4],[10,0],[12,10]]); poly([[62,4],[54,0],[52,10]]);
+      for (const [x,y] of [[4,48],[60,48]]) ell(x, y, 6, 6);
+      [[10,9],[20,6],[30,5],[40,6],[50,9],[15,15],[48,15]].forEach(([x,y]) => eyePts.push([x,y,3]));
+      tex('spots', 0, 0, 63, 51);
+      details.push(() => { B_(10,22,44,22);                                                                   // the open maw
+        for (let x = 10; x < 54; x += 3){ W_(x, 22, 2, 1); W_(x, 23, 1, 3 + ((x * 7) % 3)); }                  // upper teeth
+        for (let x = 11; x < 54; x += 3){ W_(x, 43, 2, 1); W_(x + 1, 39 - ((x * 5) % 3), 1, 4 + ((x * 5) % 3)); }   // lower teeth
+        for (let x = 16; x < 48; x += 4){ W_(x, 27, 1, 2); W_(x + 2, 37, 1, 2); }                              // a second row further in
+        [[10,9],[20,6],[30,5],[40,6],[50,9],[15,15],[48,15]].forEach(([x,y], i) => { const blink = motion && (f + i * 7) % 60 < 2; if (blink){ W_(x, y + 1, 3, 1); return; } W_(x, y, 3, 3); B_(x + 1, y, 1, 3); });
+        W_(4,3,2,1); W_(58,3,2,1); });
+      break; }
+    case 'kraken': { // Couch Kraken: a squid-headed thing sprawled over the sofa, tentacles everywhere, the remote in one
+      ell(32,13,8,11); poly([[24,6],[18,2],[25,12]]); poly([[40,6],[46,2],[39,12]]);                         // mantle and fins
+      const tw = i => motion ? Math.round(Math.sin(fm * 0.25 + i * 1.7) * 1.5) : 0;
+      const tent = (pts, w, i) => { for (let k = 0; k < pts.length - 1; k++) tl(pts[k][0] + (k ? tw(i) : 0), pts[k][1], pts[k+1][0] + tw(i), pts[k+1][1], k < pts.length - 2 ? w : w - 1); };
+      tent([[26,22],[16,25],[7,28],[3,34],[4,41],[8,44]], 3, 0);
+      tent([[29,23],[25,31],[21,38],[23,44],[27,45]], 3, 1);
+      tent([[35,23],[39,31],[43,38],[41,44],[37,45]], 3, 2);
+      tent([[38,22],[48,23],[57,26],[61,19],[58,13]], 3, 3);
+      tent([[32,24],[32,32],[31,40],[33,45]], 2, 4);
+      rect(55,6,4,8);
+      glare(26,13,0); glare(34,13,1); tex('spots', 24, 2, 40, 22);
+      // the sofa, behind it all
+      back(4,26,56,1); back(4,26,1,16); back(59,26,1,16); back(8,33,48,1); back(4,41,56,1); back(8,26,1,15); back(55,26,1,15); back(5,42,2,4); back(57,42,2,4); back(31,33,1,8);
+      details.push(() => { W_(30,21,4,1); W_(31,22,2,1);
+        for (const [x,y] of [[13,26],[6,30],[4,37],[24,33],[22,40],[40,33],[42,40],[51,24],[59,21],[32,30],[31,37]]) W_(x,y);
+        W_(56,7,2,1); W_(56,9,1,1); W_(57,11,1,1); W_(28,4,1,1); W_(36,4,1,1); W_(32,2,1,1); });
+      break; }
+    case 'gremlin': { // Knee Gremlin: crouched, bat-eared, gnawing on a bone
+      ell(30,18,8,7); poly([[24,14],[8,3],[22,21]]); poly([[36,14],[52,3],[38,21]]);
+      ell(27,32,10,8); tl(17,31,9,36,2); tl(9,36,6,33,2);                                      // body, tail
+      tl(35,28,42,27,2); tl(33,32,42,31,2);                                                   // arms to the bone
+      rect(42,26,9,2); ell(42,27,2,2); ell(51,27,2,2);                                         // bone
+      tl(22,37,17,42,3); tl(17,42,20,45,3); tl(32,38,36,43,3); tl(36,43,34,45,3);              // crouched legs
+      glare(24,15,0); glare(32,15,1); tex('fur', 18, 26, 36, 40);
+      details.push(() => { W_(42,26,9,2); W_(41,26,1,1); W_(52,26,1,1); W_(41,28,1,1); W_(52,28,1,1);   // the bone, white
+        for (let x = 26; x < 36; x += 2) W_(x, 21, 1, 2); for (let x = 27; x < 35; x += 2) W_(x, 23, 1, 1);   // teeth
+        W_(16,8,1,1); W_(18,11,1,2); W_(44,8,1,1); W_(42,11,1,2);                               // ear veins
+        for (const y of [29,32,35]) W_(21, y, 6, 1); W_(19,28,1,8);                              // ribs
+        W_(16,45,1,1); W_(18,45,1,1); W_(33,45,1,1); W_(35,45,1,1); W_(42,30,1,1); W_(42,26,0,0); });
+      break; }
+    case 'hunch': { // The Hunch: a bony thing curled over a glowing screen
+      for (let i = 0; i <= 20; i++){ const a = Math.PI * (0.95 - i / 20 * 0.8), x = 26 + Math.cos(a) * 15, y = 34 - Math.sin(a) * 18; tl(x, y, x + 1, y + 3, 4); }   // the curved spine
+      tl(40,22,46,27,3); ell(48,29,5,4);                                                        // neck, head drooping forward
+      tl(30,24,40,36,2); tl(38,26,44,37,2);                                                    // arms to the screen
+      rect(40,36,14,9);                                                                         // the screen
+      tl(14,34,10,40,2); tl(10,40,12,46,2); tl(20,34,24,40,2); tl(24,40,22,46,2);              // thin bent legs
+      glare(47,28,1);
+      details.push(() => { for (let i = 1; i < 20; i += 2){ const a = Math.PI * (0.95 - i / 20 * 0.8), x = Math.round(26 + Math.cos(a) * 15), y = Math.round(34 - Math.sin(a) * 18) - 1; W_(x, y, 2, 1); }   // vertebrae
+        for (const [x,y,w] of [[18,26,8],[19,29,9],[21,32,8]]) W_(x, y, w, 1);                  // ribs
+        W_(41,37,12,7); B_(43,39,6,1); B_(43,41,4,1); B_(50,38,2,2);                            // glowing screen
+        W_(50,31,3,1); W_(51,32,1,1); W_(9,46,1,1); W_(11,46,1,1); W_(21,46,1,1); W_(23,46,1,1);
+        if (!motion || f % 16 < 12){ W_(46,34,1,1); W_(55,35,1,1); W_(56,40,1,1); } });
+      break; }
+    case 'golem': { // Laundry Golem: a hulking heap of clothes with a basket for a head
+      poly([[14,44],[16,24],[24,15],[40,15],[48,24],[50,44]]);
+      rect(23,4,18,10); rect(21,13,22,2);                                                       // basket helm
+      tl(17,22,8,34,4); tl(8,34,6,40,3); tl(47,22,56,34,4); tl(56,34,58,41,3);                  // twisted-shirt arms
+      rect(18,40,10,6); rect(36,40,10,6);
+      tl(58,41,59,46,2);                                                                        // a sock dangling
+      glare(25,16,0); glare(35,16,1); tex('cloth', 14, 30, 50, 44);
+      details.push(() => { for (let y = 5; y < 13; y += 2) for (let x = 24 + (y % 4 === 1 ? 1 : 0); x < 41; x += 2) W_(x,y);   // basket weave
+        W_(21,13,22,1); W_(24,22,8,1); W_(28,23,1,6); W_(28,29,8,1);                             // a shirt collar
+        for (const y of [25,28,31]) W_(36, y, 1, 1); W_(33,24,1,8);                              // buttons
+        W_(18,36,10,1); W_(36,36,10,1); W_(23,37,1,3); W_(41,37,1,3);                            // waistband, pockets
+        W_(10,30,2,1); W_(7,36,3,1); W_(52,30,2,1); W_(55,36,3,1);                               // sleeve folds
+        W_(58,43,2,1); W_(58,45,2,1); W_(26,20,1,1); W_(31,20,1,1); W_(36,20,1,1); });
+      break; }
+    case 'sloth': { // Iron Sloth: hanging off a barbell by its claws, plated in riveted iron
+      rect(4,5,56,2); rect(4,1,4,10); rect(9,2,3,8); rect(56,1,4,10); rect(52,2,3,8);            // barbell and plates
+      tl(22,7,24,20,3); tl(42,7,40,20,3);                                                       // arms up to the bar
+      ell(32,30,11,11); ell(32,21,7,6);                                                         // body, head
+      tl(26,38,22,45,3); tl(38,38,42,45,3);                                                     // dangling legs
+      glare(27,20,0); glare(33,20,1); tex('fur', 22, 14, 42, 24);
+      details.push(() => { W_(4,5,56,1); W_(5,2,1,8); W_(10,3,1,6); W_(58,2,1,8); W_(53,3,1,6);  // bar and plates
+        for (const x of [20,22,24]) W_(x,5,1,3); for (const x of [40,42,44]) W_(x,5,1,3);        // claws round the bar
+        W_(25,19,4,1); W_(35,19,4,1); W_(30,24,4,1); W_(31,25,1,1); W_(33,25,1,1);               // mask stripe, fangs
+        for (const y of [27,31,35]) { W_(22, y, 21, 1); for (let x = 24; x < 42; x += 4) W_(x, y + 1); }   // iron bands and rivets
+        W_(20,45,1,1); W_(22,45,1,1); W_(42,45,1,1); W_(44,45,1,1); });
+      break; }
+    case 'wraith': { // Riptide Wraith: a hooded drowned thing rising out of the surf, claws out
+      poly([[24,17],[32,3],[40,17],[42,25],[22,25]]);                                           // hood
+      poly([[22,23],[42,23],[49,40],[44,38],[40,42],[35,39],[29,42],[24,38],[15,40]]);          // tattered robe
+      tl(23,27,12,21,2); tl(41,27,52,21,2);                                                     // skeletal arms
+      for (const s of [1,-1]){ const X = x => 32 + s*(x-32); line(X(12),21,X(8),17); line(X(12),21,X(7),20); line(X(12),21,X(9),23); }
+      for (let x = 0; x < 64; x++){ const w = Math.round(Math.sin((x + fm * 0.8) / 4) * 1.5); rect(x, 41 + w, 1, 7 - w); }   // the surf
+      glare(27,13,0); glare(33,13,1); tex('cloth', 16, 24, 48, 40);
+      details.push(() => { B_(26,11,12,6); B_(28,25,8,8); for (const y of [26,28,30]) { W_(29, y, 6, 1); } W_(32,25,1,8);   // ribs through a tear                                                      // the void inside the hood
+        W_(27,13,3,1); W_(28,14,2,1); W_(34,13,3,1); W_(34,14,2,1);                              // eyes in the dark
+        W_(22,17,2,1); W_(40,17,2,1); W_(31,4,2,1);
+        for (const [x,y] of [[26,28],[28,32],[36,29],[38,33],[31,35],[33,30]]) W_(x, y, 1, 3);  // robe tatters
+        for (let x = 0; x < 64; x += 3){ const w = Math.round(Math.sin((x + fm * 0.8) / 4) * 1.5); W_(x, 41 + w, 2, 1); }   // foam
+        W_(8,17,1,1); W_(7,20,1,1); W_(9,23,1,1); W_(56,17,1,1); W_(57,20,1,1); W_(55,23,1,1); });
       break; }
     /* mini-bosses: monsters of monotony and lost focus. Scary, not cute. */
     case 'tabgob': { // Tab Goblin: swept-back ears, a jagged snarl, claws gripping glowing tabs
@@ -3582,40 +3738,6 @@ function drawBoss(canvas, boss, f, motion, hurt, dead){
       details.push(() => { W_(35,24,3,1); W_(36,25,2,1); B_(37,25); W_(41,28,1,2); W_(43,28,1,1); W_(45,27,1,1); W_(14,38,1,2); W_(16,39,1,1);
         for (let x = 4; x < 60; x += 2) W_(x, x > 20 && x < 52 ? 49 : 47, 1, 1); });
       break; }
-    case 'heart': { // The Heartbreaker: a cracked heart on bat wings
-      ell(25,20,9,9); ell(39,20,9,9); poly([[16,22],[48,22],[32,42]]);
-      for (const s of [1,-1]){ const X = x => 32 + s*(x-32); const flap = motion && f % 8 < 4 ? 2 : 0; poly([[X(17),18],[X(3),10 + flap],[X(6),20],[X(2),26 - flap],[X(10),26],[X(16),24]]); }
-      eyes([[25,19],[36,19]],3);
-      details.push(() => { const pts = [[32,13],[30,18],[34,23],[30,28],[33,33],[31,37]]; for (let i=0;i<pts.length-1;i++){ const [x0,y0] = pts[i], [x1,y1] = pts[i+1], n = Math.max(Math.abs(x1-x0), Math.abs(y1-y0)); for (let k=0;k<=n;k++) W_(Math.round(x0+(x1-x0)*k/n), Math.round(y0+(y1-y0)*k/n)); } W_(27,27,6,1); });
-      break; }
-    case 'hydra': { // Rite I: the Hydra of Someday, five heads
-      ell(32,38,15,9); rect(22,44,5,3); rect(37,44,5,3);
-      const heads = [[10,14],[19,7],[32,4],[45,7],[54,14]];
-      heads.forEach(([hx,hy], i) => { const sway = motion ? Math.round(Math.sin((f + i*3)/4)) : 0; for (let t=0;t<=1;t+=0.05) ell(32 + (hx-32)*t + sway*t, 34 + (hy+4-34)*t, 2.5, 2.5); ell(hx + sway, hy, 4, 3); poly([[hx+sway+2,hy+1],[hx+sway+7,hy+2],[hx+sway+2,hy+3]]); });
-      details.push(() => { heads.forEach(([hx,hy], i) => { const sway = motion ? Math.round(Math.sin((f + i*3)/4)) : 0; W_(hx + sway, hy - 1, 2, 2); }); });
-      break; }
-    case 'candle': { // Rite II: the Burnout, a melted candle giant with a guttering flame
-      poly([[18,16],[46,16],[48,46],[16,46]]); ell(32,16,14,3);
-      for (const [x,len] of [[20,9],[26,15],[33,7],[39,13],[44,10]]) rect(x, 16, 3, len);
-      const fl = motion ? f % 4 : 0; poly([[32,2+fl%2],[38,12],[32,15],[26,12]]); rect(31,13,2,4);
-      eyes([[24,24],[35,24]],4);
-      details.push(() => { W_(31,7,2,4); for (let x=26;x<39;x+=2) W_(x,33,1,1 + (x%3)); for (let x=22;x<44;x+=3) W_(x,44,2,1); });
-      break; }
-    case 'leviathan': { // Final: the Last Tide. Too big for the frame.
-      ell(32,30,40,26);
-      for (let i=0;i<4;i++){ const sway = motion ? Math.sin((f + i*5)/5)*2 : 0; for (let y=0;y<52;y++){ const x0 = (i < 2 ? -2 + i*5 : 54 + (i-2)*5) + Math.sin(y/4 + i)*2 + sway; rect(Math.round(x0), y, 3, 1); } }
-      details.push(() => {
-        const ex = [[14,12],[23,8],[32,6],[41,8],[50,12]]; ex.forEach(([x,y], i) => { const blink = motion && (f + i*7) % 37 < 2; if (!blink){ W_(x-1,y-1,4,3); B_(x+1,y,1,1); } });
-        for (let x=8;x<57;x++){ const yTop = 24 + Math.round(Math.abs(x-32)/6), open = motion ? Math.round(Math.sin(f/7)*1.5) : 0; B_(x, yTop, 1, 14 + open); }
-        for (let x=9;x<56;x+=4){ const yTop = 24 + Math.round(Math.abs(x-32)/6); for (let k=0;k<4;k++) W_(x + k - (k>1?k*2-3:0)*0, yTop + k, Math.max(1, 3 - k), 1); }
-        for (let x=11;x<54;x+=4){ const yBot = 38 + Math.round(Math.abs(x-32)/8); for (let k=0;k<3;k++) W_(x + k, yBot - k, Math.max(1, 3 - k), 1); }
-        for (let i=0;i<20;i++){ const h = hash('lv' + i); W_(h % 64, 44 + (h>>>8) % 8); }
-      });
-      break; }
-    case 'titan':
-      for (const [x,y,rx,ry] of [[21,25,12,10],[40,20,14,12],[31,32,16,11],[48,32,9,8],[15,35,8,7]]) ell(x,y,rx,ry);
-      eyes([[16,23],[26,18],[38,17],[46,24],[33,27]],3); details.push(() => { for (let x=24;x<40;x+=2) W_(x,37,1,2); });
-      break;
   }
   // defeated: the boss slumps (squashed down onto the ground), its eyes turn to X's and little stars circle its head
   if (dead){
