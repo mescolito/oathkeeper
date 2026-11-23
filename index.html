@@ -928,7 +928,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '7270358c56';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'a713b31855';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -6116,7 +6116,7 @@ const LOFI_STYLES = {
     break: {bpm: 80, swing: 0.08, chord: 'vibes', lead: 'guitar', bass: 'pluck', beat: 'bossa', lead_p: 0.18, drums: 0.7, amb: 0.2, warm: 3600}, amb: 'waves'},
   dreamy: {label: 'Dreamy', note: 'Warm synths and deep 808s', key: -3, gain: 0.8,
     focus: {bpm: 82, swing: 0.06, chord: 'synth', lead: 'square', bass: 'sub', beat: 'rim', lead_p: 0.25, drums: 1, amb: 0.0001, warm: 3600},
-    break: {bpm: 64, swing: 0.04, chord: 'synth', lead: 'kalimba', bass: 'sub', beat: 'none', lead_p: 0.3, drums: 0.0001, amb: 0.22, warm: 2600}, amb: 'waves'},
+    break: {bpm: 80, swing: 0.08, chord: 'rhodes', lead: 'kalimba', oct: 24, bass: 'pluck', beat: 'bossa', lead_p: 0.18, drums: 0.7, amb: 0.2, warm: 3600, mix: 1.2}, amb: 'waves'},
   // modeled on the Afro Lofi example: 68 BPM (each engine bar here is half a real bar, so a step is a sixteenth), C# minor,
   // a chord every two beats over a four-bar loop, deep 808 kicks that choke a held sub bass, a crisp snare on 2 and 4,
   // tight sixteenth hats, dark held keys and now and then a soft sustained lead
@@ -6124,48 +6124,48 @@ const LOFI_STYLES = {
     progs: {focus: [[[49,52,56,59,63],[42,54,57,61,64],[47,54,57,59,61],[44,54,57,60,63],[44,54,56,59,63],[49,52,56,59,63],[40,56,59,63,64],[42,56,57,61,64]]],
             break: [[[49,52,56,59,63],[45,52,57,61,64],[42,54,57,61,64],[44,54,57,60,63]]]},
     focus: {bpm: 136, swing: 0.1, chord: 'held', padSnd: 'darkkeys', padv: 0.055, lead: 'flute', oct: 12, leadFrom: 59, lead_p: 0.035, leadv: 0.05, long: true, bass: 'eightoh', bassSnd: 'eightoh', bassFloor: 30, beat: 'lofitrap', drums: 1, amb: 0.0001, warm: 11000},
-    break: {bpm: 104, swing: 0.08, chord: 'held', padSnd: 'darkkeys', padv: 0.075, hold: 2, lead: 'flute', oct: 12, leadFrom: 59, lead_p: 0.05, leadv: 0.03, long: true, bass: 'eightoh', bassSnd: 'eightoh', bassFloor: 30, beat: 'lofitrapsoft', drums: 0.5, amb: 0.22, warm: 6000}, amb: 'rain'},
+    break: {bpm: 80, swing: 0.08, chord: 'rhodes', lead: 'flute', oct: 12, bass: 'pluck', beat: 'bossa', lead_p: 0.18, drums: 0.7, amb: 0.2, warm: 3600, leadv: 0.045, mix: 1.3}, amb: 'waves'},
   // modeled on the Headspace example: a wide held pad in B major (chords change every two bars over an 8-bar loop), a plucked bass line
   // over a B pedal, a half-time beat (soft kick on 1, a roomy snare on 3), and the odd bell note up high
   bloom: {label: 'Bloom', note: 'A wide warm pad, half-time beat, bell notes', key: 0, gain: 1.1, vinyl: 0.03, wow: 0, bassv: 0.45, drumVerb: 0.35,
     progs: {focus: [[[35,47,54,59,63,66,70,75],[34,47,53,59,63,65,70,73],[28,40,47,56,59,63,66,75],[37,49,56,59,61,66,70]]],
             break: [[[40,47,56,59,63,66,71],[35,47,54,59,63,66,70],[40,47,56,59,64,68,71],[33,45,52,57,61,64,69]]]},
     focus: {bpm: 96, swing: 0, chord: 'held', padSnd: 'glow', padv: 0.03, hold: 2, pad3: 'bloompad', pad3v: 0.01, lead: 'bell', oct: 12, leadFrom: 63, lead_p: 0.1, leadv: 0.05, loose: true, bass: 'hsbass', bassSnd: 'round', beat: 'halftime', drums: 1, amb: 0.0001, warm: 12000},
-    break: {bpm: 76, swing: 0, chord: 'held', padSnd: 'glow', padv: 0.022, hold: 2, pad3: 'bloompad', pad3v: 0.01, lead: 'marimba', oct: 0, leadFrom: 59, lead_p: 0.12, leadv: 0.05, loose: true, bass: 'twofeel', bassSnd: 'round', beat: 'none', drums: 0.0001, amb: 0.24, warm: 5500}, amb: 'waves'},
+    break: {bpm: 80, swing: 0.08, chord: 'vibes', lead: 'marimba', oct: 12, bass: 'pluck', beat: 'bossa', lead_p: 0.18, drums: 0.7, amb: 0.2, warm: 3600, leadv: 0.05, mix: 1.1}, amb: 'waves'},
   // modeled on the Endel example: 117.5 BPM, a soft kick on every beat, a warm C bass that ducks under each kick and swells back,
   // a steady C major 9 pad whose top notes shift colour every couple of bars, and almost nothing above 2 kHz
   pulse: {label: 'Pulse', note: 'Deep, steady and dark', key: 0, gain: 0.7, vinyl: 0, wow: 0, bassv: 0.6,
     progs: {focus: [[[36,55,60,64,67,71,74],[36,55,60,64,67,70,74],[36,55,60,64,67,69,74],[36,55,60,64,67,71,74]], [[36,55,60,64,67,71,74],[36,55,60,62,67,71,76],[36,55,60,66,67,71,74],[36,55,60,64,67,71,74]]],
             break: [[[36,55,60,64,67,71,74],[36,55,60,62,67,69,74],[36,55,60,66,67,71,74],[36,55,60,64,67,70,74]]]},
     focus: {bpm: 117.5, swing: 0, chord: 'held', padSnd: 'glow', padv: 0.042, padFlat: true, hold: 2, lead: 'softpluck', oct: 0, leadFrom: 67, lead_p: 0.04, leadv: 0.03, bass: 'pulse', bassSnd: 'pulsebass', beat: 'pulse', drums: 1, amb: 0.0001, warm: 4200},
-    break: {bpm: 96, swing: 0, chord: 'held', padSnd: 'glow', padv: 0.034, hold: 2, lead: 'softpluck', oct: 0, leadFrom: 67, lead_p: 0.08, leadv: 0.03, bass: 'pulsesoft', bassSnd: 'pulsebass', beat: 'none', drums: 0.0001, amb: 0.2, warm: 1800}, amb: 'waves'},
+    break: {bpm: 80, swing: 0.08, chord: 'rhodes', lead: 'bell', oct: 12, bass: 'pluck', beat: 'bossa', lead_p: 0.18, drums: 0.7, amb: 0.2, warm: 3600, leadv: 0.035, mix: 1.3}, amb: 'waves'},
   // built from the focus research: no words, no drums or sharp hits, slow legato pads in one bright key, chords that hold ~30 s,
   // a sparse melody in small steps, quiet overall, and a gentle 16 Hz pulse on the pads' middle range (the one modulation with some evidence)
   lockin: {label: 'Lock-in', note: 'Built from focus research', key: 2, gain: 1.0, vinyl: 0, wow: 0, am: 0.3,
     progs: {focus: [[[36,55,59,62,64],[38,54,57,62,64],[40,55,59,62,66],[36,55,59,62,64]], [[36,52,55,59,62],[45,55,59,60,64],[38,54,57,59,64],[36,55,59,62,67]]],
             break: [[[36,55,59,62,64],[38,54,57,62,64],[36,55,59,62,64],[40,55,59,62,66]]]},
     focus: {bpm: 120, swing: 0, chord: 'lockpad', hold: 16, lead: 'softpluck', mel: true, lead_p: 0.1, leadv: 0.04, bass: 'none', bassSnd: 'round', beat: 'none', drums: 0.0001, amb: 0.0001, warm: 2600, am: true},
-    break: {bpm: 90, swing: 0, chord: 'lockpad', hold: 8, lead: 'marimba', mel: true, lead_p: 0.06, leadv: 0.03, bass: 'none', beat: 'none', drums: 0.0001, amb: 0.26, warm: 2200}, amb: 'waves'},
+    break: {bpm: 80, swing: 0.08, chord: 'vibes', lead: 'softpluck', oct: 12, bass: 'pluck', beat: 'bossa', lead_p: 0.18, drums: 0.7, amb: 0.2, warm: 3600, leadv: 0.045, mix: 1.2}, amb: 'waves'},
   // these come from Riff's stall (price in gold)
   palmwine: {label: 'Palm Wine', note: 'Boom-bap drums, nylon guitar, congas', price: 400, key: 0, gain: 1.05, vinyl: 0.45, wow: 4, bassv: 0.35,
     progs: {focus: [[[45,55,59,60,64],[50,53,57,60,64],[43,52,55,59,62],[48,52,55,59,64]], [[41,52,57,60,64],[40,50,55,59,62],[45,55,59,60,64],[45,55,57,60,64]], [[50,53,57,60,64],[40,55,59,62,64],[41,55,57,60,64],[40,52,56,59,62]]],
             break: [[[41,57,60,64,67],[43,55,59,62,69],[48,55,59,62,64],[48,55,59,62,64]], [[48,52,55,59,64],[41,52,57,60,64],[48,52,55,59,64],[43,53,55,59,62]]]},
     focus: {bpm: 88, swing: 0.17, chord: 'nylon', pad2: 'rhodes', pad2v: 0.03, lead: 'marimba', oct: 12, lead_p: 0.14, leadv: 0.045, bass: 'hiphop', bassSnd: 'round', beat: 'afrohop', drums: 1, amb: 0.0001, warm: 6500},
-    break: {bpm: 72, swing: 0.1, chord: 'warmpad', lead: 'nylon', oct: 12, lead_p: 0.3, leadv: 0.05, bass: 'twofeel', bassSnd: 'round', beat: 'afrosoft', drums: 0.5, amb: 0.2, warm: 4200}, amb: 'rain'},
+    break: {bpm: 80, swing: 0.08, chord: 'vibes', lead: 'nylon', oct: 12, bass: 'pluck', beat: 'bossa', lead_p: 0.18, drums: 0.7, amb: 0.2, warm: 3600, leadv: 0.05, mix: 1.1}, amb: 'waves'},
   glade: {label: 'Glade', note: 'Plucked guitar, warm pads, soft hand drums', price: 400, key: -1, gain: 1.2, vinyl: 0.04, wow: 0, bassv: 0.35,
     progs: {focus: [[[36,55,59,62,64],[45,55,59,60,64],[41,55,57,60,64],[43,55,57,62,64]], [[36,52,55,59,62],[40,55,59,62,64],[41,55,57,60,64],[36,55,57,62,67]], [[41,57,60,64,67],[36,55,59,62,64],[45,57,60,64,67],[43,55,59,62,66]]],
             break: [[[41,57,60,64,69],[36,55,59,62,67],[41,57,60,64,69],[43,55,59,62,66]], [[45,57,60,64,71],[41,57,60,64,69],[36,55,59,62,67],[36,55,59,62,64]]]},
     focus: {bpm: 96, swing: 0.06, chord: 'bloomarp', pad2: 'warmpad', pad2root: true, pad2v: 0.045, pad3: 'bloompad', pad3v: 0.016, lead: 'steel', oct: 12, lead_p: 0.12, leadv: 0.07, loose: true, bass: 'boom', bassSnd: 'round', bassFloor: 33, beat: 'bloom', drums: 1, amb: 0.0001, warm: 9000},
-    break: {bpm: 74, swing: 0.04, chord: 'warmpad', pad3: 'bloompad', pad3v: 0.014, lead: 'marimba', oct: 12, lead_p: 0.22, leadv: 0.06, loose: true, bass: 'boom', bassSnd: 'round', bassFloor: 33, beat: 'none', drums: 0.0001, amb: 0.24, warm: 5000}, amb: 'waves'},
+    break: {bpm: 80, swing: 0.08, chord: 'rhodes', lead: 'steel', oct: 12, bass: 'pluck', beat: 'bossa', lead_p: 0.18, drums: 0.7, amb: 0.2, warm: 3600, leadv: 0.06, mix: 1.1}, amb: 'waves'},
   cafe: {label: 'Café', note: 'Piano trio with brushes', price: 400, key: -2, gain: 1.05, vinyl: 0.45, wow: 5,
     focus: {bpm: 84, swing: 0.2, chord: 'piano', lead: 'piano', oct: 12, lead_p: 0.28, leadv: 0.035, bass: 'walk', bassSnd: 'upright', beat: 'brush', drums: 1, amb: 0.0001, warm: 5200},
-    break: {bpm: 66, swing: 0.12, chord: 'piano', lead: 'piano', oct: 12, lead_p: 0.3, leadv: 0.03, bass: 'none', beat: 'none', drums: 0.0001, amb: 0.24, warm: 3600}, amb: 'rain'},
+    break: {bpm: 80, swing: 0.08, chord: 'piano', lead: 'vibes', oct: 12, bass: 'pluck', beat: 'bossa', lead_p: 0.18, drums: 0.7, amb: 0.2, warm: 3600, mix: 1.1}, amb: 'waves'},
   bossa: {label: 'Bossa', note: 'Nylon guitar and a soft samba', price: 400, key: 2, gain: 1.1, vinyl: 0.3, wow: 4,
     focus: {bpm: 92, swing: 0, chord: 'bossa', lead: 'vibes', oct: 12, lead_p: 0.2, bass: 'bossa', bassSnd: 'upright', beat: 'bossanova', drums: 1, amb: 0.0001, warm: 5500},
-    break: {bpm: 70, swing: 0, chord: 'warmpad', lead: 'nylon', oct: 12, lead_p: 0.35, leadv: 0.05, bass: 'twofeel', bassSnd: 'upright', beat: 'none', drums: 0.0001, amb: 0.24, warm: 3800}, amb: 'waves'},
+    break: {bpm: 80, swing: 0.08, chord: 'vibes', lead: 'guitar', oct: 12, bass: 'pluck', beat: 'bossa', lead_p: 0.18, drums: 0.7, amb: 0.2, warm: 3600, mix: 1.1}, amb: 'waves'},
   chip: {label: '8-bit', note: 'Soft chiptune, like an old handheld', price: 400, key: 5, gain: 0.7, vinyl: 0.2, wow: 3,
     focus: {bpm: 88, swing: 0.1, chord: 'chiparp', lead: 'chip', oct: 12, lead_p: 0.3, leadv: 0.03, bass: 'chip', bassSnd: 'tri', beat: 'chip', drums: 1, amb: 0.0001, warm: 3800},
-    break: {bpm: 72, swing: 0.08, chord: 'chiparp', lead: 'musicbox', oct: 24, lead_p: 0.4, bass: 'chip', bassSnd: 'tri', beat: 'none', drums: 0.0001, amb: 0.16, warm: 2800}, amb: 'rain'}
+    break: {bpm: 80, swing: 0.08, chord: 'vibes', lead: 'chip', oct: 12, bass: 'pluck', beat: 'bossa', lead_p: 0.18, drums: 0.7, amb: 0.2, warm: 3600, leadv: 0.025, mix: 1.4}, amb: 'waves'}
 };
 // bass lines: [eighth, semitones from the root ('walk' = a step into the next chord), length in eighths, chance]
 const LOFI_BASS_PAT = {
@@ -6230,7 +6230,7 @@ function lofiStart(mode, delay = 0, fadeIn = 2.5){
   try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch(e){}   // play even with the iPhone's silent switch on
   const style = lofiKey(), sty = LOFI_STYLES[style], part = sty[mode], now = actx.currentTime;
   const master = actx.createGain(); master.gain.setValueAtTime(0.0001, now); master.gain.setValueAtTime(0.0001, now + delay);
-  if (fadeIn > 3) master.gain.linearRampToValueAtTime(sty.gain || 0.8, now + delay + fadeIn); else master.gain.exponentialRampToValueAtTime(sty.gain || 0.8, now + delay + fadeIn);
+  const lvl = (sty.gain || 0.8) * (part.mix || 1); if (fadeIn > 3) master.gain.linearRampToValueAtTime(lvl, now + delay + fadeIn); else master.gain.exponentialRampToValueAtTime(lvl, now + delay + fadeIn);
   // tape warmth: a gentle soft-clip, then a low-pass that keeps some air
   const sat = actx.createWaveShaper(), curve = new Float32Array(1024); for (let i = 0; i < 1024; i++){ const x = i / 511.5 - 1; curve[i] = Math.tanh(1.6 * x) / Math.tanh(1.6); } sat.curve = curve;
   const warm = actx.createBiquadFilter(); warm.type = 'lowpass'; warm.frequency.value = part.warm; warm.Q.value = 0.3;
@@ -6322,8 +6322,8 @@ function lofiSchedule(){
       else if (Math.random() < 0.32){ const n = tones[Math.floor(Math.random() * tones.length)] + (Math.random() < 0.25 ? 12 : 0); lofiInst('steel', L, n, t + Math.random() * 0.02, eighth * 3, 0.06 + Math.random() * 0.04); } }
     else if (part.chord === 'chiparp'){ for (let k = 0; k < 2; k++) lofiInst('chip', L, tones[(st * 2 + k) % tones.length] + 12, t + k * eighth / 2, eighth * 0.45, 0.016); }
     else if (part.chord === 'guitar'){ if (st === 0 || st === 3 || (st === 6 && Math.random() < 0.5)) tones.forEach((m, i) => lofiInst('guitar', L, m, t + i * 0.018, eighth * 1.2, 0.05)); }
-    else if (part.chord === 'vibes'){ if (st === 0 || st === 5) tones.forEach(m => lofiInst('vibes', L, m, t, eighth * 2, 0.032)); }
-    else if (st === 0) tones.forEach((m, i) => lofiInst(part.chord, L, m, t + i * (part.chord === 'rhodes' ? 0.012 : 0), eighth * 8, part.chord === 'rhodes' ? 0.05 : 0.026));
+    else if (part.chord === 'vibes'){ if (st === 0 || st === 5) tones.slice(-4).forEach(m => lofiInst('vibes', L, m, t, eighth * 2, 0.032)); }
+    else if (st === 0) tones.slice(-5).forEach((m, i) => lofiInst(part.chord, L, m, t + i * (part.chord === 'rhodes' ? 0.012 : 0), eighth * 8, part.chord === 'rhodes' ? 0.05 : 0.026));
     // bass
     const bp = LOFI_BASS_PAT[part.bass], nextRoot = L.prog[(Math.floor(L.bar / hold) + 1) % L.prog.length][0] + sty.key;
     if (bp){ for (const [s0, semi, len, pr] of bp) if (s0 === st && (pr == null || Math.random() < pr)){
