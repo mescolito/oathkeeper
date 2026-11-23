@@ -633,6 +633,27 @@ html[data-mode="dark"] .sneed{color:#f0a3ab}
 .sprow.node::before{content:'';position:absolute;left:-19px;top:20px;width:12px;height:12px;border-radius:50%;background:var(--card);box-shadow:inset 0 0 0 2px var(--bc);z-index:1}
 .sprow.node.learned::before{background:var(--bc)}
 .leancard{display:flex;align-items:center;gap:12px}
+/* skill tree page: roomier cards and rows */
+.skillpage{display:flex;flex-direction:column;gap:18px}
+.skillpage .sec-h{margin:0}
+.skillpage > .how{margin:0;padding:0 4px}
+.skillpage .tree{gap:18px}
+.skillpage .branch{padding:20px 20px 8px;border-radius:26px}
+.skillpage .branch.shut{padding-bottom:20px}
+.skillpage .bhead{gap:10px;margin-bottom:10px;flex-wrap:nowrap;align-items:baseline}
+.skillpage .bhead .small{flex:1;min-width:0;line-height:1.35}
+.skillpage .bhead .bdot, .skillpage .bhead .clchev{align-self:center}
+.skillpage .bhead b{font-size:18px}
+.skillpage .bnodes{padding-left:26px}
+.skillpage .bnodes::before{left:7px}
+.skillpage .sprow{gap:16px;padding:18px 0;align-items:center}
+.skillpage .sprow.node::before{left:-25px;top:24px}
+.skillpage .sprow .tname{font-size:16px;line-height:1.3}
+.skillpage .sprow .tmeta{margin-top:6px;line-height:1.45}
+.skillpage .sprow .lvpips{margin-right:8px}
+.skillpage .sprow .kind{margin-left:6px}
+.skillpage .sprow .btn{flex:none;min-width:96px;justify-content:center}
+.skillpage .leancard{padding:16px 18px}
 
 .pill.rite{background:#171614;color:#f1eee4}
 html[data-mode="dark"] .pill.rite{background:#f1eee4;color:#171614}
@@ -871,7 +892,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '4ffbdfd3e3';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'fffebd8491';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -4323,12 +4344,11 @@ function renderStatsPanel(page){   // page: Stats and Skills are separate pages,
     ${pts && statsSec !== 'skills' ? `<button class="btn gold" data-tab="skills">You have ${pts} skill point${pts===1?'':'s'} · spend them</button>` : statsSec !== 'skills' ? `<span class="small muted">You get 1 skill point each level.</span>` : ''}</div>`}
   ${page ? '' : `<div class="seg wide" role="tablist" aria-label="Stats or skills"><button role="tab" data-ssec="stats" class="${statsSec==='stats'?'on':''}" aria-selected="${statsSec==='stats'}">Stats</button><button role="tab" data-ssec="skills" class="${statsSec==='skills'?'on':''}" aria-selected="${statsSec==='skills'}">Skill tree${pts ? ` · ${pts}` : ''}</button></div>`}
   ${statsSec === 'skills' ? `
-  <div class="sec-h" id="ptsH"><h2>Skill points</h2><span class="count">${pts} to spend</span></div>
-  <details class="howto"><summary>How the skill tree works</summary><p class="how">1 point per level.</p></details>
+  <div class="skillpage"><div class="sec-h" id="ptsH"><h2>Skill points</h2><span class="count">${pts} to spend</span></div>
   ${lean && lean.style === 'mon' ? `<div class="card leancard" style="--bc:${STYLES.mon.c}"><span class="bdot"></span><span><b>Master of None build</b><span class="small muted" style="display:block">Both branches work, +${Math.round(MON_TAX*100)}% MP cost, no class perk.</span></span></div>`
     : `<p class="how"><b>Master of None</b> (2 + 2 styles): both branches, +${Math.round(MON_TAX*100)}% MP cost.</p>`}
   ${lean && lean.style !== 'mon' ? `<div class="card leancard" style="--bc:${STYLES[lean.style].c}"><span class="bdot"></span><span><b>Your build leans ${STYLES[lean.style].name}</b><span class="small muted" style="display:block">${lean.n} ${STYLES[lean.style].name} pieces equipped: that branch's skills work.</span></span></div>` : lean ? '' : ``}
-  <div class="tree">${skillRows}</div>
+  <div class="tree">${skillRows}</div></div>
   <button class="btn" data-gobattle>Use skills in Battle ›</button>` : `
   <div class="card kv combat">
     <b>Max HP</b><span>${C.maxHP} <span class="muted small">from ${esc(STATS.STA.name)}</span></span>
