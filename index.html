@@ -263,6 +263,9 @@ html[data-mode="dark"] .trow.done .check{color:var(--inv)}
 .chip-streak{background:var(--yellow);color:#171614;border-radius:999px;padding:3px 10px;font-weight:700;font-size:12px}
 .chips.small{gap:6px}
 .mystery{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--yellow);color:#171614;border-radius:18px;padding:10px 14px;font-size:14px}
+.mystery.smognote{background:#cfc9bc;align-items:flex-start}
+.mystery.smognote .ntext{flex:1 1 calc(100% - 34px)}
+.smognote .btn{flex:none;white-space:nowrap;margin-left:26px}
 .attack{display:flex;flex-direction:column;gap:4px;font-size:14.5px}
 .potrow{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
 .potbtn{border:0;background:var(--card);border-radius:18px;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:600;cursor:pointer;color:var(--ink);box-shadow:0 1px 0 var(--line);min-height:44px;text-align:center;overflow-wrap:anywhere}
@@ -805,7 +808,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'cfcbb9dcdf';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'f163166268';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1112,6 +1115,11 @@ const SKILL_SLOTS = 4, SKILL_EQ_FEE = 50;
    bought (potions and runes, then gear and looks, cheapest first; prizes and legendaries are safe), then HP (15% a day).
    Finishing anything stops the eating; finish something 2 days in a row and it lets go. */
 const SLUMP_DAYS = 3, SLUMP_BACK = 2, SLUMP_PCT = 0.1, SLUMP_MIN = 25, SLUMP_HP = 0.15;
+// Toxic air: between a beaten boss and the next one, each missed daily adds a point; every finished daily or to-do clears one.
+// Each night it drains HP and MP by the points (capped, never knocks you out) with a 1-in-10 chance of poison or paralysis.
+// The next boss halves it; a Weather Machine (30 G a level) clears it.
+const SMOG_HP_CAP = 0.15, SMOG_MP_CAP = 0.25, SMOG_MP = 2, SMOG_FX = 0.1, WEATHER_PER_LV = 30;
+const weatherPrice = lv => WEATHER_PER_LV * Math.max(1, lv);
 const skillEqd = id => (S.skillEq || []).includes(id);
 const SKILLS = [
   {id:'strike',  branch:'core', name:'Power Strike',     kind:'dmg',    unlock:1,  cost:l => 25 - 2*(l-1),   power:l => 30 + 12*(l-1),
@@ -1430,7 +1438,7 @@ function sanitize(s, created){
   out.skillLog = (Array.isArray(s.skillLog) ? s.skillLog : []).filter(u => obj(u) && SKILL_BY[u.id]).map(u => { const o = {id: u.id, ts: num(u.ts, 0), date: isDate(u.date) ? u.date : null}; if (u.dmg != null) o.dmg = int(u.dmg, 0, 5000, 0); if (u.cost != null) o.cost = int(u.cost, 0, 1000, 0); if (typeof u.task === 'string') o.task = u.task.slice(0,40);
     if (SKILL_BY[u.id].kind === 'buff' && obj(u.buff) && obj(u.buff.st)){ const st = {}; for (const k of SK) if (u.buff.st[k] != null) st[k] = int(u.buff.st[k], 0, 20, 0); o.buff = {st, days: int(u.buff.days, 1, 7, 2)}; }
     return o; });
-  out.buys = (Array.isArray(s.buys) ? s.buys : []).filter(b => obj(b) && (b.kind === 'reroll' || b.kind === 'skilleq')).map(b => { const o = {kind: b.kind, id: str(b.id, 40), ts: num(b.ts, 0), g: int(b.g, 0, 100000, 0)}; if (isDate(b.date)) o.date = b.date; return o; });
+  out.buys = (Array.isArray(s.buys) ? s.buys : []).filter(b => obj(b) && (b.kind === 'reroll' || b.kind === 'skilleq' || b.kind === 'weather')).map(b => { const o = {kind: b.kind, id: str(b.id, 40), ts: num(b.ts, 0), g: int(b.g, 0, 100000, 0)}; if (isDate(b.date)) o.date = b.date; return o; });
   out.potions = (Array.isArray(s.potions) ? s.potions : []).filter(p => obj(p) && POTION_BY[p.id] && isDate(p.date)).map(p => { const o = {id: p.id, ts: num(p.ts, 0), date: p.date, g: int(p.g, 0, 100000, 0)}; if (p.bag){ o.bag = true; o.g = 0; } return o; });
   out.runeBuys = (Array.isArray(s.runeBuys) ? s.runeBuys : []).filter(r => obj(r) && RUNE_BY[r.id] && isDate(r.date)).map(r => { const o = {id: r.id, ts: num(r.ts, 0), date: r.date, g: int(r.g, 0, 100000, 0)}; if (r.token) o.token = true; if (r.bag){ o.bag = true; o.g = 0; delete o.token; } return o; });
   if (obj(s.todos) && Array.isArray(s.todos.lists)){
@@ -1461,6 +1469,7 @@ function sanitize(s, created){
   if (isDate(s.habitFrom)) out.habitFrom = s.habitFrom; else delete out.habitFrom;
   if (s.habitWk) out.habitWk = 1; else delete out.habitWk;
   if (isDate(s.slumpFrom)) out.slumpFrom = s.slumpFrom; else delete out.slumpFrom;
+  if (isDate(s.smogFrom)) out.smogFrom = s.smogFrom; else delete out.smogFrom;
   if (typeof s.gearRev === 'number' && s.gearRev > 0) out.gearRev = s.gearRev; else delete out.gearRev;
   if (typeof s.balRev === 'number' && s.balRev > 0) out.balRev = s.balRev; else delete out.balRev;
   out.slumpLog = {}; if (obj(s.slumpLog)) for (const [d, r] of Object.entries(s.slumpLog)) if (isDate(d) && obj(r)){
@@ -1821,6 +1830,7 @@ function derive(){
   // the Slump (see SLUMP_DAYS): which days you finished something, and what it has eaten
   const actDay = new Set(); for (const [d0, ents] of Object.entries(S.log)) if (ents && Object.keys(ents).length) actDay.add(d0); for (const id in todoDone) actDay.add(todoDone[id]);
   let slump = null, emptyRun = 0; const slumpBites = [], newSlump = {}, slumpTaken = new Set();
+  let smog = 0; const smogLog = {}; const smogOn = d => !!(S.smogFrom && d > S.smogFrom);
   const slumpPick = () => {
     const eqd = new Set([...Object.values(S.gear), ...Object.values(S.equip)].filter(Boolean));
     const consum = Object.keys(bag).filter(id => bag[id] > 0).map(id => ({id, kind:'bag', cost: (POTION_BY[id] || RUNE_BY[id] || {}).price || 0}));
@@ -1862,6 +1872,7 @@ function derive(){
       if (!fr && boss.rite && prevF && prevF.boss.id === boss.id){ const pr = prevF.frozen ? prevF.frozen.rem : prevF.rem; if (pr > 0){ bhp = prevF.frozen ? prevF.frozen.hp : prevF.hp; rem0 = pr; } }
       cyc[c] = {c, boss, lvl, hp: bhp, rem: rem0, heal: 0, dmg: 0, hits: {}, wonOn: null, wonTs: 0, frozen: fr || null, start: cycleStart(c), end: addDays(cycleStart(c), CYCLE-1)};
       if (fr && fr.status === 'won'){ gold += BOSS_REWARD(boss); drops.add(boss.drop); if (boss.drop2) drops.add(boss.drop2); }
+      if (smog && smogOn(d)) smog = Math.floor(smog / 2);   // the next boss blows half the toxic air away
     }
     const F = cyc[c];
     const bossAlive = () => F.frozen ? !(F.frozen.status === 'won' && F.frozen.wonOn && d >= F.frozen.wonOn) : !F.wonOn;
@@ -1907,6 +1918,7 @@ function derive(){
         if (!lull) mp = Math.min(C.maxMP, mp + MP_PER_TASK + (live ? (fx.mpTask||0) : 0)); hp = Math.min(C.maxHP, hp + 2);
         lvUp(fx);
         checkIn(fx, e.ts);
+        if (smog && smogOn(d) && !(sn ? sn.w : t.cad === 'week')) smog--;
         if (sn ? sn.w : t.cad === 'week'){ const wc = weeks[weekKey(d)] || (weeks[weekKey(d)] = {}); if (!wc[e.tid]) wc[e.tid] = {n:0, tg:0, bn:0, bns:[]}; const w = wc[e.tid]; w.n++; w.bns.push(sn ? (sn.bn||0) : (t.bonus||0)); w.tg = Math.max(w.tg, sn ? (sn.tg||1) : (t.target||1)); w.bn = Math.max(w.bn, sn ? (sn.bn||0) : (t.bonus||0)); }
         if (sn ? sn.w : t.cad === 'week'){ const wk = weekKey(d), w = weeks[wk][e.tid], key = wk + '|' + e.tid; if (!chestGot[key] && w.n >= effOf(wk, e.tid, w)){ chestGot[key] = true; chestXp += 20; chestG += 30; lvUp(fx); } }
       } else if (e.k === 'altar'){
@@ -1915,6 +1927,7 @@ function derive(){
         if (e.pz.kind === 'gold') gold += e.pz.n; else { xp += e.pz.n; lvUp(fx); }
       } else if (e.k === 'todo'){
         // only to-dos added on an earlier day pay out, and at most TODO_CAP a day
+        if (smog && smogOn(d) && e.it.createdOn && e.it.createdOn < d) smog--;
         if (lullAt(F, e.ts)){ giveKey(d, 'td|' + e.it.id, e.ts); checkIn(fx, e.ts); continue; }
         if ((e.it.createdOn && e.it.createdOn >= d) || rewardedTodos >= TODO_CAP) continue;
         rewardedTodos++; todoPaid.add(e.it.id);
@@ -1936,7 +1949,7 @@ function derive(){
         if (id === 'pot_remedy' || id === 'pot_elixir') status.para = null;
         if (id === 'pot_elixir'){ hp = C.maxHP; mp = C.maxMP; }
       } else if (e.k === 'rune'){ dyn += e.r.g || 0; }
-      else if (e.k === 'buy'){ dyn += e.b.g || 0; }
+      else if (e.k === 'buy'){ dyn += e.b.g || 0; if (e.b.kind === 'weather') smog = 0; }
       else if (e.k === 'sell'){ dyn += e.x.cost; gold += e.x.g; }
     }
     // end of day: steps ticked on things you didn't finish today pay out (see STEP_CAP)
@@ -1973,6 +1986,20 @@ function derive(){
         if (!shielded && F.boss.status && missed.length >= 2){ status[F.boss.status] = {from: d, until: addDays(d, F.boss.status === 'poison' ? 3 : 2)}; attacks[d].status = F.boss.status; }
         if (!F.frozen){ const anti = Math.min(1, fxE.antiheal || 0); const h = Math.round(missed.length * (F.boss.titan ? 10 : 6) * (1 - anti)); F.heal += h; F.rem = Math.min(F.hp, F.rem + h); }
         if (hp <= 0) faint(d, C);
+      }
+    }
+    // end of day: toxic air builds from dailies missed between bosses, then drains HP and MP (never below 1 HP)
+    if (d < today && live && !inn && smogOn(d) && d >= S.created){
+      const add = bossAlive() ? 0 : S.tasks.filter(t => dailyOn(t,d) && !covered(d,t.id)).length;
+      smog += add;
+      if (smog > 0){
+        const Cn = combatOf(statLvNow(), lvlNow(), fxAt(endOf(d), d)), rec = {add, pts: smog, hp: 0, mp: 0};
+        if (!shielded){
+          rec.hp = Math.min(smog, Math.ceil(Cn.maxHP * SMOG_HP_CAP), Math.max(0, hp - 1)); hp -= rec.hp;
+          rec.mp = Math.min(smog * SMOG_MP, Math.ceil(Cn.maxMP * SMOG_MP_CAP), Math.max(0, mp)); mp -= rec.mp;
+          if (roll('smog|' + d) < SMOG_FX){ const k2 = roll('smogfx|' + d) < 0.5 ? 'para' : 'poison'; status[k2] = {from: d, until: addDays(d, k2 === 'poison' ? 3 : 2)}; rec.status = k2; }
+        } else rec.shield = true;
+        smogLog[d] = rec;
       }
     }
     if (slumpLive && !inn){
@@ -2042,7 +2069,7 @@ function derive(){
   const spent = staticSpent + dyn;
   const newDrops = [...drops].filter(id => isDrop(id) && !S.seenDrops.includes(id));
   const nextRite = riteForL(levelInfo(xp).level, ritesWon);
-  return {slump: {on: !!slump, from: slump ? slump.from : null, back: slump ? slump.back : 0, emptyRun, bites: slumpBites, taken: slumpTaken, todayActive: actDay.has(today)}, newSlump, habits: HAB, nextRite, ritesWon, pomo: pomoInfo, inn: innNowD(), newInnEnds, innPaid: (() => { const o = innNowD(); return o && (o.paid || o.from) < today ? o : null; })(), innSpent, innFee: innFee(levelInfo(xp).level), statBonus: fxNow.st, bag, newDrops, newResults, newFaints, newLegends: pomoInfo.rolls.filter(r => !r.kept), todoPaid, partial, altar: {keys: keysAll.filter(k => !(S.altarUsed || {})[k.key]).map(k => k.key), all: new Set(keysAll.map(k => k.key)), got: altarInfo.got, wins: altarInfo.wins, won: altarInfo.won}, freezeBefore, points, skills, readyCount, weakLv, today, yest, xp, lv, gold, spent, lost, balance: gold - spent - lost, stat, statLv, fx: fxNow, C, hp, mp, status: statusNow, attacks, lastAttack: attacks[yest] || null, faints, lastFaint: faints.length ? faints[faints.length-1] : null, mood: face, moodKey: moodToday, statusText, streak: lastCheck && lastCheck >= prevActiveD(today) ? streak : 0, checkedToday: lastCheck === today, mystery, tokens, perfectWeeks, castDeficit, fights, cur, drops, weeks, T, activeRunes: runesAt(nowMs, today), activeBuffs: buffsAt(nowMs, today)};
+  return {smog: {pts: smog, log: smogLog, last: smogLog[yest] || null, on: smogOn(today), price: weatherPrice(levelInfo(xp).level)}, slump: {on: !!slump, from: slump ? slump.from : null, back: slump ? slump.back : 0, emptyRun, bites: slumpBites, taken: slumpTaken, todayActive: actDay.has(today)}, newSlump, habits: HAB, nextRite, ritesWon, pomo: pomoInfo, inn: innNowD(), newInnEnds, innPaid: (() => { const o = innNowD(); return o && (o.paid || o.from) < today ? o : null; })(), innSpent, innFee: innFee(levelInfo(xp).level), statBonus: fxNow.st, bag, newDrops, newResults, newFaints, newLegends: pomoInfo.rolls.filter(r => !r.kept), todoPaid, partial, altar: {keys: keysAll.filter(k => !(S.altarUsed || {})[k.key]).map(k => k.key), all: new Set(keysAll.map(k => k.key)), got: altarInfo.got, wins: altarInfo.wins, won: altarInfo.won}, freezeBefore, points, skills, readyCount, weakLv, today, yest, xp, lv, gold, spent, lost, balance: gold - spent - lost, stat, statLv, fx: fxNow, C, hp, mp, status: statusNow, attacks, lastAttack: attacks[yest] || null, faints, lastFaint: faints.length ? faints[faints.length-1] : null, mood: face, moodKey: moodToday, statusText, streak: lastCheck && lastCheck >= prevActiveD(today) ? streak : 0, checkedToday: lastCheck === today, mystery, tokens, perfectWeeks, castDeficit, fights, cur, drops, weeks, T, activeRunes: runesAt(nowMs, today), activeBuffs: buffsAt(nowMs, today)};
 }
 
 /* ---------- persistence ---------- */
@@ -2158,6 +2185,7 @@ function mergeSaves(a, b){
   if (o.habitFrom && (!out.habitFrom || o.habitFrom < out.habitFrom)) out.habitFrom = o.habitFrom;
   if (o.habitWk) out.habitWk = 1;
   if (o.slumpFrom && (!out.slumpFrom || o.slumpFrom < out.slumpFrom)) out.slumpFrom = o.slumpFrom;
+  if (o.smogFrom && (!out.smogFrom || o.smogFrom < out.smogFrom)) out.smogFrom = o.smogFrom;
   if (o.gearRev && (!out.gearRev || o.gearRev < out.gearRev)) out.gearRev = o.gearRev;
   if (o.balRev && (!out.balRev || o.balRev < out.balRev)) out.balRev = o.balRev;
   for (const k of ['potions','runeBuys','bag','buys','skillLog','gearLog','pomoLog','sells','inn','testGold']){
@@ -2681,7 +2709,25 @@ function drawHat(hat, cx, top, rx, ry, f, motion){
 }
 function drawScene(canvas, o){
   ctx = canvas.getContext('2d'); ctx.imageSmoothingEnabled = false;
-  drawBg(o.bg, o.f, o.motion, o.night != null ? o.night : isNightNow()); if (!o.noPet){ drawPet(o); if (o.slump) drawSlump(o); }
+  drawBg(o.bg, o.f, o.motion, o.night != null ? o.night : isNightNow()); if (o.smog) drawSmog(o); if (!o.noPet){ drawPet(o); if (o.slump) drawSlump(o); }
+}
+/* toxic air: drifting bands of dithered haze across the sky and fumes curling up from the ground; thicker as the points build (tier 1–3) */
+function drawSmog(o){
+  const tier = o.smog, t = o.motion ? o.f : 0, gap = [0, 7, 5, 3][tier];
+  // each speck takes the opposite of what's under it, so the haze shows on a light sky and a dark one alike
+  const img = ctx.getImageData(0, 0, SW, SH).data, dot = (x, y) => { if (x < 0 || x >= SW || y < 0 || y >= SH) return; const i = (y * SW + x) * 4; (img[i] + img[i+1] + img[i+2] > 382 ? B_ : W_)(x, y); };
+  // wavy smog clouds: a 50% checker core with ragged, sparser edges, sliding slowly sideways
+  const bands = [[10, 0], [20, 3], [28, 6]].slice(0, tier), thick = 1 + tier;
+  for (const [y0, ph] of bands) for (let x = 0; x < SW; x++){
+    const sx = x + Math.floor(t / 4) + ph * 5, wav = Math.round(Math.sin(sx * 0.22 + ph) * 1.6 + Math.sin(sx * 0.07) * 1.2);
+    const top = y0 + wav - (((sx * 7) % 5) === 0 ? 1 : 0), bot = y0 + wav + thick + (((sx * 3) % 4) === 0 ? 1 : 0);
+    for (let y = top; y <= bot; y++){ const edge = y === top || y === bot; if (edge ? ((x + y) % 4 === 0) : ((x + y) % 2 === 0)) dot(x, y); }
+  }
+  // fumes: little wisps wobbling upward from cracks in the ground
+  const vents = [[8, 0], [55, 3], [20, 5], [44, 1]].slice(0, tier + 1);
+  for (const [vx, ph] of vents){ const tall = 4 + tier * 3;
+    for (let i = 0; i < tall; i++){ const y = GROUND - 1 - i, k = (i + Math.floor((t + ph * 3) / 2)) % 4; if (k === 3) continue;
+      dot(vx + Math.round(Math.sin((i + t * 0.3 + ph) * 0.8) * 1.5), y); } }
 }
 /* the Slump: a wobbly amoeba glued around the pet's feet, with drips climbing its sides and two sleepy eyes */
 function drawSlump(o){
@@ -3241,7 +3287,7 @@ function assistMsg(){
   if (D.lastFaint && D.lastFaint.d === D.yest) return {k:'You fainted', p:`${a ? a.boss : f.boss.name} knocked you out last night. You lost ${D.lastFaint.loss} G and woke up at half HP.`, cta:'Heal up'};
   if (a && a.dmg > 0) return {k:`Last night · ${a.boss}`, p:`Hit you for ${a.dmg} HP for ${a.missed} missed dailies${a.dodged ? ` (you dodged ${a.dodged})` : ''}.${a.status ? ` You're ${STATUS[a.status].name.toLowerCase()}.` : ''}`, cta:'See battle'};
   if (D.readyCount && f.status === 'now') return {k:`${S.petName} says`, p:`${D.readyCount} skill${D.readyCount===1?' is':'s are'} ready to use. Time to hit ${f.boss.name}.`, cta:'Use skills'};
-  if (f.status === 'won') return {k:'Victory', p:`You beat ${f.boss.name}. ${(D.nextRite || bossFor(f.c+1)).name} shows up ${fmt(addDays(f.end,1))}.${S.altarFrom ? ' Until then, finished tasks earn Keystones.' : ''}`, cta:'See battle'};
+  if (f.status === 'won') return {k:'Victory', p:`You beat ${f.boss.name}. ${(D.nextRite || bossFor(f.c+1)).name} shows up ${fmt(addDays(f.end,1))}.${S.altarFrom ? ' Until then, finished tasks earn Keystones.' : ''}${D.smog.on ? ' Missed dailies will turn the air toxic.' : ''}`, cta:'See battle'};
   const weakTxt = f.boss.weak.length >= 5 ? 'Every stat hits it hard.' : `${f.boss.weak.map(s => STATS[s].name).join(' and ')} tasks hit twice as hard.`;
   return {k:`${f.boss.name} · ${daysLeft} day${daysLeft===1?'':'s'} left`, p:`${f.rem} HP to go. ${weakTxt}`, cta:"Let's fight"};
 }
@@ -3300,6 +3346,7 @@ function renderToday(){
   ${vitals()}
   ${myst && !dismissed('myst') ? notice('myst', `Daily check-in bonus: <b>+${myst.xp ? myst.xp + ' XP' : myst.gold + ' G'}</b>`) : ''}
   ${slumpNote()}
+  ${smogNote()}
   ${lullNote()}
   ${altarCard()}
   ${chestCard()}
@@ -3409,6 +3456,17 @@ function runeState(r){
   return {have, act, full, ok, canUse: have > 0 && !act && !full && ok, why: !have ? 'None in bag' : act ? 'Already active' : full ? 'Slots full' : !ok ? `Needs ${reqText(r)}` : ''};
 }
 // the Slump: a warning the day before it attaches, then what it's doing while it's stuck to you
+// toxic air between bosses: what it costs tonight, how to clear it, and the Weather Machine
+let weatherArm = false;
+function smogNote(){
+  const sm = D.smog; if (!sm || !sm.pts || D.inn) return '';
+  const C = D.C, hpN = Math.min(sm.pts, Math.ceil(C.maxHP * SMOG_HP_CAP), Math.max(0, D.hp - 1)), mpN = Math.min(sm.pts * SMOG_MP, Math.ceil(C.maxMP * SMOG_MP_CAP), D.mp);
+  const last = sm.last, tier = sm.pts >= 9 ? 'thick' : sm.pts >= 4 ? 'hazy' : 'a little sour';
+  const lastTxt = last ? (last.shield ? ' The Slump kept it off you last night.' : (last.hp || last.mp) ? ` Last night it took <b>${last.hp} HP</b> and <b>${last.mp} MP</b>${last.status ? ` and left you <b>${STATUS[last.status].name.toLowerCase()}</b>` : ''}.` : '') : '';
+  const can = D.balance >= sm.price;
+  return `<div class="mystery smognote">${svg('wave',18,2)} <span class="ntext"><b>The air is ${tier}: ${sm.pts} toxic point${sm.pts === 1 ? '' : 's'}.</b>${lastTxt} Tonight it drains about ${hpN} HP and ${mpN} MP, with a 1 in 10 chance of poison or paralysis. Each daily or to-do you finish clears a point.</span>
+    <button class="btn sm ${weatherArm ? 'danger' : ''}" data-weather ${can ? '' : 'disabled'}>${weatherArm ? `Buy for ${sm.price} G?` : `Weather Machine · ${sm.price} G`}</button></div>`;
+}
 function slumpNote(){
   const sl = D.slump; if (!sl || D.inn) return '';
   if (!sl.on){
@@ -3607,6 +3665,7 @@ function renderShop(){
   }).join('');
   return `<div class="bignum"><b>${D.balance}</b><span>gold to spend</span></div>
   <button class="card bagrow" data-plus="inv"><span><b>Inventory</b><span class="muted small" style="display:block">Equip gear, drink potions and set runes (${D.activeRunes.length}/${RUNE_SLOTS} active)</span></span><span class="bagopen">Open ›</span></button>
+  ${smogNote()}
   ${D.tokens && !dismissed('tokens') ? notice('tokens', `You earned ${D.tokens} free rune${D.tokens===1?'':'s'} from a perfect week. Claim it in your inventory.`) : ''}
   <div class="filters">
     <div class="catpills" role="group" aria-label="Item type">${SHOP_CATS.map(([v,l]) => `<button class="catpill ${shopCat===v?'on':''}" data-cat="${v}" aria-pressed="${shopCat===v}">${l}</button>`).join('')}</div>
@@ -4144,7 +4203,8 @@ function renderInner(){
         ate.push(it ? it.name : r.item); }
       else if (r.item) ate.push((POTION_BY[r.item] || RUNE_BY[r.item] || {}).name || r.item); }
     save(true); D = derive(); if (ate.length) toast(`The Slump ate your ${ate.join(', ')}`); }
-  if (!S.slumpFrom && !recoveryMode){ S.slumpFrom = D.today; save(true); D = derive(); }   // the Slump only counts days from now on
+  if (!S.slumpFrom && !recoveryMode){ S.slumpFrom = D.today; save(true); D = derive(); }
+  if (!S.smogFrom && !recoveryMode){ S.smogFrom = D.today; save(true); D = derive(); }   // toxic air only counts nights after today   // the Slump only counts days from now on
   const nf = Object.keys(D.newFaints || {}).filter(d => !S.faintLog[d]);
   if (nf.length){ nf.forEach(d => S.faintLog[d] = D.newFaints[d]); save(true); D = derive(); }
   // once today's fee is covered it's settled for good, so a later purchase can't undo past nights
@@ -4175,7 +4235,7 @@ function drawIcons(root){
 function draw(){
   const now = Date.now();
   const sc = document.getElementById('scene');
-  if (sc) drawScene(sc, {slump: D.slump && D.slump.on, bg: D.inn ? 'inn' : S.equip.bg, color:S.equip.color, hat:S.equip.hat, gear:S.gear, stage:stage(D.lv.level), mood: now < jumpUntil ? 'happy' : D.mood, f:frame, motion:motionOK, jump: now < jumpUntil && (Math.floor(now/120)%2===0)});
+  if (sc) drawScene(sc, {smog: D.inn || !D.smog.pts ? 0 : D.smog.pts >= 9 ? 3 : D.smog.pts >= 4 ? 2 : 1, slump: D.slump && D.slump.on, bg: D.inn ? 'inn' : S.equip.bg, color:S.equip.color, hat:S.equip.hat, gear:S.gear, stage:stage(D.lv.level), mood: now < jumpUntil ? 'happy' : D.mood, f:frame, motion:motionOK, jump: now < jumpUntil && (Math.floor(now/120)%2===0)});
   const hurt = now < hurtUntil && Math.floor(now/90)%2 === 0;
   const m = document.getElementById('bossMiniCv'); if (m) drawBoss(m, D.cur.boss, frame, motionOK, hurt, D.cur.status === 'won');
   const b = document.getElementById('bossCv'); if (b) drawBoss(b, D.cur.boss, frame, motionOK, hurt, D.cur.status === 'won');
@@ -4818,6 +4878,10 @@ function onClick(e){
   if (el.dataset.tdedel && tdraft){ readTodoFields(); tdraft.steps.splice(parseInt(el.dataset.tdedel), 1); renderTodoEditor(); return; }
   if ('tdcopy' in el.dataset){ readTodoFields(); const t = tdraft, n = Date.now().toString(36); tdraft = {...t, iid: null, isNew: true, done: false, text: (t.text.trim() + ' copy').slice(0, 80), steps: t.steps.map((x, i) => ({id: 's' + n + i, text: x.text}))}; renderTodoEditor(); toast('Copied. Edit it and save to add it.'); return; }
   if ('tddel' in el.dataset){ const {L, it} = todoFind(tdraft.lid, tdraft.iid); if (!todoDeletable(L, it)) return; if (!tdDelArm){ tdDelArm = true; readTodoFields(); renderTodoEditor(); return; } L.items = L.items.filter(x => x.id !== it.id); save(); closeEditor(); render(); toast('Deleted'); return; }
+  if ('weather' in el.dataset){ const sm = D.smog; if (!sm || !sm.pts || D.balance < sm.price) return;
+    if (!weatherArm){ weatherArm = true; render(); return; }
+    weatherArm = false; S.buys.push({kind: 'weather', id: 'weather', ts: Date.now(), g: sm.price, date: D.today}); save(); render(); toast(`The Weather Machine cleared the air. −${sm.price} G`); return; }
+  if (weatherArm){ weatherArm = false; render(); }
   if (sellArm && !el.dataset.sell){ sellArm = null; if (!Object.keys(el.dataset).length){ render(); return; } }
   if (recoveryMode){
     if ('reload' in el.dataset){ location.reload(); return; }
