@@ -849,7 +849,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '879c37759f';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'b45fba9fde';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1802,13 +1802,13 @@ function weekTarget(t, k){ const wk = weekKey(k); if (wk === weekKey(todayKey())
 const effTarget = (t, k) => Math.max(1, weekTarget(t,k) - (((S.lightens[weekKey(k)]||{})[t.id]) || 0));
 const active = () => S.tasks.filter(t => !t.archived);
 const stage = lv => lv < 5 ? 0 : lv < 12 ? 1 : 2;
-/* Habit mastery: every habit (a times-per-week task) climbs New Habit → Trying → Regular → Mastery.
+/* Habit mastery: every habit (a times-per-week task) climbs New Habit → Trying → Consistent → Mastery.
    Check-offs up to the week's goal share HABIT_WEEK points (3 for a 3-a-week habit is 1 each, a 1-a-week habit gets all 3 at once;
    extras add up to 1 each); the check-off that hits the week's target adds 2 more, plus 1 per week of a running hit streak
    (up to 4 more), and reaching the bonus goal adds 2 more;
    a week that misses its target costs 6 points and breaks the streak. Weeks with an Inn stay don't count either way.
    Progress counts from S.habitFrom (the start of the week this arrived), and a Mastered habit adds +2 to its main stat (+1 to the second). */
-const HABIT_LV = [{k:'new', name:'New Habit', at:0, icon:'leaf'}, {k:'try', name:'Trying', at:10, icon:'bolt'}, {k:'reg', name:'Regular', at:35, icon:'flame'}, {k:'mast', name:'Mastery', at:80, icon:'star'}];
+const HABIT_LV = [{k:'new', name:'New Habit', at:0, icon:'leaf'}, {k:'try', name:'Trying', at:4, icon:'bolt'}, {k:'reg', name:'Consistent', at:35, icon:'flame'}, {k:'mast', name:'Mastery', at:80, icon:'star'}];
 const HABIT_WEEK = 3, HABIT_HIT = 2, HABIT_BONUS = 2, HABIT_STREAK_MAX = 4, HABIT_MISS = 6;
 const habitLvOf = pts => { let i = 0; for (let j = 0; j < HABIT_LV.length; j++) if (pts >= HABIT_LV[j].at) i = j; return i; };
 const masteryFx = t => { const st = {}; const s0 = (t.stats || [])[0], s1 = (t.stats || [])[1]; if (s0) st[s0] = 2; if (s1 && s1 !== s0) st[s1] = (st[s1] || 0) + 1; return {st}; };
