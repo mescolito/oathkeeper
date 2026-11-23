@@ -497,6 +497,16 @@ body.focusmode[data-pomo="paused"]{--g1:#3b3a42;--g2:#19181c}
 body.focusmode[data-pomo="short"]{--g1:#1c6a5d;--g2:#0f2723}
 body.focusmode[data-pomo="long"]{--g1:#7a4a2c;--g2:#2b1a12}
 body.focusmode .top{align-items:center}
+body.focusmode.sleepmode,body.focusmode.sleepmode[data-pomo]{--g1:#1d2347;--g2:#0f1122}
+.nightwrap{width:clamp(130px, calc(100vh - 560px), min(64vw, 240px));width:clamp(130px, calc(100dvh - 560px), min(64vw, 240px));aspect-ratio:1;margin:10px 0 8px;border-radius:50%;box-shadow:0 0 0 10px rgba(241,238,228,.06)}
+#nightCv{width:100%;height:100%;border-radius:50%;image-rendering:pixelated;background:#141312;display:block}
+.slbelow{gap:10px;margin-top:22px}
+.slbelow h3{font-size:16px;margin:10px 0 0;color:#bdb6c8;font-weight:600}
+.slsnds{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.slsnd{background:rgba(241,238,228,.08);box-shadow:inset 0 0 0 1px rgba(241,238,228,.14);padding:12px}
+.slchips{display:flex;flex-wrap:wrap;gap:8px}
+.slchip{border:0;border-radius:999px;padding:9px 15px;min-height:40px;background:rgba(241,238,228,.08);box-shadow:inset 0 0 0 1px rgba(241,238,228,.14);color:#f1eee4;font:inherit;font-size:15px;font-weight:600;cursor:pointer;font-variant-numeric:tabular-nums}
+.slchip.on{background:rgba(241,238,228,.92);color:#141312;box-shadow:none}
 .fpill{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:999px;padding:11px 18px;min-height:46px;background:rgba(255,255,255,.12);color:#f1eee4;font:inherit;font-size:16px;font-weight:600;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
 .fpill .gdot{width:10px;height:10px;border-radius:50%;background:var(--gold)}
 .space{display:flex;flex-direction:column;align-items:center;gap:8px;color:#f1eee4;padding:4px 0 4px}
@@ -908,7 +918,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '88b41ba4b6';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '5fc189956c';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1562,7 +1572,7 @@ function sanitize(s, created){
   out.skillLog = (Array.isArray(s.skillLog) ? s.skillLog : []).filter(u => obj(u) && SKILL_BY[u.id]).map(u => { const o = {id: u.id, ts: num(u.ts, 0), date: isDate(u.date) ? u.date : null}; if (u.dmg != null) o.dmg = int(u.dmg, 0, 5000, 0); if (u.cost != null) o.cost = int(u.cost, 0, 1000, 0); if (typeof u.task === 'string') o.task = u.task.slice(0,40);
     if (SKILL_BY[u.id].kind === 'buff' && obj(u.buff) && obj(u.buff.st)){ const st = {}; for (const k of SK) if (u.buff.st[k] != null) st[k] = int(u.buff.st[k], 0, 20, 0); o.buff = {st, days: int(u.buff.days, 1, 7, 2)}; }
     return o; });
-  out.buys = (Array.isArray(s.buys) ? s.buys : []).filter(b => obj(b) && (b.kind === 'reroll' || b.kind === 'skilleq' || b.kind === 'weather' || b.kind === 'weatherbuy' || b.kind === 'weatheruse')).map(b => { const o = {kind: b.kind, id: str(b.id, 40), ts: num(b.ts, 0), g: int(b.g, 0, 100000, 0)}; if (isDate(b.date)) o.date = b.date; return o; });
+  out.buys = (Array.isArray(s.buys) ? s.buys : []).filter(b => obj(b) && (b.kind === 'reroll' || b.kind === 'skilleq' || b.kind === 'weather' || b.kind === 'weatherbuy' || b.kind === 'weatheruse' || b.kind === 'sirenoff')).map(b => { const o = {kind: b.kind, id: str(b.id, 40), ts: num(b.ts, 0), g: int(b.g, 0, 100000, 0)}; if (isDate(b.date)) o.date = b.date; return o; });
   out.potions = (Array.isArray(s.potions) ? s.potions : []).filter(p => obj(p) && POTION_BY[p.id] && isDate(p.date)).map(p => { const o = {id: p.id, ts: num(p.ts, 0), date: p.date, g: int(p.g, 0, 100000, 0)}; if (p.bag){ o.bag = true; o.g = 0; } return o; });
   out.runeBuys = (Array.isArray(s.runeBuys) ? s.runeBuys : []).filter(r => obj(r) && RUNE_BY[r.id] && isDate(r.date)).map(r => { const o = {id: r.id, ts: num(r.ts, 0), date: r.date, g: int(r.g, 0, 100000, 0)}; if (r.token) o.token = true; if (r.bag){ o.bag = true; o.g = 0; delete o.token; } return o; });
   if (obj(s.todos) && Array.isArray(s.todos.lists)){
@@ -1584,7 +1594,7 @@ function sanitize(s, created){
   out.inn = (Array.isArray(s.inn) ? s.inn : []).filter(st => obj(st) && isDate(st.from) && (st.to == null || isDate(st.to))).map(st => ({from: st.from, to: st.to || null, ts: num(st.ts, 0), paid: isDate(st.paid) ? st.paid : null})).filter(st => !st.to || st.to >= st.from).sort((a,b) => a.from < b.from ? -1 : 1);
   { let open = false; out.inn = out.inn.filter(st => { if (st.to) return true; if (open) return false; open = true; return true; }); }
   if (obj(s.pomo)){ const c = obj(s.pomo.cfg) ? s.pomo.cfg : {}; const r = s.pomo.run;
-    out.pomo = {cfg: {focus: int(c.focus, 5, 90, 25), short: int(c.short, 1, 30, 5), long: int(c.long, 5, 60, 15), every: int(c.every, 2, 8, 4), sound: c.sound !== false, music: c.music !== false, lofi: ['chill', 'upbeat', 'dreamy'].includes(c.lofi) ? c.lofi : 'chill', haptic: c.haptic !== false},
+    out.pomo = {cfg: {focus: int(c.focus, 5, 90, 25), short: int(c.short, 1, 30, 5), long: int(c.long, 5, 60, 15), every: int(c.every, 2, 8, 4), sound: c.sound !== false, music: c.music !== false, lofi: ['chill', 'upbeat', 'dreamy'].includes(c.lofi) ? c.lofi : 'chill', haptic: c.haptic !== false, sleepSnd: ['orange', 'deeper', 'deepest'].includes(c.sleepSnd) ? c.sleepSnd : 'orange', sleepHrs: [8, 10, 12, 0].includes(c.sleepHrs) ? c.sleepHrs : 8, sleepVol: [20, 40, 60, 80, 100].includes(c.sleepVol) ? c.sleepVol : 60},
       run: obj(r) && ['focus','short','long'].includes(r.phase) ? {phase: r.phase, startTs: num(r.startTs, 0), pausedMs: num(r.pausedMs, 0), pauseAt: r.pauseAt ? num(r.pauseAt, 0) : null, n: int(r.n, 0, 999, 0), idle: !!r.idle, ...(r.mins ? {mins: int(r.mins, 5, 90, 25)} : {}), ...(r.extra ? {extra: int(r.extra, 0, 3600000, 0)} : {})} : null}; }
   out.pomoLog = (Array.isArray(s.pomoLog) ? s.pomoLog : []).filter(x => obj(x)).map(x => ({ts: num(x.ts, 0), mins: int(x.mins, 1, 90, 25)})).filter(x => x.ts > 0);
   out.testGold = PREVIEW && Array.isArray(s.testGold) ? s.testGold.filter(x => obj(x)).map(x => ({ts: num(x.ts, 0), g: int(x.g, 0, 100000, 0)})) : [];
@@ -1828,6 +1838,7 @@ const roll = key => (hash(key) % 10000) / 10000;
 /* The Siren: about once a week she shows up with a card. Draw it (your choice) for a 50/50: a blessing doubles one daily or
    habit's rewards for the rest of the week, or a curse makes one daily hit twice as hard when missed, or puts a to-do on a
    Sunday deadline (miss it: lose 15% HP and 10% gold). Results are written down when drawn, so they never change. */
+const sirenOffPrice = lv => 5 * Math.max(1, lv);
 const SIREN_ODDS = 1 / 7, SIREN_MUL = 2, SIREN_TODO_HP = 0.15, SIREN_TODO_G = 0.1;
 const sirenOf = wk => (S.siren || []).find(x => x.wk === wk) || null;
 // most weeks (about 6 in 7) she visits once, on a random day of that week
@@ -3414,13 +3425,17 @@ function daysText(days){
   const run = idx.every((v,i) => i===0 || v === idx[i-1]+1);
   return run && s.length > 2 ? `${DOW[s[0]]}–${DOW[s[s.length-1]]}` : s.map(d => DOW[d]).join(', ');
 }
-const TITLES = {today:'Today', battle:'Battle', todo:'To-dos', shop:'Shop', settings:'Settings', focus:'Focus', stats:'Stats', skills:'Skill tree', inv:'Inventory'};
-const PAGE_TABS = ['settings', 'focus', 'stats', 'skills', 'inv'];   // full pages opened from the side menu, with a back button
+const TITLES = {today:'Today', battle:'Battle', todo:'To-dos', shop:'Shop', settings:'Settings', focus:'Focus', sleep:'Sleep', stats:'Stats', skills:'Skill tree', inv:'Inventory'};
+const PAGE_TABS = ['settings', 'focus', 'sleep', 'stats', 'skills', 'inv'];   // full pages opened from the side menu, with a back button
 function renderHeader(){
   const d = parseKey(D.today).toLocaleDateString('en-US', {weekday:'long', month:'short', day:'numeric'});
-  document.body.classList.toggle('focusmode', tab === 'focus'); document.documentElement.classList.toggle('focusmode', tab === 'focus'); document.body.dataset.pomo = pomoState();
+  const dark = tab === 'focus' || tab === 'sleep'; document.body.classList.toggle('focusmode', dark); document.documentElement.classList.toggle('focusmode', dark); document.body.classList.toggle('sleepmode', tab === 'sleep'); document.body.dataset.pomo = pomoState();
   if (tab === 'focus'){
     document.getElementById('top').innerHTML = `<button class="fpill" data-back aria-label="Back to ${TITLES[prevTab] || 'Today'}">${svg('back',20,2.4)} Back</button><span class="row" style="gap:8px">${musicBtn()}<span class="fpill" aria-label="${D.balance} gold"><i class="gdot"></i>${D.balance} G</span></span>`;
+    return;
+  }
+  if (tab === 'sleep'){
+    document.getElementById('top').innerHTML = `<button class="fpill" data-back aria-label="Back to ${TITLES[prevTab] || 'Today'}">${svg('back',20,2.4)} Back</button><span class="fpill" aria-label="${D.balance} gold"><i class="gdot"></i>${D.balance} G</span>`;
     return;
   }
   if (tab === 'settings' || tab === 'stats' || tab === 'skills' || tab === 'inv'){
@@ -3430,12 +3445,13 @@ function renderHeader(){
   }
   document.getElementById('top').innerHTML = `<div><span class="eyebrow">${d}</span><h1>${TITLES[tab]}</h1></div>
     <div class="row" style="gap:8px"><span class="goldpill" aria-label="${D.balance} gold"><i></i>${D.balance} G</span>
-    <button class="iconbtn sm ${S.pomo.run && !S.pomo.run.idle ? 'dotted' : ''}" data-drawer aria-label="Menu" aria-haspopup="dialog">${svg('menu',21,2.2)}</button></div>`;
+    <button class="iconbtn sm ${(S.pomo.run && !S.pomo.run.idle) || sleepRun ? 'dotted' : ''}" data-drawer aria-label="Menu" aria-haspopup="dialog">${svg('menu',21,2.2)}</button></div>`;
 }
 /* ---------- side menu: slides in from the right. Add a feature by adding a line to DRAWER_ITEMS ---------- */
 const DRAWER_ITEMS = [
   [   // features
     {tab: 'focus', label: 'Focus Mode', icon: 'timer', status: () => S.pomo.run && !S.pomo.run.idle ? (S.pomo.run.pauseAt ? 'Paused' : 'Running') : ''},
+    {tab: 'sleep', label: 'Sleep Mode', icon: 'moon', status: () => sleepRun ? (sleepRun.paused ? 'Paused' : 'Playing') : ''},
   ],
   [   // your character
     {tab: 'inv', label: 'Inventory', icon: 'bag'},
@@ -3599,7 +3615,7 @@ let sirenFlip = false;
 const sirenPending = () => { const wk = weekKey(D.today), day = sirenDayOf(wk); return day && day <= D.today && !sirenOf(wk) ? wk : null; };
 function sirenNote(){
   const wk = weekKey(D.today), x = sirenOf(wk), sun = fmtDow(addDays(wk, 6)).split(',')[0];
-  if (sirenPending()) return `<div class="mystery sirennote">${svg('flame',18,2)} <span class="ntext"><b>A siren appears with a card.</b> Draw it for a 50/50: a blessing or a curse.</span><span class="row" style="gap:6px;margin-left:26px"><button class="btn sm" data-siren="off">Wave her off</button><button class="btn sm primary" data-siren="draw">Draw a card</button></span></div>`;
+  if (sirenPending()) return `<div class="mystery sirennote">${svg('flame',18,2)} <span class="ntext"><b>A siren appears with a card.</b> Draw it for a 50/50: a blessing or a curse.</span><span class="row" style="gap:6px;margin-left:26px"><button class="btn sm" data-siren="off" ${D.balance < sirenOffPrice(D.lv.level) ? 'disabled' : ''}>Wave her off · ${sirenOffPrice(D.lv.level)} G</button><button class="btn sm primary" data-siren="draw">Draw a card</button></span></div>`;
   if (!x || !x.drawn) return '';
   const flip = sirenFlip ? ' flip' : ''; sirenFlip = false;
   if (x.res === 'bless'){ const t = D.T[x.tid]; if (!t) return ''; return `<div class="mystery sirennote bless${flip}">${svg('star',18,2)} <span class="ntext"><b>Siren's blessing:</b> ${esc(t.name)} pays 2× until ${sun}.</span></div>`; }
@@ -4314,6 +4330,45 @@ function renderFocus(){
 }
 /* what the timer is doing right now: idle, focus, paused, short (break) or long (break) */
 function pomoState(){ const r = S.pomo && S.pomo.run; if (!r || r.idle) return 'idle'; if (r.pauseAt) return 'paused'; return r.phase; }
+/* ---------- Sleep Mode page ---------- */
+function renderSleep(){
+  const cfg = sleepCfg(), r = sleepRun, on = r && !r.paused;
+  const tfmt = ts => new Date(ts).toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'});
+  const sub = !r ? (cfg.hrs ? `Plays for ${cfg.hrs} hours` : 'Plays until you stop it') : r.busy && !r.paused ? 'Mixing the noise…' : r.paused ? 'Paused' : r.end ? `Until ${tfmt(r.end)}` : 'Playing until you stop it';
+  const playIc = on ? '<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>' : '<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
+  const main = !r ? 'data-sleep="start" aria-label="Start the noise"' : on ? 'data-sleep="pause" aria-label="Pause"' : 'data-sleep="resume" aria-label="Resume"';
+  const chip = (k, v, label, cur) => `<button class="slchip ${cur ? 'on' : ''}" data-${k}="${v}" aria-pressed="${cur}">${label}</button>`;
+  return `<section class="space" aria-label="Sleep Mode">
+    <h2 class="ptitle">Sleep</h2>
+    <div class="psub">${sub}</div>
+    <div class="nightwrap"><canvas id="nightCv" width="52" height="52" role="img" aria-label="${esc(S.petName)} asleep"></canvas></div>
+    <div class="pctrl">
+      <span></span>
+      <button class="pmain" ${main}>${playIc}</button>
+      <button class="ptext" ${r ? 'data-sleep="stop"' : 'disabled'}>Stop</button>
+    </div>
+  </section>
+  <section class="pbelow slbelow">
+    <div class="slsnds" role="group" aria-label="Sound">${Object.entries(SLEEP_SOUNDS).map(([k, sn]) => `<button class="lofiopt slsnd ${cfg.snd === k ? 'on' : ''}" data-sleepsnd="${k}" aria-pressed="${cfg.snd === k}"><b>${sn.label}</b><span>${sn.note}</span></button>`).join('')}</div>
+    <h3>Timer</h3>
+    <div class="slchips" role="group" aria-label="Timer">${SLEEP_HRS.map(h => chip('sleephrs', h, h ? `${h} h` : 'No limit', cfg.hrs === h)).join('')}</div>
+    <h3>Volume</h3>
+    <div class="slchips" role="group" aria-label="Volume">${SLEEP_VOLS.map(v => chip('sleepvol', v, `${v}%`, cfg.vol === v)).join('')}</div>
+  </section>`;
+}
+// the pet asleep under the stars, a crescent moon overhead
+function drawNight(cv){
+  ctx = cv.getContext('2d'); ctx.imageSmoothingEnabled = false;
+  const N = cv.width, c = N/2, mv = motionOK;
+  B_(0,0,N,N);
+  for (let i=0;i<40;i++){ const h = hash('nstar' + i), x = h % N, y = (h >>> 8) % N;
+    if (Math.abs(x - c) < 14 && y > c - 16) continue;
+    if (mv && (frame + i*5) % 23 < 2) continue;
+    W_(x,y); if (i % 9 === 0){ W_(x-1,y); W_(x+1,y); W_(x,y-1); W_(x,y+1); } }
+  disc(N-15, 13, 4, PW); disc(N-13, 12, 4, PB);
+  const bob = mv ? Math.round(Math.sin(frame / 14)) : 0;
+  drawPet({stage: stage(D.lv.level), color: S.equip.color, hat: S.equip.hat, gear: S.gear, mood: 'sleep', f: frame, motion: mv, cx: Math.floor(c), ground: Math.floor(c) + 12 + bob, shadow: false});
+}
 function drawSpace(cv){
   ctx = cv.getContext('2d'); ctx.imageSmoothingEnabled = false;
   const N = cv.width, c = N/2, ps = pomoState(), mv = motionOK;
@@ -4566,7 +4621,7 @@ function renderInner(){
   renderHeader();
   const v = document.getElementById('view');
   if (tab === 'stats' || tab === 'skills'){ sheetMode = 'stats'; statsSec = tab; } else if (tab === 'inv') sheetMode = 'inv'; else if (sheetMode === 'stats' || sheetMode === 'inv') sheetMode = null;
-  v.innerHTML = tab === 'today' ? renderToday() : tab === 'battle' ? renderBattle() : tab === 'todo' ? renderTodo() : tab === 'shop' ? renderShop() : tab === 'focus' ? renderFocus() : tab === 'stats' || tab === 'skills' ? `<div class="pagewrap">${renderStatsPanel(tab)}</div>` : tab === 'inv' ? `<div class="pagewrap">${renderInventory()}</div>` : renderSettings();
+  v.innerHTML = tab === 'today' ? renderToday() : tab === 'battle' ? renderBattle() : tab === 'todo' ? renderTodo() : tab === 'shop' ? renderShop() : tab === 'focus' ? renderFocus() : tab === 'sleep' ? renderSleep() : tab === 'stats' || tab === 'skills' ? `<div class="pagewrap">${renderStatsPanel(tab)}</div>` : tab === 'inv' ? `<div class="pagewrap">${renderInventory()}</div>` : renderSettings();
   document.querySelectorAll('#tabs button[data-tab]').forEach(b => b.setAttribute('aria-current', b.dataset.tab === tab ? 'page' : 'false'));
   drawIcons(v);
   if ((sheetMode === 'stats' || sheetMode === 'inv') && !document.getElementById('sheet').hidden) renderSheet();
@@ -4592,6 +4647,7 @@ function draw(){
   const m = document.getElementById('bossMiniCv'); if (m) drawBoss(m, D.cur.boss, frame, motionOK, hurt, D.cur.status === 'won');
   const b = document.getElementById('bossCv'); if (b) drawBoss(b, D.cur.boss, frame, motionOK, hurt, D.cur.status === 'won');
   const sp = document.getElementById('spaceCv'); if (sp) drawSpace(sp);
+  const nc = document.getElementById('nightCv'); if (nc) drawNight(nc);
 }
 setInterval(() => { frame++; if (motionOK || Date.now() < jumpUntil + 200 || Date.now() < hurtUntil + 200) draw(); }, 140);
 setInterval(() => { if (recoveryMode || !D) return; let nd; try { nd = derive(); } catch(e){ render(); return; } if (nd.today !== D.today || nd.mood !== D.mood) render(); }, 60000);
@@ -5337,7 +5393,8 @@ function onClick(e){
   if ('newtimer' in el.dataset){ openTimerEditor(null); return; }
   // the Siren's card: wave her off, or draw for a 50/50 blessing or curse (picked from this week's seed, so it can't be rerolled)
   if (el.dataset.siren){ const wk = sirenPending(); if (!wk) return; const now = Date.now(), day = sirenDayOf(wk);
-    if (el.dataset.siren === 'off'){ S.siren.push({wk, day, declined: now}); save(); render(); toast('She shrugs and flies off.'); return; }
+    if (el.dataset.siren === 'off'){ const g = sirenOffPrice(D.lv.level); if (D.balance < g){ toast(`Waving her off costs ${g} G`); return; }
+      S.siren.push({wk, day, declined: now}); S.buys.push({kind: 'sirenoff', id: 'siren', ts: now, g, date: D.today}); save(); render(); toast(`She takes ${g} G and flies off.`); return; }
     const pick = (arr, key) => arr.length ? arr.slice().sort((a, b) => a.id < b.id ? -1 : 1)[hash(key + '|' + wk) % arr.length] : null;
     const tasks = active().filter(t => !t.pool && !startOf(t, D.today)), dailies = tasks.filter(t => schedAt(t, D.today).cad === 'day');
     const todos = S.todos.lists.filter(L => !L.hidden && L.kind !== 'plain').flatMap(L => L.items.filter(i => !i.doneOn).map(i => ({id: L.id + '|' + i.id, L, it: i})));
@@ -5459,6 +5516,9 @@ function onClick(e){
     if (st.from >= D.today) S.inn = S.inn.filter(x => x !== st); else st.to = D.yest;
     save(); render(); toast('Checked out. The fight is back on.'); return; }
   if ('musicmenu' in el.dataset){ musicMenu = !musicMenu; sfxInit(); render(); return; }
+  if (el.dataset.sleep){ sleepCmd(el.dataset.sleep); return; }
+  if (el.dataset.sleepsnd || el.dataset.sleepvol){ const c = S.pomo.cfg; if (el.dataset.sleepsnd) c.sleepSnd = el.dataset.sleepsnd; else c.sleepVol = +el.dataset.sleepvol; save(); render(); sleepRetune(); return; }
+  if (el.dataset.sleephrs != null){ const h = +el.dataset.sleephrs; S.pomo.cfg.sleepHrs = h; if (sleepRun){ sleepRun.end = h ? (sleepRun.paused || Date.now()) + h * 3600000 : 0; sleepRun.fading = false; try { sleepEl().volume = 1; } catch(e){} } save(); render(); return; }
   if (el.dataset.lofi){ const v = el.dataset.lofi; musicMenu = false; sfxInit();
     if (v === 'off') S.pomo.cfg.music = false; else if (LOFI_STYLES[v]){ S.pomo.cfg.music = true; S.pomo.cfg.lofi = v; }
     save(); render(); return; }
@@ -6207,6 +6267,90 @@ function lofiNoise(L, t, dur, type, freq, vol){
   f.type = type; f.frequency.value = freq; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
   n.connect(f); f.connect(g); g.connect(L.drums); n.start(t, Math.random() * 0.5); n.stop(t + dur + 0.02);
 }
+
+/* ---------- Sleep Mode: deep noise made on the device, looped through an <audio> element so it keeps going with the screen locked ---------- */
+// "Orange" copies Sean's recording: its level (dB) at each frequency, relative to the 50 Hz peak
+var SLEEP_CURVE = [[20,-29.9],[22.4,-24.8],[25.2,-16.9],[28.3,-9.6],[31.7,-5.1],[35.6,-2],[40,-.4],[44.9,-.2],[50.4,0],[56.6,-.1],[63.5,-.5],[71.3,-1.4],[80,-3.3],[89.8,-5.4],[100.8,-7.5],[113.1,-8.7],[127,-11.1],[142.5,-12.7],[160,-15.2],[179.6,-17.2],[201.6,-19.4],[226.3,-21.6],[254,-24],[285.1,-26.5],[320,-28.9],[359.2,-31.4],[403.2,-33.7],[452.5,-36.2],[508,-38.3],[570.2,-40.4],[640,-42.2],[718.4,-44.3],[806.3,-46],[905.1,-47.3],[1015.9,-48.8],[1140.4,-50],[1280,-51.2],[1436.8,-52.4],[1612.7,-53.6],[1810.2,-54.7],[2031.9,-55.9],[2280.7,-57.2],[2560,-58.6],[2873.5,-60],[3225.4,-61.7],[3620.4,-63.3],[4063.7,-64.9],[4561.4,-66.7],[5120,-68.3],[5747,-70.1],[6450.8,-71.8],[7240.8,-73.7],[8127.5,-75.8],[9122.8,-79.2],[10240,-88.9],[11025,-100]];
+// the deeper two tilt the highs further down (dB per octave above a corner), so they're lower and smoother
+var SLEEP_SOUNDS = {orange: {label: 'Orange', note: 'Warm and low', tilt: 0, from: 0}, deeper: {label: 'Deeper', note: 'Smoother', tilt: 3, from: 90}, deepest: {label: 'Deepest', note: 'A low rumble', tilt: 5, from: 70}};
+var SLEEP_HRS = [8, 10, 12, 0], SLEEP_VOLS = [20, 40, 60, 80, 100], SLEEP_SR = 22050, SLEEP_N = 1 << 20;   // a 47-second loop that repeats seamlessly
+var sleepCfg = () => { const c = S.pomo.cfg; return {snd: SLEEP_SOUNDS[c.sleepSnd] ? c.sleepSnd : 'orange', hrs: SLEEP_HRS.includes(c.sleepHrs) ? c.sleepHrs : 8, vol: SLEEP_VOLS.includes(c.sleepVol) ? c.sleepVol : 60}; };
+var sleepRun = null, sleepAud = null, sleepUrl = null, sleepUrlKey = '', sleepFadeT = null;
+var sleepPcm = {};
+function sleepFFT(re, im){ const n = re.length;
+  for (let i = 1, j = 0; i < n; i++){ let b = n >> 1; for (; j & b; b >>= 1) j ^= b; j ^= b; if (i < j){ let t = re[i]; re[i] = re[j]; re[j] = t; t = im[i]; im[i] = im[j]; im[j] = t; } }
+  for (let len = 2; len <= n; len <<= 1){ const h = len >> 1, ang = 2 * Math.PI / len, wr = Math.cos(ang), wi = Math.sin(ang);
+    for (let i = 0; i < n; i += len){ let cr = 1, ci = 0;
+      for (let j = 0; j < h; j++){ const a = i + j, b = a + h, xr = re[b] * cr - im[b] * ci, xi = re[b] * ci + im[b] * cr; re[b] = re[a] - xr; im[b] = im[a] - xi; re[a] += xr; im[a] += xi; const t = cr * wr - ci * wi; ci = cr * wi + ci * wr; cr = t; } } } }
+// random phases with the curve's loudness at every frequency, turned into sound with one inverse FFT (so the loop has no seam)
+function sleepMake(kind){
+  if (sleepPcm[kind]) return sleepPcm[kind];
+  const snd = SLEEP_SOUNDS[kind], N = SLEEP_N, re = new Float64Array(N), im = new Float64Array(N), C = SLEEP_CURVE; let p = 0;
+  for (let k = 1; k < N / 2; k++){ const f = k * SLEEP_SR / N; let db;
+    if (f <= C[0][0]) db = C[0][1] - 40 * Math.log2(C[0][0] / f);
+    else { while (p < C.length - 2 && C[p + 1][0] < f) p++; const [f0, d0] = C[p], [f1, d1] = C[p + 1]; db = d0 + (d1 - d0) * Math.min(1, Math.log(f / f0) / Math.log(f1 / f0)); }
+    if (snd.tilt && f > snd.from) db -= snd.tilt * Math.log2(f / snd.from);
+    if (db < -110) continue;
+    const r = Math.pow(10, db / 20) * Math.sqrt(-2 * Math.log(Math.random() || 1e-12)), ph = 2 * Math.PI * Math.random();
+    re[k] = r * Math.cos(ph); im[k] = r * Math.sin(ph); re[N - k] = re[k]; im[N - k] = -im[k]; }
+  sleepFFT(re, im);
+  let ss = 0; for (let i = 0; i < N; i++) ss += re[i] * re[i];
+  const g = 0.2 / Math.sqrt(ss / N), out = new Float32Array(N);   // the same loudness as the recording, with soft peaks
+  for (let i = 0; i < N; i++){ const x = re[i] * g, ax = Math.abs(x); out[i] = ax < 0.8 ? x : Math.sign(x) * (0.8 + 0.19 * Math.tanh((ax - 0.8) / 0.19)); }
+  return (sleepPcm[kind] = out); }
+// iPhones ignore an audio element's volume, so the level is baked into the file
+function sleepWav(pcm, vol){
+  const n = pcm.length, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf), w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+  w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, SLEEP_SR, true); v.setUint32(28, SLEEP_SR * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+  const g = vol / 100 * 32767; for (let i = 0; i < n; i++) v.setInt16(44 + i * 2, Math.max(-32767, Math.min(32767, Math.round(pcm[i] * g))), true);
+  return URL.createObjectURL(new Blob([buf], {type: 'audio/wav'})); }
+var SLEEP_SILENT = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YQQAAAAAAAAA';
+function sleepEl(){
+  if (sleepAud) return sleepAud;
+  const a = sleepAud = new Audio(); a.loop = true; a.preload = 'auto'; a.setAttribute('playsinline', '');
+  // the lock screen's play/pause (or an interruption, like a call) changes the run too
+  a.addEventListener('pause', () => { if (sleepRun && !sleepRun.paused && !sleepRun.busy){ sleepRun.paused = Date.now(); sleepRefresh(); } });
+  a.addEventListener('play', () => { if (sleepRun && sleepRun.paused){ if (sleepRun.end) sleepRun.end += Date.now() - sleepRun.paused; sleepRun.paused = 0; sleepRefresh(); } });
+  return a; }
+function sleepRefresh(){ if (tab === 'sleep') render(); else renderHeader(); }
+function sleepLoad(cfg){
+  const key = cfg.snd + '|' + cfg.vol, a = sleepEl(); if (key === sleepUrlKey && a.src === sleepUrl) return false;
+  const at = a.currentTime || 0, old = sleepUrl; sleepUrl = sleepWav(sleepMake(cfg.snd), cfg.vol); sleepUrlKey = key; a.src = sleepUrl;
+  try { a.currentTime = at % (SLEEP_N / SLEEP_SR); } catch(e){}
+  if (old) setTimeout(() => URL.revokeObjectURL(old), 2000);
+  return true; }
+function sleepMedia(cfg){
+  if (!('mediaSession' in navigator)) return;
+  try { navigator.mediaSession.metadata = new MediaMetadata({title: `${SLEEP_SOUNDS[cfg.snd].label} noise`, artist: 'Oathkeeper', album: 'Sleep Mode'});
+    navigator.mediaSession.setActionHandler('play', () => sleepCmd('resume'));
+    navigator.mediaSession.setActionHandler('pause', () => sleepCmd('pause'));
+    navigator.mediaSession.setActionHandler('stop', () => sleepCmd('stop')); } catch(e){} }
+function sleepFade(to, ms, then){ const a = sleepEl(); clearInterval(sleepFadeT); const from = a.volume, t0 = Date.now();
+  sleepFadeT = setInterval(() => { const k = Math.min(1, (Date.now() - t0) / ms); try { a.volume = from + (to - from) * k; } catch(e){} if (k >= 1){ clearInterval(sleepFadeT); if (then) then(); } }, 100); }
+function sleepCmd(cmd){
+  const cfg = sleepCfg(), a = sleepEl();
+  if (cmd === 'start'){
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch(e){}   // keep playing with the silent switch on
+    // unlock playback inside the tap (iPhones need that), then mix the noise and start it
+    sleepRun = {start: Date.now(), end: cfg.hrs ? Date.now() + cfg.hrs * 3600000 : 0, paused: 0, busy: true};
+    if (a.paused){ a.src = SLEEP_SILENT; sleepUrlKey = ''; const p = a.play(); if (p && p.catch) p.catch(() => {}); }
+    sleepRefresh();
+    setTimeout(() => { if (!sleepRun) return; sleepLoad(cfg); try { a.volume = 0; } catch(e){} const p = a.play();
+      const ok = () => { if (!sleepRun) return; sleepRun.busy = false; sleepMedia(cfg); sleepFade(1, 6000); sleepRefresh(); };
+      if (p && p.then) p.then(ok, () => { sleepRun = null; sleepRefresh(); toast('Tap play again to start the noise'); }); else ok(); }, 30);
+    return; }
+  if (!sleepRun) return;
+  if (cmd === 'pause'){ sleepRun.busy = true; a.pause(); sleepRun.busy = false; if (!sleepRun.paused) sleepRun.paused = Date.now(); sleepRefresh(); return; }
+  if (cmd === 'resume'){ const p = a.play(); if (sleepRun.paused){ sleepRun.end = sleepRun.end ? sleepRun.end + Date.now() - sleepRun.paused : 0; sleepRun.paused = 0; } if (p && p.catch) p.catch(() => {}); sleepRefresh(); return; }
+  if (cmd === 'stop'){ sleepRun.busy = true; clearInterval(sleepFadeT); a.pause(); sleepRun = null; try { if (navigator.mediaSession) navigator.mediaSession.playbackState = 'none'; } catch(e){} sleepRefresh(); return; }
+}
+// a new sound or level while it plays swaps the loop in place
+function sleepRetune(){ if (!sleepRun || sleepRun.busy) return; const a = sleepEl(), was = !a.paused; sleepRun.busy = true;
+  setTimeout(() => { if (!sleepRun) return; sleepLoad(sleepCfg()); sleepMedia(sleepCfg()); if (was){ const p = a.play(); if (p && p.catch) p.catch(() => {}); } setTimeout(() => { if (sleepRun) sleepRun.busy = false; }, 400); }, 30); }
+// the timer: fade out over the last minute, then stop
+setInterval(() => { if (!sleepRun || sleepRun.paused || sleepRun.busy || !sleepRun.end) return; const left = sleepRun.end - Date.now();
+  if (left <= 0){ sleepCmd('stop'); return; }
+  if (left < 60000 && !sleepRun.fading){ sleepRun.fading = true; sleepFade(0, left); } }, 1000);
 </script>
 </body>
 </html>
