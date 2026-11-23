@@ -805,7 +805,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'cd12129bf8';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'cfcbb9dcdf';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -3240,8 +3240,8 @@ function assistMsg(){
   if (D.slump && D.slump.on) return {k:'The Slump', p:`A Slump is stuck to ${esc(S.petName)}. Boss hits can't land, but it eats your gold while you're away. Finish something ${SLUMP_BACK} days in a row to shake it off.`, cta:'See battle'};
   if (D.lastFaint && D.lastFaint.d === D.yest) return {k:'You fainted', p:`${a ? a.boss : f.boss.name} knocked you out last night. You lost ${D.lastFaint.loss} G and woke up at half HP.`, cta:'Heal up'};
   if (a && a.dmg > 0) return {k:`Last night · ${a.boss}`, p:`Hit you for ${a.dmg} HP for ${a.missed} missed dailies${a.dodged ? ` (you dodged ${a.dodged})` : ''}.${a.status ? ` You're ${STATUS[a.status].name.toLowerCase()}.` : ''}`, cta:'See battle'};
-  if (D.readyCount) return {k:`${S.petName} says`, p:`${D.readyCount} skill${D.readyCount===1?' is':'s are'} ready to use. Time to hit ${f.boss.name}.`, cta:'Use skills'};
-  if (f.status === 'won') return {k:'Victory', p:`You beat ${f.boss.name}. ${(D.nextRite || bossFor(f.c+1)).name} shows up ${fmt(addDays(f.end,1))}.`, cta:'See battle'};
+  if (D.readyCount && f.status === 'now') return {k:`${S.petName} says`, p:`${D.readyCount} skill${D.readyCount===1?' is':'s are'} ready to use. Time to hit ${f.boss.name}.`, cta:'Use skills'};
+  if (f.status === 'won') return {k:'Victory', p:`You beat ${f.boss.name}. ${(D.nextRite || bossFor(f.c+1)).name} shows up ${fmt(addDays(f.end,1))}.${S.altarFrom ? ' Until then, finished tasks earn Keystones.' : ''}`, cta:'See battle'};
   const weakTxt = f.boss.weak.length >= 5 ? 'Every stat hits it hard.' : `${f.boss.weak.map(s => STATS[s].name).join(' and ')} tasks hit twice as hard.`;
   return {k:`${f.boss.name} · ${daysLeft} day${daysLeft===1?'':'s'} left`, p:`${f.rem} HP to go. ${weakTxt}`, cta:"Let's fight"};
 }
