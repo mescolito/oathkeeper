@@ -838,7 +838,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '5292116fc3';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '6a21fb1339';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -3354,8 +3354,8 @@ function checklistBlock(t, k, locked){
 }
 function assistMsg(){
   const f = D.cur, daysLeft = dayIdx(f.end) - dayIdx(D.today) + 1, a = D.lastAttack;
-  if (D.inn) return {k:'Resting at the Inn', p:`The fight is paused while ${esc(S.petName)} sleeps it off. ${D.innFee} G a day.`, cta:'See battle'};
-  if (D.slump && D.slump.on) return {k:'The Slump', p:`A Slump is stuck to ${esc(S.petName)}. Boss hits can't land, but it eats your gold while you're away. Finish something ${SLUMP_BACK} days in a row to shake it off.`, cta:'See battle'};
+  if (D.inn) return {k:'Resting at the Inn', p:`Fight paused. ${D.innFee} G a day.`, cta:'See battle'};
+  if (D.slump && D.slump.on) return {k:'The Slump', p:`Boss hits can't land, but it eats while you're away. Finish something ${SLUMP_BACK} days in a row to lose it.`, cta:'See battle'};
   if (D.lastFaint && D.lastFaint.d === D.yest) return {k:'You fainted', p:`${a ? a.boss : f.boss.name} knocked you out last night. You lost ${D.lastFaint.loss} G and woke up at half HP.`, cta:'Heal up'};
   if (a && a.dmg > 0) return {k:`Last night · ${a.boss}`, p:`Hit you for ${a.dmg} HP for ${a.missed} missed dailies${a.dodged ? ` (you dodged ${a.dodged})` : ''}.${a.status ? ` You're ${STATUS[a.status].name.toLowerCase()}.` : ''}`, cta:'See battle'};
   if (D.readyCount && f.status === 'now') return {k:`${S.petName} says`, p:`${D.readyCount} skill${D.readyCount===1?' is':'s are'} ready to use. Time to hit ${f.boss.name}.`, cta:'Use skills'};
@@ -3430,14 +3430,13 @@ function timerAskNote(){
 function timersView(){
   const all = timersLive(), run = all.filter(t => !t.done || !t.finished).sort((a, b) => ((b.done ? 1 : 0) - (a.done ? 1 : 0)) || a.start - b.start), fin = all.filter(t => t.done && t.finished).sort((a, b) => b.done - a.done);
   const runShut = clOpen.has('shut:tm-run'), finOpen = clOpen.has('show:tm-done');
-  return `<div class="row between"><span class="muted small">${run.filter(t => !t.done).length} running${fin.length ? ` · ${fin.length} finished` : ''}</span></div>
-  <div class="tdgroup todgrp" data-tm="run">
+  return `  <div class="tdgroup todgrp" data-tm="run">
     <div class="tdhead"><button class="tdpill tod-any" data-clopen="shut:tm-run" aria-expanded="${!runShut}">${svg('timer',16,2.2)} RUNNING (${run.length})<span class="chev ${runShut ? 'up' : ''}">${svg('back',14,2.6)}</span></button><button class="tdplus" data-newtimer aria-label="New timer">${svg('plus',16,2.4)}</button></div>
-    ${runShut ? '' : run.length ? `<div class="list">${run.map(timerRow).join('')}</div>` : `<p class="how">Nothing counting yet. Tap + to start a timer for something you're keeping up or staying away from, like no drinking or days since you started a new routine.</p>`}
+    ${runShut ? '' : run.length ? `<div class="list">${run.map(timerRow).join('')}</div>` : `<p class="how">No timers yet. Tap + to start one.</p>`}
   </div>
   ${fin.length ? `<div class="tdgroup todgrp" data-tm="done"><div class="tdhead"><button class="tdpill tod-rest" data-clopen="show:tm-done" aria-expanded="${finOpen}">${svg('check',16,2.4)} FINISHED (${fin.length})<span class="chev ${finOpen ? '' : 'up'}">${svg('back',14,2.6)}</span></button></div>
     ${finOpen ? `<div class="list">${fin.map(timerRow).join('')}</div>` : ''}</div>` : ''}
-  <p class="how">Timers count up from the day you start, with nothing to check off. A milestone every few days pays XP and gold, and reaching a goal pays more, rolls for a legendary (better odds the longer the goal) and finishes the timer. Rewards are a share of what your level needs, so they keep pace as you grow. Resetting starts the count over and costs ${Math.round(TIMER_RESET_HP * 100)}% of your max HP and ${TIMER_RESET_G} G.</p>`;
+  `;
 }
 // log milestones and goals a timer has reached (payouts are written once, so later edits never take them back)
 function timerSweep(){
@@ -3504,7 +3503,7 @@ function renderToday(){
   ${todayTab === 'day'
     ? `${hide && dailiesAll.length && !dailies.length ? '<p class="how">All done here.</p>' : ''}${todGroups(dailies, 'day', k)}`
     : `${hide && weekliesAll.length && !weeklies.length ? '<p class="how">All done here.</p>' : ''}${todGroups(weeklies, 'week', k)}`}
-  <p class="how">Each missed daily lets the boss hit you that night, so defense and dodge matter. Checking in every day keeps your streak and gives a mystery bonus. A perfect week earns a free rune.</p>`}`;
+  `}`;
 }
 function skillTargets(id){
   const k = D.today;
@@ -3603,22 +3602,22 @@ function smogNote(){
   const sm = D.smog; if (!sm || !sm.pts || D.inn) return '';
   const C = D.C, hpN = Math.min(sm.pts, Math.ceil(C.maxHP * SMOG_HP_CAP), Math.max(0, D.hp - 1)), mpN = Math.min(sm.pts * SMOG_MP, Math.ceil(C.maxMP * SMOG_MP_CAP), D.mp);
   const last = sm.last, tier = sm.pts >= 9 ? 'thick' : sm.pts >= 4 ? 'hazy' : 'a little sour';
-  const lastTxt = last ? (last.shield ? ' The Slump kept it off you last night.' : (last.hp || last.mp) ? ` Last night it took <b>${last.hp} HP</b> and <b>${last.mp} MP</b>${last.status ? ` and left you <b>${STATUS[last.status].name.toLowerCase()}</b>` : ''}.` : '') : '';
+  const lastTxt = last && !last.shield && (last.hp || last.mp) ? ` Last night −${last.hp} HP, −${last.mp} MP${last.status ? `, ${STATUS[last.status].name.toLowerCase()}` : ''}.` : '';
   const can = D.balance >= sm.price;
-  return `<div class="mystery smognote">${svg('wave',18,2)} <span class="ntext"><b>The air is ${tier}: ${sm.pts} toxic point${sm.pts === 1 ? '' : 's'}.</b>${lastTxt} Tonight it drains about ${hpN} HP and ${mpN} MP, with a 1 in 10 chance of poison or paralysis. Each daily or to-do you finish clears a point.</span>
+  return `<div class="mystery smognote">${svg('wave',18,2)} <span class="ntext"><b>Toxic air: ${sm.pts}</b>.${lastTxt} Tonight −${hpN} HP, −${mpN} MP. Each finished daily or to-do clears 1.</span>
     <button class="btn sm ${weatherArm ? 'danger' : ''}" data-weather ${can ? '' : 'disabled'}>${weatherArm ? `Buy for ${sm.price} G?` : `Weather Machine · ${sm.price} G`}</button></div>`;
 }
 function slumpNote(){
   const sl = D.slump; if (!sl || D.inn) return '';
   if (!sl.on){
-    if (sl.emptyRun >= SLUMP_DAYS - 1 && !sl.todayActive) return `<div class="mystery slumpnote">${svg('moon',18,2)} <span class="ntext"><b>Nothing finished for ${sl.emptyRun} days.</b> Finish anything today, or a Slump attaches tonight.</span></div>`;
+    if (sl.emptyRun >= SLUMP_DAYS - 1 && !sl.todayActive) return `<div class="mystery slumpnote">${svg('moon',18,2)} <span class="ntext"><b>${sl.emptyRun} days with nothing finished.</b> Finish one thing today or a Slump attaches tonight.</span></div>`;
     return '';
   }
   const last = sl.bites.length ? sl.bites[sl.bites.length - 1] : null, n = sl.back + (sl.todayActive ? 1 : 0);
   const nm = id => (GEAR_BY[id] || ITEM[id] || POTION_BY[id] || RUNE_BY[id] || {}).name || id;
   let ate = '';
   if (last && last.d === D.yest) ate = last.g ? ` Last night it ate <b>${last.g} G</b>.` : last.hp ? ` Last night it drained <b>${last.hp} HP</b>.` : last.pending ? ` It's chewing on your <b>${esc(nm(last.item))}</b>: log yesterday's tasks to save it.` : ` Last night it ate your <b>${esc(nm(last.item))}</b>.`;
-  return `<div class="mystery slumpnote on">${svg('moon',18,2)} <span class="ntext"><b>A Slump is stuck to you.</b> It blocks boss hits, but every day you finish nothing it eats gold, then your stuff, then HP.${ate} Finish something ${SLUMP_BACK} days in a row to shake it off: <b>${Math.min(n, SLUMP_BACK)} of ${SLUMP_BACK}</b>${sl.todayActive ? ' (today counts)' : ''}.</span></div>`;
+  return `<div class="mystery slumpnote on">${svg('moon',18,2)} <span class="ntext"><b>Slump attached.</b>${ate} Finish something ${SLUMP_BACK} days in a row to lose it: <b>${Math.min(n, SLUMP_BACK)}/${SLUMP_BACK}</b>.</span></div>`;
 }
 function renderBattle(){
   const f = D.cur, b = f.boss, daysLeft = dayIdx(f.end) - dayIdx(D.today) + 1, C = D.C;
@@ -3661,13 +3660,13 @@ function renderBattle(){
   <div class="sec-h"><h2>Rites of passage</h2><span class="muted small">can't be bumped by holidays</span></div>
   <div class="list">${RITES.map(r => { const won = D.ritesWon.has(r.id), now = f.boss.id === r.id && f.status === 'now', reach = D.lv.level >= r.levels[0];
     return `<div class="tl"><span class="pill ${won ? 'won' : now ? 'rite' : 'next'}">${won ? 'Beaten' : now ? 'Now' : `Lv ${r.levels[0]}–${r.levels[1]}`}</span><span>${reach || won ? esc(r.name) : '???'}${r.final ? ' <b class="small">· Final boss</b>' : ''}</span><span class="small muted">${now ? `${f.rem} HP left` : ''}</span></div>`; }).join('')}</div>
-  <p class="how">These are the bosses you must face. When your level reaches a rite, it takes the next fight and stays, fight after fight, until you beat it. Damage you deal carries over, so every fight wears it down.</p>
+  
   ${past.length ? `<div class="sec-h"><h2>Past fights</h2></div><div class="list">${past.map(p => `<div class="tl"><span class="pill ${p.status==='won'?'won':'lost'}">${p.status==='won'?'Won':p.boss.rite?'Continues':'Escaped'}</span><span>${esc(p.boss.name)}</span><span class="small muted">${fmt(p.start)}</span></div>`).join('')}</div>` : ''}
-  <p class="how">Titans can poison or paralyze you if you miss two dailies in a day; potions cure it. If your HP hits 0 you faint, lose 10% of your gold and wake up at half HP. Your mood quietly helps too: a good streak makes tasks hit harder, and a bad one makes boss hits sting more.</p>` : `
-  <details class="howto"><summary>How skills work</summary><p class="how">You can have ${SKILL_SLOTS} skills equipped at a time, and only equipped skills can be used or leveled up. A newly learned skill drops into an empty slot for free; after that, equipping a skill costs ${SKILL_EQ_FEE} G and taking one off is free. Skills spend MP: every finished task adds ${MP_PER_TASK} MP, up to your max. Core skills always work; branch skills work when your build leans that way (2+ equipped items of one style). You never lose a skill you've learned.</p></details>
+  ` : `
+  <details class="howto"><summary>How skills work</summary><p class="how">${SKILL_SLOTS} slots · equipping costs ${SKILL_EQ_FEE} G</p></details>
   ${(() => { const L = buildLean(); return `<div class="leanline">${L ? `<span class="bdot" style="--bc:${STYLES[L.style].c}"></span> Build: <b>${STYLES[L.style].name}</b>${L.style === 'mon' ? ` <span class="small muted">(${L.pair.map(x => STYLES[x].name).join(' + ')} skills, +${Math.round(MON_TAX*100)}% MP)</span>` : ''}` : 'Build: <b>none yet</b> · equip 2+ items of one style'}</div>`; })()}
   <button class="card bagrow" data-plus="stats" data-gopts><span><b>Skill tree</b><span class="muted small" style="display:block">${D.points ? `${D.points} skill point${D.points===1?'':'s'} to spend` : 'Learn new skills and level up equipped ones'}</span></span><span class="bagopen">${D.points ? `<span class="ptsdot">${D.points}</span>` : ''}Open ›</span></button>
-  ${SKILLS.some(sk => D.skills[sk.id].l) ? skillCards() : `<p class="how">You haven’t learned any skills yet. Spend skill points in Stats to learn your first one.</p>`}`}`;
+  ${SKILLS.some(sk => D.skills[sk.id].l) ? skillCards() : `<p class="how">No skills yet. Learn one in the Skill tree.</p>`}`}`;
 }
 
 /* ---------- to-dos ---------- */
@@ -3698,7 +3697,7 @@ function renderTodo(){
   const tabs = `<div class="tdtabs" role="tablist" aria-label="Your lists">${vis.map(x => `<button role="tab" class="tdtab ${L && x.id === L.id ? 'on' : ''}" data-todolist="${esc(x.id)}" aria-selected="${!!(L && x.id === L.id)}">${esc(x.name)}</button>`).join('')}<button class="tdtab add" data-todoadd="__list" aria-label="New list">${svg('plus',22,2.2)}</button></div>`;
   const newList = todoAdd === '__list' ? `<form class="card addlist" data-addlist>
       <div class="seg wide" role="group" aria-label="List type"><button type="button" class="${newListKind !== 'plain' ? 'on' : ''}" data-newkind="pri" aria-pressed="${newListKind !== 'plain'}">To-do list</button><button type="button" class="${newListKind === 'plain' ? 'on' : ''}" data-newkind="plain" aria-pressed="${newListKind === 'plain'}">Simple list</button></div>
-      <p class="how small">${newListKind === 'plain' ? 'No priorities and no rewards: a plain checklist for things like groceries or packing.' : 'Priority groups, steps, and a bonus for finishing things.'}</p>
+      <p class="how small">${newListKind === 'plain' ? 'No priorities or rewards, like groceries.' : 'Priorities, steps and a finish bonus.'}</p>
       <div class="addrow"><input type="text" id="newList" maxlength="40" placeholder="${newListKind === 'plain' ? 'Groceries' : 'New list name, like Casa Ferg'}" aria-label="New list name"><button class="btn primary" type="submit">Create</button></div></form>` : '';
   if (L && L.kind === 'plain') return `${tabs}${newList}${plainList(L, vis)}`;
   if (!L) return `${tabs}${newList || `<p class="how">No lists yet. Tap + to make one.</p>`}`;
@@ -3732,7 +3731,7 @@ function renderTodo(){
   <div class="row between tdbar"><span class="row" style="gap:8px"><span class="count">${left} left</span>${todoEdit ? '<button class="btn primary sm" data-todoedit>Done editing</button>' : ''}</span><span class="row" style="gap:8px"><button class="iconbtn" data-todomenu aria-label="List options" aria-expanded="${todoMenu}">•••</button></span></div>
   ${menu}
   <div class="tdgroups">${groups}</div>
-  <p class="how">One-off things you don't want to forget. Drag the dots to change priority. Finished to-dos give a bonus (up to ${TODO_CAP} a day, for items added before today).</p>`;
+  `;
 }
 // a simple list: no priorities, no rewards; checked items sink to the bottom and can be cleared
 function plainList(L, vis){
@@ -3753,7 +3752,7 @@ function plainList(L, vis){
   ${menu}
   <form class="addrow plainadd" data-additem="${esc(L.id)}" data-pri="none"><input type="text" id="add-${esc(L.id)}" maxlength="80" placeholder="Add an item" aria-label="Add an item"><button class="btn primary" type="submit">Add</button></form>
   <div class="tdgroups"><div class="tdgroup" data-group="none"><div class="tdlist" data-group="none">${open.map(row).join('')}${S.settings.hideDone ? '' : done.map(row).join('')}</div></div></div>
-  <p class="how">A simple list: no priorities and no rewards. Checked items drop to the bottom; clear them from ••• when you're done.</p>`;
+  `;
 }
 /* ---------- shop ---------- */
 const SHOP_CATS = [['all','All'],['weapon','Hands'],['armor','Armor'],['rune','Runes'],['potion','Potions'],['hat','Hats'],['color','Patterns'],['bg','Scenes']];
@@ -3807,7 +3806,7 @@ function renderShop(){
   return `<div class="bignum"><b>${D.balance}</b><span>gold to spend</span></div>
   <button class="card bagrow" data-plus="inv"><span><b>Inventory</b><span class="muted small" style="display:block">Equip gear, drink potions and set runes (${D.activeRunes.length}/${RUNE_SLOTS} active)</span></span><span class="bagopen">Open ›</span></button>
   ${smogNote()}
-  ${D.tokens && !dismissed('tokens') ? notice('tokens', `You earned ${D.tokens} free rune${D.tokens===1?'':'s'} from a perfect week. Claim it in your inventory.`) : ''}
+  ${D.tokens && !dismissed('tokens') ? notice('tokens', `${D.tokens} free rune${D.tokens===1?'':'s'} in your inventory`) : ''}
   <div class="filters">
     <div class="catpills" role="group" aria-label="Item type">${SHOP_CATS.map(([v,l]) => `<button class="catpill ${shopCat===v?'on':''}" data-cat="${v}" aria-pressed="${shopCat===v}">${l}</button>`).join('')}</div>
     <div class="catpills fbar" role="group" aria-label="More filters">
@@ -3817,8 +3816,8 @@ function renderShop(){
       <button class="catpill ${shopAfford ? 'on' : ''}" data-shoptog="afford" aria-pressed="${shopAfford}" title="Only what you can buy right now">${shopAfford ? svg('check',14,3) + ' ' : ''}Can buy now</button>
     </div>
   </div>
-  ${items.length ? `<div class="shopgrid">${cards}</div>` : `<p class="how">Nothing here fits that filter yet. Keep finishing tasks to earn gold and levels.</p>`}
-  <p class="how">Potions and runes stack in your bag; use them from your inventory. Gear and looks are one of a kind: once you own one it greys out here, and you can sell it back for half what it cost. Gear and hats lean toward a play style: Warriors hit hard, Guardians soak hits, Rogues dodge and crit, and Casters build MP and skill damage. Novice gear fits anyone at level 1; then every style has sets at level 5 (Early), 15 (Mid), 30 (Late), 45 (Elite) and 80 (End, your prep for the final boss), each with a specialty piece for a different take on the build. Mix them however you like. Seasonal items only show up in the shop during their dates, and you keep them forever. Boss and Titan prizes never appear here; you get them by winning.</p>`;
+  ${items.length ? `<div class="shopgrid">${cards}</div>` : `<p class="how">Nothing fits that filter.</p>`}
+  `;
 }
 function itemArt(it, small){
   const isBg = it.kind === 'bg', isHat = it.kind === 'hat';
@@ -3849,7 +3848,7 @@ function renderInventory(){
   </div>
   <div class="slotgrid four">${[0,1,2].map(i => runes[i] ? slot(`Rune ${i+1}`, runes[i], null, '', `${runes[i].left}d left`) : slot(`Rune ${i+1}`, null, null, '◇')).join('')}${(() => { const lr = LRUNE_BY[gearAt(Date.now()).lrune];
     return `<button class="slot legend ${lr ? 'full' : ''}" ${lr ? `data-lrune="${lr.id}"` : 'disabled'} aria-label="Legendary rune: ${lr ? esc(lr.name) + ', tap to take off' : 'empty'}"><span class="slotart">${lr ? itemArt({...lr, kind:'lrune'}, true) : '<span class="slotempty">✦</span>'}</span><span class="slotl">Legendary</span><span class="slotn">${lr ? esc(lr.name.replace('Rune of the ', '')) : D.altar.got.length ? 'Empty' : 'Locked'}</span></button>`; })()}</div>
-  <p class="how">One item per hand, plus armor and a helmet. Warrior weapons take both hands, and Rogue weapons only pair with an off-hand blade (katars and claws can be bought twice, one for each hand). Up to ${RUNE_SLOTS} runes can be active at once, and each slot frees up when its rune runs out. The ✦ slot holds one legendary rune from the Rune Altar; they never run out and you can swap them any time.</p>`;
+  `;
   let list = '';
   const row = (it, sub, btn) => `<div class="invrow">${itemArt(it, true)}<span class="tbody"><span class="tname">${esc(it.name)}</span><span class="tmeta">${sub}</span></span><span class="invbtns">${btn}</span></div>`;
   if (invTab === 'gear'){
@@ -3857,23 +3856,23 @@ function renderInventory(){
     list = mine.map(x => { const it = {...x, gear:true}, eq = S.gear[x.slot] === x.id, ok = canWear(x, D.statLv);
       const block = !eq && x.slot === 'offhand' ? offhandBlock(S.gear.weapon, x.id) : '';
       return row(it, `${esc(SLOTS[x.slot])}${handTxt(x)}${x.style ? ' · ' + STYLES[x.style].name : ''} · ${esc(gearText(x))}${x.boss ? ' · prize' : ''}`, (block ? `<button class="btn sm" disabled>${(GEAR_BY[S.gear.weapon] || {}).hands === 2 ? 'Hands full' : 'Blades only'}</button>` : ok || eq ? `<button class="btn ${eq ? 'ghost' : 'primary'} sm" data-equipgear="${x.id}">${eq ? 'Take off' : 'Equip'}</button>` : `<button class="btn sm" disabled>Needs ${reqText({req: x.req})}</button>`) + sellBtn(x, eq)); }).join('');
-    if (!mine.length) list = `<p class="how">No gear yet. Buy weapons, shields and armor in the shop, or win them from Titans.</p>`;
+    if (!mine.length) list = `<p class="how">No gear yet.</p>`;
   } else if (invTab === 'potion'){
     const mine = POTIONS.filter(p => D.bag[p.id]);
     list = mine.map(p => { const ps = potionState(p); return row({...p, kind:'potion'}, `${D.bag[p.id]} in bag · ${esc(p.text)}`, `<button class="btn gold sm" data-usepot="${p.id}" ${ps.ok ? '' : 'disabled'}>${ps.ok ? 'Drink' : esc(ps.why)}</button>`); }).join('');
-    if (!mine.length) list = `<p class="how">Your bag has no potions. Buy them in the shop, then drink them here when you need them.</p>`;
+    if (!mine.length) list = `<p class="how">No potions.</p>`;
   } else if (invTab === 'rune'){
     const mine = RUNES.filter(r => D.bag[r.id]), eqL = gearAt(Date.now()).lrune;
     const legends = LEGEND_RUNES.filter(r => D.altar.got.includes(r.id)).map(r => row({...r, kind:'lrune'}, `Legendary · ${esc(r.text)} · never runs out`, `<button class="btn ${eqL === r.id ? 'ghost' : 'primary'} sm" data-lrune="${r.id}">${eqL === r.id ? 'Take off' : 'Equip'}</button>`)).join('');
     list = legends + (D.tokens ? `<div class="mystery">${svg('gift',18,2)} Perfect week! Pick a free rune for your bag:</div><div class="chips">${RUNES.filter(r => meetsReq(r, D.statLv)).map(r => `<button class="chip" data-runetoken="${r.id}">${esc(runeName(r))}</button>`).join('')}</div>` : '')
       + mine.map(r => { const rs = runeState(r); return row({...r, name: runeName(r), kind:'rune'}, `${D.bag[r.id]} in bag · ${esc(runeText(r))}`, `<button class="btn gold sm" data-userune="${r.id}" ${rs.canUse ? '' : 'disabled'}>${rs.canUse ? 'Activate' : esc(rs.why)}</button>`); }).join('');
-    if (!mine.length && !D.tokens) list = `<p class="how">Your bag has no runes. Buy them in the shop, then activate up to ${RUNE_SLOTS} at a time here.</p>`;
+    if (!mine.length && !D.tokens) list = `<p class="how">No runes.</p>`;
   } else {
     const kinds = invTab === 'hat' ? ['hat'] : ['bg','color'];
     const mine = ITEMS.filter(i => kinds.includes(i.kind) && owns(i.id));
     list = mine.map(i => { const eq = S.equip[i.kind] === i.id; const what = i.kind === 'hat' ? 'Helmet' : i.kind === 'bg' ? 'Scene' : 'Pattern';
       return row(i, `${what}${i.style ? ' · ' + STYLES[i.style].name : ''}${i.fx ? ' · ' + esc(fxText(i.fx)) : ''}${i.boss ? ' · prize' : i.season ? ` · ${esc(i.when)}` : ''}`, (i.kind === 'hat' ? `<button class="btn ${eq ? 'ghost' : 'primary'} sm" data-equip="${i.id}">${eq ? 'Take off' : 'Wear'}</button>` : `<button class="btn ${eq ? 'ghost' : 'primary'} sm" data-equip="${i.id}" ${eq ? 'disabled' : ''}>${eq ? 'In use' : 'Use'}</button>`) + sellBtn(i, eq)); }).join('');
-    if (!mine.length) list = `<p class="how">${invTab === 'hat' ? 'No hats yet. Buy them in the shop or win them from bosses.' : 'Nothing here yet.'}</p>`;
+    if (!mine.length) list = `<p class="how">${invTab === 'hat' ? 'No hats yet.' : 'Nothing here yet.'}</p>`;
   }
   return `${altarCard()}${chestCard()}<div class="sec-h"><h2>Equipped</h2></div>${eqHtml}
   <div class="catpills" role="group" aria-label="Inventory type">${INV_TABS.map(([v,l]) => `<button class="catpill ${invTab===v?'on':''}" data-invtab="${v}" aria-pressed="${invTab===v}">${l}${v==='potion' || v==='rune' ? ` <span class="small">${(v==='potion' ? POTIONS : RUNES).reduce((a,x) => a + (D.bag[x.id]||0), 0) || ''}</span>` : ''}</button>`).join('')}</div>
@@ -3912,7 +3911,7 @@ function openNextBoss(){
 const inLull = () => D.cur.status === 'won' && D.cur.wonTs && S.altarFrom && D.cur.wonTs >= S.altarFrom;
 function lullNote(){
   if (!inLull() || dismissed('lull')) return '';
-  return notice('lull', `<b>${esc(D.cur.boss.name)} is defeated!</b> Until the next boss arrives ${fmtDow(addDays(D.cur.end, 1))}, tasks and to-dos give a <b>Keystone</b> for the Rune Altar instead of XP, gold and MP.`);
+  return notice('lull', `<b>${esc(D.cur.boss.name)} is defeated!</b> Tasks give <b>Keystones</b> until ${fmtDow(addDays(D.cur.end, 1))}.`);
 }
 function altarCard(){
   const n = D.altar.keys.length; if (!n) return '';
@@ -3921,7 +3920,7 @@ function altarCard(){
 function altarPanel(){
   const n = D.altar.keys.length;
   return `<div class="card altarpanel"><canvas class="altarbig" width="32" height="32" aria-hidden="true"></canvas>
-    <div><b>The Rune Altar</b><p class="how">Until the next boss, every task and to-do you finish gives a Keystone (up to ${KEY_CAP} a day). Meditate with one for a 1 in 2,000 chance at a legendary rune, or a little gold, XP or MP.</p>
+    <div><b>The Rune Altar</b><p class="how">1 in 2,000 for a legendary rune.</p>
     ${n ? `<button class="btn gold" data-meditate>Meditate · ${n} Keystone${n === 1 ? '' : 's'}</button>` : `<span class="muted small">No Keystones yet. Finish a task to earn one.</span>`}
     ${D.altar.got.length ? `<p class="how">Legendary runes: ${D.altar.got.map(id => esc(LRUNE_BY[id].name)).join(', ')}</p>` : ''}</div></div>`;
 }
@@ -4095,10 +4094,10 @@ function renderFocus(){
       <div class="pstep"><span>Lo-fi music (focus &amp; breaks)</span><button class="ptog ${c.music ? 'on' : ''}" data-ptog="music" aria-pressed="${c.music}">${c.music ? 'On' : 'Off'}</button></div>
       <div class="pstep"><span>Timer chimes</span><button class="ptog ${c.sound ? 'on' : ''}" data-ptog="sound" aria-pressed="${c.sound}">${c.sound ? 'On' : 'Off'}</button></div>
       <div class="pstep"><span>Vibration</span><button class="ptog ${c.haptic ? 'on' : ''}" data-ptog="haptic" aria-pressed="${c.haptic}">${c.haptic ? 'On' : 'Off'}</button></div></div>
-    <p class="phow">Vibration works on Android phones; iPhones don't let web pages vibrate, so you'll get the sounds there.</p>
+    <p class="phow">Vibration is Android only.</p>
     ${running ? '<p class="phow">Stop the timer to change these.</p>' : ''}
     <h3>Legendary drops</h3>
-    <p class="phow">Every finished focus block of ${POMO_MIN}+ minutes rolls for treasure: a <b>1 in ${LEG_GEAR_ODDS.toLocaleString()}</b> chance at legendary gear (one per slot) and a <b>1 in ${LEG_PET_ODDS.toLocaleString()}</b> chance at a legendary pet. Up to ${POMO_ROLLS} rolls a day.</p>
+    <p class="phow">Gear 1 in ${LEG_GEAR_ODDS.toLocaleString()} · pet 1 in ${LEG_PET_ODDS.toLocaleString()} per ${POMO_MIN}+ min block.</p>
     <div class="leggrid">${coll}</div>
   </section>`}`;
 }
@@ -4165,7 +4164,7 @@ function renderSettings(){
   <div class="sec-h"><h2>New day starts at</h2></div>
   <div class="card" style="display:flex;flex-direction:column;gap:10px">
     <div class="chips">${[0,1,2,3,4,5].map(h => `<button class="chip ${ro===h?'on':''}" data-rollover="${h}" style="${ro===h?'background:var(--ink);color:var(--inv)':''}" aria-pressed="${ro===h}" ${rolloverLocked() && ro!==h ? 'disabled' : ''}>${h===0 ? 'Midnight' : h + ' AM'}</button>`).join('')}</div>
-    <p class="how">Night owl? Until this time, the app still counts it as the previous day, so late-night tasks land on the right day and the boss waits to strike.${rolloverLocked() ? ' <b>You can change this after 6 AM</b>, so the day can’t jump while it’s changing over.' : ''}</p>
+    <p class="how">Until this time, it still counts as the previous day.${rolloverLocked() ? ' <b>You can change this after 6 AM</b>, so the day can’t jump while it’s changing over.' : ''}</p>
   </div>
   ${PREVIEW ? `<div class="sec-h"><h2>Preview tools</h2></div><div class="card" style="display:flex;flex-direction:column;gap:10px"><p class="how">Only in this preview: test gold for trying purchases. The real app never has this.</p><button class="btn gold" data-testgold>Add 2000 test gold</button></div>` : ''}
   <div class="sec-h"><h2>Pet</h2></div>
@@ -4250,10 +4249,10 @@ function renderStatsPanel(){
   <div class="seg wide" role="tablist" aria-label="Stats or skills"><button role="tab" data-ssec="stats" class="${statsSec==='stats'?'on':''}" aria-selected="${statsSec==='stats'}">Stats</button><button role="tab" data-ssec="skills" class="${statsSec==='skills'?'on':''}" aria-selected="${statsSec==='skills'}">Skill tree${pts ? ` · ${pts}` : ''}</button></div>
   ${statsSec === 'skills' ? `
   <div class="sec-h" id="ptsH"><h2>Skill points</h2><span class="count">${pts} to spend</span></div>
-  <details class="howto"><summary>How the skill tree works</summary><p class="how">You earn 1 point every level. Spend a point to learn a new skill or make one stronger, then use your skills in Battle (they cost MP). You can only learn or raise a skill if your max MP covers its cost, and only equipped skills (${SKILL_SLOTS} at a time) can be leveled up. Some skills need stat levels to learn or certain gear equipped to use, so your build shapes what you can do.</p></details>
-  ${lean && lean.style === 'mon' ? `<div class="card leancard" style="--bc:${STYLES.mon.c}"><span class="bdot"></span><span><b>Master of None build</b><span class="small muted" style="display:block">You have 2 ${STYLES[lean.pair[0]].name} and 2 ${STYLES[lean.pair[1]].name} pieces on, so both branches' skills work in battle. They cost ${Math.round(MON_TAX*100)}% more MP, and you get neither class's build perk.</span></span></div>`
-    : `<p class="how">Wear 2 pieces each of two styles and you're a <b>Master of None</b>: both branches' skills work, for ${Math.round(MON_TAX*100)}% more MP and no class perks.</p>`}
-  ${lean && lean.style !== 'mon' ? `<div class="card leancard" style="--bc:${STYLES[lean.style].c}"><span class="bdot"></span><span><b>Your build leans ${STYLES[lean.style].name}</b><span class="small muted" style="display:block">${lean.n} of your equipped items are ${STYLES[lean.style].name} gear, so that branch's skills work in battle. Keep learning every branch: switch gear later and those skills are ready.</span></span></div>` : lean ? '' : `<p class="how">Equip two or more items of one style and your build will lean that way, so that branch's skills work in battle.</p>`}
+  <details class="howto"><summary>How the skill tree works</summary><p class="how">1 point per level.</p></details>
+  ${lean && lean.style === 'mon' ? `<div class="card leancard" style="--bc:${STYLES.mon.c}"><span class="bdot"></span><span><b>Master of None build</b><span class="small muted" style="display:block">Both branches work, +${Math.round(MON_TAX*100)}% MP cost, no class perk.</span></span></div>`
+    : `<p class="how"><b>Master of None</b> (2 + 2 styles): both branches, +${Math.round(MON_TAX*100)}% MP cost.</p>`}
+  ${lean && lean.style !== 'mon' ? `<div class="card leancard" style="--bc:${STYLES[lean.style].c}"><span class="bdot"></span><span><b>Your build leans ${STYLES[lean.style].name}</b><span class="small muted" style="display:block">${lean.n} ${STYLES[lean.style].name} pieces equipped: that branch's skills work.</span></span></div>` : lean ? '' : ``}
   <div class="tree">${skillRows}</div>
   <button class="btn" data-gobattle>Use skills in Battle ›</button>` : `
   <div class="card kv combat">
@@ -4267,7 +4266,7 @@ function renderStatsPanel(){
     ${D.fx.lean === 'rogue' ? `<b>Counterattack</b><span>${pctTxt(C.counter)} <span class="muted small">of dodged hits strike back for ${C.counterDmg}</span></span>` : ''}
   </div>
   <div class="list">${cards}</div>
-  <p class="how">The big number is the level you earned from tasks; the + is what your gear, runes and boost skills add right now. Combat uses both. Renaming a stat changes its label everywhere. What it powers stays the same.</p>`}`;
+  `}`;
 }
 
 let resetArmed = false, restoreArmed = false;
