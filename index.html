@@ -808,7 +808,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'a37e42865c';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'f365e9c185';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -4553,15 +4553,15 @@ function openEditor(t, roulette, fromPlus){
 // the editor's repeat choice, as one value: day / weekdays / weekends / custom / week / xday / xweek / xmonth
 function repeatOf(t){
   if (t.rep) return {day:'xday', week:'xweek', month:'xmonth'}[t.rep.unit];
-  if (t.cad === 'week') return 'week';
-  const d = (t.days || []).slice().sort().join('');
-  return d === '0123456' ? 'day' : d === '12345' ? 'weekdays' : d === '06' ? 'weekends' : 'custom';
+  return t.cad === 'week' ? 'week' : 'day';
 }
-const REPEAT_OPTS = [['day', 'Every day'], ['weekdays', 'Weekdays'], ['weekends', 'Weekends'], ['custom', 'Custom days'], ['week', 'Times per week'], ['xday', 'Every few days'], ['xweek', 'Every few weeks'], ['xmonth', 'Every few months']];
+// how often: Daily (which days lives in the Days row), Times per week, or every few days / weeks / months
+const REPEAT_OPTS = [['day', 'Daily'], ['week', 'Times per week'], ['xday', 'Every few days'], ['xweek', 'Every few weeks'], ['xmonth', 'Every few months']];
+const DAY_PRESETS = [['all', 'Every day', [0,1,2,3,4,5,6]], ['wkd', 'Weekdays', [1,2,3,4,5]], ['wke', 'Weekends', [0,6]]];
 function repeatLabel(t){ const v = repeatOf(t), u = t.rep && t.rep.unit, n = t.rep && t.rep.every;
   if (u) return n === 1 ? `Every ${u}` : `Every ${n} ${u}s`;
   return REPEAT_OPTS.find(o => o[0] === v)[1]; }
-const daysLabel = days => days.length >= 7 ? 'Every day' : DOW_ORDER.filter(d => days.includes(d)).map(d => DOW[d]).join(', ');
+const daysLabel = days => { const key = days.slice().sort().join(''), pr = DAY_PRESETS.find(p => p[2].join('') === key); return pr ? pr[1] : DOW_ORDER.filter(d => days.includes(d)).map(d => DOW[d]).join(', '); };
 function setRepeat(v){
   const unit = {xday:'day', xweek:'week', xmonth:'month'}[v];
   if (unit){ draft.cad = 'day'; const old = draft.rep && draft.rep.unit === unit ? draft.rep : null;
@@ -4572,9 +4572,6 @@ function setRepeat(v){
   draft.rep = null;
   if (v === 'week'){ draft.cad = 'week'; return; }
   draft.cad = 'day';
-  if (v === 'day') draft.days = [0,1,2,3,4,5,6];
-  if (v === 'weekdays') draft.days = [1,2,3,4,5];
-  if (v === 'weekends') draft.days = [0,6];
 }
 // a tappable editor row: label on the left, value on the right, opens a floating picker
 const edRow = (pk, label, val, icon) => `<button type="button" class="edrow" data-pk="${pk}"><span>${label}</span><span class="edval">${icon ? svg(icon, 15, 2.2) : ''}<span>${val}</span></span></button>`;
@@ -4689,8 +4686,9 @@ function pickOpts(key){
   if (ns === 't' && draft){ const t = draft;
     if (k === 'stat') return {title: 'Trains: pick 1 or 2, first is main', multi: true, opts: SK.map(s2 => pkOpt(s2, STATS[s2].name, t.stats.includes(s2), s2, {sub: t.stats[0] === s2 && t.stats.length > 1 ? '★ Main' : ''}))};
     if (k === 'tod') return {title: 'Time of day', opts: TODS.map(g => pkOpt(g.k, g.label, (t.tod || 'any') === g.k, g.icon))};
-    if (k === 'repeat'){ const rv = repeatOf(t); return {title: 'Repeat', opts: [...REPEAT_OPTS.slice(0, 4).map(([v, l]) => pkOpt(v, l, rv === v)), {h: 'Habit'}, pkOpt('week', 'Times per week', rv === 'week', null, {sub: 'Lives on the Habits tab'}), {h: 'Every few'}, ...REPEAT_OPTS.slice(5).map(([v, l]) => pkOpt(v, l.replace('Every few ', '').replace(/^./, m => m.toUpperCase()), rv === v))]}; }
-    if (k === 'days') return {title: t.rep ? 'Day of the week' : 'Days it shows up', multi: true, opts: DOW_ORDER.map(d => pkOpt(d, ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d], t.days.includes(d)))};
+    if (k === 'repeat'){ const rv = repeatOf(t); return {title: 'Repeat', opts: [pkOpt('day', 'Daily', rv === 'day', null, {sub: 'Pick which days under Days'}), {h: 'Habit'}, pkOpt('week', 'Times per week', rv === 'week', null, {sub: 'Lives on the Habits tab'}), {h: 'Every few'}, ...REPEAT_OPTS.slice(2).map(([v, l]) => pkOpt(v, l.replace('Every few ', '').replace(/^./, m => m.toUpperCase()), rv === v))]}; }
+    if (k === 'days'){ const key = t.days.slice().sort().join('');
+      return {title: t.rep ? 'Day of the week' : 'Days it shows up', multi: true, opts: [...(t.rep ? [] : DAY_PRESETS.map(([v, l, ds]) => pkOpt(v, l, ds.join('') === key))), ...(t.rep ? [] : [{h: 'Or pick days'}]), ...DOW_ORDER.map(d => pkOpt(d, ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d], t.days.includes(d)))]}; }
     if (k === 'target') return {title: 'Weekly goal', opts: [1,2,3,4,5,6,7].map(n => pkOpt(n, `${n}× a week`, (t.target || 1) === n))};
     if (k === 'bonus') return {title: 'Bonus goal', opts: [pkOpt(0, 'None', !t.bonus), ...[1,2,3,4,5,6,7].filter(n => n > (t.target || 1)).map(n => pkOpt(n, `${n}× a week`, t.bonus === n))]};
     if (k === 'every' && t.rep){ const u = t.rep.unit, mx = REP_MAX[u]; let ns2 = u === 'day' ? [...Array(30)].map((_, i) => i + 1).concat([45, 60, 90, 120, 180, 365]) : [...Array(mx)].map((_, i) => i + 1);
@@ -4739,7 +4737,7 @@ function applyPick(key, v){
   if (ns === 'd' && tdraft){ readTodoFields(); if (k === 'list' && S.todos.lists.some(x => x.id === v)) tdraft.toLid = v; if (k === 'pri' && PRI.some(p => p[0] === v)) tdraft.pri = v; closePick(); renderTodoEditor(); return; }
   if (ns === 't' && draft){
     if (k === 'stat'){ runAction({stat: v}); renderPick(); return; }   // pick up to two, so it stays open
-    if (k === 'days'){ runAction({day: v}); renderPick(); return; }
+    if (k === 'days'){ const pr = DAY_PRESETS.find(p => p[0] === v); if (pr){ readEditorFields(); draft.days = pr[2].slice(); renderEditor(); } else runAction({day: v}); renderPick(); return; }
     if (k === 'icon'){ runAction({ticon: v}); closePick(); return; }
     if (k === 'tod'){ closePick(); runAction({ttod: v}); return; }
     readEditorFields();
@@ -4749,7 +4747,6 @@ function applyPick(key, v){
     if (k === 'every' && draft.rep) draft.rep.every = clamp(parseInt(v) || 1, 1, REP_MAX[draft.rep.unit]);
     if (k === 'dom' && draft.rep) draft.rep.dom = v === 'last' ? 'last' : clamp(parseInt(v) || 1, 1, 31);
     closePick(); renderEditor();
-    if (k === 'repeat' && v === 'custom'){ const el = document.querySelector('[data-pk="t.days"]'); if (el) openPick('t.days', el); }
   }
 }
 function quickAct(act){
@@ -4757,7 +4754,7 @@ function quickAct(act){
   if (c.kind === 't'){ const t = S.tasks.find(x => x.id === c.id); if (!t) return closeQuick();
     if (act === 'edit'){ closeQuick(); openEditor(t); return; }
     if (act === 'copy'){ closeQuick(); openEditor(t); runAction({copytask: ''}); return; }
-    if (act === 'del'){ if (!c.del){ c.del = true; renderQuick(); return; } closeQuick(); const stays = !done(D.today, t.id) && isDue(t, D.today) && schedAt(t, D.today).cad === 'day'; draft = clone(t); runAction({archive: '1', confirmed: '1'}); toast(stays ? `Deleted ${t.name}. It stays on today's list until tonight so it can't skip a daily.` : `Deleted ${t.name}`); return; } }
+    if (act === 'del'){ if (!c.del){ c.del = true; renderQuick(); return; } closeQuick(); draft = clone(t); runAction({archive: '1', confirmed: '1'}); toast(`Deleted ${t.name}`); return; } }
   if (c.kind === 'd'){ const {L, it} = todoFind(c.lid, c.iid); if (!it) return closeQuick();
     if (act === 'edit'){ closeQuick(); openTodoEditor(L.id, it.id); return; }
     if (act === 'copy'){ closeQuick(); openTodoEditor(L.id, it.id, true); return; }
@@ -5118,7 +5115,8 @@ function onClick(e){
     renderEditor(); return; }
   if (el.dataset.day !== undefined && draft){ readEditorFields(); const d = +el.dataset.day, i = draft.days.indexOf(d); if (i >= 0){ if (draft.days.length > 1) draft.days.splice(i,1); } else draft.days.push(d); renderEditor(); return; }
   if ('archive' in el.dataset && !el.dataset.confirmed && !archArm){ archArm = true; el.innerHTML = `${svg('trash',16,2.2)} Tap again to delete`; return; }
-  if ('archive' in el.dataset){ const t = S.tasks.find(t => t.id === draft.id); if (t){ t.archived = true; (t.off || (t.off = [])).push([addDays(D.today,1), null]); save(); } closeEditor(); render(); return; }
+  // deleting takes the task off today's list right away; one already finished today keeps today's credit
+  if ('archive' in el.dataset){ const t = S.tasks.find(t => t.id === draft.id); if (t){ t.archived = true; (t.off || (t.off = [])).push([done(D.today, t.id) ? addDays(D.today,1) : D.today, null]); save(); } closeEditor(); render(); return; }
   // a copy starts as a brand-new task with the same settings and steps; nothing is saved until you press Save
   if ('copytask' in el.dataset){
     readEditorFields();
