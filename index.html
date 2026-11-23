@@ -660,6 +660,8 @@ html[data-mode="dark"] .pill.rite{background:#f1eee4;color:#171614}
 .mystery.tmnote{background:var(--pink)}
 .mystery.tmnote .ntext{flex:1 1 calc(100% - 34px)}
 .pkcustom{display:flex;gap:6px;padding:4px 4px 6px}
+.qminfo{color:var(--ink);font-weight:600}
+.qminfo + *:not(:empty), .qminfo:not(:last-child){margin-bottom:6px}
 .pkswatch{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;padding:2px 6px 8px}
 .pkswatch button{aspect-ratio:1;border:0;border-radius:50%;cursor:pointer}
 .pkswatch button.on{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--ink)}
@@ -841,7 +843,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '55af85e4cf';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '5261de800a';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -3407,19 +3409,21 @@ function timerNext(tm, now){ if (tm.done) return null; const el = now - tm.start
   if (m) return {m, at: tm.start + m * DAY_MS, goal: false};
   return tm.goal ? {m: tm.goal, at: tm.start + tm.goal * DAY_MS, goal: true} : null; }
 const daysIn = ms => { const d = Math.ceil(ms / DAY_MS); return d <= 1 ? (ms < 3600000 ? `${Math.max(1, Math.ceil(ms / 60000))} min` : `${Math.ceil(ms / 3600000)} h`) : `${d} days`; };
+// what's next for a timer, shown in its tap menu: the next milestone or goal, or when the goal was reached
+function timerInfo(tm){
+  const now = Date.now(), nx = timerNext(tm, now), won = tm.won && tm.won.length ? `${tm.won[tm.won.length - 1].goal}-day goal ✓ · ` : '';
+  if (tm.done) return `Goal reached ${fmt(calKey(tm.done))}`;
+  if (nx){ const r = nx.goal ? timerReward(tm.goal, D.lv.level, true) : timerReward(tm.every, D.lv.level); return `${won}${nx.goal ? 'Goal' : 'Next'}: day ${nx.m} in ${daysIn(nx.at - now)} · +${r.xp} XP, +${r.g} G`; }
+  return won + 'Counting up';
+}
 function timerRow(tm){
   const now = Date.now(), end = tm.done || now, el = end - tm.start, nx = timerNext(tm, now);
   const pct = tm.goal ? Math.min(100, 100 * el / (tm.goal * DAY_MS)) : 0;
-  let meta;
-  const wonTxt = tm.won && tm.won.length ? `${tm.won[tm.won.length - 1].goal}-day goal ✓ · ` : '';
-  if (tm.done) meta = `Goal reached ${fmt(calKey(tm.done))}`;
-  else if (nx){ const r = nx.goal ? timerReward(tm.goal, D.lv.level, true) : timerReward(tm.every, D.lv.level); meta = `${wonTxt}${nx.goal ? 'Goal' : 'Next'}: day ${nx.m} in ${daysIn(nx.at - now)} · +${r.xp} XP`; }
-  else meta = wonTxt + 'Counting up';
   const ask = tm.done && !tm.finished;
   const icon = tm.icon ? (tm.icon.startsWith('e:') ? `<span class="temoji" aria-hidden="true">${esc(tm.icon.slice(2))}</span>` : svg(tm.icon, 17, 2)) : svg('timer', 17, 2);
   return `<div class="trow tmrow ${tm.done ? 'tmdone' : ''}" data-qm="m|${esc(tm.id)}" ${nx ? `data-tnext="${nx.at}"` : ''}>
     <span class="ticon" style="background:${tm.color || 'var(--pink)'}">${icon}</span>
-    <span class="tbody"><span class="tname">${esc(tm.name)}${tm.note ? ` <span class="notedot" aria-label="Has notes">${svg('note',12,2.2)}</span>` : ''}</span><span class="tmeta">${meta}</span></span>
+    <span class="tbody"><span class="tname">${esc(tm.name)}${tm.note ? ` <span class="notedot" aria-label="Has notes">${svg('note',12,2.2)}</span>` : ''}</span></span>
     <span class="tmbadge" aria-hidden="true">${tm.done ? svg('check', 14, 3) : ''}</span>
     <div class="tmclock" data-tstart="${tm.start}" data-tend="${tm.done || 0}">${clockHTML(el)}</div>
     ${tm.goal ? `<div class="wk tmwk">${bar(pct, tm.color || 'var(--pink)')}<span class="wkn"><b>${Math.floor(Math.min(el, tm.goal * DAY_MS) / DAY_MS)}</b> of ${tm.goal} days</span></div>` : ''}
@@ -4797,7 +4801,7 @@ function renderQuick(){
   if (qmCtx.kind === 't'){ const t = S.tasks.find(x => x.id === qmCtx.id);
     html = qmTop(t.name, t.note) + `${item('copy', 'copy', 'Make a copy')}${item('edit', 'pencil', 'Edit task')}${item('del', 'trash', qmCtx.del ? 'Tap again to delete' : 'Delete task', 'danger')}`; }
   else if (qmCtx.kind === 'm'){ const tm = timersLive().find(x => x.id === qmCtx.id), cost = Math.min(TIMER_RESET_G, Math.max(0, D.balance));
-    html = qmTop(tm.name, tm.note) + item('edit', 'pencil', 'Edit timer') + (tm.done ? item('again', 'reroll', 'Start again') : item('reset', 'reroll', qmCtx.reset ? `Tap again to reset: −${Math.ceil(D.C.maxHP * TIMER_RESET_HP)} HP, −${cost} G` : 'Reset timer', qmCtx.reset ? 'danger' : '')) + item('del', 'trash', qmCtx.del ? 'Tap again to delete' : 'Delete timer', 'danger'); }
+    html = qmTop(tm.name, tm.note, timerInfo(tm)) + item('edit', 'pencil', 'Edit timer') + (tm.done ? item('again', 'reroll', 'Start again') : item('reset', 'reroll', qmCtx.reset ? `Tap again to reset: −${Math.ceil(D.C.maxHP * TIMER_RESET_HP)} HP, −${cost} G` : 'Reset timer', qmCtx.reset ? 'danger' : '')) + item('del', 'trash', qmCtx.del ? 'Tap again to delete' : 'Delete timer', 'danger'); }
   else { const {L, it} = todoFind(qmCtx.lid, qmCtx.iid), plain = L.kind === 'plain';
     html = qmTop(it.text, it.note) + `${item('copy', 'copy', 'Make a copy')}${moveTargets(L, it).length ? item('move', 'move', 'Move to list') : ''}${item('edit', 'pencil', plain ? 'Edit item' : 'Edit to-do')}`
       + (todoDeletable(L, it) ? item('del', 'trash', qmCtx.del ? 'Tap again to delete' : (plain ? 'Delete item' : 'Delete to-do'), 'danger') : ''); }
@@ -4806,7 +4810,7 @@ function renderQuick(){
 }
 let qmHideT = 0;
 // the name on top; a note, if there is one, sits between two dividers above the actions
-const qmTop = (name, note) => `<div class="qmhead">${esc(name)}</div>` + (note && note.trim() ? `<div class="qmnote">${esc(note.trim())}</div>` : '');
+const qmTop = (name, note, info) => `<div class="qmhead">${esc(name)}</div>` + ((note && note.trim()) || info ? `<div class="qmnote">${info ? `<div class="qminfo">${esc(info)}</div>` : ''}${note && note.trim() ? esc(note.trim()) : ''}</div>` : '');
 function closeQuick(){ qmCtx = null; const qm = document.getElementById('qm'); if (qm.hidden) return;
   qm.classList.add('closing'); clearTimeout(qmHideT); qmHideT = setTimeout(() => { if (!qmCtx) qm.hidden = true; qm.classList.remove('closing'); }, 190); }
 const moveTargets = (L, it) => S.todos.lists.filter(x => !x.hidden && x.id !== L.id && !(it.doneOn && (x.kind === 'plain') !== (L.kind === 'plain')));
