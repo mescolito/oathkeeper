@@ -928,7 +928,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'd0fb187015';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '414ce97789';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1332,6 +1332,28 @@ const RITES = [
   {id:'leviathan', name:'Leviathan, the Last Tide', levels:[95,100], weak:SK.slice(), shape:'leviathan', rite:true, final:true, atk:25, status:'poison', beaten:'The last tide breaks against you and pulls back for good. Every oath kept.', flavor:'The tide that swallows every habit you ever built. Too big to see all at once. The final boss.', drop:'abysscrown'}
 ];
 const ALL_BOSSES = [...BOSSES, ...TITANS, ...SEASONAL, ...RITES];
+/* Mini-bosses: after a boss is beaten early, each day that starts with no boss or mini-boss live has a 1 in 5 chance of one.
+   They take about 1-3 days of tasks to beat (scaled to your level), don't attack, and stop Keystones while they're around.
+   A win pays a little gold and XP plus 3 Keystones or 3 Focus chests. If the next boss arrives first, the mini-boss runs off.
+   Only days after miniFrom (stamped the first time this build runs) can roll one, so the past never changes. */
+const MINI_ODDS = 0.2, MINI_CHEST0 = 10000000000;
+const MINIS = [
+  {id:'tabgob',  name:'Tab Goblin',        days:1, weak:['HRT','MOB'], shape:'tabgob',  flavor:'Opens one more tab every time you look away.', beaten:'Every tab closed. It scurries off clutching a single bookmark.'},
+  {id:'scroll',  name:'Doomscroll Imp',    days:1, weak:['HRT','STA'], shape:'imp',     flavor:'Keeps your thumb flicking. Just one more post.', beaten:'Its phone hits 1%. It flaps off to find a charger.'},
+  {id:'drudge',  name:'Drudge Goblin',     days:1, weak:['HRT','MGT'], shape:'goblin',  flavor:'Hands you the same chore again and calls it a plan.', beaten:'It drops its little pile of busywork and runs.'},
+  {id:'snooze',  name:'Snooze Kobold',     days:2, weak:['STA','HRT'], shape:'kobold',  flavor:'Hits snooze for you. Nine times.', beaten:'Wide awake now. It shuffles off in its nightcap, yawning.'},
+  {id:'humdrum', name:'Humdrum Hobgoblin', days:2, weak:['MOB','HRT'], shape:'hobgob',  flavor:'Hums one flat note until every day sounds the same.', beaten:'It loses the tune and wanders off, muttering.'},
+  {id:'fogre',   name:'Brain-Fog Ogre',    days:2, weak:['ARM','HRT'], shape:'ogre',    flavor:'Breathes a grey haze that makes simple things feel heavy.', beaten:'The haze lifts. It lumbers off coughing up the last of the fog.'},
+  {id:'tedium',  name:'Tedium Troll',      days:3, weak:['MGT','HRT'], shape:'troll',   flavor:'Squats on the bridge between you and anything interesting.', beaten:'Off the bridge at last. It sulks back under it.'},
+  {id:'rut',     name:'Rut Troll',         days:3, weak:['STA','ARM'], shape:'ruttroll',flavor:'Digs the same groove deeper every day and dares you to climb out.', beaten:'You climbed out. It keeps digging somewhere else.'}
+];
+const MINI_BY = Object.fromEntries(MINIS.map(m => [m.id, m]));
+const miniHp = (m, lvl) => m.days * (125 + 9 * (lvl - 1));
+const miniGold = (m, lvl) => 10 * m.days + lvl;
+const miniXp = (m, lvl) => 15 * m.days + lvl;
+const miniPrize = from => roll('miniprize|' + from) < 0.5 ? 'keys' : 'chests';
+const miniChestIds = from => [1, 2, 3].map(n => MINI_CHEST0 + dayIdx(from) * 10 + n);
+const miniPick = (d, prev) => { const pool = MINIS.filter(m => m.id !== prev); return pool[hash('minipick|' + d) % pool.length]; };
 // once your level reaches a rite, it's your boss every fight until you beat it (its HP carries over between fights)
 // rites only take fights that start on or after the day they were added, so a fight already under way never changes
 const RITES_FROM = '2026-11-18';
@@ -1447,6 +1469,13 @@ function pomoDrops(){
     const left = LEGENDARY_GEAR.filter(id => !got.includes(id));
     if (left.length && u32('leg|' + p.ts) < 1 / LEG_GEAR_ODDS){ const id = left[hash('legpick|' + p.ts) % left.length]; got.push(id); rolls.push({ts:p.ts, id}); }
     if (!got.includes(LEGENDARY_PET) && u32('pet|' + p.ts) < 1 / LEG_PET_ODDS){ got.push(LEGENDARY_PET); rolls.push({ts:p.ts, id:LEGENDARY_PET}); }
+  }
+  // Focus chests won from mini-bosses (their ids are 11 digits, never a session time): opened ones roll the same way
+  for (const [k, at] of Object.entries(S.fchests || {}).filter(([k]) => k.length === 11).sort((a, b) => a[1] - b[1])){
+    const ts = +k; if (keptTs.has(ts) || at > Date.now()) continue;
+    const left = LEGENDARY_GEAR.filter(id => !got.includes(id));
+    if (left.length && u32('leg|' + ts) < 1 / LEG_GEAR_ODDS){ const id = left[hash('legpick|' + ts) % left.length]; got.push(id); rolls.push({ts, id}); }
+    if (!got.includes(LEGENDARY_PET) && u32('pet|' + ts) < 1 / LEG_PET_ODDS){ got.push(LEGENDARY_PET); rolls.push({ts, id:LEGENDARY_PET}); }
   }
   return {got, chests, rolls: [...Object.entries(L).map(([id, ts]) => ({ts, id, kept: true})), ...rolls], counted: Object.values(perDay).reduce((a,n) => a + Math.min(n, POMO_ROLLS), 0)};
 }
@@ -1617,6 +1646,8 @@ function sanitize(s, created){
   if (isDate(s.smogFrom)) out.smogFrom = s.smogFrom; else delete out.smogFrom;
   if (isDate(s.sirenFrom)) out.sirenFrom = s.sirenFrom; else delete out.sirenFrom;
   if (isDate(s.bossFrom)) out.bossFrom = s.bossFrom; else delete out.bossFrom;
+  if (isDate(s.miniFrom)) out.miniFrom = s.miniFrom; else delete out.miniFrom;
+  out.miniLog = {}; if (obj(s.miniLog)) for (const [d, r] of Object.entries(s.miniLog)) if (isDate(d) && obj(r) && MINI_BY[r.id] && isDate(r.on)) out.miniLog[d] = {id: r.id, lvl: int(r.lvl, 1, 999, 1), hp: int(r.hp, 1, 100000, 1), dmg: int(r.dmg, 0, 1000000, 0), status: r.status === 'won' ? 'won' : 'fled', on: r.on, ts: Number.isFinite(Number(r.ts)) ? Number(r.ts) : 0, g: int(r.g, 0, 100000, 0), xp: int(r.xp, 0, 100000, 0), prize: r.prize === 'chests' ? 'chests' : 'keys'};
   out.siren = (Array.isArray(s.siren) ? s.siren : []).filter(x => obj(x) && isDate(x.wk)).map(x => { const o = {wk: x.wk, day: isDate(x.day) ? x.day : x.wk};
     if (num(x.declined, 0)) o.declined = num(x.declined, 0);
     else if (num(x.drawn, 0)){ o.drawn = num(x.drawn, 0); o.res = x.res === 'bless' ? 'bless' : 'curse'; o.kind = x.kind === 'todo' ? 'todo' : 'daily'; if (typeof x.tid === 'string') o.tid = str(x.tid, 40); if (typeof x.lid === 'string') o.lid = str(x.lid, 40); if (typeof x.iid === 'string') o.iid = str(x.iid, 40); if (typeof x.name === 'string') o.name = str(x.name, 80); }
@@ -1991,6 +2022,8 @@ function derive(){
   // opened Focus chests that weren't legendary pay their small prize the moment they're opened
   const legTs = new Set(pomoInfo.rolls.map(r => r.ts));
   for (const [ts, at] of Object.entries(S.fchests || {})){ if (legTs.has(+ts)) continue; const pz = chestPrize(+ts); if (pz.kind !== 'potion' && at <= Date.now()) add(todayKeyAt(at), {k:'fchest', ts: at, pz}); }
+  // a mini-boss win that's already settled pays out at the moment it happened
+  for (const [from, r] of Object.entries(S.miniLog || {})) if (r.status === 'won' && r.ts) add(r.on, {k:'minikill', ts: r.ts, from});
   // the bag: what you bought minus what you used
   const bag = Object.create(null);
   for (const b of S.bag) bag[b.id] = (bag[b.id] || 0) + 1;
@@ -2002,6 +2035,7 @@ function derive(){
   const todoPaid = new Set();
   const partial = {}, todoDone = Object.create(null); for (const L of S.todos.lists) if (L.kind !== 'plain') for (const it of L.items) if (it.doneOn) todoDone[it.id] = it.doneOn;
   const freezeBefore = cycleOf(yest), newResults = {}, newFaints = {};
+  let mini = null; const minis = [], newMinis = {}, miniChests = [];   // mini-bosses (see MINIS)
   // weekly-goal XP lands the moment a goal is hit, so the level here matches the level you see
   let chestXp = 0, chestG = 0; const chestGot = Object.create(null);   // chestG: weekly-chest gold so far (paid for real after the loop)
   const lvlNow = () => levelInfo(xp + chestXp).level;
@@ -2046,6 +2080,9 @@ function derive(){
     F.rem -= dmg;
     if (F.rem <= 0){ F.rem = 0; F.wonOn = d; F.wonTs = ts || 0; gold += BOSS_REWARD(F.boss); drops.add(F.boss.drop); if (F.boss.drop2) drops.add(F.boss.drop2); }
   };
+  const miniLive = ts => !!(mini && !mini.fledOn && (mini.frozen ? !(mini.frozen.status === 'won' && ts > mini.frozen.ts) : !mini.wonOn));
+  const miniPay = (M, d, ts) => { gold += M.g; xp += M.xp; if (M.prize === 'keys') for (let n = 1; n <= 3; n++) keysAll.push({key: M.from + '|mini' + n, ts, d}); else miniChests.push(...miniChestIds(M.from)); };
+  const hitMini = (key, dmg, d, ts) => { const M = mini; M.dmg += dmg; M.hits[key] = (M.hits[key] || 0) + dmg; if (M.frozen || M.wonOn) return false; M.rem -= dmg; if (M.rem <= 0){ M.rem = 0; M.wonOn = d; M.wonTs = ts || 0; miniPay(M, d, ts); return true; } return false; };
   for (let d = start; d <= today; d = addDays(d,1)){
     const c = cycleOf(d);
     if (!cyc[c]){
@@ -2061,6 +2098,18 @@ function derive(){
     }
     const F = cyc[c];
     const bossAlive = () => F.frozen ? !(F.frozen.status === 'won' && F.frozen.wonOn && d >= F.frozen.wonOn) : !F.wonOn;
+    // mini-bosses: one still around when the next boss arrives runs off; then, on a day that starts with no boss or mini-boss, 1 in 5 that one shows up
+    if (mini && mini.c !== c){ if (!mini.wonOn && !(mini.frozen && mini.frozen.status === 'won')) mini.fledOn = d; mini = null; }
+    if (mini && (mini.wonOn ? mini.wonOn < d : mini.frozen && mini.frozen.status === 'won' && mini.frozen.on < d)) mini = null;
+    const bossGone = F.frozen ? !!(F.frozen.status === 'won' && F.frozen.wonOn && F.frozen.wonOn < d) : !!(F.wonOn && F.wonOn < d);
+    if (!mini && bossGone && S.miniFrom && d > S.miniFrom && d >= combatFrom){
+      const rec = (S.miniLog || {})[d];
+      if (rec || (!innOnD(d) && roll('mini|' + d) < MINI_ODDS)){
+        const prev = minis.length ? minis[minis.length - 1].m.id : null, m = rec ? MINI_BY[rec.id] : miniPick(d, prev), mlv = rec ? rec.lvl : lvlNow(), mhp = rec ? rec.hp : miniHp(m, mlv);
+        mini = {from: d, m, c, lvl: mlv, hp: mhp, rem: rec ? (rec.status === 'won' ? 0 : Math.max(0, mhp - rec.dmg)) : mhp, dmg: 0, hits: {}, wonOn: null, wonTs: 0, fledOn: null, frozen: rec || null, prize: rec ? rec.prize : miniPrize(d), g: rec ? rec.g : miniGold(m, mlv), xp: rec ? rec.xp : miniXp(m, mlv), flees: cycleStart(c + 1)};
+        minis.push(mini);
+      }
+    }
     let C = combatOf(statLvNow(), lvlNow(), fxAt(parseKey(d).getTime(), d));
     if (hp === null){ hp = C.maxHP; mp = Math.round(C.maxMP / 2); }
     const live = d >= combatFrom;
@@ -2087,17 +2136,18 @@ function derive(){
         const t = T[e.tid]; if (!t) continue;
         const sn = (S.snap[d]||{})[e.tid];
         const stats = sn ? sn.s : statsFor(t, d), prim = stats[0];
-        const r = sn ? {xp:sn.xp, gold:sn.g} : rewardOf(t), lull = lullAt(F, e.ts);
+        const r = sn ? {xp:sn.xp, gold:sn.g} : rewardOf(t), lull = lullAt(F, e.ts) && !miniLive(e.ts);
         if (lull) giveKey(d, d + '|' + e.tid, e.ts);
         const sirX = sirenBlessed(e.tid, d, e.ts) ? SIREN_MUL : 1;
         if (!lull){ xp += Math.round(r.xp * (1 + fx.xp) * boost * sirX); gold += Math.round(r.gold * (1 + fx.gold) * boost * sirX); }
         const sl = statLvNow(); C = combatOf(sl, lvlNow(), fx);
-        if (bossAlive() && !innAtD(d, e.ts)){
-          const weak = stats.some(x => F.boss.weak.includes(x));
+        const foe = bossAlive() ? F.boss : miniLive(e.ts) ? mini.m : null;
+        if (foe && !innAtD(d, e.ts)){
+          const weak = stats.some(x => foe.weak.includes(x));
           let dmg = (10 + 2*(live ? sl[prim] + (fx.st[prim]||0) : sl[prim]) + (live ? C.atk : (fx.flat||0))) * (weak ? 2 : 1) * (1 + fx.all + (fx.pct[prim]||0)) * boost;
           if (live && roll('crit|' + d + '|' + e.tid) < C.crit) dmg *= C.critX;
           if (statusOn('para', d)) dmg *= 0.5;
-          hitBoss(F, d, e.tid, Math.round(dmg), e.ts);
+          if (foe === F.boss) hitBoss(F, d, e.tid, Math.round(dmg), e.ts); else hitMini(e.tid, Math.round(dmg), d, e.ts);
         }
         stats.forEach((x,i) => stat[x] += Math.round((i===0 ? 10 : 5) * (1 + (fx.sxp[x]||0)) * sirX));
         C = combatOf(statLvNow(), lvlNow(), fx);
@@ -2111,10 +2161,12 @@ function derive(){
         if (e.pz.kind === 'gold') gold += e.pz.n; else if (e.pz.kind === 'xp'){ xp += e.pz.n; lvUp(fx); } else { C = combatOf(statLvNow(), lvlNow(), fx); mp = Math.min(C.maxMP, mp + e.pz.n); }
       } else if (e.k === 'fchest'){
         if (e.pz.kind === 'gold') gold += e.pz.n; else { xp += e.pz.n; lvUp(fx); }
+      } else if (e.k === 'minikill'){
+        if (mini && mini.frozen && mini.from === e.from){ miniPay(mini, d, e.ts); lvUp(fx); }
       } else if (e.k === 'todo'){
         // only to-dos added on an earlier day pay out, and at most TODO_CAP a day
         if (smog && smogOn(d) && e.it.createdOn && e.it.createdOn < d) smog--;
-        if (lullAt(F, e.ts)){ giveKey(d, 'td|' + e.it.id, e.ts); checkIn(fx, e.ts); continue; }
+        if (lullAt(F, e.ts) && !miniLive(e.ts)){ giveKey(d, 'td|' + e.it.id, e.ts); checkIn(fx, e.ts); continue; }
         if ((e.it.createdOn && e.it.createdOn >= d) || rewardedTodos >= TODO_CAP) continue;
         rewardedTodos++; todoPaid.add(e.it.id);
         xp += Math.round(8 * (1 + fx.xp) * boost); gold += Math.round(6 * (1 + fx.gold) * boost);
@@ -2126,6 +2178,7 @@ function derive(){
         if (mp < cost) castDeficit++;
         mp = Math.max(0, mp - cost);
         if (e.u.dmg && bossAlive() && !innAtD(d, e.ts)) hitBoss(F, d, 'skill:' + e.u.id, e.u.dmg, e.ts);
+        else if (e.u.dmg && miniLive(e.ts) && !innAtD(d, e.ts) && hitMini('skill:' + e.u.id, e.u.dmg, d, e.ts)) lvUp(fx);
       } else if (e.k === 'pot'){
         dyn += e.p.g || 0; C = combatOf(statLvNow(), lvlNow(), fx);
         const id = e.p.id;
@@ -2140,7 +2193,7 @@ function derive(){
       else if (e.k === 'tlog'){ if (e.x.kind === 'reset'){ dyn += e.x.cost || 0; hp = Math.max(1, hp - (e.x.hp || 0)); } else { xp += e.x.xp || 0; gold += e.x.g || 0; lvUp(fx); } }
     }
     // end of day: steps ticked on things you didn't finish today pay out (see STEP_CAP)
-    if (d < today && S.stepFrom && d >= S.stepFrom && !lullAt(F, parseKey(d).getTime())){
+    if (d < today && S.stepFrom && d >= S.stepFrom && !(lullAt(F, parseKey(d).getTime()) && !miniLive(endOf(d)))){
       let g = 0, n = 0;
       for (const [tid, ids] of Object.entries(S.checks[d] || {})){ if ((S.log[d] || {})[tid]) continue; for (const sid of ids){ n++; g += roll('step|' + d + '|' + tid + '|' + sid) < 0.5 ? 1 : 2; } }
       for (const key of Object.keys(S.stepLog[d] || {})){ const [, iid, sid] = key.split(':'); if (!iid || !sid || key.slice(0,3) !== 'td:' || todoDone[iid] === d) continue; n++; g += roll('step|' + d + '|' + iid + '|' + sid) < 0.5 ? 1 : 2; }
@@ -2202,6 +2255,13 @@ function derive(){
       else if (slump && slump.back >= SLUMP_BACK) slump = null;
     }
   }
+  // mini-bosses settled before yesterday are written down for good; Focus chests they gave join the ones to open
+  for (const M of minis){
+    if (M.frozen) continue;
+    const res = M.wonOn ? {status: 'won', on: M.wonOn, ts: M.wonTs} : M.fledOn ? {status: 'fled', on: M.fledOn, ts: 0} : null;
+    if (res && res.on < yest) newMinis[M.from] = {id: M.m.id, lvl: M.lvl, hp: M.hp, dmg: M.dmg, g: M.g, xp: M.xp, prize: M.prize, ...res};
+  }
+  for (const id of miniChests) if (!(S.fchests || {})[id]) pomoInfo.chests.push(id);
   // weekly chests and perfect weeks (the XP was already shown in-loop; it's counted for real here)
   chestXp = 0;
   for (const [wk, counts] of Object.entries(weeks)) for (const [tid, w] of Object.entries(counts)){
@@ -2265,7 +2325,11 @@ function derive(){
   const newDrops = [...drops].filter(id => isDrop(id) && !S.seenDrops.includes(id));
   const nextRite = riteForL(levelInfo(xp).level, ritesWon);
   const wb = S.buys || [], weatherOwned = Math.max(0, wb.filter(b => b.kind === 'weatherbuy').length - wb.filter(b => b.kind === 'weatheruse').length);   // you can hold one Weather Machine
-  return {sirenLog, smog: {pts: smog, log: smogLog, last: smogLog[yest] || null, on: smogOn(today), price: weatherPrice(levelInfo(xp).level), owned: weatherOwned}, slump: {on: !!slump, from: slump ? slump.from : null, back: slump ? slump.back : 0, emptyRun, bites: slumpBites, taken: slumpTaken, todayActive: actDay.has(today)}, newSlump, habits: HAB, nextRite, ritesWon, pomo: pomoInfo, inn: innNowD(), newInnEnds, innPaid: (() => { const o = innNowD(); return o && (o.paid || o.from) < today ? o : null; })(), innSpent, innFee: innFee(levelInfo(xp).level), statBonus: fxNow.st, bag, newDrops, newResults, newFaints, newLegends: pomoInfo.rolls.filter(r => !r.kept), todoPaid, partial, altar: {keys: keysAll.filter(k => !(S.altarUsed || {})[k.key]).map(k => k.key), all: new Set(keysAll.map(k => k.key)), got: altarInfo.got, wins: altarInfo.wins, won: altarInfo.won}, freezeBefore, points, skills, readyCount, weakLv, today, yest, xp, lv, gold, spent, lost, balance: gold - spent - lost, stat, statLv, fx: fxNow, C, hp, mp, status: statusNow, attacks, lastAttack: attacks[yest] || null, faints, lastFaint: faints.length ? faints[faints.length-1] : null, mood: face, moodKey: moodToday, statusText, streak: lastCheck && lastCheck >= prevActiveD(today) ? streak : 0, checkedToday: lastCheck === today, mystery, tokens, perfectWeeks, castDeficit, fights, cur, drops, weeks, T, activeRunes: runesAt(nowMs, today), activeBuffs: buffsAt(nowMs, today)};
+  const miniOut = M => ({from: M.from, m: M.m, lvl: M.lvl, hp: M.hp, rem: M.rem, dmg: M.dmg, hits: M.hits, prize: M.prize, g: M.g, xp: M.xp, flees: M.flees,
+    status: M.wonOn || (M.frozen && M.frozen.status === 'won') ? 'won' : M.fledOn || (M.frozen && M.frozen.status === 'fled') ? 'fled' : 'now',
+    on: M.wonOn || M.fledOn || (M.frozen ? M.frozen.on : null)});
+  const miniList = minis.map(miniOut), miniNow = miniList.length && miniList[miniList.length - 1].status === 'now' ? miniList[miniList.length - 1] : null;
+  return {mini: miniNow, minis: miniList, newMinis, sirenLog, smog: {pts: smog, log: smogLog, last: smogLog[yest] || null, on: smogOn(today), price: weatherPrice(levelInfo(xp).level), owned: weatherOwned}, slump: {on: !!slump, from: slump ? slump.from : null, back: slump ? slump.back : 0, emptyRun, bites: slumpBites, taken: slumpTaken, todayActive: actDay.has(today)}, newSlump, habits: HAB, nextRite, ritesWon, pomo: pomoInfo, inn: innNowD(), newInnEnds, innPaid: (() => { const o = innNowD(); return o && (o.paid || o.from) < today ? o : null; })(), innSpent, innFee: innFee(levelInfo(xp).level), statBonus: fxNow.st, bag, newDrops, newResults, newFaints, newLegends: pomoInfo.rolls.filter(r => !r.kept), todoPaid, partial, altar: {keys: keysAll.filter(k => !(S.altarUsed || {})[k.key]).map(k => k.key), all: new Set(keysAll.map(k => k.key)), got: altarInfo.got, wins: altarInfo.wins, won: altarInfo.won}, freezeBefore, points, skills, readyCount, weakLv, today, yest, xp, lv, gold, spent, lost, balance: gold - spent - lost, stat, statLv, fx: fxNow, C, hp, mp, status: statusNow, attacks, lastAttack: attacks[yest] || null, faints, lastFaint: faints.length ? faints[faints.length-1] : null, mood: face, moodKey: moodToday, statusText, streak: lastCheck && lastCheck >= prevActiveD(today) ? streak : 0, checkedToday: lastCheck === today, mystery, tokens, perfectWeeks, castDeficit, fights, cur, drops, weeks, T, activeRunes: runesAt(nowMs, today), activeBuffs: buffsAt(nowMs, today)};
 }
 
 /* ---------- persistence ---------- */
@@ -2373,7 +2437,7 @@ function mergeSaves(a, b){
     if (!isObj(o[k])) continue; if (!isObj(out[k])) out[k] = {};
     for (const [d, m] of Object.entries(o[k])){ if (!isObj(m)) continue; if (!isObj(out[k][d])) out[k][d] = {}; for (const [id, v] of Object.entries(m)) if (!(id in out[k][d])) out[k][d][id] = v; }
   }
-  for (const k of ['faintLog','results','skillUnlock','fchests','altarUsed','lrunes','slumpLog']){ if (!isObj(o[k])) continue; if (!isObj(out[k])) out[k] = {}; for (const [id, v] of Object.entries(o[k])) if (!(id in out[k])) out[k][id] = v; }
+  for (const k of ['faintLog','results','skillUnlock','fchests','altarUsed','lrunes','slumpLog','miniLog']){ if (!isObj(o[k])) continue; if (!isObj(out[k])) out[k] = {}; for (const [id, v] of Object.entries(o[k])) if (!(id in out[k])) out[k][id] = v; }
   out.legends = {...(o.legends || {}), ...(out.legends || {})};
   if (!Array.isArray(out.skillEq) && Array.isArray(o.skillEq)) out.skillEq = o.skillEq.slice();
   if (o.chestFrom && (!out.chestFrom || o.chestFrom < out.chestFrom)) out.chestFrom = o.chestFrom;
@@ -2384,6 +2448,7 @@ function mergeSaves(a, b){
   if (o.smogFrom && (!out.smogFrom || o.smogFrom < out.smogFrom)) out.smogFrom = o.smogFrom;
   if (o.sirenFrom && (!out.sirenFrom || o.sirenFrom < out.sirenFrom)) out.sirenFrom = o.sirenFrom;
   if (o.bossFrom && (!out.bossFrom || o.bossFrom < out.bossFrom)) out.bossFrom = o.bossFrom;
+  if (o.miniFrom && (!out.miniFrom || o.miniFrom < out.miniFrom)) out.miniFrom = o.miniFrom;
   if (Array.isArray(o.siren)){ if (!Array.isArray(out.siren)) out.siren = []; for (const x of o.siren){ const i = out.siren.findIndex(y => y.wk === x.wk); if (i < 0) out.siren.push(x); else if ((x.drawn || x.declined || 0) < (out.siren[i].drawn || out.siren[i].declined || 0)) out.siren[i] = x; } }   // the first answer for a week wins
   // timers: each device's copy of a timer, the newer edit wins; a payout or reset logged on either device counts once
   if (Array.isArray(o.timers)){ if (!Array.isArray(out.timers)) out.timers = []; for (const t of o.timers){ const i = out.timers.findIndex(x => x.id === t.id); if (i < 0) out.timers.push(t); else { const m = out.timers[i]; if ((t.edited || 0) > (m.edited || 0)) out.timers[i] = t; if (t.deleted && !m.deleted) out.timers[i].deleted = t.deleted; } } }
@@ -3323,6 +3388,58 @@ function drawBoss(canvas, boss, f, motion, hurt, dead){
       eyes([[25,10],[35,10]],3);
       details.push(() => { const k = motion ? f % 6 : 0; for (let y=24;y<34;y+=2) W_(32, y + (k % 2), 1, 1); for (let y=38;y<44;y++) for (let x=32-(y-37)*2; x<=32+(y-37)*2; x++) if ((x+y)%2) W_(x,y); for (let x=27;x<38;x+=2) W_(x,15,1,1); });
       break; }
+    /* mini-bosses: smaller than the bosses, all about losing focus */
+    case 'tabgob': { // Tab Goblin: big ears, a fistful of browser tabs
+      const ef = motion && f % 24 < 3 ? 1 : 0;
+      ell(30,36,7,7); ell(30,25,6,5); poly([[25,23],[15,17 + ef],[24,27]]); poly([[35,23],[45,17 + ef],[36,27]]); rect(26,42,3,4); rect(31,42,3,4);
+      line(36,34,41,30); rect(40,19,13,8); rect(43,16,13,8); rect(46,13,13,8);
+      eyes([[26,23],[31,23]],3); details.push(() => { W_(28,29,5,1); W_(28,28,1,1); W_(32,28,1,1); for (const [x,y] of [[40,19],[43,16],[46,13]]){ W_(x+1,y+2,11,1); W_(x+2,y+1,3,1); } });
+      break; }
+    case 'imp': { // Doomscroll Imp: bat wings, a tail, a phone glued to its hand
+      const bob = motion ? Math.round(Math.sin(fm * 0.3) * 1.5) : 0, wf = motion && f % 8 < 4 ? 2 : 0;
+      ell(30,32 + bob,6,7); ell(30,22 + bob,6,5); poly([[26,19 + bob],[24,12 + bob],[28,18 + bob]]); poly([[34,19 + bob],[36,12 + bob],[32,18 + bob]]);
+      poly([[25,28 + bob],[13,20 + bob + wf],[15,31 + bob],[24,35 + bob]]); poly([[35,28 + bob],[47,20 + bob + wf],[45,31 + bob],[36,35 + bob]]);
+      for (let i = 0; i < 10; i++) mk(30 - i, 39 + bob + Math.round(Math.sin(i / 3) * 2)); poly([[19,38 + bob],[22,41 + bob],[19,43 + bob],[17,41 + bob]]);
+      rect(36,24 + bob,6,9);
+      eyes([[27,20 + bob],[31,20 + bob]],2); details.push(() => { W_(37,25 + bob,4,7); B_(38,27 + bob,2,1); B_(38,29 + bob,2,1); W_(28,25 + bob,4,1); });
+      break; }
+    case 'goblin': { // Drudge Goblin: hunched under a stack of busywork
+      ell(30,36,9,7); ell(39,31,6,5); poly([[42,28],[50,23],[43,32]]); rect(25,41,3,5); rect(33,41,3,5);
+      rect(17,22,15,5); rect(19,17,13,5); rect(18,12,12,5);
+      eyes([[37,29],[41,29]],2); details.push(() => { for (const [x,y,w] of [[17,22,15],[19,17,13],[18,12,12]]){ W_(x+1,y+2,w-2,1); W_(x + (w >> 1),y,1,5); } W_(38,34,4,1); });
+      break; }
+    case 'kobold': { // Snooze Kobold: a nightcap, a snout, an alarm clock it keeps hitting
+      ell(32,36,7,8); ell(31,23,6,5); rect(35,23,7,4); poly([[24,21],[39,20],[44,8]]); poly([[39,20],[44,8],[47,12]]); ell(47,13,2,2);
+      for (let i = 0; i < 9; i++) mk(39 + i, 40 - Math.round(i * i / 9)); rect(27,43,3,3); rect(34,43,3,3);
+      ell(20,33,4,4); rect(17,28,2,2); rect(22,28,2,2);
+      eyes([[28,22],[32,22]],2);
+      details.push(() => { B_(28,22,4,1); B_(32,22,2,1); W_(20,31,1,3); W_(20,33,2,1); W_(41,24,1,1);
+        const z = motion ? (f >> 3) % 3 : 1; for (let i = 0; i <= z; i++){ const x = 50 + i*4, y = 26 - i*6; W_(x,y,4,1); W_(x+2,y+1,1,1); W_(x+1,y+2,1,1); W_(x,y+3,4,1); } });
+      break; }
+    case 'hobgob': { // Humdrum Hobgoblin: droopy ears, humming one flat note
+      ell(32,35,10,9); ell(32,22,7,6); poly([[25,20],[16,28],[25,25]]); poly([[39,20],[48,28],[39,25]]); rect(26,42,4,4); rect(34,42,4,4); rect(20,30,4,9); rect(40,30,4,9);
+      eyes([[28,20],[34,20]],2);
+      details.push(() => { W_(31,25,3,2); B_(32,25,1,1);
+        const ny = motion ? 8 + Math.round(Math.sin(fm * 0.2)) : 8; W_(53,ny - 2,1,7); W_(54,ny - 2,2,1); W_(56,ny - 1,1,2); W_(51,ny + 4,2,2); W_(46,ny,1,6); W_(47,ny + 3,2,1); W_(49,ny + 4,1,1); W_(47,ny + 5,2,1); });
+      break; }
+    case 'ogre': { // Brain-Fog Ogre: a big lump breathing out grey haze
+      ell(30,31,13,12); ell(30,16,7,6); rect(14,24,5,13); rect(41,24,5,13); rect(22,41,6,5); rect(32,41,6,5);
+      eyes([[26,14],[32,14]],3);
+      details.push(() => { B_(26,14,3,1); B_(32,14,3,1); W_(27,19,6,1);
+        for (let x = 34; x < 62; x++) for (let y = 8; y < 30; y++){ const dd = Math.hypot((x - 48) / 14, (y - 18) / 9); if (dd < 1 && lit(x + (motion ? (f >> 2) : 0), y, 0.35 * (1 - dd))) W_(x,y); } });
+      break; }
+    case 'troll': { // Tedium Troll: squatting on its bridge, club across its knees
+      ell(32,27,13,11); ell(32,14,8,7); ell(32,18,3,3); rect(18,24,4,14); rect(42,24,4,14); rect(24,37,5,9); rect(35,37,5,9);
+      rect(4,40,56,4); line(14,36,50,36); line(14,35,50,35);
+      eyes([[27,11],[34,11]],3);
+      details.push(() => { W_(28,21,1,2); W_(36,21,1,2); for (let x = 6; x < 60; x += 6) W_(x,41,1,3); W_(4,40,56,1); });
+      break; }
+    case 'ruttroll': { // Rut Troll: digging the same groove deeper with a big shovel
+      ell(28,28,12,11); ell(28,15,7,6); ell(33,17,3,2); rect(15,25,4,12); rect(24,38,5,8); rect(33,38,5,8);
+      const dg = motion && f % 20 < 10 ? 1 : 0; line(44,8 + dg,44,36 + dg); line(45,8 + dg,45,36 + dg); rect(41,36 + dg,8,6); line(38,28,44,24);
+      eyes([[24,13],[30,13]],3);
+      details.push(() => { B_(24,13,3,1); W_(25,20,5,1); for (let x = 4; x < 60; x++){ const dip = x > 20 && x < 52 ? 1 : 0; if ((x & 1) === 0) W_(x, 47 + dip, 1, 1); } });
+      break; }
     case 'heart': { // The Heartbreaker: a cracked heart on bat wings
       ell(25,20,9,9); ell(39,20,9,9); poly([[16,22],[48,22],[32,42]]);
       for (const s of [1,-1]){ const X = x => 32 + s*(x-32); const flap = motion && f % 8 < 4 ? 2 : 0; poly([[X(17),18],[X(3),10 + flap],[X(6),20],[X(2),26 - flap],[X(10),26],[X(16),24]]); }
@@ -3576,6 +3693,7 @@ function assistMsg(){
   if (D.slump && D.slump.on) return {k:'The Slump', p:`Boss hits can't land, but it eats while you're away. Finish something ${SLUMP_BACK} days in a row to lose it.`, cta:'See battle'};
   if (D.lastFaint && D.lastFaint.d === D.yest) return {k:'You fainted', p:`${a ? a.boss : f.boss.name} knocked you out last night. You lost ${D.lastFaint.loss} G and woke up at half HP.`, cta:'Heal up'};
   if (a && a.dmg > 0) return {k:`Last night · ${a.boss}`, p:`Hit you for ${a.dmg} HP for ${a.missed} missed dailies${a.dodged ? ` (you dodged ${a.dodged})` : ''}.${a.status ? ` You're ${STATUS[a.status].name.toLowerCase()}.` : ''}`, cta:'See battle'};
+  if (D.mini){ const mm = D.mini, m = mm.m; return {k:`${m.name} · mini-boss`, p:`${mm.rem} HP to go. ${m.weak.map(x => STATS[x].name).join(' and ')} hit twice as hard. Prize: ${miniPrizeTxt(mm)}. Runs off ${fmtDow(mm.flees)}.`, cta:"Let's fight"}; }
   if (D.readyCount && f.status === 'now') return {k:`${S.petName} says`, p:`${D.readyCount} skill${D.readyCount===1?' is':'s are'} ready to use. Time to hit ${f.boss.name}.`, cta:'Use skills'};
   if (f.status === 'won') return {k:'Victory', p:`You beat ${f.boss.name}. ${(D.nextRite || bossFor(f.c+1)).name} shows up ${fmt(addDays(f.end,1))}.${S.altarFrom ? ' Until then, finished tasks earn Keystones.' : ''}${D.smog.on ? ' Missed dailies will turn the air toxic.' : ''}`, cta:'See battle'};
   const weakTxt = f.boss.weak.length >= 5 ? 'Every stat hits it hard.' : `${f.boss.weak.map(s => STATS[s].name).join(' and ')} tasks hit twice as hard.`;
@@ -3737,12 +3855,13 @@ function renderToday(){
   ${smogNote()}
   ${skillNote()}
   ${timerAskNote()}
+  ${miniNote()}
   ${lullNote()}
   ${altarCard()}
   ${chestCard()}
   ${D.partial[D.yest] && !dismissed('partial') ? notice('partial', `Partial progress yesterday: <b>+${D.partial[D.yest].g} G</b> for ${D.partial[D.yest].n} step${D.partial[D.yest].n === 1 ? '' : 's'} on unfinished tasks`) : ''}
   ${D.tokens && !dismissed('tokens') ? notice('tokens', `${D.tokens} free rune${D.tokens===1?'':'s'} waiting in your inventory`) : ''}
-  ${S.settings.collapse.boss ? `<div class="mini assistmini"><button class="minimain" data-tab="battle"><canvas id="bossMiniCv" width="64" height="52" aria-hidden="true"></canvas><span><b>${esc(D.cur.boss.name)}</b><span class="small">${D.cur.status === 'now' ? `${D.cur.rem}/${D.cur.hp} HP` : esc(a.k)}</span></span></button><button class="minitog" data-collapse="boss" aria-expanded="false" aria-label="Show the boss card">${svg('back',16,2.6)}</button></div>`
+  ${S.settings.collapse.boss ? `<div class="mini assistmini"><button class="minimain" data-tab="battle"><canvas id="bossMiniCv" width="64" height="52" aria-hidden="true"></canvas><span><b>${esc(D.mini ? D.mini.m.name : D.cur.boss.name)}</b><span class="small">${D.mini ? `${D.mini.rem}/${D.mini.hp} HP` : D.cur.status === 'now' ? `${D.cur.rem}/${D.cur.hp} HP` : esc(a.k)}</span></span></button><button class="minitog" data-collapse="boss" aria-expanded="false" aria-label="Show the boss card">${svg('back',16,2.6)}</button></div>`
   : `<div class="assistwrap"><button class="assist" id="bossmini" data-tab="battle">
     <span><span class="k">${esc(a.k)}</span><p>${esc(a.p)}</p><span class="pillbtn">${esc(a.cta)}</span></span>
     <canvas id="bossMiniCv" width="64" height="52" aria-hidden="true"></canvas>
@@ -3763,7 +3882,7 @@ function skillTargets(id){
 }
 // why a learned skill can't be used right now ('' when it can)
 function skillWhy(sk){
-  const k = D.today, bossLive = D.cur.status === 'now', targets = skillTargets(sk.id);
+  const k = D.today, bossLive = D.cur.status === 'now' || !!D.mini, targets = skillTargets(sk.id);
   if (!skillGearOk(sk)) return `Needs a ${STYLES[sk.branch].name} build`;
   if (sk.kind === 'dmg' && !bossLive) return 'Boss defeated';
   if (targets && !targets.length) return sk.id === 'wind' ? 'No open dailies' : 'No habit to lighten';
@@ -3883,17 +4002,7 @@ function renderBattle(){
   const past = D.fights.slice(0,-1).reverse();
   const tag = bb => bb.final ? 'Final' : bb.rite ? 'Rite' : bb.seasonal ? 'Holiday' : bb.titan ? 'Titan' : 'Next';
   const a = D.lastAttack;
-  return `
-  <section class="game boss" aria-label="${esc(b.name)}">
-    <canvas id="bossCv" width="64" height="52" role="img" aria-label="${esc(b.name)}"></canvas>
-    <div class="dlg"><div class="dlg-in"><div class="dlg-h"><span class="dlg-name">${esc(b.name)}</span><span class="${f.status==='won' ? 'dlg-won' : ''}">${f.status==='won' ? 'Defeated' : (b.seasonal ? 'Holiday · ' : b.titan ? 'Titan · ' : '') + daysLeft + 'd left'}</span></div><p>${esc(f.status === 'won' && b.beaten ? b.beaten : b.flavor)}</p></div></div>
-  </section>
-  <div>
-    <div class="hprow"><div class="bignum"><b>${f.rem}</b><span>of ${f.hp} boss HP</span></div>${f.status === 'won' ? (() => { const n = dayIdx(upcoming[0].start) - dayIdx(D.today); return `<button class="nextboss" data-nextboss>Next boss · ${n <= 0 ? 'today' : n === 1 ? 'tomorrow' : `in ${n}d`} ›</button>`; })() : ''}</div>
-    <div style="margin-top:10px">${bar(100*f.rem/f.hp, 'var(--pink)', 'thick')}</div>
-  </div>
-  ${inLull() ? altarPanel() : ''}
-  <div class="chips">${(b.weak.length >= 5 ? ['ALL'] : b.weak).map(s => `<span class="chip-s" style="background:${s==='ALL' ? 'var(--yellow)' : STATS[s].c};font-size:13px;padding:5px 12px">Weak to ${s==='ALL' ? 'every stat' : esc(STATS[s].name)}</span>`).join('')}<span class="chip-s plain" style="background:var(--track);font-size:13px;padding:5px 12px">Hits ${b.atk + Math.floor((f.lvl || D.lv.level)/3)} per missed daily</span></div>
+  const battleBottom = () => `
   ${slumpNote()}
   ${a ? `<div class="card attack"><b>Last night</b><span>${a.shield ? `The Slump blocked ${esc(a.boss)}'s hits` : `${esc(a.boss)} hit you for <b>${a.dmg} HP</b>`} · ${a.missed} missed${a.dodged ? `, ${a.dodged} dodged` : ''}${a.counters ? `, ${a.counters} counter${a.counters === 1 ? '' : 's'}` : ''}${a.status ? ` · ${esc(STATUS[a.status].name)}` : ''}</span></div>` : ''}
   <div class="sec-h"><h2>You</h2><span class="muted small">Block ${pctTxt(C.def)} · Dodge ${pctTxt(C.dodge)} · Crit ${pctTxt(C.crit)}${C.critX > 1.5 ? ` ×${C.critX.toFixed(1)}` : ''}${C.counter ? ` · Counter ${pctTxt(C.counter)}` : ''}</span></div>
@@ -3904,6 +4013,12 @@ function renderBattle(){
     <button role="tab" data-bsec="info" class="${battleSec==='info'?'on':''}" aria-selected="${battleSec==='info'}">Boss Info</button>
     <button role="tab" data-bsec="inn" class="${battleSec==='inn'?'on':''}" aria-selected="${battleSec==='inn'}">Inn${D.inn ? ' · zzz' : ''}</button></div>
   ${battleSec === 'inn' ? innCard() : battleSec === 'info' ? `
+  ${D.mini ? `<div class="card kv">
+    <b>Mini-boss</b><span>${esc(D.mini.m.name)}</span>
+    <b>Your damage so far</b><span>${D.mini.dmg}</span>
+    <b>Runs off</b><span>${fmtDow(D.mini.flees)}</span>
+    <b>Reward</b><span>${D.mini.g} G + ${D.mini.xp} XP + ${miniPrizeTxt(D.mini)}</span>
+  </div>` : ''}
   <div class="card kv">
     <b>Your damage this fight</b><span>${f.dmg}</span>
     <b>Healed by missed dailies</b><span>+${f.heal}</span>
@@ -3918,12 +4033,38 @@ function renderBattle(){
   <div class="list">${RITES.map(r => { const won = D.ritesWon.has(r.id), now = f.boss.id === r.id && f.status === 'now', reach = D.lv.level >= r.levels[0];
     return `<div class="tl"><span class="pill ${won ? 'won' : now ? 'rite' : 'next'}">${won ? 'Beaten' : now ? 'Now' : `Lv ${r.levels[0]}–${r.levels[1]}`}</span><span>${reach || won ? esc(r.name) : '???'}${r.final ? ' <b class="small">· Final boss</b>' : ''}</span><span class="small muted">${now ? `${f.rem} HP left` : ''}</span></div>`; }).join('')}</div>
   
+  ${D.minis.some(x => x.status !== 'now') ? `<div class="sec-h"><h2>Mini-bosses</h2><span class="muted small">show up between bosses</span></div><div class="list">${D.minis.filter(x => x.status !== 'now').reverse().slice(0, 8).map(x => `<div class="tl"><span class="pill ${x.status === 'won' ? 'won' : 'lost'}">${x.status === 'won' ? 'Won' : 'Ran off'}</span><span>${esc(x.m.name)}</span><span class="small muted">${fmt(x.from)}</span></div>`).join('')}</div>` : ''}
   ${past.length ? `<div class="sec-h"><h2>Past fights</h2></div><div class="list">${past.map(p => `<div class="tl"><span class="pill ${p.status==='won'?'won':'lost'}">${p.status==='won'?'Won':p.boss.rite?'Continues':'Escaped'}</span><span>${esc(p.boss.name)}</span><span class="small muted">${fmt(p.start)}</span></div>`).join('')}</div>` : ''}
   ` : `
   <details class="howto"><summary>How skills work</summary><p class="how">${SKILL_SLOTS} slots · equipping costs ${SKILL_EQ_FEE} G</p></details>
   ${(() => { const L = buildLean(); return `<div class="leanline">${L ? `<span class="bdot" style="--bc:${STYLES[L.style].c}"></span> Build: <b>${STYLES[L.style].name}</b>${L.style === 'mon' ? ` <span class="small muted">(${L.pair.map(x => STYLES[x].name).join(' + ')} skills, +${Math.round(MON_TAX*100)}% MP)</span>` : ''}` : 'Build: <b>none yet</b> · equip 2+ items of one style'}</div>`; })()}
   <button class="card bagrow" data-plus="stats" data-gopts><span><b>Skill tree</b><span class="muted small" style="display:block">${D.points ? `${D.points} skill point${D.points===1?'':'s'} to spend` : 'Learn new skills and level up equipped ones'}</span></span><span class="bagopen">${D.points ? `<span class="ptsdot">${D.points}</span>` : ''}Open ›</span></button>
   ${SKILLS.some(sk => D.skills[sk.id].l) ? skillCards() : `<p class="how">No skills yet. Learn one in the Skill tree.</p>`}`}`;
+  const mm = D.mini;
+  if (mm){ const ml = dayIdx(mm.flees) - dayIdx(D.today), n = dayIdx(upcoming[0].start) - dayIdx(D.today); return `
+  <section class="game boss" aria-label="${esc(mm.m.name)}">
+    <canvas id="bossCv" width="64" height="52" role="img" aria-label="${esc(mm.m.name)}"></canvas>
+    <div class="dlg"><div class="dlg-in"><div class="dlg-h"><span class="dlg-name">${esc(mm.m.name)}</span><span>Mini-boss · ${ml}d left</span></div><p>${esc(mm.m.flavor)}</p></div></div>
+  </section>
+  <div>
+    <div class="hprow"><div class="bignum"><b>${mm.rem}</b><span>of ${mm.hp} HP</span></div><button class="nextboss" data-nextboss>Next boss · ${n <= 0 ? 'today' : n === 1 ? 'tomorrow' : `in ${n}d`} ›</button></div>
+    <div style="margin-top:10px">${bar(100*mm.rem/mm.hp, 'var(--pink)', 'thick')}</div>
+  </div>
+  <div class="chips">${mm.m.weak.map(s => `<span class="chip-s" style="background:${STATS[s].c};font-size:13px;padding:5px 12px">Weak to ${esc(STATS[s].name)}</span>`).join('')}<span class="chip-s plain" style="background:var(--track);font-size:13px;padding:5px 12px">Prize: ${miniPrizeTxt(mm)}</span></div>
+  <p class="how">Prize: +${mm.g} G, +${mm.xp} XP and ${miniPrizeTxt(mm)}. No Keystones from tasks while it's here. Runs off when ${esc((D.nextRite || bossFor(f.c+1)).name)} arrives ${fmtDow(mm.flees)}.</p>
+  ${battleBottom()}`; }
+  return `
+  <section class="game boss" aria-label="${esc(b.name)}">
+    <canvas id="bossCv" width="64" height="52" role="img" aria-label="${esc(b.name)}"></canvas>
+    <div class="dlg"><div class="dlg-in"><div class="dlg-h"><span class="dlg-name">${esc(b.name)}</span><span class="${f.status==='won' ? 'dlg-won' : ''}">${f.status==='won' ? 'Defeated' : (b.seasonal ? 'Holiday · ' : b.titan ? 'Titan · ' : '') + daysLeft + 'd left'}</span></div><p>${esc(f.status === 'won' && b.beaten ? b.beaten : b.flavor)}</p></div></div>
+  </section>
+  <div>
+    <div class="hprow"><div class="bignum"><b>${f.rem}</b><span>of ${f.hp} boss HP</span></div>${f.status === 'won' ? (() => { const n = dayIdx(upcoming[0].start) - dayIdx(D.today); return `<button class="nextboss" data-nextboss>Next boss · ${n <= 0 ? 'today' : n === 1 ? 'tomorrow' : `in ${n}d`} ›</button>`; })() : ''}</div>
+    <div style="margin-top:10px">${bar(100*f.rem/f.hp, 'var(--pink)', 'thick')}</div>
+  </div>
+  ${inLull() ? altarPanel() : ''}
+  <div class="chips">${(b.weak.length >= 5 ? ['ALL'] : b.weak).map(s => `<span class="chip-s" style="background:${s==='ALL' ? 'var(--yellow)' : STATS[s].c};font-size:13px;padding:5px 12px">Weak to ${s==='ALL' ? 'every stat' : esc(STATS[s].name)}</span>`).join('')}<span class="chip-s plain" style="background:var(--track);font-size:13px;padding:5px 12px">Hits ${b.atk + Math.floor((f.lvl || D.lv.level)/3)} per missed daily</span></div>
+  ${battleBottom()}`;
 }
 
 /* ---------- to-dos ---------- */
@@ -4193,8 +4334,16 @@ function openNextBoss(){
 
 /* ---------- the Rune Altar ---------- */
 const inLull = () => D.cur.status === 'won' && D.cur.wonTs && S.altarFrom && D.cur.wonTs >= S.altarFrom;
+const miniPrizeTxt = mm => mm.prize === 'keys' ? '3 Keystones' : '3 Focus chests';
+// the last mini-boss: beaten (today or yesterday) or ran off when the boss arrived
+function miniNote(){
+  const last = D.minis[D.minis.length - 1]; if (!last || !last.on || last.on < D.yest) return '';
+  if (last.status === 'won' && !dismissed('mini-' + last.from)) return notice('mini-' + last.from, `<b>You beat the ${esc(last.m.name)}!</b> +${last.g} G, +${last.xp} XP and ${miniPrizeTxt(last)}.`);
+  if (last.status === 'fled' && !dismissed('miniran-' + last.from)) return notice('miniran-' + last.from, `The ${esc(last.m.name)} ran off when ${esc(D.cur.boss.name)} arrived.`);
+  return '';
+}
 function lullNote(){
-  if (!inLull() || dismissed('lull')) return '';
+  if (!inLull() || D.mini || dismissed('lull')) return '';
   return notice('lull', `<b>${esc(D.cur.boss.name)} is defeated!</b> Tasks give <b>Keystones</b> until ${fmtDow(addDays(D.cur.end, 1))}.`);
 }
 function altarCard(){
@@ -4667,6 +4816,9 @@ function renderInner(){
   if (!S.smogFrom && !recoveryMode){ S.smogFrom = D.today; save(true); D = derive(); }   // toxic air only counts nights after today
   if (!S.sirenFrom && !recoveryMode){ S.sirenFrom = D.today; save(true); }   // the Siren starts visiting from today
   if (!S.bossFrom && !recoveryMode){ S.bossFrom = D.today; save(true); D = derive(); }   // tougher bosses from the next fight on
+  if (!S.miniFrom && !recoveryMode){ S.miniFrom = D.today; save(true); D = derive(); }   // mini-bosses can show up from tomorrow on
+  const nm = Object.keys(D.newMinis || {}).filter(d => !(S.miniLog || {})[d]);
+  if (nm.length && !recoveryMode){ if (!S.miniLog) S.miniLog = {}; nm.forEach(d => S.miniLog[d] = D.newMinis[d]); save(true); D = derive(); }   // settled mini-boss fights are written down for good
   if (!recoveryMode) timerSweep();   // the Slump only counts days from now on
   const nf = Object.keys(D.newFaints || {}).filter(d => !S.faintLog[d]);
   if (nf.length){ nf.forEach(d => S.faintLog[d] = D.newFaints[d]); save(true); D = derive(); }
@@ -4700,8 +4852,9 @@ function draw(){
   const sc = document.getElementById('scene');
   if (sc) drawScene(sc, {siren: !!sirenPending(), riff: riffHere() && !D.inn, smog: D.inn || !D.smog.pts ? 0 : D.smog.pts >= 9 ? 3 : D.smog.pts >= 4 ? 2 : 1, slump: D.slump && D.slump.on, bg: D.inn ? 'inn' : S.equip.bg, color:S.equip.color, hat:S.equip.hat, gear:S.gear, stage:stage(D.lv.level), mood: now < jumpUntil ? 'happy' : D.mood, f:frame, motion:motionOK, jump: now < jumpUntil && (Math.floor(now/120)%2===0)});
   const hurt = now < hurtUntil && Math.floor(now/90)%2 === 0;
-  const m = document.getElementById('bossMiniCv'); if (m) drawBoss(m, D.cur.boss, frame, motionOK, hurt, D.cur.status === 'won');
-  const b = document.getElementById('bossCv'); if (b) drawBoss(b, D.cur.boss, frame, motionOK, hurt, D.cur.status === 'won');
+  const foe = D.mini ? D.mini.m : D.cur.boss, down = !D.mini && D.cur.status === 'won';
+  const m = document.getElementById('bossMiniCv'); if (m) drawBoss(m, foe, frame, motionOK, hurt, down);
+  const b = document.getElementById('bossCv'); if (b) drawBoss(b, foe, frame, motionOK, hurt, down);
   const sp = document.getElementById('spaceCv'); if (sp) drawSpace(sp);
   const nc = document.getElementById('nightCv'); if (nc) drawNight(nc);
   const rc = document.getElementById('riffCv'); if (rc){ ctx = rc.getContext('2d'); ctx.imageSmoothingEnabled = false; ctx.clearRect(0, 0, rc.width, rc.height); drawRiffAt(2, 3, motionOK ? frame : 0); }
@@ -4918,19 +5071,20 @@ function toggle(id, el){
   }
   save();
   const after = derive();
-  const dx = after.xp - before.xp, dg = after.balance - before.balance, dd = after.cur.dmg - before.cur.dmg;
+  const dx = after.xp - before.xp, dg = after.balance - before.balance, mWas = before.mini && after.minis.find(x => x.from === before.mini.from), dd = after.cur.dmg - before.cur.dmg + (mWas ? mWas.dmg - before.mini.dmg : 0), mWon = miniBeaten(before, after);
   const r = el.getBoundingClientRect();
   render();
   if (recoveryMode) return;
   if (completing) confetti(r);
-  const keyGain = after.altar.keys.length > before.altar.keys.length;
+  const keyGain = !mWon && after.altar.keys.length > before.altar.keys.length;
   if (keyGain){ floatAt(r.left + r.width/2, r.top, `<span style="color:var(--gold)">+1 Keystone</span>${dx > 0 ? `  <span style="color:var(--accent)">+${dx} XP</span>` : ''}`); jumpUntil = Date.now() + 700; }
   else if (dx > 0){
-    floatAt(r.left + r.width/2, r.top, `<span style="color:var(--accent)">+${dx} XP</span>  <span style="color:var(--gold)">+${dg} G</span>${dd>0 && before.cur.status==='now' ? `<br><span style="color:var(--hp)">-${dd} HP</span>` : ''}`);
+    floatAt(r.left + r.width/2, r.top, `<span style="color:var(--accent)">+${dx} XP</span>  <span style="color:var(--gold)">+${dg} G</span>${dd>0 && (before.cur.status==='now' || before.mini) ? `<br><span style="color:var(--hp)">-${dd} HP</span>` : ''}`);
     jumpUntil = Date.now() + 700; if (dd > 0) hurtUntil = Date.now() + 500;
   }
   if (after.lv.level > before.lv.level){ toast(stage(after.lv.level) > stage(before.lv.level) ? `Level ${after.lv.level}! ${S.petName} evolved.` : `Level ${after.lv.level}!`); }
   else if (after.cur.status === 'won' && before.cur.status === 'now'){ toast(`${after.cur.boss.name} defeated! +${BOSS_REWARD(after.cur.boss)} G and ${dropName(after.cur.boss)}`); }
+  else if (mWon) toast(mWon);
   else { const t = S.tasks.find(x => x.id === id); if (t && t.cad === 'week' && dx > 0 && weekCount(id,k) === effTarget(t,k)) toast(`Weekly goal hit: ${t.name}. +30 G chest`); }
   const bm = document.getElementById('bossmini'); if (bm && dd > 0){ bm.classList.remove('shake'); void bm.offsetWidth; bm.classList.add('shake'); }
 }
@@ -4943,6 +5097,11 @@ function wearGear(it, next){
   if (next && it.slot === 'weapon' && S.gear.offhand && offhandBlock(next, S.gear.offhand)){ freed = (GEAR_BY[S.gear.offhand] || {}).name || ''; S.gear.offhand = null; S.gearLog.push({ts: now, slot: 'offhand', id: null}); }
   return freed;
 }
+// the message for a mini-boss beaten between two states, or ''
+function miniBeaten(before, after){
+  if (!before.mini) return ''; const m = after.minis.find(x => x.from === before.mini.from && x.status === 'won');
+  return m ? `${m.m.name} beaten! +${m.g} G, +${m.xp} XP and ${m.prize === 'keys' ? '3 Keystones' : '3 Focus chests'}` : '';
+}
 function cast(id, el){
   const sk = SKILL_BY[id], st = D.skills[id], k = D.today;
   if (!st || !st.ready || !st.l) return;
@@ -4950,7 +5109,7 @@ function cast(id, el){
   if (!skillGearOk(sk)){ toast(`${sk.name} needs a ${STYLES[sk.branch].name} build`); return; }
   const use = {id, ts: Date.now(), date: k, cost: st.cost};
   let msg = '';
-  if (sk.kind === 'dmg'){ if (D.cur.status !== 'now' || D.inn) return; use.dmg = st.power; msg = `${sk.name}: ${st.power} damage to ${D.cur.boss.name}`; }
+  if (sk.kind === 'dmg'){ if ((D.cur.status !== 'now' && !D.mini) || D.inn) return; use.dmg = st.power; msg = `${sk.name}: ${st.power} damage to ${D.cur.status === 'now' ? D.cur.boss.name : D.mini.m.name}`; }
   if (sk.kind === 'buff'){
     if (D.activeBuffs.some(u => u.id === id)){ toast(`${sk.name} is already active`); return; }
     use.buff = {st: {[sk.stat]: sk.amt(st.l)}, days: sk.days};
@@ -4975,6 +5134,7 @@ function cast(id, el){
   if (use.dmg){ floatAt(r.left + r.width/2, r.top, `<span style="color:var(--hp)">-${use.dmg} HP</span>`); hurtUntil = Date.now() + 600; }
   else { floatAt(r.left + r.width/2, r.top, `<span style="color:var(--accent)">${esc(sk.name)}</span>`); jumpUntil = Date.now() + 700; }
   if (D.cur.status === 'won' && before.cur.status === 'now') toast(`${D.cur.boss.name} defeated! +${BOSS_REWARD(D.cur.boss)} G and ${dropName(D.cur.boss)}`);
+  else if (miniBeaten(before, D)) toast(miniBeaten(before, D));
   else toast(msg);
 }
 
