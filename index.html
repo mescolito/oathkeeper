@@ -501,6 +501,8 @@ body.focusmode .top{align-items:center}
 body.focusmode.sleepmode,body.focusmode.sleepmode[data-pomo]{--g1:#1d2347;--g2:#0f1122}
 .nightwrap{width:clamp(130px, calc(100vh - 560px), min(64vw, 240px));width:clamp(130px, calc(100dvh - 560px), min(64vw, 240px));aspect-ratio:1;margin:10px 0 8px;border-radius:50%;box-shadow:0 0 0 10px rgba(241,238,228,.06)}
 #nightCv{width:100%;height:100%;border-radius:50%;image-rendering:pixelated;background:#141312;display:block}
+.shopfront{margin:0 0 14px;border-radius:18px;overflow:hidden;background:#141312;line-height:0}
+.shopfront canvas{width:100%;height:auto;image-rendering:pixelated;display:block}
 .riffhero{display:flex;align-items:center;gap:16px;margin:4px 0 6px}
 #riffCv{width:92px;height:88px;image-rendering:pixelated;background:#141312;border-radius:22px;flex:none}
 .riffhero b{font-family:'Fraunces',Georgia,serif;font-size:26px;font-weight:500;display:block}
@@ -928,7 +930,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '2dab725427';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '49f61031e3';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1345,7 +1347,7 @@ const RUN_ODDS = 0.05, RUN_RUNE = 0.1, RUN_POT = 0.8, RUN_STEAL = 0.05;   // get
 const MINIS = [
   {id:'tabgob',  name:'Tab Goblin',        days:1, weak:['HRT','MOB'], shape:'tabgob',  flavor:'Opens one more tab every time you look away.', beaten:'Every tab closed. It scurries off clutching a single bookmark.'},
   {id:'scroll',  name:'Doomscroll Imp',    days:1, weak:['HRT','STA'], shape:'imp',     flavor:'Keeps your thumb flicking. Just one more post.', beaten:'Its phone hits 1%. It flaps off to find a charger.'},
-  {id:'drudge',  name:'Drudge Goblin',     days:1, weak:['HRT','MGT'], shape:'goblin',  flavor:'Hands you the same chore again and calls it a plan.', beaten:'It drops its little pile of busywork and runs.'},
+  {id:'drudge',  name:'Drudge Ghoul',      days:1, weak:['HRT','MGT'], shape:'ghoul',   flavor:'Drags a chain of chores behind it and hands you the same one again.', beaten:'It drops its chain of busywork and rattles off.'},
   {id:'snooze',  name:'Snooze Kobold',     days:2, weak:['STA','HRT'], shape:'kobold',  flavor:'Hits snooze for you. Nine times.', beaten:'Wide awake now. It shuffles off in its nightcap, yawning.'},
   {id:'humdrum', name:'Humdrum Hobgoblin', days:2, weak:['MOB','HRT'], shape:'hobgob',  flavor:'Hums one flat note until every day sounds the same.', beaten:'It loses the tune and wanders off, muttering.'},
   {id:'fogre',   name:'Brain-Fog Ogre',    days:2, weak:['ARM','HRT'], shape:'ogre',    flavor:'Breathes a grey haze that makes simple things feel heavy.', beaten:'The haze lifts. It lumbers off coughing up the last of the fog.'},
@@ -3316,6 +3318,128 @@ function drawIcon(canvas, kind, id){
 }
 
 /* bosses: black silhouettes with a white rim and glowing eyes, framed by a soft floor light */
+/* mini-boss sprites drawn pixel by pixel: '#' body, 'w' white detail */
+const MB_TAB = [
+  "................##########",
+  "..............##############",
+  ".............################",
+  "#............################............#",
+  "###..........################..........###",
+  ".#####.......################.......#####",
+  "..#######...######w######w#######.#######",
+  "...##########w#####w####w#####w########",
+  "....##########ww####w##w####ww#######",
+  "......########wwww########wwww#####",
+  "........######################",
+  "............##################",
+  "............#w#w#w#w#w#w#w#w##",
+  ".............#ww##########ww#",
+  ".............##w#w#w#w#w#w##",
+  "..............##############",
+  "...............############",
+  "........#........########........#",
+  "........##......##########......##",
+  "..#########################.############",
+  "..#wwwwwwwwwww##############wwwwwwwwwww#",
+  "..############.##########.##############",
+  "..##wwwww#####..########..##wwwwww######",
+  "..############..########..##############",
+  "..##wwwwwwww##..########..##wwwww#######",
+  "..############..########..##############",
+  "..##www#######..########..##wwwwwww#####",
+  "..############..########..##############",
+  ".................########",
+  "................###..###",
+  "...............###....###",
+  "..............###......###",
+  ".............###........###",
+  "............####........####",
+  "...........#.#.#........#.#.#"];
+const MB_IMP = [
+  "..............#..........#",
+  "..............##........##",
+  "...............##......##",
+  "...............##########",
+  "..............############",
+  "#.............#ww######ww#.............#",
+  "##............##www##www##............##",
+  "####..........############..........####",
+  ".#####........#w#w#w#w#w##........#####",
+  ".#######.......##########.......#######",
+  "..#########.....########.....#########",
+  "..###########....######....###########",
+  "...############.########.############",
+  "...#######################################",
+  "....######.####.########.####.######",
+  ".....####...###.########.###...####",
+  ".....###.....##.########.##.....###",
+  "......#.......#.###wwww#.#.......#",
+  "................###w##w##",
+  "................###wwww#",
+  "................###w##w#",
+  "................###wwww#",
+  ".................######",
+  "..................####.......#",
+  "..................#..#......###",
+  ".................##..##....#####",
+  "................##....##.....#",
+  "........................#####"];
+const MB_GHOUL = [
+  "..............wwwwwwww",
+  ".............wwwwwwwwww",
+  "............wwwwwwwwwwww",
+  "............ww###ww###ww",
+  "............ww###ww###ww",
+  "............wwwwww#wwwww",
+  ".............wwww###www",
+  "..............w#w#w#w#",
+  "..............wwwwwwww",
+  "...........###############",
+  "..........##################",
+  ".........####################",
+  "........##########################",
+  ".......###########################w",
+  "......####################ww######",
+  "......###.##############......w#",
+  ".....###..##############......#w",
+  ".....###..###############.....w#",
+  "....w#w...###############.....#w",
+  "....w.w..#################....w#",
+  "..........#################...#w",
+  ".........##################...w#",
+  "........##.##.###.###.###.##..#w..#####",
+  "................###....###....w#.#######",
+  "...............###......###...#w##w#####",
+  "..............####......####...wwww#w###",
+  ".............#.#.#......#.#.#.....#######"];
+const MB_HOB = [
+  "...........##..........##",
+  "............##........##",
+  "............###......###",
+  ".............####..####",
+  ".............##########",
+  "............############",
+  "............#w##w##w##w#",
+  "............##ww####ww##",
+  "............############",
+  ".............##w#w#w###",
+  ".............#########w..................#",
+  "..............#######.w#................##",
+  "............###########ww###########...##",
+  "..........#################wwwwwwwwwww###",
+  ".........###################################",
+  "........##.###############.##############...##",
+  "........#..###############.#.............#.###",
+  "........#..###############.#..............#",
+  "........#..###############",
+  ".......##..###############",
+  ".......#...###############",
+  "...........##############",
+  "...........######.#######",
+  "...........#####...######",
+  "...........####.....####",
+  "..........#####.....#####",
+  ".........#.#.#.......#.#.#"];
 function drawBoss(canvas, boss, f, motion, hurt, dead){
   ctx = canvas.getContext('2d');
   const BW = 64, BH = 52, m = new Uint8Array(BW*BH);
@@ -3332,6 +3456,8 @@ function drawBoss(canvas, boss, f, motion, hurt, dead){
   const line = (x0,y0,x1,y1) => { const n = Math.max(Math.abs(x1-x0), Math.abs(y1-y0)); for (let i=0;i<=n;i++) mk(x0+(x1-x0)*i/n, y0+(y1-y0)*i/n); };
   const fm = motion ? f : 0;
   const details = [];
+  const tl = (x0,y0,x1,y1,w=2) => { const n = Math.max(Math.abs(x1-x0), Math.abs(y1-y0)) || 1; for (let i=0;i<=n;i++){ const cx = Math.round(x0+(x1-x0)*i/n), cy = Math.round(y0+(y1-y0)*i/n); for (let j=0;j<w;j++) for (let k=0;k<w;k++) mk(cx+j-(w>>1), cy+k-(w>>1)); } };   // thick line
+  const grid = (rows, ox, oy) => { const ws = []; rows.forEach((r, y) => { for (let x = 0; x < r.length; x++){ if (r[x] === '.') continue; mk(ox+x, oy+y); if (r[x] === 'w') ws.push([ox+x, oy+y]); } }); details.push(() => ws.forEach(([x,y]) => W_(x,y))); };   // pixel-art sprite
   const eyePts = [];
   const eyes = (pts, s=3) => { pts.forEach(([x,y]) => eyePts.push([x,y,s])); details.push(() => { for (const [x,y] of pts){ W_(x,y,s,s); B_(x+s-2,y+1,1,s-1); W_(x,y,1,1); } }); };
   switch (boss.shape){
@@ -3400,57 +3526,61 @@ function drawBoss(canvas, boss, f, motion, hurt, dead){
       eyes([[25,10],[35,10]],3);
       details.push(() => { const k = motion ? f % 6 : 0; for (let y=24;y<34;y+=2) W_(32, y + (k % 2), 1, 1); for (let y=38;y<44;y++) for (let x=32-(y-37)*2; x<=32+(y-37)*2; x++) if ((x+y)%2) W_(x,y); for (let x=27;x<38;x+=2) W_(x,15,1,1); });
       break; }
-    /* mini-bosses: smaller than the bosses, all about losing focus */
-    case 'tabgob': { // Tab Goblin: big ears, a fistful of browser tabs
-      const ef = motion && f % 24 < 3 ? 1 : 0;
-      ell(30,36,7,7); ell(30,25,6,5); poly([[25,23],[15,17 + ef],[24,27]]); poly([[35,23],[45,17 + ef],[36,27]]); rect(26,42,3,4); rect(31,42,3,4);
-      line(36,34,41,30); rect(40,19,13,8); rect(43,16,13,8); rect(46,13,13,8);
-      eyes([[26,23],[31,23]],3); details.push(() => { W_(28,29,5,1); W_(28,28,1,1); W_(32,28,1,1); for (const [x,y] of [[40,19],[43,16],[46,13]]){ W_(x+1,y+2,11,1); W_(x+2,y+1,3,1); } });
+    /* mini-bosses: monsters of monotony and lost focus. Scary, not cute. */
+    case 'tabgob': { // Tab Goblin: swept-back ears, a jagged snarl, claws gripping glowing tabs
+      grid(MB_TAB, 10, 12 + (motion && f % 30 < 4 ? -1 : 0)); eyePts.push([23,19,3],[34,19,3]);
       break; }
-    case 'imp': { // Doomscroll Imp: bat wings, a tail, a phone glued to its hand
-      const bob = motion ? Math.round(Math.sin(fm * 0.3) * 1.5) : 0, wf = motion && f % 8 < 4 ? 2 : 0;
-      ell(30,32 + bob,6,7); ell(30,22 + bob,6,5); poly([[26,19 + bob],[24,12 + bob],[28,18 + bob]]); poly([[34,19 + bob],[36,12 + bob],[32,18 + bob]]);
-      poly([[25,28 + bob],[13,20 + bob + wf],[15,31 + bob],[24,35 + bob]]); poly([[35,28 + bob],[47,20 + bob + wf],[45,31 + bob],[36,35 + bob]]);
-      for (let i = 0; i < 10; i++) mk(30 - i, 39 + bob + Math.round(Math.sin(i / 3) * 2)); poly([[19,38 + bob],[22,41 + bob],[19,43 + bob],[17,41 + bob]]);
-      rect(36,24 + bob,6,9);
-      eyes([[27,20 + bob],[31,20 + bob]],2); details.push(() => { W_(37,25 + bob,4,7); B_(38,27 + bob,2,1); B_(38,29 + bob,2,1); W_(28,25 + bob,4,1); });
+    case 'imp': { // Doomscroll Imp: horns, bat wings, a spaded tail, a phone in its claws
+      const bob = motion ? Math.round(Math.sin(fm * 0.3) * 1.5) : 0; grid(MB_IMP, 11, 6 + bob); eyePts.push([26,11 + bob,2],[34,11 + bob,2]);
       break; }
-    case 'goblin': { // Drudge Goblin: hunched under a stack of busywork
-      ell(30,36,9,7); ell(39,31,6,5); poly([[42,28],[50,23],[43,32]]); rect(25,41,3,5); rect(33,41,3,5);
-      rect(17,22,15,5); rect(19,17,13,5); rect(18,12,12,5);
-      eyes([[37,29],[41,29]],2); details.push(() => { for (const [x,y,w] of [[17,22,15],[19,17,13],[18,12,12]]){ W_(x+1,y+2,w-2,1); W_(x + (w >> 1),y,1,5); } W_(38,34,4,1); });
+    case 'ghoul': { // Drudge Ghoul: a skull on a ragged hunched body, dragging a ball and chain of busywork
+      grid(MB_GHOUL, 8, 20); eyePts.push([22,23,3],[28,23,3]);
       break; }
-    case 'kobold': { // Snooze Kobold: a nightcap, a snout, an alarm clock it keeps hitting
+    case 'kobold': { // Snooze Kobold: the nightcap, the snout, the clock it keeps smashing; a glare and fangs
       ell(32,36,7,8); ell(31,23,6,5); rect(35,23,7,4); poly([[24,21],[39,20],[44,8]]); poly([[39,20],[44,8],[47,12]]); ell(47,13,2,2);
       for (let i = 0; i < 9; i++) mk(39 + i, 40 - Math.round(i * i / 9)); rect(27,43,3,3); rect(34,43,3,3);
-      ell(20,33,4,4); rect(17,28,2,2); rect(22,28,2,2);
-      eyes([[28,22],[32,22]],2);
-      details.push(() => { B_(28,22,4,1); B_(32,22,2,1); W_(20,31,1,3); W_(20,33,2,1); W_(41,24,1,1);
+      ell(20,33,4,4); rect(17,28,2,2); rect(22,28,2,2); line(24,33,27,31);
+      eyePts.push([28,21,2],[32,21,2]);
+      details.push(() => { W_(27,20,3,1); W_(28,21,2,1); W_(33,20,3,1); W_(33,21,2,1); B_(29,21); B_(33,21);   // slanted glare
+        W_(37,27,1,2); W_(40,27,1,2); W_(36,26,6,1);                                                       // fangs under the snout
+        W_(20,31,1,3); W_(20,33,2,1); W_(25,30,1,1); W_(26,32,1,1);                                        // the clock, and claws on it
+        W_(26,46,1,1); W_(29,46,1,1); W_(33,46,1,1); W_(36,46,1,1);
         const z = motion ? (f >> 3) % 3 : 1; for (let i = 0; i <= z; i++){ const x = 50 + i*4, y = 26 - i*6; W_(x,y,4,1); W_(x+2,y+1,1,1); W_(x+1,y+2,1,1); W_(x,y+3,4,1); } });
       break; }
-    case 'hobgob': { // Humdrum Hobgoblin: droopy ears, humming one flat note
-      ell(32,35,10,9); ell(32,22,7,6); poly([[25,20],[16,28],[25,25]]); poly([[39,20],[48,28],[39,25]]); rect(26,42,4,4); rect(34,42,4,4); rect(20,30,4,9); rect(40,30,4,9);
-      eyes([[28,20],[34,20]],2);
-      details.push(() => { W_(31,25,3,2); B_(32,25,1,1);
-        const ny = motion ? 8 + Math.round(Math.sin(fm * 0.2)) : 8; W_(53,ny - 2,1,7); W_(54,ny - 2,2,1); W_(56,ny - 1,1,2); W_(51,ny + 4,2,2); W_(46,ny,1,6); W_(47,ny + 3,2,1); W_(49,ny + 4,1,1); W_(47,ny + 5,2,1); });
+    case 'hobgob': { // Humdrum Hobgoblin: tall, horned and hunched, droning one flat note on a long horn
+      grid(MB_HOB, 8, 20); eyePts.push([21,26,2],[26,26,2]);
+      details.push(() => { const ny = motion ? 18 + Math.round(Math.sin(fm * 0.2)) : 18; W_(54,ny - 2,1,7); W_(55,ny - 2,2,1); W_(57,ny - 1,1,2); W_(52,ny + 4,2,2); W_(47,ny,1,6); W_(48,ny + 3,2,1); W_(50,ny + 4,1,1); W_(48,ny + 5,2,1); });
       break; }
-    case 'ogre': { // Brain-Fog Ogre: a big lump breathing out grey haze
-      ell(30,31,13,12); ell(30,16,7,6); rect(14,24,5,13); rect(41,24,5,13); rect(22,41,6,5); rect(32,41,6,5);
-      eyes([[26,14],[32,14]],3);
-      details.push(() => { B_(26,14,3,1); B_(32,14,3,1); W_(27,19,6,1);
-        for (let x = 34; x < 62; x++) for (let y = 8; y < 30; y++){ const dd = Math.hypot((x - 48) / 14, (y - 18) / 9); if (dd < 1 && lit(x + (motion ? (f >> 2) : 0), y, 0.35 * (1 - dd))) W_(x,y); } });
+    case 'ogre': { // Brain-Fog Ogre: a hulking cyclops with tusks and a spiked club, breathing grey haze
+      ell(30,17,9,8); poly([[17,24],[43,24],[46,36],[40,40],[20,40],[14,36]]);
+      tl(16,26,11,34,3); tl(11,34,12,41,3); tl(44,26,49,33,3); tl(49,33,50,38,3);
+      tl(51,39,56,24,3); ell(57,21,3,4); for (const [x,y] of [[54,17],[60,19],[61,23],[53,22]]) mk(x,y);
+      tl(23,40,21,45,4); tl(37,40,39,45,4); rect(18,45,6,2); rect(36,45,6,2);
+      eyePts.push([27,15,6]);
+      details.push(() => { W_(25,13,10,1); W_(27,15,6,1); W_(26,16,8,3); W_(27,19,6,1); B_(29,16,2,3);
+        W_(24,22,1,2); W_(36,22,1,2); W_(23,21,1,1); W_(37,21,1,1); for (const x of [26,28,30,32,34]) W_(x, x % 4 ? 24 : 23, 1, 1);
+        W_(20,35,20,1); W_(22,36,1,3); W_(30,36,1,3); W_(38,36,1,3); W_(10,41,1,1); W_(12,42,1,1); W_(14,41,1,1); for (let x = 26; x < 34; x += 2) W_(x,30,1,1);
+        for (let x = 2; x < 22; x++) for (let y = 8; y < 30; y++){ const dd = Math.hypot((x - 12) / 11, (y - 18) / 9); if (dd < 1 && lit(x + (motion ? (f >> 2) : 0), y, 0.35 * (1 - dd))) W_(x,y); } });
       break; }
-    case 'troll': { // Tedium Troll: squatting on its bridge, club across its knees
-      ell(32,27,13,11); ell(32,14,8,7); ell(32,18,3,3); rect(18,24,4,14); rect(42,24,4,14); rect(24,37,5,9); rect(35,37,5,9);
-      rect(4,40,56,4); line(14,36,50,36); line(14,35,50,35);
-      eyes([[27,11],[34,11]],3);
-      details.push(() => { W_(28,21,1,2); W_(36,21,1,2); for (let x = 6; x < 60; x += 6) W_(x,41,1,3); W_(4,40,56,1); });
+    case 'troll': { // Tedium Troll: horned and tusked, squatting on its stone bridge with a club across its knees
+      rect(2,38,60,4); rect(2,42,6,6); rect(56,42,6,6); poly([[8,42],[56,42],[52,44],[44,46],[20,46],[12,44]]);
+      ell(32,14,8,7); poly([[25,10],[16,2],[19,9]]); poly([[39,10],[48,2],[45,9]]); poly([[29,16],[35,16],[33,22],[31,22]]);
+      poly([[20,22],[44,22],[48,36],[16,36]]); tl(18,24,11,31,3); tl(11,31,17,35,3); tl(46,24,53,31,3); tl(53,31,47,35,3);
+      tl(8,33,58,30,2); ell(58,30,3,3); ell(22,36,6,3); ell(42,36,6,3); tl(20,38,20,45,3); tl(44,38,44,45,3);
+      eyePts.push([27,10,3],[34,10,3]);
+      details.push(() => { W_(26,10,4,1); W_(34,10,4,1); W_(27,11,3,2); W_(34,11,3,2); B_(29,12); B_(34,12);
+        W_(27,20,1,3); W_(37,20,1,3); W_(26,19,1,1); W_(38,19,1,1); for (let x = 4; x < 60; x += 6) W_(x,39,1,3); W_(2,38,60,1);
+        W_(9,32,1,1); W_(11,33,1,1); W_(53,32,1,1); W_(55,33,1,1); });
       break; }
-    case 'ruttroll': { // Rut Troll: digging the same groove deeper with a big shovel
-      ell(28,28,12,11); ell(28,15,7,6); ell(33,17,3,2); rect(15,25,4,12); rect(24,38,5,8); rect(33,38,5,8);
-      const dg = motion && f % 20 < 10 ? 1 : 0; line(44,8 + dg,44,36 + dg); line(45,8 + dg,45,36 + dg); rect(41,36 + dg,8,6); line(38,28,44,24);
-      eyes([[24,13],[30,13]],3);
-      details.push(() => { B_(24,13,3,1); W_(25,20,5,1); for (let x = 4; x < 60; x++){ const dip = x > 20 && x < 52 ? 1 : 0; if ((x & 1) === 0) W_(x, 47 + dip, 1, 1); } });
+    case 'ruttroll': { // Rut Troll: spines down its back, stooped over a big shovel in its groove
+      ell(24,24,12,10); for (let i = 0; i < 6; i++){ const x = 13 + i*4, y = 16 - Math.round(Math.sin(i / 5 * Math.PI) * 4); poly([[x,y+4],[x+2,y-3],[x+4,y+4]]); }
+      ell(37,26,6,5); poly([[40,23],[47,26],[40,29]]);
+      const dg = motion && f % 20 < 10 ? 1 : 0;
+      tl(30,30,40,36 + dg,3); tl(40,36 + dg,44,33 + dg,2); tl(18,30,15,38,3); tl(50,6 + dg,44,40 + dg,2); poly([[41,39 + dg],[48,39 + dg],[47,46 + dg],[42,46 + dg]]);
+      tl(18,32,16,45,4); tl(28,33,30,45,4); rect(13,45,6,2); rect(28,45,6,2);
+      eyePts.push([35,24,3]);
+      details.push(() => { W_(35,24,3,1); W_(36,25,2,1); B_(37,25); W_(41,28,1,2); W_(43,28,1,1); W_(45,27,1,1); W_(14,38,1,2); W_(16,39,1,1);
+        for (let x = 4; x < 60; x += 2) W_(x, x > 20 && x < 52 ? 49 : 47, 1, 1); });
       break; }
     case 'heart': { // The Heartbreaker: a cracked heart on bat wings
       ell(25,20,9,9); ell(39,20,9,9); poly([[16,22],[48,22],[32,42]]);
@@ -3507,6 +3637,66 @@ function drawBoss(canvas, boss, f, motion, hurt, dead){
   for (let i=0;i<m.length;i++) if (m[i]) ctx.fillRect(i%BW, (i/BW)|0, 1, 1);
   details.forEach(d => d());
   if (hurt){ ctx.globalCompositeOperation = 'difference'; ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,BW,BH); ctx.globalCompositeOperation = 'source-over'; }
+}
+
+/* The shop seen from the street: a pitched roof, a sign, pink-striped awnings, bunting over the door,
+   window displays that glint, swaying flowers and a chalkboard out front. Our own little store, 112 x 56. */
+function drawShopFront(cv, t){
+  ctx = cv.getContext('2d'); ctx.imageSmoothingEnabled = false;
+  const PK = '#eeb7d8', K = (x, y, w = 1, h = 1) => px(x, y, w, h, PK), frame = (x, y, w, h) => { W_(x, y, w, 1); W_(x, y + h - 1, w, 1); W_(x, y, 1, h); W_(x + w - 1, y, 1, h); };
+  B_(0, 0, 112, 56);
+  // a few stars and a drifting cloud
+  for (const [x, y] of [[4,5],[19,2],[103,4],[94,10],[7,17],[108,19]]) if ((t >> 4) % 5 !== (x % 5)) W_(x, y);
+  const cx = 112 - ((t >> 2) % 140); for (const [dx, dy, w] of [[0,0,6],[-3,1,12],[-1,2,9]]) for (let i = 0; i < w; i += 2) W_(cx + dx + i + (dy & 1), 10 + dy);
+  // street
+  for (let x = 0; x < 112; x += 2) W_(x + ((x >> 1) & 1), 51); for (let x = 3; x < 112; x += 9) W_(x, 54, 3, 1);
+  // building
+  B_(12, 14, 88, 37); frame(12, 14, 88, 37);
+  // roof: stepped tiles
+  for (let y = 6; y < 14; y++){ const inset = 14 - y; const x0 = 8 + inset, w = 96 - inset * 2; W_(x0, y, 1, 1); W_(x0 + w - 1, y, 1, 1); if (y % 2 === 0) for (let x = x0; x < x0 + w; x += 1) W_(x, y); else for (let x = x0 + 2; x < x0 + w - 1; x += 4) W_(x, y); }
+  W_(6, 14, 100, 1);
+  // sign with SHOP
+  B_(37, 1, 38, 12); frame(37, 1, 38, 12); frame(39, 3, 34, 8);
+  const F = { S:['111','100','111','001','111'], H:['101','101','111','101','101'], O:['111','101','101','101','111'], P:['111','101','111','100','100'] };
+  [...'SHOP'].forEach((ch, i) => F[ch].forEach((r, y) => [...r].forEach((b, x) => { if (b === '1') W_(47 + i * 5 + x, 5 + y); })));
+  const glint = (t >> 2) % 24; if (glint < 4) K(43 + glint * 6, 4);
+  K(42, 6, 2, 2); K(68, 6, 2, 2);
+  // awnings over the two windows, scalloped edge flutters
+  const flap = (t >> 3) % 2;
+  for (const ax of [15, 71]){
+    for (let x = 0; x < 26; x++){ const pink = ((x / 3) | 0) % 2 === 0; for (let y = 19; y < 24; y++) (pink ? K : W_)(ax + x, y); }
+    for (let s = 0; s < 26; s += 3){ const pink = ((s / 3) | 0) % 2 === 0, c = pink ? K : W_; c(ax + s, 24, 3, 1); c(ax + s + 1, 25 + ((s / 3 + flap) % 2 ? 0 : 0), 1, 1 + ((s / 3 + flap) % 2)); }
+    B_(ax, 18, 26, 1);
+  }
+  // windows with things on display
+  for (const wx of [17, 73]){ frame(wx, 28, 22, 15); W_(wx + 11, 28, 1, 15); W_(wx, 35, 22, 1); W_(wx - 1, 43, 24, 1); }
+  // left: a potion and a sword; right: a hat and a rune
+  W_(21,30,2,1); W_(21,31,2,1); W_(20,32,4,3); B_(21,33,2,1);
+  W_(33,29,1,5); W_(31,33,5,1);
+  W_(19,40,6,1); W_(20,38,4,2); W_(21,37,2,1);
+  W_(31,38,4,1); W_(32,37,2,4); W_(32,41,2,1);
+  W_(76,31,6,2); W_(78,29,2,2); W_(75,33,8,1);
+  W_(88,30,3,1); W_(87,31,5,2); W_(88,33,3,1);
+  W_(77,38,4,4); B_(78,39,2,2); W_(87,39,5,1); W_(89,37,1,5);
+  const sp = (t >> 2) % 40, sx = [22, 33, 79, 89][(t >> 5) % 4], sy = [30, 29, 30, 37][(t >> 5) % 4];
+  if (sp < 6){ const r = sp < 3 ? sp : 6 - sp; K(sx, sy - r); K(sx, sy + r); K(sx - r, sy); K(sx + r, sy); }
+  // the double door, with a little bell
+  frame(46, 27, 20, 24); W_(55, 27, 1, 24); W_(56, 27, 1, 24);
+  frame(48, 29, 6, 8); frame(58, 29, 6, 8); W_(51, 29, 1, 8); W_(61, 29, 1, 8); W_(48, 33, 6, 1); W_(58, 33, 6, 1);
+  W_(53, 41, 1, 3); W_(58, 41, 1, 3);
+  const ring = (t >> 3) % 12 < 2 ? 1 : 0; W_(55 - ring, 25, 2, 2); W_(55, 24, 1, 1);
+  W_(44, 51, 24, 1); W_(42, 52, 28, 1);
+  // bunting across the front, swaying
+  const sway = Math.round(Math.sin(t * 0.12) * 1);
+  for (let i = 0; i < 9; i++){ const x = 41 + i * 3.5, sag = Math.round(Math.sin(i / 8 * Math.PI) * 3) + sway; const c = i % 2 ? W_ : K; c(x, 18 + sag, 3, 1); c(x + 1, 19 + sag, 1, 1); }
+  // flower pots by the door, tulips swaying
+  for (const fx of [40, 70]){ W_(fx, 47, 5, 4); B_(fx + 1, 48, 3, 2);
+    for (let k = 0; k < 2; k++){ const lean = Math.round(Math.sin(t * 0.1 + fx + k * 2)); W_(fx + 1 + k * 2 + lean, 43, 1, 4); K(fx + k * 2 + lean, 41, 3, 2); K(fx + 1 + k * 2 + lean, 40, 1, 1); } }
+  // chalkboard easel out front
+  W_(98, 36, 12, 10); B_(99, 37, 10, 8); W_(100, 39, 5, 1); W_(100, 41, 7, 1); W_(100, 43, 4, 1); K(106, 43, 2, 1);
+  W_(99, 46, 1, 5); W_(108, 46, 1, 5);
+  // a lantern on the left wall that flickers
+  W_(5, 30, 1, 2); W_(4, 32, 3, 1); (((t >> 2) % 9) ? K : W_)(4, 33, 3, 3); W_(4, 36, 3, 1); W_(6, 29, 6, 1);
 }
 const ICON = {
   pencil:'<path d="M4 20l1-5L15.5 4.5a2.1 2.1 0 013 3L8 18z"/><path d="M13.5 6.5l3 3"/>',
@@ -4240,7 +4430,8 @@ function renderShop(){
     return `<div class="item ${s.eq?'eq':''} ${s.owned && !it.potion && !it.rune ? 'owned' : ''} ${lockd ? 'locked' : ''}">${itemArt(it)}
       <b>${esc(it.name)}</b><span class="tags">${styleTag(it)}${tierTag(it)}</span><span class="small muted">${esc(it.text)}${(it.req || it.lvl) && !s.owned && !s.eq ? ` · needs ${reqText(it)}` : ''}</span>${seasonTag(it)}${btn}</div>`;
   }).join('');
-  return `<div class="bignum"><b>${D.balance}</b><span>gold to spend</span></div>
+  return `<div class="shopfront"><canvas id="shopCv" width="112" height="56" role="img" aria-label="The shop, seen from the street"></canvas></div>
+  <div class="bignum"><b>${D.balance}</b><span>gold to spend</span></div>
   <button class="card bagrow" data-plus="inv"><span><b>Inventory</b><span class="muted small" style="display:block">Equip gear, drink potions and set runes (${D.activeRunes.length}/${RUNE_SLOTS} active)</span></span><span class="bagopen">Open ›</span></button>
   ${smogNote()}
   ${weatherShopCard()}
@@ -4879,6 +5070,7 @@ function draw(){
   const b = document.getElementById('bossCv'); if (b) drawBoss(b, foe, frame, motionOK, hurt, down);
   const sp = document.getElementById('spaceCv'); if (sp) drawSpace(sp);
   const nc = document.getElementById('nightCv'); if (nc) drawNight(nc);
+  const shc = document.getElementById('shopCv'); if (shc) drawShopFront(shc, motionOK ? frame : 0);
   const rc = document.getElementById('riffCv'); if (rc){ ctx = rc.getContext('2d'); ctx.imageSmoothingEnabled = false; ctx.clearRect(0, 0, rc.width, rc.height); drawRiffAt(2, 3, motionOK ? frame : 0); }
 }
 setInterval(() => { frame++; if (motionOK || Date.now() < jumpUntil + 200 || Date.now() < hurtUntil + 200) draw(); }, 140);
