@@ -458,6 +458,23 @@ html[data-mode="dark"] .tdplus{background:#2d2a26;color:var(--ink)}
 
 /* focus timer: full-bleed dark page like Tiimo's focus mode */
 .iconbtn.ticking{background:var(--ink);color:var(--inv)}
+.iconbtn.dotted{position:relative}
+.iconbtn.dotted::after{content:'';position:absolute;top:7px;right:7px;width:9px;height:9px;border-radius:50%;background:var(--pink);box-shadow:0 0 0 2px var(--card)}
+/* side menu from the right, Slack style */
+.drawer{position:fixed;inset:0;z-index:42;background:rgba(10,9,8,0);transition:background .26s ease}
+.drawer[hidden]{display:none}
+.drawer.open{background:rgba(10,9,8,.5)}
+.drawerpanel{position:absolute;top:0;right:0;bottom:0;width:min(84vw,360px);background:var(--bg);box-shadow:-10px 0 40px rgba(0,0,0,.35);display:flex;flex-direction:column;padding:calc(18px + env(safe-area-inset-top)) 14px calc(18px + env(safe-area-inset-bottom));transform:translateX(100%);transition:transform .26s cubic-bezier(.2,.9,.25,1)}
+html[data-mode="dark"] .drawerpanel{background:#1b1a18}
+.drawer.open .drawerpanel{transform:none}
+.drhead{display:flex;align-items:center;justify-content:space-between;padding:4px 6px 14px}
+.drhead h2{margin:0;font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:28px;letter-spacing:-.01em}
+.drlist{display:flex;flex-direction:column;gap:2px;flex:1;overflow-y:auto}
+.dritem{display:flex;align-items:center;gap:14px;width:100%;border:0;background:none;color:var(--ink);font:inherit;font-size:16px;font-weight:500;text-align:left;padding:13px 12px;border-radius:14px;cursor:pointer}
+.dritem:hover,.dritem:active,.dritem.on{background:var(--track)}
+.dritem svg{flex:none;opacity:.85}
+.dritem em{margin-left:auto;font-style:normal;font-size:12px;font-weight:700;color:#171614;background:var(--pink);border-radius:999px;padding:3px 9px}
+.drfoot{border-top:1px solid var(--line);padding-top:10px;margin-top:10px;display:flex;flex-direction:column;gap:2px}
 @property --g1{syntax:'<color>';inherits:true;initial-value:#3d2f55}
 @property --g2{syntax:'<color>';inherits:true;initial-value:#1b1724}
 html.focusmode{background:#0b0a0d}
@@ -839,6 +856,7 @@ html[data-mode="dark"] .edpill:not(.primary){background:var(--track)}
 </div></nav>
 
 <div class="sheet" id="sheet" hidden><div class="panel" id="sheetBody" role="dialog" aria-modal="true" aria-label="Edit task"></div></div>
+<div class="drawer" id="drawer" hidden><div class="drawerpanel" id="drawerpanel" role="dialog" aria-modal="true" aria-label="Menu"></div></div>
 <div class="qm" id="qm" hidden><div class="qmcard" id="qmcard" role="menu"></div></div>
 <div class="pk" id="pk" hidden><div class="pkcard" id="pkcard" role="menu"></div></div>
 <div class="qa" id="qa" hidden></div>
@@ -851,7 +869,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'd00320c91f';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '874df3e8c0';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -3239,6 +3257,7 @@ const ICON = {
   broom:'<path d="M12 2v9"/><path d="M8.5 11h7L18 21H6z"/><path d="M10 15v6M12 15v6M14 15v6"/>',
   calendar:'<rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16M8.5 3v4M15.5 3v4"/>',
   timer:'<path d="M10 2h4M12 14l3-3"/><circle cx="12" cy="14" r="8"/>',
+  menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
   clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
   sunrise:'<path d="M3 18h18M7.5 18a4.5 4.5 0 019 0M12 5v3M4.6 10.6l2 2M19.4 10.6l-2 2M2.5 14.5h2M19.5 14.5h2"/>',
   sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>',
@@ -3297,9 +3316,24 @@ function renderHeader(){
   }
   document.getElementById('top').innerHTML = `<div><span class="eyebrow">${d}</span><h1>${TITLES[tab]}</h1></div>
     <div class="row" style="gap:8px"><span class="goldpill" aria-label="${D.balance} gold"><i></i>${D.balance} G</span>
-    <button class="iconbtn sm ${S.pomo.run && !S.pomo.run.idle ? 'ticking' : ''}" data-tab="focus" aria-label="Focus timer">${svg('timer',21,2)}</button>
-    <button class="iconbtn sm" data-tab="settings" aria-label="Settings">${svg('gear',21,2)}</button></div>`;
+    <button class="iconbtn sm ${S.pomo.run && !S.pomo.run.idle ? 'dotted' : ''}" data-drawer aria-label="Menu" aria-haspopup="dialog">${svg('menu',21,2.2)}</button></div>`;
 }
+/* ---------- side menu: slides in from the right. Add a feature by adding a line to DRAWER_ITEMS ---------- */
+const DRAWER_ITEMS = [
+  {tab: 'focus', label: 'Focus Mode', icon: 'timer', status: () => S.pomo.run && !S.pomo.run.idle ? (S.pomo.run.pauseAt ? 'Paused' : 'Running') : ''},
+];
+const DRAWER_FOOT = [
+  {tab: 'settings', label: 'Settings', icon: 'gear'},
+];
+function renderDrawer(){
+  const row = it => { const st = it.status ? it.status() : ''; return `<button class="dritem ${tab === it.tab ? 'on' : ''}" data-tab="${it.tab}">${svg(it.icon, 20, 2)}<span>${it.label}</span>${st ? `<em>${st}</em>` : ''}</button>`; };
+  document.getElementById('drawerpanel').innerHTML = `<div class="drhead"><h2>Menu</h2><button class="iconbtn sm" data-drawerclose aria-label="Close menu">${svg('x',20,2.4)}</button></div>
+    <nav class="drlist">${DRAWER_ITEMS.map(row).join('')}</nav>
+    <div class="drfoot">${DRAWER_FOOT.map(row).join('')}</div>`;
+}
+let drawerWant = false;
+function openDrawer(){ const d = document.getElementById('drawer'); drawerWant = true; renderDrawer(); d.hidden = false; requestAnimationFrame(() => requestAnimationFrame(() => { if (drawerWant) d.classList.add('open'); })); }
+function closeDrawer(){ const d = document.getElementById('drawer'); drawerWant = false; if (d.hidden) return; d.classList.remove('open'); setTimeout(() => { if (!drawerWant) d.hidden = true; }, 260); }
 const dismissed = k => S.settings.dismissed[k] === D.today;
 const notice = (k, html) => `<div class="mystery">${svg('gift',18,2)} <span class="ntext">${html}</span><button class="nclose" data-dismiss="${k}" aria-label="Close">${svg('x',16,2.4)}</button></div>`;
 function vitals(compact){
@@ -5130,6 +5164,9 @@ function onClick(e){
   // tapping a task or to-do anywhere but its buttons opens its quick menu
   if (!e.target.closest('button, input, select, textarea, a, form, .tdgrip, .sgrip, .cl') && e.target.closest('[data-qm]') && !recoveryMode){ const q = e.target.closest('[data-qm]'); openQuick(q.dataset.qm, q); return; }
   const el = e.target.closest('button'); if (!el) return;
+  if ('drawer' in el.dataset){ openDrawer(); return; }
+  if ('drawerclose' in el.dataset){ closeDrawer(); return; }
+  if (el.closest('#drawer')) closeDrawer();   // a menu item: close the menu, then go where it points
   if (el.dataset.qmact){ quickAct(el.dataset.qmact); return; }
   if (el.dataset.pick !== undefined){ const i = el.dataset.pick.indexOf('|'); applyPick(el.dataset.pick.slice(0, i), el.dataset.pick.slice(i + 1)); return; }
   if (el.dataset.pk){ if (pkCtx && pkCtx.key === el.dataset.pk){ closePick(); return; } openPick(el.dataset.pk, el); return; }
@@ -5541,11 +5578,14 @@ document.addEventListener('change', e => {
   if (e.target.id === 'petName'){ const v = e.target.value.trim().slice(0,16); if (v && v !== S.petName){ S.petName = v; save(); render(); } }
 });
 document.getElementById('sheet').addEventListener('click', e => { if (e.target.id === 'sheet') closeEditor(); });
-document.addEventListener('keydown', e => { if (e.key !== 'Escape') return; if (pkCtx){ closePick(); return; } if (qmCtx){ closeQuick(); return; } if (qaCtx){ closeQuickAdd(); return; } if (draft || tdraft || mdraft) closeEditor(); });
+document.addEventListener('keydown', e => { if (e.key !== 'Escape') return; if (!document.getElementById('drawer').hidden){ closeDrawer(); return; } if (pkCtx){ closePick(); return; } if (qmCtx){ closeQuick(); return; } if (qaCtx){ closeQuickAdd(); return; } if (draft || tdraft || mdraft) closeEditor(); });
 // tapping the dimmed backdrop closes the quick menu or the quick-add bar
 document.getElementById('qm').addEventListener('click', e => { if (e.target.id === 'qm') closeQuick(); });
 document.getElementById('qa').addEventListener('click', e => { if (e.target.id === 'qa' && !pkCtx) closeQuickAdd(); });
 document.getElementById('pk').addEventListener('click', e => { if (e.target.id === 'pk') closePick(); });
+document.getElementById('drawer').addEventListener('click', e => { if (e.target.id === 'drawer') closeDrawer(); });
+// swipe the menu back to the right to close it
+{ let sx = null; const dp = document.getElementById('drawerpanel'); dp.addEventListener('touchstart', e => { sx = e.touches[0].clientX; }, {passive: true}); dp.addEventListener('touchmove', e => { if (sx != null && e.touches[0].clientX - sx > 70){ sx = null; closeDrawer(); } }, {passive: true}); dp.addEventListener('touchend', () => { sx = null; }, {passive: true}); }
 // the quick-add send button stays gray until there's a title
 document.getElementById('qa').addEventListener('input', e => { if (e.target.id !== 'qaText') return; const b = document.querySelector('#qa .qasend'); if (b) b.disabled = !e.target.value.trim(); });
 // the emoji box inside the icon picker
