@@ -928,7 +928,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'a713b31855';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '9d834882bb';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -6151,7 +6151,7 @@ const LOFI_STYLES = {
     progs: {focus: [[[45,55,59,60,64],[50,53,57,60,64],[43,52,55,59,62],[48,52,55,59,64]], [[41,52,57,60,64],[40,50,55,59,62],[45,55,59,60,64],[45,55,57,60,64]], [[50,53,57,60,64],[40,55,59,62,64],[41,55,57,60,64],[40,52,56,59,62]]],
             break: [[[41,57,60,64,67],[43,55,59,62,69],[48,55,59,62,64],[48,55,59,62,64]], [[48,52,55,59,64],[41,52,57,60,64],[48,52,55,59,64],[43,53,55,59,62]]]},
     focus: {bpm: 88, swing: 0.17, chord: 'nylon', pad2: 'rhodes', pad2v: 0.03, lead: 'marimba', oct: 12, lead_p: 0.14, leadv: 0.045, bass: 'hiphop', bassSnd: 'round', beat: 'afrohop', drums: 1, amb: 0.0001, warm: 6500},
-    break: {bpm: 80, swing: 0.08, chord: 'vibes', lead: 'nylon', oct: 12, bass: 'pluck', beat: 'bossa', lead_p: 0.18, drums: 0.7, amb: 0.2, warm: 3600, leadv: 0.05, mix: 1.1}, amb: 'waves'},
+    break: {bpm: 80, swing: 0.08, chord: 'vibes', lead: 'nylon', oct: 12, bass: 'pluck', beat: 'bossa', lead_p: 0.18, drums: 0.7, amb: 0.2, warm: 3600, leadv: 0.05, mix: 1.25}, amb: 'waves'},
   glade: {label: 'Glade', note: 'Plucked guitar, warm pads, soft hand drums', price: 400, key: -1, gain: 1.2, vinyl: 0.04, wow: 0, bassv: 0.35,
     progs: {focus: [[[36,55,59,62,64],[45,55,59,60,64],[41,55,57,60,64],[43,55,57,62,64]], [[36,52,55,59,62],[40,55,59,62,64],[41,55,57,60,64],[36,55,57,62,67]], [[41,57,60,64,67],[36,55,59,62,64],[45,57,60,64,67],[43,55,59,62,66]]],
             break: [[[41,57,60,64,69],[36,55,59,62,67],[41,57,60,64,69],[43,55,59,62,66]], [[45,57,60,64,71],[41,57,60,64,69],[36,55,59,62,67],[36,55,59,62,64]]]},
@@ -6159,13 +6159,13 @@ const LOFI_STYLES = {
     break: {bpm: 80, swing: 0.08, chord: 'rhodes', lead: 'steel', oct: 12, bass: 'pluck', beat: 'bossa', lead_p: 0.18, drums: 0.7, amb: 0.2, warm: 3600, leadv: 0.06, mix: 1.1}, amb: 'waves'},
   cafe: {label: 'Café', note: 'Piano trio with brushes', price: 400, key: -2, gain: 1.05, vinyl: 0.45, wow: 5,
     focus: {bpm: 84, swing: 0.2, chord: 'piano', lead: 'piano', oct: 12, lead_p: 0.28, leadv: 0.035, bass: 'walk', bassSnd: 'upright', beat: 'brush', drums: 1, amb: 0.0001, warm: 5200},
-    break: {bpm: 80, swing: 0.08, chord: 'piano', lead: 'vibes', oct: 12, bass: 'pluck', beat: 'bossa', lead_p: 0.18, drums: 0.7, amb: 0.2, warm: 3600, mix: 1.1}, amb: 'waves'},
+    break: {bpm: 80, swing: 0.08, chord: 'piano', lead: 'vibes', oct: 12, bass: 'pluck', beat: 'bossa', lead_p: 0.18, drums: 0.7, amb: 0.2, warm: 3600, mix: 1.4}, amb: 'waves'},
   bossa: {label: 'Bossa', note: 'Nylon guitar and a soft samba', price: 400, key: 2, gain: 1.1, vinyl: 0.3, wow: 4,
     focus: {bpm: 92, swing: 0, chord: 'bossa', lead: 'vibes', oct: 12, lead_p: 0.2, bass: 'bossa', bassSnd: 'upright', beat: 'bossanova', drums: 1, amb: 0.0001, warm: 5500},
-    break: {bpm: 80, swing: 0.08, chord: 'vibes', lead: 'guitar', oct: 12, bass: 'pluck', beat: 'bossa', lead_p: 0.18, drums: 0.7, amb: 0.2, warm: 3600, mix: 1.1}, amb: 'waves'},
+    break: {bpm: 80, swing: 0.08, chord: 'vibes', lead: 'guitar', oct: 12, bass: 'pluck', beat: 'bossa', lead_p: 0.18, drums: 0.7, amb: 0.2, warm: 3600, mix: 1.5}, amb: 'waves'},
   chip: {label: '8-bit', note: 'Soft chiptune, like an old handheld', price: 400, key: 5, gain: 0.7, vinyl: 0.2, wow: 3,
     focus: {bpm: 88, swing: 0.1, chord: 'chiparp', lead: 'chip', oct: 12, lead_p: 0.3, leadv: 0.03, bass: 'chip', bassSnd: 'tri', beat: 'chip', drums: 1, amb: 0.0001, warm: 3800},
-    break: {bpm: 80, swing: 0.08, chord: 'vibes', lead: 'chip', oct: 12, bass: 'pluck', beat: 'bossa', lead_p: 0.18, drums: 0.7, amb: 0.2, warm: 3600, leadv: 0.025, mix: 1.4}, amb: 'waves'}
+    break: {bpm: 80, swing: 0.08, chord: 'vibes', lead: 'chip', oct: 12, bass: 'pluck', beat: 'bossa', lead_p: 0.18, drums: 0.7, amb: 0.2, warm: 3600, leadv: 0.025, mix: 1.7}, amb: 'waves'}
 };
 // bass lines: [eighth, semitones from the root ('walk' = a step into the next chord), length in eighths, chance]
 const LOFI_BASS_PAT = {
@@ -6200,7 +6200,7 @@ function musicSync(){
     const want = lofiWanted();
     if (want && !lofi) lofiStart(want);
     else if (want && lofi.style !== lofiKey()){ lofiStop(); lofiStart(want); }   // switching style: the old one fades as the new one comes in
-    else if (want && lofi.mode !== want){ lofiStop(6); lofiStart(want, 2, 6); }   // focus <-> break: the old part fades out over 6 s while the new one fades in
+    else if (want && lofi.mode !== want){ lofiStop(8); lofiStart(want, 0, 4.5); }   // focus <-> break: the old part fades out over 6 s while the new one fades in
     else if (!want && lofi) lofiStop();
   } catch(e){}
 }
@@ -6230,7 +6230,9 @@ function lofiStart(mode, delay = 0, fadeIn = 2.5){
   try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch(e){}   // play even with the iPhone's silent switch on
   const style = lofiKey(), sty = LOFI_STYLES[style], part = sty[mode], now = actx.currentTime;
   const master = actx.createGain(); master.gain.setValueAtTime(0.0001, now); master.gain.setValueAtTime(0.0001, now + delay);
-  const lvl = (sty.gain || 0.8) * (part.mix || 1); if (fadeIn > 3) master.gain.linearRampToValueAtTime(lvl, now + delay + fadeIn); else master.gain.exponentialRampToValueAtTime(lvl, now + delay + fadeIn);
+  const lvl = (sty.gain || 0.8) * (part.mix || 1);
+  if (fadeIn > 3){ const c = new Float32Array(64); for (let i = 0; i < 64; i++) c[i] = Math.max(0.0001, lvl * Math.sin(i / 63 * Math.PI / 2)); master.gain.setValueCurveAtTime(c, now + delay + 0.01, fadeIn); }   // equal-power: the two parts add up to a steady level
+  else master.gain.exponentialRampToValueAtTime(lvl, now + delay + fadeIn);
   // tape warmth: a gentle soft-clip, then a low-pass that keeps some air
   const sat = actx.createWaveShaper(), curve = new Float32Array(1024); for (let i = 0; i < 1024; i++){ const x = i / 511.5 - 1; curve[i] = Math.tanh(1.6 * x) / Math.tanh(1.6); } sat.curve = curve;
   const warm = actx.createBiquadFilter(); warm.type = 'lowpass'; warm.frequency.value = part.warm; warm.Q.value = 0.3;
@@ -6288,7 +6290,8 @@ function lofiMode(mode){
 function lofiStop(fade = 1.2){
   const L = lofi; lofi = null; if (!L) return;
   clearInterval(L.timer);
-  try { const t = actx.currentTime; L.master.gain.cancelScheduledValues(t); L.master.gain.setValueAtTime(Math.max(0.0001, L.master.gain.value), t); if (fade > 3) L.master.gain.linearRampToValueAtTime(0.0001, t + fade); else L.master.gain.exponentialRampToValueAtTime(0.0001, t + fade);
+  try { const t = actx.currentTime; L.master.gain.cancelScheduledValues(t); L.master.gain.setValueAtTime(Math.max(0.0001, L.master.gain.value), t); if (fade > 3){ const v0 = Math.max(0.0001, L.master.gain.value), c = new Float32Array(64); for (let i = 0; i < 64; i++) c[i] = Math.max(0.0001, v0 * Math.cos(i / 63 * Math.PI / 2)); L.master.gain.cancelScheduledValues(t); L.master.gain.setValueCurveAtTime(c, t + 0.01, fade); }
+    else L.master.gain.exponentialRampToValueAtTime(0.0001, t + fade);
     setTimeout(() => { try { L.srcs.forEach(x => x.stop()); L.master.disconnect(); } catch(e){} }, fade * 1000 + 300); } catch(e){}
 }
 // schedules ~1.5s ahead so a backgrounded tab (timers slowed to once a second) doesn't leave gaps
