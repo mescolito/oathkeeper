@@ -928,7 +928,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '938205771e';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '2dab725427';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1180,7 +1180,8 @@ const RUNES = [
   {id:'rune_xp',     name:'Rune of Insight',    price:90,  days:3, lvl:6, fx:{xp:.25}},
   {id:'rune_ward', style:'guard',   name:'Rune of Warding',  price:80,  days:3, lvl:3, fx:{st:{ARM:4}}},
   {id:'rune_wither', name:'Rune of Withering',price:70,  days:4, fx:{antiheal:.5}},
-  {id:'rune_seal',   name:'Rune of Sealing',  price:120, days:2, lvl:5, fx:{antiheal:1}}
+  {id:'rune_seal',   name:'Rune of Sealing',  price:120, days:2, lvl:5, fx:{antiheal:1}},
+  {id:'rune_agi',    name:'Rune of Agility',  price:50,  days:3, fx:{flee:0.1}}
 ];
 const RUNE_BY = Object.assign(Object.create(null), Object.fromEntries(RUNES.map(r => [r.id, r])));
 /* Potions take effect the moment you buy them. */
@@ -1189,7 +1190,8 @@ const POTIONS = [
   {id:'pot_mp',     name:'Mana Potion',   price:25,  text:'Restores 50% of your max MP'},
   {id:'pot_anti',   name:'Antidote',      price:20,  text:'Cures poison'},
   {id:'pot_remedy', name:'Remedy',        price:20,  text:'Cures paralysis'},
-  {id:'pot_elixir', name:'Elixir',        price:120, lvl:6, text:'Full HP and MP, and cures everything'}
+  {id:'pot_elixir', name:'Elixir',        price:120, lvl:6, text:'Full HP and MP, and cures everything'},
+  {id:'pot_agi',    name:'Agility Potion', price:40,  text:'Run from a mini-boss with an 80% chance'}
 ];
 const POTION_BY = Object.assign(Object.create(null), Object.fromEntries(POTIONS.map(p => [p.id, p])));
 const STATUS = {poison:{name:'Poisoned', text:'Loses 6% max HP at the start of each day', cure:'pot_anti'}, para:{name:'Paralyzed', text:'Your tasks deal half damage', cure:'pot_remedy'}};
@@ -1208,6 +1210,7 @@ function fxText(f){
   for (const k in (f.sxp||{})) p.push(`+${Math.round(f.sxp[k]*100)}% ${STATS[k].name} XP`);
   if (f.gold) p.push(`+${Math.round(f.gold*100)}% gold from tasks`);
   if (f.xp) p.push(`+${Math.round(f.xp*100)}% level XP from tasks`);
+  if (f.flee) p.push(`${Math.round(f.flee*100)}% chance to run from a mini-boss`);
   if (f.antiheal >= 1) p.push('Boss can’t heal'); else if (f.antiheal) p.push(`Boss heals ${Math.round(f.antiheal*100)}% less`);
   return p.join(' · ');
 }
@@ -1337,6 +1340,8 @@ const ALL_BOSSES = [...BOSSES, ...TITANS, ...SEASONAL, ...RITES];
    A win pays a little gold and XP plus 3 Keystones or 3 Focus chests. If the next boss arrives first, the mini-boss runs off.
    Only days after miniFrom (stamped the first time this build runs) can roll one, so the past never changes. */
 const MINI_ODDS = 0.2, MINI_CHEST0 = 10000000000;
+// running away from a mini-boss: one try a day; 1 in 20, 1 in 10 with a Rune of Agility active, 80% with an Agility Potion
+const RUN_ODDS = 0.05, RUN_RUNE = 0.1, RUN_POT = 0.8, RUN_STEAL = 0.05;   // getting away with neither costs 5% of your gold
 const MINIS = [
   {id:'tabgob',  name:'Tab Goblin',        days:1, weak:['HRT','MOB'], shape:'tabgob',  flavor:'Opens one more tab every time you look away.', beaten:'Every tab closed. It scurries off clutching a single bookmark.'},
   {id:'scroll',  name:'Doomscroll Imp',    days:1, weak:['HRT','STA'], shape:'imp',     flavor:'Keeps your thumb flicking. Just one more post.', beaten:'Its phone hits 1%. It flaps off to find a charger.'},
@@ -1647,7 +1652,8 @@ function sanitize(s, created){
   if (isDate(s.sirenFrom)) out.sirenFrom = s.sirenFrom; else delete out.sirenFrom;
   if (isDate(s.bossFrom)) out.bossFrom = s.bossFrom; else delete out.bossFrom;
   if (isDate(s.miniFrom)) out.miniFrom = s.miniFrom; else delete out.miniFrom;
-  out.miniLog = {}; if (obj(s.miniLog)) for (const [d, r] of Object.entries(s.miniLog)) if (isDate(d) && obj(r) && MINI_BY[r.id] && isDate(r.on)) out.miniLog[d] = {id: r.id, lvl: int(r.lvl, 1, 999, 1), hp: int(r.hp, 1, 100000, 1), dmg: int(r.dmg, 0, 1000000, 0), status: r.status === 'won' ? 'won' : 'fled', on: r.on, ts: Number.isFinite(Number(r.ts)) ? Number(r.ts) : 0, g: int(r.g, 0, 100000, 0), xp: int(r.xp, 0, 100000, 0), prize: r.prize === 'chests' ? 'chests' : 'keys'};
+  out.runs = (Array.isArray(s.runs) ? s.runs : []).filter(r => obj(r) && isDate(r.from) && isDate(r.d) && [RUN_ODDS, RUN_RUNE, RUN_POT].includes(Number(r.odds))).map(r => ({from: r.from, d: r.d, ts: num(r.ts, 0), odds: Number(r.odds), ok: !!r.ok, ...(r.ok && int(r.g, 0, 1000000, 0) ? {g: int(r.g, 0, 1000000, 0)} : {})}));
+  out.miniLog = {}; if (obj(s.miniLog)) for (const [d, r] of Object.entries(s.miniLog)) if (isDate(d) && obj(r) && MINI_BY[r.id] && isDate(r.on)) out.miniLog[d] = {id: r.id, lvl: int(r.lvl, 1, 999, 1), hp: int(r.hp, 1, 100000, 1), dmg: int(r.dmg, 0, 1000000, 0), status: ['won', 'ran'].includes(r.status) ? r.status : 'fled', on: r.on, ts: Number.isFinite(Number(r.ts)) ? Number(r.ts) : 0, g: int(r.g, 0, 100000, 0), xp: int(r.xp, 0, 100000, 0), prize: r.prize === 'chests' ? 'chests' : 'keys'};
   out.siren = (Array.isArray(s.siren) ? s.siren : []).filter(x => obj(x) && isDate(x.wk)).map(x => { const o = {wk: x.wk, day: isDate(x.day) ? x.day : x.wk};
     if (num(x.declined, 0)) o.declined = num(x.declined, 0);
     else if (num(x.drawn, 0)){ o.drawn = num(x.drawn, 0); o.res = x.res === 'bless' ? 'bless' : 'curse'; o.kind = x.kind === 'todo' ? 'todo' : 'daily'; if (typeof x.tid === 'string') o.tid = str(x.tid, 40); if (typeof x.lid === 'string') o.lid = str(x.lid, 40); if (typeof x.iid === 'string') o.iid = str(x.iid, 40); if (typeof x.name === 'string') o.name = str(x.name, 80); }
@@ -2024,6 +2030,7 @@ function derive(){
   for (const [ts, at] of Object.entries(S.fchests || {})){ if (legTs.has(+ts)) continue; const pz = chestPrize(+ts); if (pz.kind !== 'potion' && at <= Date.now()) add(todayKeyAt(at), {k:'fchest', ts: at, pz}); }
   // a mini-boss win that's already settled pays out at the moment it happened
   for (const [from, r] of Object.entries(S.miniLog || {})) if (r.status === 'won' && r.ts) add(r.on, {k:'minikill', ts: r.ts, from});
+  for (const r of (S.runs || [])) if (r.ok) add(r.d, {k:'run', ts: r.ts, r});   // got away from a mini-boss
   // the bag: what you bought minus what you used
   const bag = Object.create(null);
   for (const b of S.bag) bag[b.id] = (bag[b.id] || 0) + 1;
@@ -2080,7 +2087,7 @@ function derive(){
     F.rem -= dmg;
     if (F.rem <= 0){ F.rem = 0; F.wonOn = d; F.wonTs = ts || 0; gold += BOSS_REWARD(F.boss); drops.add(F.boss.drop); if (F.boss.drop2) drops.add(F.boss.drop2); }
   };
-  const miniLive = ts => !!(mini && !mini.fledOn && (mini.frozen ? !(mini.frozen.status === 'won' && ts > mini.frozen.ts) : !mini.wonOn));
+  const miniLive = ts => !!(mini && !mini.fledOn && !mini.ranOn && (mini.frozen ? !((mini.frozen.status === 'won' || mini.frozen.status === 'ran') && ts > mini.frozen.ts) : !mini.wonOn));
   const miniPay = (M, d, ts) => { gold += M.g; xp += M.xp; if (M.prize === 'keys') for (let n = 1; n <= 3; n++) keysAll.push({key: M.from + '|mini' + n, ts, d}); else miniChests.push(...miniChestIds(M.from)); };
   const hitMini = (key, dmg, d, ts) => { const M = mini; M.dmg += dmg; M.hits[key] = (M.hits[key] || 0) + dmg; if (M.frozen || M.wonOn) return false; M.rem -= dmg; if (M.rem <= 0){ M.rem = 0; M.wonOn = d; M.wonTs = ts || 0; miniPay(M, d, ts); return true; } return false; };
   for (let d = start; d <= today; d = addDays(d,1)){
@@ -2099,8 +2106,8 @@ function derive(){
     const F = cyc[c];
     const bossAlive = () => F.frozen ? !(F.frozen.status === 'won' && F.frozen.wonOn && d >= F.frozen.wonOn) : !F.wonOn;
     // mini-bosses: one still around when the next boss arrives runs off; then, on a day that starts with no boss or mini-boss, 1 in 5 that one shows up
-    if (mini && mini.c !== c){ if (!mini.wonOn && !(mini.frozen && mini.frozen.status === 'won')) mini.fledOn = d; mini = null; }
-    if (mini && (mini.wonOn ? mini.wonOn < d : mini.frozen && mini.frozen.status === 'won' && mini.frozen.on < d)) mini = null;
+    if (mini && mini.c !== c){ if (!mini.wonOn && !mini.ranOn && !(mini.frozen && (mini.frozen.status === 'won' || mini.frozen.status === 'ran'))) mini.fledOn = d; mini = null; }
+    if (mini && (mini.ranOn ? mini.ranOn < d : mini.wonOn ? mini.wonOn < d : mini.frozen && (mini.frozen.status === 'won' || mini.frozen.status === 'ran') && mini.frozen.on < d)) mini = null;
     const bossGone = F.frozen ? !!(F.frozen.status === 'won' && F.frozen.wonOn && F.frozen.wonOn < d) : !!(F.wonOn && F.wonOn < d);
     if (!mini && bossGone && S.miniFrom && d > S.miniFrom && d >= combatFrom){
       const rec = (S.miniLog || {})[d];
@@ -2161,6 +2168,9 @@ function derive(){
         if (e.pz.kind === 'gold') gold += e.pz.n; else if (e.pz.kind === 'xp'){ xp += e.pz.n; lvUp(fx); } else { C = combatOf(statLvNow(), lvlNow(), fx); mp = Math.min(C.maxMP, mp + e.pz.n); }
       } else if (e.k === 'fchest'){
         if (e.pz.kind === 'gold') gold += e.pz.n; else { xp += e.pz.n; lvUp(fx); }
+      } else if (e.k === 'run'){
+        if (mini && mini.from === e.r.from && miniLive(e.ts)){ mini.ranOn = d; mini.ranTs = e.ts; }
+        if (e.r.g) lost += e.r.g;   // what it grabbed on your way out
       } else if (e.k === 'minikill'){
         if (mini && mini.frozen && mini.from === e.from){ miniPay(mini, d, e.ts); lvUp(fx); }
       } else if (e.k === 'todo'){
@@ -2258,7 +2268,7 @@ function derive(){
   // mini-bosses settled before yesterday are written down for good; Focus chests they gave join the ones to open
   for (const M of minis){
     if (M.frozen) continue;
-    const res = M.wonOn ? {status: 'won', on: M.wonOn, ts: M.wonTs} : M.fledOn ? {status: 'fled', on: M.fledOn, ts: 0} : null;
+    const res = M.wonOn ? {status: 'won', on: M.wonOn, ts: M.wonTs} : M.ranOn ? {status: 'ran', on: M.ranOn, ts: M.ranTs} : M.fledOn ? {status: 'fled', on: M.fledOn, ts: 0} : null;
     if (res && res.on < yest) newMinis[M.from] = {id: M.m.id, lvl: M.lvl, hp: M.hp, dmg: M.dmg, g: M.g, xp: M.xp, prize: M.prize, ...res};
   }
   for (const id of miniChests) if (!(S.fchests || {})[id]) pomoInfo.chests.push(id);
@@ -2326,10 +2336,10 @@ function derive(){
   const nextRite = riteForL(levelInfo(xp).level, ritesWon);
   const wb = S.buys || [], weatherOwned = Math.max(0, wb.filter(b => b.kind === 'weatherbuy').length - wb.filter(b => b.kind === 'weatheruse').length);   // you can hold one Weather Machine
   const miniOut = M => ({from: M.from, m: M.m, lvl: M.lvl, hp: M.hp, rem: M.rem, dmg: M.dmg, hits: M.hits, prize: M.prize, g: M.g, xp: M.xp, flees: M.flees,
-    status: M.wonOn || (M.frozen && M.frozen.status === 'won') ? 'won' : M.fledOn || (M.frozen && M.frozen.status === 'fled') ? 'fled' : 'now',
-    on: M.wonOn || M.fledOn || (M.frozen ? M.frozen.on : null)});
+    status: M.wonOn || (M.frozen && M.frozen.status === 'won') ? 'won' : M.ranOn || (M.frozen && M.frozen.status === 'ran') ? 'ran' : M.fledOn || (M.frozen && M.frozen.status === 'fled') ? 'fled' : 'now',
+    on: M.wonOn || M.ranOn || M.fledOn || (M.frozen ? M.frozen.on : null)});
   const miniList = minis.map(miniOut), miniNow = miniList.length && miniList[miniList.length - 1].status === 'now' ? miniList[miniList.length - 1] : null;
-  return {mini: miniNow, minis: miniList, newMinis, sirenLog, smog: {pts: smog, log: smogLog, last: smogLog[yest] || null, on: smogOn(today), price: weatherPrice(levelInfo(xp).level), owned: weatherOwned}, slump: {on: !!slump, from: slump ? slump.from : null, back: slump ? slump.back : 0, emptyRun, bites: slumpBites, taken: slumpTaken, todayActive: actDay.has(today)}, newSlump, habits: HAB, nextRite, ritesWon, pomo: pomoInfo, inn: innNowD(), newInnEnds, innPaid: (() => { const o = innNowD(); return o && (o.paid || o.from) < today ? o : null; })(), innSpent, innFee: innFee(levelInfo(xp).level), statBonus: fxNow.st, bag, newDrops, newResults, newFaints, newLegends: pomoInfo.rolls.filter(r => !r.kept), todoPaid, partial, altar: {keys: keysAll.filter(k => !(S.altarUsed || {})[k.key]).map(k => k.key), all: new Set(keysAll.map(k => k.key)), got: altarInfo.got, wins: altarInfo.wins, won: altarInfo.won}, freezeBefore, points, skills, readyCount, weakLv, today, yest, xp, lv, gold, spent, lost, balance: gold - spent - lost, stat, statLv, fx: fxNow, C, hp, mp, status: statusNow, attacks, lastAttack: attacks[yest] || null, faints, lastFaint: faints.length ? faints[faints.length-1] : null, mood: face, moodKey: moodToday, statusText, streak: lastCheck && lastCheck >= prevActiveD(today) ? streak : 0, checkedToday: lastCheck === today, mystery, tokens, perfectWeeks, castDeficit, fights, cur, drops, weeks, T, activeRunes: runesAt(nowMs, today), activeBuffs: buffsAt(nowMs, today)};
+  return {mini: miniNow, minis: miniList, newMinis, ranToday: (S.runs || []).some(r => r.d === today), sirenLog, smog: {pts: smog, log: smogLog, last: smogLog[yest] || null, on: smogOn(today), price: weatherPrice(levelInfo(xp).level), owned: weatherOwned}, slump: {on: !!slump, from: slump ? slump.from : null, back: slump ? slump.back : 0, emptyRun, bites: slumpBites, taken: slumpTaken, todayActive: actDay.has(today)}, newSlump, habits: HAB, nextRite, ritesWon, pomo: pomoInfo, inn: innNowD(), newInnEnds, innPaid: (() => { const o = innNowD(); return o && (o.paid || o.from) < today ? o : null; })(), innSpent, innFee: innFee(levelInfo(xp).level), statBonus: fxNow.st, bag, newDrops, newResults, newFaints, newLegends: pomoInfo.rolls.filter(r => !r.kept), todoPaid, partial, altar: {keys: keysAll.filter(k => !(S.altarUsed || {})[k.key]).map(k => k.key), all: new Set(keysAll.map(k => k.key)), got: altarInfo.got, wins: altarInfo.wins, won: altarInfo.won}, freezeBefore, points, skills, readyCount, weakLv, today, yest, xp, lv, gold, spent, lost, balance: gold - spent - lost, stat, statLv, fx: fxNow, C, hp, mp, status: statusNow, attacks, lastAttack: attacks[yest] || null, faints, lastFaint: faints.length ? faints[faints.length-1] : null, mood: face, moodKey: moodToday, statusText, streak: lastCheck && lastCheck >= prevActiveD(today) ? streak : 0, checkedToday: lastCheck === today, mystery, tokens, perfectWeeks, castDeficit, fights, cur, drops, weeks, T, activeRunes: runesAt(nowMs, today), activeBuffs: buffsAt(nowMs, today)};
 }
 
 /* ---------- persistence ---------- */
@@ -2455,7 +2465,7 @@ function mergeSaves(a, b){
   if (Array.isArray(o.timerLog)){ if (!Array.isArray(out.timerLog)) out.timerLog = []; const seen = new Set(out.timerLog.map(x => x.tid + '#' + x.key)); for (const x of o.timerLog) if (!seen.has(x.tid + '#' + x.key)){ seen.add(x.tid + '#' + x.key); out.timerLog.push(x); } }
   if (o.gearRev && (!out.gearRev || o.gearRev < out.gearRev)) out.gearRev = o.gearRev;
   if (o.balRev && (!out.balRev || o.balRev < out.balRev)) out.balRev = o.balRev;
-  for (const k of ['potions','runeBuys','bag','buys','skillLog','gearLog','pomoLog','sells','inn','testGold']){
+  for (const k of ['potions','runeBuys','bag','buys','skillLog','gearLog','pomoLog','sells','inn','testGold','runs']){
     if (!Array.isArray(o[k])) continue; if (!Array.isArray(out[k])) out[k] = [];
     const seen = new Set(out[k].map(x => JSON.stringify(x)));
     for (const x of o[k]){ const j = JSON.stringify(x); if (!seen.has(j)){ seen.add(j); out[k].push(x); } }
@@ -3272,6 +3282,7 @@ function drawIcon(canvas, kind, id){
         else if (g2 === 'mp'){ B_(12,7,1,1); B_(11,8,3,1); B_(9,9,7,1); B_(10,10,5,1); B_(10,11,2,1); B_(13,11,2,1); }
         else if (g2 === 'anti'){ B_(11,7,2,6); B_(9,9,6,2); }
         else if (g2 === 'remedy'){ wline(13,7,10,10,PB); wline(10,10,14,10,PB); wline(14,10,11,13,PB); }
+        else if (g2 === 'agi'){ B_(8,10,7,1); wline(12,7,15,10,PB); wline(15,10,12,13,PB); B_(8,8,2,1); B_(8,12,2,1); }   // a dash forward
         else { for (const [x,y] of [[12,7],[9,10],[15,10],[12,12]]) B_(x,y); B_(11,9,3,3); }
         return;
       }
@@ -3290,6 +3301,7 @@ function drawIcon(canvas, kind, id){
         for (let y=-9;y<=9;y++) for (let x=-9;x<=9;x++) if (Math.abs(x)*1.15 + Math.abs(y) <= 9.5) W_(12+x, 12+y);
         const g = id.slice(5);
         if (g === 'MGT'){ B_(8,9,1,6); B_(15,9,1,6); B_(8,11,8,2); }
+        else if (g === 'agi'){ wline(7,8,10,12,PB); wline(10,12,7,16,PB); wline(12,8,15,12,PB); wline(15,12,12,16,PB); }   // run: a double chevron
         else if (g === 'STA'){ wline(7,13,10,9,PB); wline(10,9,13,15,PB); wline(13,15,16,10,PB); }
         else if (g === 'MOB'){ for (let i=0;i<9;i++) B_(8+i, 14 - Math.round(Math.sin(i/8*Math.PI)*5)); B_(11,7,2,2); }
         else if (g === 'ARM'){ B_(9,8,6,1); B_(9,8,1,5); B_(14,8,1,5); wline(9,13,12,16,PB); wline(14,13,12,16,PB); }
@@ -3956,6 +3968,8 @@ function potionState(p){
   if (p.id === 'pot_mp' && D.mp >= D.C.maxMP){ useful = false; why = 'MP is full'; }
   if (p.id === 'pot_anti' && !D.status.poison){ useful = false; why = 'Not poisoned'; }
   if (p.id === 'pot_remedy' && !D.status.para){ useful = false; why = 'Not paralyzed'; }
+  if (p.id === 'pot_agi' && !D.mini){ useful = false; why = 'No mini-boss to run from'; }
+  else if (p.id === 'pot_agi' && D.ranToday){ useful = false; why = 'Already tried to run today'; }
   if (p.id === 'pot_elixir' && D.hp >= D.C.maxHP && D.mp >= D.C.maxMP && !D.status.poison && !D.status.para){ useful = false; why = 'Nothing to restore'; }
   // ok = can drink one from the bag right now; canBuy = can buy one in the shop
   return {ok: have > 0 && useful, have, canBuy: lvlOk && afford, lvlOk, afford, useful, why: !have ? 'None in bag' : why};
@@ -4033,7 +4047,7 @@ function renderBattle(){
   <div class="list">${RITES.map(r => { const won = D.ritesWon.has(r.id), now = f.boss.id === r.id && f.status === 'now', reach = D.lv.level >= r.levels[0];
     return `<div class="tl"><span class="pill ${won ? 'won' : now ? 'rite' : 'next'}">${won ? 'Beaten' : now ? 'Now' : `Lv ${r.levels[0]}–${r.levels[1]}`}</span><span>${reach || won ? esc(r.name) : '???'}${r.final ? ' <b class="small">· Final boss</b>' : ''}</span><span class="small muted">${now ? `${f.rem} HP left` : ''}</span></div>`; }).join('')}</div>
   
-  ${D.minis.some(x => x.status !== 'now') ? `<div class="sec-h"><h2>Mini-bosses</h2><span class="muted small">show up between bosses</span></div><div class="list">${D.minis.filter(x => x.status !== 'now').reverse().slice(0, 8).map(x => `<div class="tl"><span class="pill ${x.status === 'won' ? 'won' : 'lost'}">${x.status === 'won' ? 'Won' : 'Ran off'}</span><span>${esc(x.m.name)}</span><span class="small muted">${fmt(x.from)}</span></div>`).join('')}</div>` : ''}
+  ${D.minis.some(x => x.status !== 'now') ? `<div class="sec-h"><h2>Mini-bosses</h2><span class="muted small">show up between bosses</span></div><div class="list">${D.minis.filter(x => x.status !== 'now').reverse().slice(0, 8).map(x => `<div class="tl"><span class="pill ${x.status === 'won' ? 'won' : 'lost'}">${x.status === 'won' ? 'Won' : x.status === 'ran' ? 'Escaped' : 'Ran off'}</span><span>${esc(x.m.name)}</span><span class="small muted">${fmt(x.from)}</span></div>`).join('')}</div>` : ''}
   ${past.length ? `<div class="sec-h"><h2>Past fights</h2></div><div class="list">${past.map(p => `<div class="tl"><span class="pill ${p.status==='won'?'won':'lost'}">${p.status==='won'?'Won':p.boss.rite?'Continues':'Escaped'}</span><span>${esc(p.boss.name)}</span><span class="small muted">${fmt(p.start)}</span></div>`).join('')}</div>` : ''}
   ` : `
   <details class="howto"><summary>How skills work</summary><p class="how">${SKILL_SLOTS} slots · equipping costs ${SKILL_EQ_FEE} G</p></details>
@@ -4050,8 +4064,9 @@ function renderBattle(){
     <div class="hprow"><div class="bignum"><b>${mm.rem}</b><span>of ${mm.hp} HP</span></div><button class="nextboss" data-nextboss>Next boss · ${n <= 0 ? 'today' : n === 1 ? 'tomorrow' : `in ${n}d`} ›</button></div>
     <div style="margin-top:10px">${bar(100*mm.rem/mm.hp, 'var(--pink)', 'thick')}</div>
   </div>
-  <div class="chips">${mm.m.weak.map(s => `<span class="chip-s" style="background:${STATS[s].c};font-size:13px;padding:5px 12px">Weak to ${esc(STATS[s].name)}</span>`).join('')}<span class="chip-s plain" style="background:var(--track);font-size:13px;padding:5px 12px">Prize: ${miniPrizeTxt(mm)}</span></div>
+  <div class="chips">${mm.m.weak.map(s => `<span class="chip-s" style="background:${STATS[s].c};font-size:13px;padding:5px 12px">Weak to ${esc(STATS[s].name)}</span>`).join('')}</div>
   <p class="how">Prize: +${mm.g} G, +${mm.xp} XP and ${miniPrizeTxt(mm)}. No Keystones from tasks while it's here. Runs off when ${esc((D.nextRite || bossFor(f.c+1)).name)} arrives ${fmtDow(mm.flees)}.</p>
+  ${runRow()}
   ${battleBottom()}`; }
   return `
   <section class="game boss" aria-label="${esc(b.name)}">
@@ -4334,11 +4349,18 @@ function openNextBoss(){
 
 /* ---------- the Rune Altar ---------- */
 const inLull = () => D.cur.status === 'won' && D.cur.wonTs && S.altarFrom && D.cur.wonTs >= S.altarFrom;
+// running away from a mini-boss: one try a day
+function runRow(){
+  if (D.ranToday) return `<p class="how"><b>Couldn't get away today.</b> You can try again tomorrow.</p>`;
+  const rune = D.activeRunes.some(r => r.id === 'rune_agi'), pot = D.bag.pot_agi || 0;
+  return `<div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn sm" data-runaway>Run away · ${rune ? '10' : '5'}%</button>${pot ? `<button class="btn sm gold" data-runaway="pot">Drink Agility Potion & run · 80%</button>` : ''}</div>${rune ? '' : `<p class="how small">Get away without Agility and it grabs ${Math.round(RUN_STEAL * 100)}% of your gold.</p>`}`;
+}
 const miniPrizeTxt = mm => mm.prize === 'keys' ? '3 Keystones' : '3 Focus chests';
 // the last mini-boss: beaten (today or yesterday) or ran off when the boss arrived
 function miniNote(){
   const last = D.minis[D.minis.length - 1]; if (!last || !last.on || last.on < D.yest) return '';
   if (last.status === 'won' && !dismissed('mini-' + last.from)) return notice('mini-' + last.from, `<b>You beat the ${esc(last.m.name)}!</b> +${last.g} G, +${last.xp} XP and ${miniPrizeTxt(last)}.`);
+  if (last.status === 'ran' && !dismissed('miniesc-' + last.from)) return notice('miniesc-' + last.from, `You got away from the ${esc(last.m.name)}. Tasks give Keystones again.`);
   if (last.status === 'fled' && !dismissed('miniran-' + last.from)) return notice('miniran-' + last.from, `The ${esc(last.m.name)} ran off when ${esc(D.cur.boss.name)} arrived.`);
   return '';
 }
@@ -5097,6 +5119,17 @@ function wearGear(it, next){
   if (next && it.slot === 'weapon' && S.gear.offhand && offhandBlock(next, S.gear.offhand)){ freed = (GEAR_BY[S.gear.offhand] || {}).name || ''; S.gear.offhand = null; S.gearLog.push({ts: now, slot: 'offhand', id: null}); }
   return freed;
 }
+// try to run from the mini-boss: one try a day, fixed by the day so it can't be re-rolled
+function runAway(pot){
+  if (recoveryMode || !D.mini) return;
+  if (D.ranToday){ toast('You already tried to run today'); return; }
+  if (pot && !(D.bag.pot_agi > 0)){ toast('No Agility Potion in your bag'); return; }
+  const rune = D.activeRunes.some(r => r.id === 'rune_agi'), odds = pot ? RUN_POT : rune ? RUN_RUNE : RUN_ODDS, from = D.mini.from, name = D.mini.m.name, ts = Date.now();
+  const ok = roll('run|' + from + '|' + D.today) < odds, g = ok && !pot && !rune ? Math.floor(Math.max(0, D.balance) * RUN_STEAL) : 0;
+  if (pot) S.potions.push({id: 'pot_agi', ts, date: D.today, g: 0, bag: true});
+  S.runs.push({from, d: D.today, ts, odds, ok, ...(g ? {g} : {})}); save(); render();
+  toast(ok ? `You got away from the ${name}!${g ? ` It grabbed ${g} G on your way out.` : ''}` : `The ${name} blocks your way. Try again tomorrow.`);
+}
 // the message for a mini-boss beaten between two states, or ''
 function miniBeaten(before, after){
   if (!before.mini) return ''; const m = after.minis.find(x => x.from === before.mini.from && x.status === 'won');
@@ -5680,7 +5713,9 @@ function onClick(e){
   if (el.dataset.bagbuy){ const id = el.dataset.bagbuy, it = POTION_BY[id] || RUNE_BY[id]; if (!it) return;
     if (!meetsReq(it, D.statLv)){ toast(`Needs ${reqText(it)}`); return; } if (D.balance < it.price){ toast('Not enough gold'); return; }
     S.bag.push({id, ts:Date.now(), date:D.today, g:it.price}); save(); render(); toast(`${RUNE_BY[id] ? runeName(it) : it.name} is in your bag`); return; }
+  if ('runaway' in el.dataset){ runAway(el.dataset.runaway === 'pot'); return; }
   if (el.dataset.usepot){ const p = POTION_BY[el.dataset.usepot]; if (!p) return; const ps = potionState(p); if (!ps.ok){ if (ps.why) toast(ps.why); return; }
+    if (p.id === 'pot_agi'){ runAway(true); return; }
     S.potions.push({id:p.id, ts:Date.now(), date:D.today, g:0, bag:true}); save(); render(); toast(`${p.name}: ${p.text.toLowerCase()}`); return; }
   if (el.dataset.userune){ const r = RUNE_BY[el.dataset.userune]; if (!r) return; const rs = runeState(r); if (!rs.canUse){ if (rs.why) toast(rs.why); return; }
     S.runeBuys.push({id:r.id, ts:Date.now(), date:D.today, g:0, bag:true}); save(); render(); toast(`${runeName(r)} is active for ${r.days} days`); return; }
