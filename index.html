@@ -266,6 +266,14 @@ html[data-mode="dark"] .trow.done .check{color:var(--inv)}
 .weathercard{display:flex;align-items:center;gap:12px;padding:12px 14px}
 .weathercard .tbody{flex:1;display:flex;flex-direction:column;min-width:0}
 .weathercard canvas{width:40px;height:40px;border-radius:10px;image-rendering:pixelated;flex:none}
+.mystery.sirennote{background:#d9b4cf}
+.mystery.sirennote.bless{background:#f2d982}
+.mystery.sirennote.curse{background:#e9a3a3}
+.mystery.sirennote .ntext{flex:1 1 calc(100% - 34px)}
+.sirennote.flip{animation:sirflip .6s cubic-bezier(.2,.8,.3,1)}
+@keyframes sirflip{0%{transform:perspective(600px) rotateY(90deg);opacity:.2}100%{transform:none;opacity:1}}
+.sirtag{display:inline-flex;align-items:center;justify-content:center;margin-left:6px;font-size:10.5px;font-weight:800;border-radius:999px;padding:1px 6px;background:#f2d982;color:#171614;vertical-align:middle}
+.sirtag.curse{background:#e9a3a3;padding:2px 5px}
 .mystery.smognote{background:#cfc9bc;align-items:flex-start}
 .mystery.smognote .ntext{flex:1 1 calc(100% - 34px)}
 .smognote .btn{flex:none;white-space:nowrap;margin-left:26px}
@@ -900,7 +908,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'a2e2730bb4';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '88b41ba4b6';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1482,7 +1490,7 @@ function defaults(){
     log:{}, pickLog:{}, rerolls:{}, owned:['dawn','axo'], equip:{hat:null, bg:'dawn', color:'axo'},
     gear:{weapon:null, offhand:null, armor:null}, gearLog:[], bag:[], seenDrops:[],
     skills:{}, skillUnlock:{}, skillLog:[], waives:{}, lightens:{}, buys:[], snap:{}, firstTs:{}, picks:{}, results:{}, statMeta:{}, wkTg:{}, wkBn:{},
-    todos:{lists:[{id:'l_home', name:'House repairs', items:[]}]}, timers:[], timerLog:[], potions:[], runeBuys:[], faintLog:{}, legends:{}, fchests:{}, altarUsed:{}, lrunes:{}, checks:{}, stepLog:{}, schema:SCHEMA, inn:[], pomo:{cfg:{focus:25, short:5, long:15, every:4, sound:true, music:true, lofi:'chill', haptic:true}, run:null}, pomoLog:[], settings:{theme:'light', rollover:0, hideDone:false, hideRest:false, collapse:{vitals:false, boss:false}, dismissed:{}}, sells:[], mig:7, updated:0};
+    todos:{lists:[{id:'l_home', name:'House repairs', items:[]}]}, timers:[], timerLog:[], siren:[], potions:[], runeBuys:[], faintLog:{}, legends:{}, fchests:{}, altarUsed:{}, lrunes:{}, checks:{}, stepLog:{}, schema:SCHEMA, inn:[], pomo:{cfg:{focus:25, short:5, long:15, every:4, sound:true, music:true, lofi:'chill', haptic:true}, run:null}, pomoLog:[], settings:{theme:'light', rollover:0, hideDone:false, hideRest:false, collapse:{vitals:false, boss:false}, dismissed:{}}, sells:[], mig:7, updated:0};
 }
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const isDate = v => typeof v === 'string' && DATE_RE.test(v);
@@ -1586,6 +1594,11 @@ function sanitize(s, created){
   if (s.habitWk) out.habitWk = 1; else delete out.habitWk;
   if (isDate(s.slumpFrom)) out.slumpFrom = s.slumpFrom; else delete out.slumpFrom;
   if (isDate(s.smogFrom)) out.smogFrom = s.smogFrom; else delete out.smogFrom;
+  if (isDate(s.sirenFrom)) out.sirenFrom = s.sirenFrom; else delete out.sirenFrom;
+  out.siren = (Array.isArray(s.siren) ? s.siren : []).filter(x => obj(x) && isDate(x.wk)).map(x => { const o = {wk: x.wk, day: isDate(x.day) ? x.day : x.wk};
+    if (num(x.declined, 0)) o.declined = num(x.declined, 0);
+    else if (num(x.drawn, 0)){ o.drawn = num(x.drawn, 0); o.res = x.res === 'bless' ? 'bless' : 'curse'; o.kind = x.kind === 'todo' ? 'todo' : 'daily'; if (typeof x.tid === 'string') o.tid = str(x.tid, 40); if (typeof x.lid === 'string') o.lid = str(x.lid, 40); if (typeof x.iid === 'string') o.iid = str(x.iid, 40); if (typeof x.name === 'string') o.name = str(x.name, 80); }
+    return o; }).filter(x => x.declined || x.drawn).slice(-200);
   out.timers = (Array.isArray(s.timers) ? s.timers : []).filter(t => obj(t) && typeof t.id === 'string' && num(t.start, 0) > 0).map(t => { const o = {id: str(t.id, 40), name: str(t.name, 40) || 'Timer', start: num(t.start, 0), created: num(t.created, 0), payFrom: num(t.payFrom, 0),
       resets: (Array.isArray(t.resets) ? t.resets : []).filter(r => obj(r)).map(r => ({at: num(r.at, 0), from: num(r.from, 0)})).filter(r => r.at > 0).slice(-200)};
     if (t.goal != null && int(t.goal, 1, 100000, 0) > 0) o.goal = int(t.goal, 1, 100000, 0);
@@ -1812,6 +1825,15 @@ function combatOf(statLv, level, fx){
 }
 const dropName = bs => [(ITEM[bs.drop] || GEAR_BY[bs.drop] || {}).name, bs.drop2 && (GEAR_BY[bs.drop2] || ITEM[bs.drop2] || {}).name].filter(Boolean).join(' and ') || 'a prize';
 const roll = key => (hash(key) % 10000) / 10000;
+/* The Siren: about once a week she shows up with a card. Draw it (your choice) for a 50/50: a blessing doubles one daily or
+   habit's rewards for the rest of the week, or a curse makes one daily hit twice as hard when missed, or puts a to-do on a
+   Sunday deadline (miss it: lose 15% HP and 10% gold). Results are written down when drawn, so they never change. */
+const SIREN_ODDS = 1 / 7, SIREN_MUL = 2, SIREN_TODO_HP = 0.15, SIREN_TODO_G = 0.1;
+const sirenOf = wk => (S.siren || []).find(x => x.wk === wk) || null;
+// most weeks (about 6 in 7) she visits once, on a random day of that week
+function sirenDayOf(wk){ if (!S.sirenFrom || roll('sirenwk|' + wk) >= 1 - SIREN_ODDS) return null; const d = addDays(wk, hash('sirenday|' + wk) % 7); return d >= S.sirenFrom ? d : null; }
+const sirenBlessed = (tid, d, ts) => (S.siren || []).some(x => x.res === 'bless' && x.tid === tid && x.wk === weekKey(d) && ts >= x.drawn);
+const sirenCursed = (tid, d) => (S.siren || []).some(x => x.res === 'curse' && x.kind === 'daily' && x.tid === tid && x.wk === weekKey(d) && d >= todayKeyAt(x.drawn));
 const MOOD_BOOST = {great:1.2, good:1.15, meh:1, bad:1, awful:1};
 const MOOD_HURT  = {great:1, good:1, meh:1, bad:1.15, awful:1.2};
 const BOSS_REWARD = b => b.final ? 3000 : b.rite ? 700 : b.titan ? 400 : b.seasonal ? 300 : 150;
@@ -1962,7 +1984,7 @@ function derive(){
   // the Slump (see SLUMP_DAYS): which days you finished something, and what it has eaten
   const actDay = new Set(); for (const [d0, ents] of Object.entries(S.log)) if (ents && Object.keys(ents).length) actDay.add(d0); for (const id in todoDone) actDay.add(todoDone[id]);
   let slump = null, emptyRun = 0; const slumpBites = [], newSlump = {}, slumpTaken = new Set();
-  let smog = 0; const smogLog = {}; const smogOn = d => !!(S.smogFrom && d > S.smogFrom);
+  let smog = 0; const smogLog = {}, sirenLog = {}; const smogOn = d => !!(S.smogFrom && d > S.smogFrom);
   const slumpPick = () => {
     const eqd = new Set([...Object.values(S.gear), ...Object.values(S.equip)].filter(Boolean));
     const consum = Object.keys(bag).filter(id => bag[id] > 0).map(id => ({id, kind:'bag', cost: (POTION_BY[id] || RUNE_BY[id] || {}).price || 0}));
@@ -2036,7 +2058,8 @@ function derive(){
         const stats = sn ? sn.s : statsFor(t, d), prim = stats[0];
         const r = sn ? {xp:sn.xp, gold:sn.g} : rewardOf(t), lull = lullAt(F, e.ts);
         if (lull) giveKey(d, d + '|' + e.tid, e.ts);
-        else { xp += Math.round(r.xp * (1 + fx.xp) * boost); gold += Math.round(r.gold * (1 + fx.gold) * boost); }
+        const sirX = sirenBlessed(e.tid, d, e.ts) ? SIREN_MUL : 1;
+        if (!lull){ xp += Math.round(r.xp * (1 + fx.xp) * boost * sirX); gold += Math.round(r.gold * (1 + fx.gold) * boost * sirX); }
         const sl = statLvNow(); C = combatOf(sl, lvlNow(), fx);
         if (bossAlive() && !innAtD(d, e.ts)){
           const weak = stats.some(x => F.boss.weak.includes(x));
@@ -2045,7 +2068,7 @@ function derive(){
           if (statusOn('para', d)) dmg *= 0.5;
           hitBoss(F, d, e.tid, Math.round(dmg), e.ts);
         }
-        stats.forEach((x,i) => stat[x] += Math.round((i===0 ? 10 : 5) * (1 + (fx.sxp[x]||0))));
+        stats.forEach((x,i) => stat[x] += Math.round((i===0 ? 10 : 5) * (1 + (fx.sxp[x]||0)) * sirX));
         C = combatOf(statLvNow(), lvlNow(), fx);
         if (!lull) mp = Math.min(C.maxMP, mp + MP_PER_TASK + (live ? (fx.mpTask||0) : 0)); hp = Math.min(C.maxHP, hp + 2);
         lvUp(fx);
@@ -2112,7 +2135,7 @@ function derive(){
         C = combatOf(statLvNow(), lvlNow(), fxE);
         let raw = 0, dodged = 0;
         let counters = 0;
-        for (const t of missed){ if (roll('dodge|' + d + '|' + t.id) < C.dodge){ dodged++; if (C.counter && !shielded && bossAlive() && roll('counter|' + d + '|' + t.id) < C.counter){ counters++; hitBoss(F, d, 'counter', C.counterDmg, endTs); } } else raw += F.boss.atk + Math.floor(F.lvl / 3); }
+        for (const t of missed){ if (roll('dodge|' + d + '|' + t.id) < C.dodge){ dodged++; if (C.counter && !shielded && bossAlive() && roll('counter|' + d + '|' + t.id) < C.counter){ counters++; hitBoss(F, d, 'counter', C.counterDmg, endTs); } } else raw += (F.boss.atk + Math.floor(F.lvl / 3)) * (sirenCursed(t.id, d) ? 2 : 1); }
         const taken = shielded ? 0 : Math.round(raw * (1 - C.def) * MOOD_HURT[mood]);
         hp -= taken;
         attacks[d] = {boss: F.boss.name, missed: missed.length, dodged, dmg: taken, mood, ...(shielded ? {shield: true} : {}), ...(counters ? {counters} : {})};
@@ -2121,9 +2144,17 @@ function derive(){
         if (hp <= 0) faint(d, C);
       }
     }
+    // end of the week: a to-do the Siren cursed that still isn't done costs 15% HP (never below 1) and 10% of your gold
+    if (d < today && !inn && d === addDays(weekKey(d), 6)) for (const x of (S.siren || [])){
+      if (x.res !== 'curse' || x.kind !== 'todo' || x.wk !== weekKey(d) || todayKeyAt(x.drawn) > d) continue;
+      const L = S.todos.lists.find(l => l.id === x.lid), it = L && L.items.find(i => i.id === x.iid); if (!it || (it.doneOn && it.doneOn <= d)) continue;
+      const Cs = combatOf(statLvNow(), lvlNow(), fxAt(endOf(d), d)), lose = Math.min(Math.ceil(Cs.maxHP * SIREN_TODO_HP), Math.max(0, hp - 1)); hp -= lose;
+      const bal = Math.max(0, gold + chestG - staticSpent - dyn - lost), g = Math.min(bal, Math.max(25, Math.floor(bal * SIREN_TODO_G))); lost += g;
+      sirenLog[d] = {hp: lose, g, text: it.text};
+    }
     // end of day: toxic air builds from dailies missed between bosses, then drains HP and MP (never below 1 HP)
     if (d < today && live && !inn && smogOn(d) && d >= S.created){
-      const add = bossAlive() ? 0 : S.tasks.filter(t => dailyOn(t,d) && !covered(d,t.id)).length;
+      const add = bossAlive() ? 0 : S.tasks.filter(t => dailyOn(t,d) && !covered(d,t.id)).reduce((n, t) => n + (sirenCursed(t.id, d) ? 2 : 1), 0);
       smog += add;
       if (smog > 0){
         const Cn = combatOf(statLvNow(), lvlNow(), fxAt(endOf(d), d)), rec = {add, pts: smog, hp: 0, mp: 0};
@@ -2203,7 +2234,7 @@ function derive(){
   const newDrops = [...drops].filter(id => isDrop(id) && !S.seenDrops.includes(id));
   const nextRite = riteForL(levelInfo(xp).level, ritesWon);
   const wb = S.buys || [], weatherOwned = Math.max(0, wb.filter(b => b.kind === 'weatherbuy').length - wb.filter(b => b.kind === 'weatheruse').length);   // you can hold one Weather Machine
-  return {smog: {pts: smog, log: smogLog, last: smogLog[yest] || null, on: smogOn(today), price: weatherPrice(levelInfo(xp).level), owned: weatherOwned}, slump: {on: !!slump, from: slump ? slump.from : null, back: slump ? slump.back : 0, emptyRun, bites: slumpBites, taken: slumpTaken, todayActive: actDay.has(today)}, newSlump, habits: HAB, nextRite, ritesWon, pomo: pomoInfo, inn: innNowD(), newInnEnds, innPaid: (() => { const o = innNowD(); return o && (o.paid || o.from) < today ? o : null; })(), innSpent, innFee: innFee(levelInfo(xp).level), statBonus: fxNow.st, bag, newDrops, newResults, newFaints, newLegends: pomoInfo.rolls.filter(r => !r.kept), todoPaid, partial, altar: {keys: keysAll.filter(k => !(S.altarUsed || {})[k.key]).map(k => k.key), all: new Set(keysAll.map(k => k.key)), got: altarInfo.got, wins: altarInfo.wins, won: altarInfo.won}, freezeBefore, points, skills, readyCount, weakLv, today, yest, xp, lv, gold, spent, lost, balance: gold - spent - lost, stat, statLv, fx: fxNow, C, hp, mp, status: statusNow, attacks, lastAttack: attacks[yest] || null, faints, lastFaint: faints.length ? faints[faints.length-1] : null, mood: face, moodKey: moodToday, statusText, streak: lastCheck && lastCheck >= prevActiveD(today) ? streak : 0, checkedToday: lastCheck === today, mystery, tokens, perfectWeeks, castDeficit, fights, cur, drops, weeks, T, activeRunes: runesAt(nowMs, today), activeBuffs: buffsAt(nowMs, today)};
+  return {sirenLog, smog: {pts: smog, log: smogLog, last: smogLog[yest] || null, on: smogOn(today), price: weatherPrice(levelInfo(xp).level), owned: weatherOwned}, slump: {on: !!slump, from: slump ? slump.from : null, back: slump ? slump.back : 0, emptyRun, bites: slumpBites, taken: slumpTaken, todayActive: actDay.has(today)}, newSlump, habits: HAB, nextRite, ritesWon, pomo: pomoInfo, inn: innNowD(), newInnEnds, innPaid: (() => { const o = innNowD(); return o && (o.paid || o.from) < today ? o : null; })(), innSpent, innFee: innFee(levelInfo(xp).level), statBonus: fxNow.st, bag, newDrops, newResults, newFaints, newLegends: pomoInfo.rolls.filter(r => !r.kept), todoPaid, partial, altar: {keys: keysAll.filter(k => !(S.altarUsed || {})[k.key]).map(k => k.key), all: new Set(keysAll.map(k => k.key)), got: altarInfo.got, wins: altarInfo.wins, won: altarInfo.won}, freezeBefore, points, skills, readyCount, weakLv, today, yest, xp, lv, gold, spent, lost, balance: gold - spent - lost, stat, statLv, fx: fxNow, C, hp, mp, status: statusNow, attacks, lastAttack: attacks[yest] || null, faints, lastFaint: faints.length ? faints[faints.length-1] : null, mood: face, moodKey: moodToday, statusText, streak: lastCheck && lastCheck >= prevActiveD(today) ? streak : 0, checkedToday: lastCheck === today, mystery, tokens, perfectWeeks, castDeficit, fights, cur, drops, weeks, T, activeRunes: runesAt(nowMs, today), activeBuffs: buffsAt(nowMs, today)};
 }
 
 /* ---------- persistence ---------- */
@@ -2320,6 +2351,8 @@ function mergeSaves(a, b){
   if (o.habitWk) out.habitWk = 1;
   if (o.slumpFrom && (!out.slumpFrom || o.slumpFrom < out.slumpFrom)) out.slumpFrom = o.slumpFrom;
   if (o.smogFrom && (!out.smogFrom || o.smogFrom < out.smogFrom)) out.smogFrom = o.smogFrom;
+  if (o.sirenFrom && (!out.sirenFrom || o.sirenFrom < out.sirenFrom)) out.sirenFrom = o.sirenFrom;
+  if (Array.isArray(o.siren)){ if (!Array.isArray(out.siren)) out.siren = []; for (const x of o.siren){ const i = out.siren.findIndex(y => y.wk === x.wk); if (i < 0) out.siren.push(x); else if ((x.drawn || x.declined || 0) < (out.siren[i].drawn || out.siren[i].declined || 0)) out.siren[i] = x; } }   // the first answer for a week wins
   // timers: each device's copy of a timer, the newer edit wins; a payout or reset logged on either device counts once
   if (Array.isArray(o.timers)){ if (!Array.isArray(out.timers)) out.timers = []; for (const t of o.timers){ const i = out.timers.findIndex(x => x.id === t.id); if (i < 0) out.timers.push(t); else { const m = out.timers[i]; if ((t.edited || 0) > (m.edited || 0)) out.timers[i] = t; if (t.deleted && !m.deleted) out.timers[i].deleted = t.deleted; } } }
   if (Array.isArray(o.timerLog)){ if (!Array.isArray(out.timerLog)) out.timerLog = []; const seen = new Set(out.timerLog.map(x => x.tid + '#' + x.key)); for (const x of o.timerLog) if (!seen.has(x.tid + '#' + x.key)){ seen.add(x.tid + '#' + x.key); out.timerLog.push(x); } }
@@ -2846,7 +2879,51 @@ function drawHat(hat, cx, top, rx, ry, f, motion){
 }
 function drawScene(canvas, o){
   ctx = canvas.getContext('2d'); ctx.imageSmoothingEnabled = false;
-  drawBg(o.bg, o.f, o.motion, o.night != null ? o.night : isNightNow()); if (o.smog) drawSmog(o); if (!o.noPet){ drawPet(o); if (o.slump) drawSlump(o); }
+  drawBg(o.bg, o.f, o.motion, o.night != null ? o.night : isNightNow()); if (o.smog) drawSmog(o); if (!o.noPet){ drawPet(o); if (o.slump) drawSlump(o); } if (o.siren) drawSiren(o);
+}
+/* the Siren: a winged figure with pink hair and a pink flame, bobbing in the sky with flapping wings.
+   Drawn cream with a black outline so she reads over a light or a dark sky. */
+const SIREN_UP = [
+  "#.............#..",
+  "##...#...#...##..",
+  "###..#ppp#..###..",
+  ".###pp###pp###...",
+  ".####p###p####...",
+  "..####p#p####....",
+  "..#####p#####.p..",
+  "...###.###.###pp.",
+  "....#..###..#.#p.",
+  "......#####...#..",
+  ".......###.......",
+  ".......###.......",
+  "........#........",
+  "........##.......",
+  ".........#.......",
+  "........#........"];
+const SIREN_DOWN = [
+  ".................",
+  ".....#...#.......",
+  ".....#ppp#.......",
+  "....pp###pp......",
+  ".....p###p.......",
+  "..#...p#p...#....",
+  ".####.ppp.####p..",
+  "########.#####pp.",
+  "#####.#####.#.#p.",
+  "###...#####...#..",
+  "##.....###.......",
+  "#......###.......",
+  "........#........",
+  "........##.......",
+  ".........#.......",
+  "........#........"];
+function drawSiren(o){
+  const t = o.motion ? o.f : 0, art = Math.floor(t / 5) % 2 === 0 ? SIREN_UP : SIREN_DOWN;
+  const ox = 45, oy = 4 + Math.round(Math.sin(t * 0.15) * 1.5), on = (x, y) => art[y] && art[y][x] && art[y][x] !== '.';
+  // black outline first, then the figure
+  for (let y = -1; y <= art.length; y++) for (let x = -1; x <= 17; x++){ if (on(x, y)) continue; if (on(x-1,y) || on(x+1,y) || on(x,y-1) || on(x,y+1)) B_(ox + x, oy + y); }
+  const fl = Math.floor(t / 3) % 2;
+  art.forEach((r, y) => [...r].forEach((c, x) => { if (c === '#') W_(ox + x, oy + y); else if (c === 'p') px(ox + x, oy + y - (fl && x > 12 ? 1 : 0), 1, 1, '#eeb7d8'); }));
 }
 /* toxic air: drifting bands of dithered haze across the sky and fumes curling up from the ground; thicker as the points build (tier 1–3) */
 function drawSmog(o){
@@ -3426,7 +3503,7 @@ function taskRow(t, k){
   }
   return `<div class="trow ${isD?'done':''} ${rested?'rested':''} ${closed?'closed':''}" data-qm="t|${esc(t.id)}">
     <span class="ticon" style="background:${STATS[prim].c}">${tIcon(t, prim)}</span>
-    <div class="tbody">${isPool || t.archived ? `<span class="tkick">${isPool ? esc(t.name) : ''}${t.archived ? (isPool ? ' · ' : '') + (k === D.today ? 'Archived · last day today' : 'Archived') : ''}</span>` : ''}<span class="tname">${esc(name)}${t.note ? ` <span class="notedot" aria-label="Has notes">${svg('note',12,2.2)}</span>` : ''}</span>${isD ? '' : wk}
+    <div class="tbody">${isPool || t.archived ? `<span class="tkick">${isPool ? esc(t.name) : ''}${t.archived ? (isPool ? ' · ' : '') + (k === D.today ? 'Archived · last day today' : 'Archived') : ''}</span>` : ''}<span class="tname">${esc(name)}${sirenTag('t', t.id)}${t.note ? ` <span class="notedot" aria-label="Has notes">${svg('note',12,2.2)}</span>` : ''}</span>${isD ? '' : wk}
       <span class="tmeta">${isD ? `<span>Done${cad === 'week' ? ` · ${weekCount(t.id,k)} of ${effTarget(t,k)} this week` : ''}</span>` : `${stats.map(chipS).join('')}${weak ? '<span class="chip-weak">2× dmg</span>' : ''}<span>${esc(meta)}</span>`}</span>${rr}</div>
     <button class="check" data-toggle="${esc(t.id)}" aria-pressed="${isD}" aria-label="${isD ? 'Undo' : 'Complete'} ${esc(name)}" ${disabled?'disabled':''}>${svg('check',18,2.8)}</button>
     ${checklistBlock(t, k, disabled || closed)}
@@ -3517,6 +3594,25 @@ function timerRow(tm){
   </div>`;
 }
 // a skill point waiting: a card that takes you straight to the skill tree
+// the Siren's visit this week: an offer to draw, or what her card did
+let sirenFlip = false;
+const sirenPending = () => { const wk = weekKey(D.today), day = sirenDayOf(wk); return day && day <= D.today && !sirenOf(wk) ? wk : null; };
+function sirenNote(){
+  const wk = weekKey(D.today), x = sirenOf(wk), sun = fmtDow(addDays(wk, 6)).split(',')[0];
+  if (sirenPending()) return `<div class="mystery sirennote">${svg('flame',18,2)} <span class="ntext"><b>A siren appears with a card.</b> Draw it for a 50/50: a blessing or a curse.</span><span class="row" style="gap:6px;margin-left:26px"><button class="btn sm" data-siren="off">Wave her off</button><button class="btn sm primary" data-siren="draw">Draw a card</button></span></div>`;
+  if (!x || !x.drawn) return '';
+  const flip = sirenFlip ? ' flip' : ''; sirenFlip = false;
+  if (x.res === 'bless'){ const t = D.T[x.tid]; if (!t) return ''; return `<div class="mystery sirennote bless${flip}">${svg('star',18,2)} <span class="ntext"><b>Siren's blessing:</b> ${esc(t.name)} pays 2× until ${sun}.</span></div>`; }
+  if (x.kind === 'daily'){ const t = D.T[x.tid]; if (!t) return ''; return `<div class="mystery sirennote curse${flip}">${svg('flame',18,2)} <span class="ntext"><b>Siren's curse:</b> missing ${esc(t.name)} hits 2× until ${sun}.</span></div>`; }
+  const L = S.todos.lists.find(l => l.id === x.lid), it = L && L.items.find(i => i.id === x.iid);
+  if (!it) return '';
+  if (it.doneOn) return `<div class="mystery sirennote bless">${svg('check',18,2.4)} <span class="ntext"><b>Curse broken.</b> You finished ${esc(it.text)}.</span></div>`;
+  return `<div class="mystery sirennote curse${flip}">${svg('flame',18,2)} <span class="ntext"><b>Siren's curse:</b> finish ${esc(it.text)} by ${sun} night, or lose 15% HP and 10% gold.</span></div>`;
+}
+const sirenTag = (kind, a, b) => { const x = sirenOf(weekKey(D.today)); if (!x || !x.drawn) return '';
+  if (kind === 't' && x.tid === a) return x.res === 'bless' ? '<span class="sirtag">2×</span>' : `<span class="sirtag curse" aria-label="Cursed">${svg('flame',11,2.4)}</span>`;
+  if (kind === 'd' && x.kind === 'todo' && x.lid === a && x.iid === b) return `<span class="sirtag curse" aria-label="Cursed">${svg('flame',11,2.4)}</span>`;
+  return ''; };
 function skillNote(){
   if (!D.points) return '';
   const canGrow = SKILLS.some(sk => { const l = D.skills[sk.id].l; return l ? (S.skillEq || []).includes(sk.id) && l < SKILL_MAX && sk.cost(l + 1) <= D.C.maxMP : D.lv.level >= sk.unlock && skillStatOk(sk, D.statLv) && sk.cost(1) <= D.C.maxMP; });
@@ -3586,6 +3682,7 @@ function renderToday(){
   ${vitals()}
   ${myst && !dismissed('myst') ? notice('myst', `Daily check-in bonus: <b>+${myst.xp ? myst.xp + ' XP' : myst.gold + ' G'}</b>`) : ''}
   ${slumpNote()}
+  ${sirenNote()}
   ${smogNote()}
   ${skillNote()}
   ${timerAskNote()}
@@ -3814,7 +3911,7 @@ function renderTodo(){
     const meta = isD ? `Done ${it.doneOn === D.today ? 'today' : fmt(it.doneOn)}${D.todoPaid.has(it.id) ? '' : ' · no bonus'}` : it.createdOn === D.today ? 'Bonus starts tomorrow' : todoLeft > 0 ? '+8 XP, +6 G' : 'Daily to-do bonus used up';
     return `<div class="tditem pri-${g} ${isD ? 'done' : ''}" data-item="${esc(it.id)}" data-qm="d|${esc(L.id)}|${esc(it.id)}">
       <span class="tdgrip pri-${g}" ${isD ? '' : `data-drag="${esc(it.id)}"`} aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-      <span class="tbody"><span class="tname">${esc(it.text)}${it.note ? ` <span class="notedot" aria-label="Has notes">${svg('note',12,2.2)}</span>` : ''}</span><span class="tmeta">${meta}${todoEdit && !isD && !(it.steps && it.steps.length) && !clOpen.has('td:' + it.id) ? `<button class="addsteps" data-clopen="td:${esc(it.id)}">+ Steps</button>` : ''}</span></span>
+      <span class="tbody"><span class="tname">${esc(it.text)}${sirenTag('d', L.id, it.id)}${it.note ? ` <span class="notedot" aria-label="Has notes">${svg('note',12,2.2)}</span>` : ''}</span><span class="tmeta">${meta}${todoEdit && !isD && !(it.steps && it.steps.length) && !clOpen.has('td:' + it.id) ? `<button class="addsteps" data-clopen="td:${esc(it.id)}">+ Steps</button>` : ''}</span></span>
       <button class="check round" data-todo="${esc(L.id)}|${esc(it.id)}" aria-pressed="${isD}" aria-label="${isD ? 'Undo' : 'Complete'} ${esc(it.text)}" ${isD && !canUndo ? 'disabled' : ''}>${svg('check',18,2.8)}</button>
       ${todoSteps(L, it)}
     </div>`; };
@@ -4458,6 +4555,7 @@ function renderInner(){
     save(true); D = derive(); if (ate.length) toast(`The Slump ate your ${ate.join(', ')}`); }
   if (!S.slumpFrom && !recoveryMode){ S.slumpFrom = D.today; save(true); D = derive(); }
   if (!S.smogFrom && !recoveryMode){ S.smogFrom = D.today; save(true); D = derive(); }   // toxic air only counts nights after today
+  if (!S.sirenFrom && !recoveryMode){ S.sirenFrom = D.today; save(true); }   // the Siren starts visiting from today
   if (!recoveryMode) timerSweep();   // the Slump only counts days from now on
   const nf = Object.keys(D.newFaints || {}).filter(d => !S.faintLog[d]);
   if (nf.length){ nf.forEach(d => S.faintLog[d] = D.newFaints[d]); save(true); D = derive(); }
@@ -4489,7 +4587,7 @@ function drawIcons(root){
 function draw(){
   const now = Date.now();
   const sc = document.getElementById('scene');
-  if (sc) drawScene(sc, {smog: D.inn || !D.smog.pts ? 0 : D.smog.pts >= 9 ? 3 : D.smog.pts >= 4 ? 2 : 1, slump: D.slump && D.slump.on, bg: D.inn ? 'inn' : S.equip.bg, color:S.equip.color, hat:S.equip.hat, gear:S.gear, stage:stage(D.lv.level), mood: now < jumpUntil ? 'happy' : D.mood, f:frame, motion:motionOK, jump: now < jumpUntil && (Math.floor(now/120)%2===0)});
+  if (sc) drawScene(sc, {siren: !!sirenPending(), smog: D.inn || !D.smog.pts ? 0 : D.smog.pts >= 9 ? 3 : D.smog.pts >= 4 ? 2 : 1, slump: D.slump && D.slump.on, bg: D.inn ? 'inn' : S.equip.bg, color:S.equip.color, hat:S.equip.hat, gear:S.gear, stage:stage(D.lv.level), mood: now < jumpUntil ? 'happy' : D.mood, f:frame, motion:motionOK, jump: now < jumpUntil && (Math.floor(now/120)%2===0)});
   const hurt = now < hurtUntil && Math.floor(now/90)%2 === 0;
   const m = document.getElementById('bossMiniCv'); if (m) drawBoss(m, D.cur.boss, frame, motionOK, hurt, D.cur.status === 'won');
   const b = document.getElementById('bossCv'); if (b) drawBoss(b, D.cur.boss, frame, motionOK, hurt, D.cur.status === 'won');
@@ -5237,6 +5335,19 @@ function onClick(e){
     openEditor(null); draft = qaToDraft(txt, c); renderEditor(); setTimeout(() => { const n = document.getElementById('tName'); if (n){ n.focus(); n.setSelectionRange(n.value.length, n.value.length); } }, 40); return; }
   if (el.dataset.qadd){ openQuickAdd(el.dataset.qadd); return; }
   if ('newtimer' in el.dataset){ openTimerEditor(null); return; }
+  // the Siren's card: wave her off, or draw for a 50/50 blessing or curse (picked from this week's seed, so it can't be rerolled)
+  if (el.dataset.siren){ const wk = sirenPending(); if (!wk) return; const now = Date.now(), day = sirenDayOf(wk);
+    if (el.dataset.siren === 'off'){ S.siren.push({wk, day, declined: now}); save(); render(); toast('She shrugs and flies off.'); return; }
+    const pick = (arr, key) => arr.length ? arr.slice().sort((a, b) => a.id < b.id ? -1 : 1)[hash(key + '|' + wk) % arr.length] : null;
+    const tasks = active().filter(t => !t.pool && !startOf(t, D.today)), dailies = tasks.filter(t => schedAt(t, D.today).cad === 'day');
+    const todos = S.todos.lists.filter(L => !L.hidden && L.kind !== 'plain').flatMap(L => L.items.filter(i => !i.doneOn).map(i => ({id: L.id + '|' + i.id, L, it: i})));
+    let rec = null;
+    if (roll('sirenres|' + wk) < 0.5){ const t = pick(tasks, 'sirentask'); if (t) rec = {res: 'bless', kind: 'daily', tid: t.id, name: t.name}; }
+    else { const useTodo = todos.length && (!dailies.length || roll('sirenkind|' + wk) < 0.5);
+      if (useTodo){ const o = pick(todos, 'sirentodo'); rec = {res: 'curse', kind: 'todo', lid: o.L.id, iid: o.it.id, name: o.it.text}; }
+      else { const t = pick(dailies, 'sirendaily'); if (t) rec = {res: 'curse', kind: 'daily', tid: t.id, name: t.name}; } }
+    if (!rec){ S.siren.push({wk, day, declined: now}); save(); render(); toast('Her card was blank. Nothing to bless or curse yet.'); return; }
+    S.siren.push({wk, day, drawn: now, ...rec}); sirenFlip = true; save(); render(); toast(rec.res === 'bless' ? `Blessed! ${rec.name} pays 2× this week.` : `Cursed! ${rec.name}`); return; }
   // after a goal: keep counting (the goal stays marked done, the timer runs on with no goal) or finish it
   if (el.dataset.tmkeep || el.dataset.tmnewgoal){ const id = el.dataset.tmkeep || el.dataset.tmnewgoal, tm = timersLive().find(x => x.id === id); if (!tm || !tm.done) return;
     (tm.won || (tm.won = [])).push({goal: tm.goal, at: tm.done}); delete tm.goal; delete tm.done; tm.edited = Date.now(); save(); render();
