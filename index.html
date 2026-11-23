@@ -808,7 +808,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'f163166268';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'a37e42865c';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1714,11 +1714,15 @@ function repStart(rp, from, days){
 }
 const isDue = (t, k) => { const sc = schedAt(t,k); if (sc.cad === 'day' && sc.rep) return repDue(sc.rep, k, sc.days); return !sc.days || !sc.days.length || sc.days.includes(parseKey(k).getDay()); };
 const offOn = (t, k) => (t.off && t.off.length) ? t.off.some(([a,b]) => a <= k && (!b || k < b)) : !!t.archived;
+// a task that hasn't started yet on day k (a future start date, or a pause that ends later) returns the day it starts
+const startOf = (t, k) => { if (t.archived) return null; const c = t.created || S.created; if (c > k) return c;
+  const r = (t.off || []).find(([a, b]) => b && a <= k && k < b); if (r) return r[1];
+  const sc = schedAt(t, k); return sc.rep && sc.rep.first && sc.rep.first > k ? sc.rep.first : null; };
 const dailyOn = (t, k) => schedAt(t,k).cad === 'day' && (t.created || S.created) <= k && !offOn(t,k) && isDue(t,k);
 const done = (k, id) => !!(S.log[k] && S.log[k][id]);
 const waived = (k, id) => !!(S.waives[k] && (S.waives[k][id] || S.waives[k]['*']));
 const covered = (k, id) => done(k,id) || waived(k,id);
-function weekTarget(t, k){ const wk = weekKey(k); let tg = ((S.wkTg[wk]||{})[t.id]) || 0; for (let i=0;i<7;i++){ const sn = (S.snap[addDays(wk,i)]||{})[t.id]; if (sn && sn.w) tg = Math.max(tg, sn.tg || 1); } if (wk === weekKey(todayKey()) || !tg) tg = Math.max(tg, t.target || 1); return tg; }
+function weekTarget(t, k){ const wk = weekKey(k); if (wk === weekKey(todayKey())) return t.target || 1; let tg = ((S.wkTg[wk]||{})[t.id]) || 0; for (let i=0;i<7;i++){ const sn = (S.snap[addDays(wk,i)]||{})[t.id]; if (sn && sn.w) tg = Math.max(tg, sn.tg || 1); } if (wk === weekKey(todayKey()) || !tg) tg = Math.max(tg, t.target || 1); return tg; }
 const effTarget = (t, k) => Math.max(1, weekTarget(t,k) - (((S.lightens[weekKey(k)]||{})[t.id]) || 0));
 const active = () => S.tasks.filter(t => !t.archived);
 const stage = lv => lv < 5 ? 0 : lv < 12 ? 1 : 2;
@@ -1743,7 +1747,7 @@ function habitInfo(innOn, today){
     let any = false;
     for (let wk = startWk; wk <= today; wk = addDays(wk, 7)){
       const wkEnd = addDays(wk, 6); let n = 0, habitWeek = false, inn = false;
-      const tg = effTarget(t, wk), bn = Math.max(t.bonus || 0, ((S.wkBn[wk] || {})[t.id]) || 0);
+      const tg = effTarget(t, wk), bn = wk === weekKey(today) ? (t.bonus || 0) : Math.max(t.bonus || 0, ((S.wkBn[wk] || {})[t.id]) || 0);
       for (let i = 0; i < 7; i++){ const d = addDays(wk, i); if (d > today) break;
         if (innOn(d)) inn = true;
         const sc = schedAt(t, d); if (sc.cad !== 'week' || offOn(t, d) || (t.created || S.created) > d) continue;
@@ -1823,7 +1827,7 @@ function derive(){
   const lvlBase = () => levelInfo(xp).level;          // boss HP has always used this one
   const combatFrom = S.combatFrom && S.combatFrom > COMBAT_FROM ? S.combatFrom : COMBAT_FROM;
   const curWk = weekKey(today);
-  const effOf = (wk, tid, w) => { let tg = Math.max(w.tg, ((S.wkTg[wk]||{})[tid]) || 0); if (wk === curWk && T[tid]) tg = Math.max(tg, T[tid].target || 1); return Math.max(1, tg - (((S.lightens[wk]||{})[tid]) || 0)); };
+  const effOf = (wk, tid, w) => { let tg = Math.max(w.tg, ((S.wkTg[wk]||{})[tid]) || 0); if (wk === curWk && T[tid]) tg = T[tid].target || 1; return Math.max(1, tg - (((S.lightens[wk]||{})[tid]) || 0)); };
   const statLvNow = () => Object.fromEntries(SK.map(k => [k, statLevel(stat[k])]));
   const statusOn = (key, d) => status[key] && status[key].from < d && d <= status[key].until;
   const faint = (d, C) => { const fz = S.faintLog[d]; const bal = gold - staticSpent - dyn - lost; const loss = fz ? fz.loss : Math.max(0, Math.floor(bal * 0.1)); lost += loss; if (!fz) newFaints[d] = {loss}; hp = Math.round(C.maxHP / 2); faints.push({d, loss}); const F = cyc[cycleOf(d)]; if (F && !F.wonOn) F.rem = Math.min(F.hp, F.rem + Math.round(F.hp * 0.1)); };
@@ -2010,12 +2014,12 @@ function derive(){
   // weekly chests and perfect weeks (the XP was already shown in-loop; it's counted for real here)
   chestXp = 0;
   for (const [wk, counts] of Object.entries(weeks)) for (const [tid, w] of Object.entries(counts)){
-    w.tg = Math.max(w.tg, ((S.wkTg[wk]||{})[tid]) || 0);
-    if (wk === curWk && T[tid]) w.tg = Math.max(w.tg, T[tid].target || 1);
+    // this week's goal is whatever the task says now (edits count right away); past weeks keep the goal they had
+    if (wk === curWk && T[tid]) w.tg = T[tid].target || 1; else w.tg = Math.max(w.tg, ((S.wkTg[wk]||{})[tid]) || 0);
     const eff = Math.max(1, w.tg - (((S.lightens[wk]||{})[tid]) || 0));
     w.eff = eff;
     if (w.n >= eff){ xp += 20; gold += 30; }
-    const bnReq = Math.max(w.bn, ((S.wkBn[wk]||{})[tid]) || 0);
+    const bnReq = wk === curWk && T[tid] ? (T[tid].bonus || 0) : Math.max(w.bn, ((S.wkBn[wk]||{})[tid]) || 0);
     if (bnReq && bnReq > eff && w.n >= bnReq && (w.bns[bnReq-1] || 0) >= bnReq) gold += 20;
   }
   let perfectWeeks = 0;
@@ -3248,10 +3252,8 @@ function taskRow(t, k){
     const hb = D.habits.lv[t.id]; if (hb) meta += hb.next != null ? ` · ${hb.shown}/${hb.next} to ${HABIT_LV[hb.lv + 1].name}` : ' · Mastered: ' + fxText(masteryFx(t));
     if (!isDue(t,k)){ disabled = !isD; meta = `Not open today · opens ${daysText(schedAt(t,k).days)}`; }
   }
-  // a change to how often waits for tomorrow; say where the task is headed so it doesn't look stuck
-  const nextCad = schedAt(t, addDays(k,1)).cad;
-  if (nextCad !== cad) meta += nextCad === 'week' ? ' · moves to Habits tomorrow' : ' · moves to Dailies tomorrow';
-  const closed = !isD && !rested && !isDue(t,k);
+  const sw = startOf(t, k); if (sw){ disabled = true; meta = `Starts ${fmtDow(sw)}`; wk = ''; }
+  const closed = sw || (!isD && !rested && !isDue(t,k));
   const name = isPool ? pick.name : t.name;
   let rr = '';
   if (isPool && !isD){
@@ -3297,7 +3299,7 @@ var todayTab = (() => { try { return localStorage.getItem(TODAY_TAB_KEY) === 'we
 // a tab's tasks split into Anytime / Morning / Afternoon / Evening, each a group you can fold away (like To-do priorities)
 function todGroups(all, cad, k){
   // tasks that aren't scheduled for this day (rest days, closed days) leave the groups and wait in a folded "Not today" group
-  const list = all.filter(t => isDue(t,k) || done(k,t.id)), off = all.filter(t => !isDue(t,k) && !done(k,t.id));
+  const list = all.filter(t => !startOf(t,k) && (isDue(t,k) || done(k,t.id))), off = all.filter(t => startOf(t,k) || (!isDue(t,k) && !done(k,t.id)));
   const restKey = 'show:rest-' + cad, restOpen = clOpen.has(restKey);
   const rest = off.length && !S.settings.hideRest ? `<div class="tdgroup todgrp" data-tod="rest">
       <div class="tdhead"><button class="tdpill tod-rest" data-clopen="${restKey}" aria-expanded="${restOpen}">NOT TODAY (${off.length})<span class="chev ${restOpen ? '' : 'up'}">${svg('back',14,2.6)}</span></button></div>
@@ -3324,14 +3326,14 @@ function todGroups(all, cad, k){
 function renderToday(){
   const k = vday === 'today' ? D.today : D.yest;
   // an archived task that's already done for this day has nothing left to do, so it leaves the list right away
-  const shown = S.tasks.filter(t => !offOn(t,k) && (t.created || S.created) <= k && !(t.archived && done(k, t.id)) && !(schedAt(t,k).rep && !isDue(t,k) && !done(k, t.id)));
+  const shown = S.tasks.filter(t => startOf(t,k) || (!offOn(t,k) && (t.created || S.created) <= k && !(t.archived && done(k, t.id)) && !(schedAt(t,k).rep && !isDue(t,k) && !done(k, t.id))));   // tasks starting later wait in Not today
   const hide = S.settings.hideDone;
   const dailiesAll = shown.filter(t => schedAt(t,k).cad === 'day'), weekliesAll = shown.filter(t => schedAt(t,k).cad === 'week');
   const dailies = hide ? dailiesAll.filter(t => !done(k,t.id)) : dailiesAll, weeklies = (hide ? weekliesAll.filter(t => !done(k,t.id)) : weekliesAll).slice().sort((a,b) => (isDue(a,k) ? 0 : 1) - (isDue(b,k) ? 0 : 1));
   const wkk = weekKey(k), lv = D.lv, st = stage(lv.level);
-  const dueD = dailiesAll.filter(t => isDue(t,k));
+  const dueD = dailiesAll.filter(t => isDue(t,k) && !startOf(t,k));
   const doneD = dueD.filter(t => done(k,t.id)).length;
-  const weekLeft = weekliesAll.filter(t => weekCount(t.id,k) < effTarget(t,k)).length;
+  const weekLeft = weekliesAll.filter(t => !startOf(t,k) && weekCount(t.id,k) < effTarget(t,k)).length;
   const wkEnd = addDays(wkk,6), wkRange = wkEnd.slice(0,7) === wkk.slice(0,7) ? `${fmt(wkk)}–${parseKey(wkEnd).getDate()}` : `${fmt(wkk)} – ${fmt(wkEnd)}`;
   const a = assistMsg();
   const myst = D.mystery[D.today];
@@ -4544,6 +4546,7 @@ function openEditor(t, roulette, fromPlus){
   draft = t ? clone(t) : {id:'t'+Date.now().toString(36), name:'', stats:['MGT'], cad:'day', target:3, created:D.today, isNew:true};
   if (!t && roulette) draft.pool = [{name:'', stats:['MGT']}, {name:'', stats:['MOB']}];
   if (!draft.days || !draft.days.length) draft.days = [0,1,2,3,4,5,6];
+  draft.start = (t && startOf(t, D.today)) || D.today;
   archArm = false; renderEditor(); showSheet(draft.isNew ? (draft.pool ? 'New roulette' : 'New task') : 'Edit task'); sheetFull(true);
   setTimeout(() => { const n = document.getElementById('tName'); if (n) n.focus(); }, 30);
 }
@@ -4598,7 +4601,8 @@ function renderEditor(){
       ${t.cad === 'week' ? edRow('t.target', 'Weekly goal', `${t.target || 1}× a week`) + edRow('t.bonus', 'Bonus goal', t.bonus ? `${t.bonus}× a week` : 'None') : ''}
       ${t.rep ? edRow('t.every', 'Every', `${t.rep.every} ${t.rep.unit}${t.rep.every === 1 ? '' : 's'}`)
         + (t.rep.unit === 'month' ? edRow('t.dom', 'On the', t.rep.dom === 'last' ? 'Last day' : ordinal(t.rep.dom)) : '')
-        + `<label class="edrow" for="tStart"><span>Starts on</span><input type="date" id="tStart" min="${D.today}" value="${t.rep.first && t.rep.first >= D.today ? t.rep.first : D.today}"></label>` : ''}
+        : ''}
+      <label class="edrow" for="tStart"><span>Starts on</span><input type="date" id="tStart" min="${D.today}" value="${t.rep ? (t.rep.first && t.rep.first >= D.today ? t.rep.first : D.today) : (t.start && t.start > D.today ? t.start : D.today)}"></label>
       ${showDays ? edRow('t.days', t.rep ? 'Day of the week' : 'Days', daysLabel(t.days), 'calendar') : ''}
       <label class="edrow" for="tRandom"><span>Roulette<span class="edsub">Pick one routine at random each time</span></span><input type="checkbox" class="tog" id="tRandom" ${t.pool?'checked':''}></label>
     </div>
@@ -4618,7 +4622,7 @@ function readEditorFields(){
     if (unit){ draft.cad = 'day'; const old = draft.rep && draft.rep.unit === unit ? draft.rep : null; draft.rep = {unit, every: old ? old.every : 2, ...(unit === 'month' ? {dom: old ? old.dom : parseKey(D.today).getDate()} : {})}; if (unit === 'week' && !old && (!draft.days || draft.days.length >= 7)) draft.days = [parseKey(D.today).getDay()]; }
     else { if (draft.rep && draft.rep.unit === 'week') draft.days = [0,1,2,3,4,5,6]; draft.cad = v; draft.rep = null; } }
   const ev = document.getElementById('tEvery'); if (ev && draft.rep) draft.rep.every = clamp(parseInt(ev.value) || 1, 1, REP_MAX[draft.rep.unit]);
-  const st = document.getElementById('tStart'); if (st && draft.rep){ const v = st.value; if (/^\d{4}-\d{2}-\d{2}$/.test(v)) draft.rep.first = v; }
+  const st = document.getElementById('tStart'); if (st){ const v = st.value; if (/^\d{4}-\d{2}-\d{2}$/.test(v)){ if (draft.rep) draft.rep.first = v; else draft.start = v; } }
   const dm = document.getElementById('tDom'); if (dm && draft.rep && draft.rep.unit === 'month') draft.rep.dom = dm.value === 'last' ? 'last' : clamp(parseInt(dm.value) || 1, 1, 31);
   const tg = document.getElementById('tTarget'); if (tg) draft.target = clamp(parseInt(tg.value)||1, 1, 7);
   const bn = document.getElementById('tBonus'); if (bn) { const v = parseInt(bn.value)||0; draft.bonus = v > draft.target ? clamp(v,1,7) : undefined; }
@@ -5135,6 +5139,8 @@ function onClick(e){
     const name = draft.name.trim();
     if (!name){ document.getElementById('edErr').textContent = 'Give the task a name first.'; return; }
     const out = {id:draft.id, name, stats:draft.stats.slice(0,2), cad:draft.cad, created:draft.created || D.today};
+    const startAt = !draft.rep && draft.start && draft.start > D.today ? draft.start : null, fresh = !S.tasks.some(x => x.id === draft.id) || out.created > D.today;
+    if (fresh) out.created = startAt || (out.created > D.today ? D.today : out.created);   // not started yet: the start date is when it begins
     if (draft.pool){
       const pool = draft.pool.map(o => ({name:o.name.trim(), stats:o.stats.slice(0,2)})).filter(o => o.name);
       if (pool.length < 2){ document.getElementById('edErr').textContent = 'A roulette needs at least two named routines.'; return; }
@@ -5152,16 +5158,17 @@ function onClick(e){
     if (draft.note && draft.note.trim()) out.note = draft.note.slice(0, 500);
     const i = S.tasks.findIndex(t => t.id === out.id), old = i >= 0 ? S.tasks[i] : null;
     let relock = [];
-    const entry = {from: old ? addDays(D.today,1) : D.today, cad: out.cad, days: out.days || null};
-    // a repeating schedule edited to start today can begin today, as long as that can't be used to skip something due today
-    if (old && out.rep && schedAt(old, D.today).cad === 'day' && (!out.rep.first || out.rep.first <= D.today)){
-      const trial = {...out.rep, start: repStart(out.rep, D.today, out.days), first: D.today};
-      if (!isDue(old, D.today) || done(D.today, old.id) || repDue(trial, D.today, out.days)) entry.from = D.today;
-    }
+    // new tasks and schedule edits take effect today (honor system); earlier days keep the schedule they had
+    const entry = {from: D.today, cad: out.cad, days: out.days || null};
     if (out.rep){ const first = out.rep.first && out.rep.first > entry.from ? out.rep.first : entry.from; if (first > entry.from) out.rep.first = first; else delete out.rep.first; entry.rep = {...out.rep, start: repStart(out.rep, first, out.days), first}; }
     if (old){
       // schedule changes queued for days that haven't happened yet are replaced by this one
-      out.sched = (old.sched || []).filter(e => e.from <= entry.from); if (old.off) out.off = old.off;
+      out.sched = (old.sched || []).filter(e => e.from <= entry.from);
+      // a running task with a later start date pauses until then; clearing the date (or picking today) resumes it now
+      if (old.off || startAt){ let off = (old.off || []).map(r => r.slice()).filter(([a, b]) => !(b && a >= D.today && b > D.today));
+        off = off.map(([a, b]) => b && a < D.today && b > D.today ? [a, D.today] : [a, b]);
+        if (startAt && !fresh){ const from = done(D.today, old.id) ? addDays(D.today, 1) : D.today; if (from < startAt) off.push([from, startAt]); }
+        if (off.length) out.off = off; }
       const last = out.sched[out.sched.length-1];
       const repKey = e => e && e.rep ? JSON.stringify([e.rep.unit, e.rep.every, e.rep.dom || null, e.rep.first && e.rep.first > entry.from ? e.rep.first : null]) : null;
       if (!last || last.cad !== entry.cad || JSON.stringify(last.days||null) !== JSON.stringify(entry.days) || repKey(last) !== repKey(entry)){ if (last && last.from === entry.from) out.sched[out.sched.length-1] = entry; else out.sched.push(entry); }
@@ -5170,7 +5177,8 @@ function onClick(e){
         if ((S.pickLog[dk] && S.pickLog[dk][old.id]) || (S.picks[dk] && S.picks[dk][old.id])) continue;
         const p = pickFor(old, dk); (S.picks[dk] || (S.picks[dk] = {}))[old.id] = {n:p.name, s:p.stats.slice()};
       }
-      if (out.cad === 'week' || old.cad === 'week') for (const wk of new Set([weekKey(D.today), weekKey(D.yest)])){ const m = S.wkTg[wk] || (S.wkTg[wk] = {}); m[old.id] = Math.max(m[old.id] || 0, old.target || 1, out.target || 1); const mb = S.wkBn[wk] || (S.wkBn[wk] = {}); mb[old.id] = Math.max(mb[old.id] || 0, old.bonus || 0, out.bonus || 0); }
+      if (weekKey(D.yest) !== weekKey(D.today) && (out.cad === 'week' || old.cad === 'week')){ const pw = weekKey(D.yest), m = S.wkTg[pw] || (S.wkTg[pw] = {}); m[old.id] = Math.max(m[old.id] || 0, old.target || 1); }   // last week keeps the goal it had
+      if (out.cad === 'week'){ const wk = weekKey(D.today), m = S.wkTg[wk] || (S.wkTg[wk] = {}), mb = S.wkBn[wk] || (S.wkBn[wk] = {}); m[old.id] = out.target || 1; if (out.bonus) mb[old.id] = out.bonus; else delete mb[old.id]; }
       if (old.pool && old.pool.length){
         const charges = [];
         for (const dk of [D.yest, D.today].filter(runs)){
@@ -5188,7 +5196,7 @@ function onClick(e){
     if (out.pool) for (const dk of relock){ if (S.picks[dk]) delete S.picks[dk][out.id]; const p = pickFor(out, dk); (S.picks[dk] || (S.picks[dk] = {}))[out.id] = {n:p.name, s:p.stats.slice()}; }
     const nowCad = schedAt(out, D.today).cad, nextCad = schedAt(out, addDays(D.today,1)).cad;
     save(); closeEditor(); render();
-    if (old && nowCad !== nextCad) toast(nowCad === 'day' ? 'Saved. It’s still a daily today (so it can’t dodge tonight), then moves to Habits tomorrow.' : 'Saved. It moves to Dailies tomorrow.');
+    if (old && nowCad !== nextCad) toast(nextCad === 'week' ? 'Saved. It moves to Habits tomorrow.' : 'Saved. It moves to Dailies tomorrow.');
     return;
   }
   if ('copy' in el.dataset){ const msg = document.getElementById('copyMsg');
