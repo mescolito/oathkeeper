@@ -646,6 +646,18 @@ html[data-mode="dark"] .pill.rite{background:#f1eee4;color:#171614}
 .tdplus svg{width:14px;height:14px}
 .clhead{min-height:34px;padding:4px 18px 4px 10px;font-size:12px}
 .cl .clitem{font-size:13.5px}
+/* timers: a task card with a live day/hour/minute/second clock instead of a check */
+.trow.tmrow{grid-template-columns:34px 1fr 26px;row-gap:6px}
+.tmbadge{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;justify-self:center}
+.tmdone .tmbadge{background:var(--pink);color:#171614}
+.tmclock{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding-left:44px}
+.tmcell{display:flex;flex-direction:column;line-height:1.05}
+.tmcell b{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.tmcell i{font-style:normal;font-size:10.5px;color:var(--muted);margin-top:2px}
+.tmwk{grid-column:1/-1;padding-left:44px;margin-top:2px}
+.tmdone{opacity:.75}
+.pkcustom{display:flex;gap:6px;padding:4px 4px 6px}
+html .pkcustom input{flex:1;min-width:0;border:0;background:var(--track);border-radius:12px;font:inherit;font-size:15px;color:var(--ink);padding:8px 12px}
 /* checklist inside a task card: stays within the card, steps line up under the name, boxes centre under the check circle */
 .trow .check,.tditem .check{width:26px;height:26px;justify-self:center}
 .trow .check svg,.tditem .check svg{width:13px;height:13px}
@@ -734,7 +746,7 @@ button.edrow{border:0;background:none;font:inherit;font-size:16px;width:100%;pad
 .edval{display:inline-flex;align-items:center;gap:7px;color:var(--ink);font-size:15px;background:var(--track);border-radius:999px;padding:8px 14px;max-width:64%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .edval > span{overflow:hidden;text-overflow:ellipsis}
 .edval svg{flex:none;opacity:.85}
-.edval.plain{background:none;padding-right:0;color:var(--muted)}
+.edval.plain{background:none;padding-right:0;color:var(--muted);white-space:normal;text-align:right;justify-content:flex-end;flex-wrap:wrap}
 html .sheet .edrow input[type=date]{border:0;background:var(--track);border-radius:999px;padding:8px 14px;font:inherit;font-size:15px;color:var(--ink);text-align:right;width:auto}
 .edsub{font-size:12.5px;color:var(--muted);display:block;font-weight:400;margin-top:2px}
 .ednamewrap{position:relative}
@@ -808,7 +820,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'f365e9c185';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '8853d369e9';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1120,6 +1132,25 @@ const SLUMP_DAYS = 3, SLUMP_BACK = 2, SLUMP_PCT = 0.1, SLUMP_MIN = 25, SLUMP_HP 
 // The next boss halves it; a Weather Machine (30 G a level) clears it.
 const SMOG_HP_CAP = 0.15, SMOG_MP_CAP = 0.25, SMOG_MP = 2, SMOG_FX = 0.1, WEATHER_PER_LV = 30;
 const weatherPrice = lv => WEATHER_PER_LV * Math.max(1, lv);
+// Timers: count up from a start date with no check-off. Milestones pay XP and gold that scale with the length; a goal pays double
+// and finishes the timer. Resetting starts the count over and costs 10% max HP and 25 G. Rewards only: no boss hits, no stats.
+const DAY_MS = 86400000;
+const TIMER_MILES = [1, 3, 7, 14, 21, 30, 60, 75, 90, 100, 180, 365, 500, 730, 1000];
+const TIMER_GOALS = [7, 14, 21, 30, 60, 75, 90, 100, 180, 365, 730, 1000];
+const TIMER_RESET_HP = 0.1, TIMER_RESET_G = 25;
+const timerReward = days => { const xp = Math.round(12 * Math.pow(Math.max(1, days), 0.7)); return {xp, g: Math.round(xp * 0.75)}; };
+// milestones and the goal a timer has reached by now but hasn't logged yet; ones reached before you added (or re-dated) it pay nothing
+function timerDue(tm, now){
+  if (!tm || tm.deleted) return [];
+  const out = [], start = tm.start, end = tm.done || now, from = tm.payFrom || 0;
+  const has = new Set((S.timerLog || []).filter(x => x.tid === tm.id).map(x => x.key));
+  for (const m of (tm.miles || [])){ if (tm.goal && m >= tm.goal) continue;
+    const at = start + m * DAY_MS, key = start + '|' + m; if (at > end || at < from || has.has(key)) continue;
+    const r = timerReward(m); out.push({tid: tm.id, key, at, kind: 'mile', m, xp: r.xp, g: r.g}); }
+  if (tm.goal && !tm.done){ const at = start + tm.goal * DAY_MS; if (at <= now){ const r = timerReward(tm.goal), pay = at >= from;
+    out.push({tid: tm.id, key: start + '|goal', at, kind: 'goal', m: tm.goal, xp: pay ? r.xp * 2 : 0, g: pay ? r.g * 2 : 0}); } }
+  return out;
+}
 const skillEqd = id => (S.skillEq || []).includes(id);
 const SKILLS = [
   {id:'strike',  branch:'core', name:'Power Strike',     kind:'dmg',    unlock:1,  cost:l => 25 - 2*(l-1),   power:l => 30 + 12*(l-1),
@@ -1366,7 +1397,7 @@ function defaults(){
     log:{}, pickLog:{}, rerolls:{}, owned:['dawn','axo'], equip:{hat:null, bg:'dawn', color:'axo'},
     gear:{weapon:null, offhand:null, armor:null}, gearLog:[], bag:[], seenDrops:[],
     skills:{}, skillUnlock:{}, skillLog:[], waives:{}, lightens:{}, buys:[], snap:{}, firstTs:{}, picks:{}, results:{}, statMeta:{}, wkTg:{}, wkBn:{},
-    todos:{lists:[{id:'l_home', name:'House repairs', items:[]}]}, potions:[], runeBuys:[], faintLog:{}, legends:{}, fchests:{}, altarUsed:{}, lrunes:{}, checks:{}, stepLog:{}, schema:SCHEMA, inn:[], pomo:{cfg:{focus:25, short:5, long:15, every:4, sound:true, music:true, lofi:'chill', haptic:true}, run:null}, pomoLog:[], settings:{theme:'light', rollover:0, hideDone:false, hideRest:false, collapse:{vitals:false, boss:false}, dismissed:{}}, sells:[], mig:7, updated:0};
+    todos:{lists:[{id:'l_home', name:'House repairs', items:[]}]}, timers:[], timerLog:[], potions:[], runeBuys:[], faintLog:{}, legends:{}, fchests:{}, altarUsed:{}, lrunes:{}, checks:{}, stepLog:{}, schema:SCHEMA, inn:[], pomo:{cfg:{focus:25, short:5, long:15, every:4, sound:true, music:true, lofi:'chill', haptic:true}, run:null}, pomoLog:[], settings:{theme:'light', rollover:0, hideDone:false, hideRest:false, collapse:{vitals:false, boss:false}, dismissed:{}}, sells:[], mig:7, updated:0};
 }
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const isDate = v => typeof v === 'string' && DATE_RE.test(v);
@@ -1470,6 +1501,16 @@ function sanitize(s, created){
   if (s.habitWk) out.habitWk = 1; else delete out.habitWk;
   if (isDate(s.slumpFrom)) out.slumpFrom = s.slumpFrom; else delete out.slumpFrom;
   if (isDate(s.smogFrom)) out.smogFrom = s.smogFrom; else delete out.smogFrom;
+  out.timers = (Array.isArray(s.timers) ? s.timers : []).filter(t => obj(t) && typeof t.id === 'string' && num(t.start, 0) > 0).map(t => { const o = {id: str(t.id, 40), name: str(t.name, 40) || 'Timer', start: num(t.start, 0), created: num(t.created, 0), payFrom: num(t.payFrom, 0),
+      miles: (Array.isArray(t.miles) ? t.miles : []).map(m => int(m, 1, 100000, 0)).filter(m => m > 0).filter((m, i, a) => a.indexOf(m) === i).sort((a, b) => a - b).slice(0, 20),
+      resets: (Array.isArray(t.resets) ? t.resets : []).filter(r => obj(r)).map(r => ({at: num(r.at, 0), from: num(r.from, 0)})).filter(r => r.at > 0).slice(-200)};
+    if (t.goal != null && int(t.goal, 1, 100000, 0) > 0) o.goal = int(t.goal, 1, 100000, 0);
+    if (num(t.done, 0) > 0) o.done = num(t.done, 0); if (num(t.deleted, 0) > 0) o.deleted = num(t.deleted, 0); if (num(t.edited, 0) > 0) o.edited = num(t.edited, 0);
+    if (typeof t.icon === 'string' && taskIconOk(t.icon)) o.icon = t.icon; if (typeof t.note === 'string' && t.note.trim()) o.note = t.note.slice(0, 500);
+    return o; });
+  out.timerLog = (Array.isArray(s.timerLog) ? s.timerLog : []).filter(x => obj(x) && typeof x.tid === 'string' && typeof x.key === 'string').map(x => { const o = {tid: str(x.tid, 40), key: str(x.key, 60), ts: num(x.ts, 0), kind: ['mile', 'goal', 'reset'].includes(x.kind) ? x.kind : 'mile'};
+    if (o.kind === 'reset'){ o.cost = int(x.cost, 0, 100000, 0); o.hp = int(x.hp, 0, 100000, 0); } else { o.xp = int(x.xp, 0, 100000, 0); o.g = int(x.g, 0, 100000, 0); if (num(x.at, 0)) o.at = num(x.at, 0); }
+    return o; }).filter(x => x.ts > 0);
   if (typeof s.gearRev === 'number' && s.gearRev > 0) out.gearRev = s.gearRev; else delete out.gearRev;
   if (typeof s.balRev === 'number' && s.balRev > 0) out.balRev = s.balRev; else delete out.balRev;
   out.slumpLog = {}; if (obj(s.slumpLog)) for (const [d, r] of Object.entries(s.slumpLog)) if (isDate(d) && obj(r)){
@@ -1797,6 +1838,7 @@ function derive(){
   for (const r of S.runeBuys) add(r.date, {k:'rune', ts:r.ts, r});
   for (const b of S.buys) add(b.date || todayKeyAt(b.ts), {k:'buy', ts:b.ts, b});
   for (const x of (S.sells || [])) add(x.date, {k:'sell', ts:x.ts, x});
+  for (const x of (S.timerLog || [])) add(todayKeyAt(x.ts), {k:'tlog', ts:x.ts, x});
   for (const b of S.bag) add(b.date, {k:'buy', ts:b.ts, b});
   let start = S.created; for (const d of Object.keys(ev)) if (d < start) start = d;
   let xp = 0, gold = 0, lost = 0, dyn = 0, hp = null, mp = null, castDeficit = 0;
@@ -1955,6 +1997,7 @@ function derive(){
       } else if (e.k === 'rune'){ dyn += e.r.g || 0; }
       else if (e.k === 'buy'){ dyn += e.b.g || 0; if (e.b.kind === 'weather') smog = 0; }
       else if (e.k === 'sell'){ dyn += e.x.cost; gold += e.x.g; }
+      else if (e.k === 'tlog'){ if (e.x.kind === 'reset'){ dyn += e.x.cost || 0; hp = Math.max(1, hp - (e.x.hp || 0)); } else { xp += e.x.xp || 0; gold += e.x.g || 0; lvUp(fx); } }
     }
     // end of day: steps ticked on things you didn't finish today pay out (see STEP_CAP)
     if (d < today && S.stepFrom && d >= S.stepFrom && !lullAt(F, parseKey(d).getTime())){
@@ -2190,6 +2233,9 @@ function mergeSaves(a, b){
   if (o.habitWk) out.habitWk = 1;
   if (o.slumpFrom && (!out.slumpFrom || o.slumpFrom < out.slumpFrom)) out.slumpFrom = o.slumpFrom;
   if (o.smogFrom && (!out.smogFrom || o.smogFrom < out.smogFrom)) out.smogFrom = o.smogFrom;
+  // timers: each device's copy of a timer, the newer edit wins; a payout or reset logged on either device counts once
+  if (Array.isArray(o.timers)){ if (!Array.isArray(out.timers)) out.timers = []; for (const t of o.timers){ const i = out.timers.findIndex(x => x.id === t.id); if (i < 0) out.timers.push(t); else { const m = out.timers[i]; if ((t.edited || 0) > (m.edited || 0)) out.timers[i] = t; if (t.deleted && !m.deleted) out.timers[i].deleted = t.deleted; } } }
+  if (Array.isArray(o.timerLog)){ if (!Array.isArray(out.timerLog)) out.timerLog = []; const seen = new Set(out.timerLog.map(x => x.tid + '#' + x.key)); for (const x of o.timerLog) if (!seen.has(x.tid + '#' + x.key)){ seen.add(x.tid + '#' + x.key); out.timerLog.push(x); } }
   if (o.gearRev && (!out.gearRev || o.gearRev < out.gearRev)) out.gearRev = o.gearRev;
   if (o.balRev && (!out.balRev || o.balRev < out.balRev)) out.balRev = o.balRev;
   for (const k of ['potions','runeBuys','bag','buys','skillLog','gearLog','pomoLog','sells','inn','testGold']){
@@ -3295,7 +3341,7 @@ function assistMsg(){
 }
 // Dailies and Habits are two tabs, like the lists on To-dos; each device remembers which one was open
 const TODAY_TAB_KEY = 'oathkeeper-todaytab';
-var todayTab = (() => { try { return localStorage.getItem(TODAY_TAB_KEY) === 'week' ? 'week' : 'day'; } catch(e){ return 'day'; } })();
+var todayTab = (() => { try { const v = localStorage.getItem(TODAY_TAB_KEY); return v === 'week' || v === 'timer' ? v : 'day'; } catch(e){ return 'day'; } })();
 // a tab's tasks split into Anytime / Morning / Afternoon / Evening, each a group you can fold away (like To-do priorities)
 function todGroups(all, cad, k){
   // tasks that aren't scheduled for this day (rest days, closed days) leave the groups and wait in a folded "Not today" group
@@ -3323,6 +3369,58 @@ function todGroups(all, cad, k){
     </div>`;
   }).join('') + rest;
 }
+/* ---------- Timers: count up from a start date, Days Since style ---------- */
+const timersLive = () => (S.timers || []).filter(t => !t.deleted);
+function clockParts(ms){ ms = Math.max(0, ms); const d = Math.floor(ms / DAY_MS), h = Math.floor(ms % DAY_MS / 3600000), m = Math.floor(ms % 3600000 / 60000), sc = Math.floor(ms % 60000 / 1000); return [d, h, m, sc]; }
+const clockHTML = (ms) => { const [d, h, m, sc] = clockParts(ms); return [[d, d === 1 ? 'Day' : 'Days'], [h, h === 1 ? 'Hour' : 'Hours'], [m, 'Min'], [sc, 'Sec']].map(([v, l]) => `<span class="tmcell"><b>${v}</b><i>${l}</i></span>`).join(''); };
+// the next milestone (or the goal) still ahead of a running timer
+function timerNext(tm, now){ if (tm.done) return null; const marks = (tm.miles || []).filter(m => !tm.goal || m < tm.goal).concat(tm.goal ? [tm.goal] : []).sort((a, b) => a - b);
+  for (const m of marks){ const at = tm.start + m * DAY_MS; if (at > now) return {m, at, goal: m === tm.goal}; } return null; }
+const daysIn = ms => { const d = Math.ceil(ms / DAY_MS); return d <= 1 ? (ms < 3600000 ? `${Math.max(1, Math.ceil(ms / 60000))} min` : `${Math.ceil(ms / 3600000)} h`) : `${d} days`; };
+function timerRow(tm){
+  const now = Date.now(), end = tm.done || now, el = end - tm.start, nx = timerNext(tm, now);
+  const pct = tm.goal ? Math.min(100, 100 * el / (tm.goal * DAY_MS)) : 0;
+  let meta;
+  if (tm.done) meta = `Goal reached ${fmt(todayKeyAt(tm.done))}`;
+  else if (nx){ const r = timerReward(nx.m); meta = `${nx.goal ? 'Goal' : 'Next'}: ${nx.m} day${nx.m === 1 ? '' : 's'} in ${daysIn(nx.at - now)} · +${nx.goal ? r.xp * 2 : r.xp} XP`; }
+  else meta = tm.miles && tm.miles.length ? 'Every milestone reached' : 'Counting up';
+  const icon = tm.icon ? (tm.icon.startsWith('e:') ? `<span class="temoji" aria-hidden="true">${esc(tm.icon.slice(2))}</span>` : svg(tm.icon, 17, 2)) : svg('timer', 17, 2);
+  return `<div class="trow tmrow ${tm.done ? 'tmdone' : ''}" data-qm="m|${esc(tm.id)}" ${nx ? `data-tnext="${nx.at}"` : ''}>
+    <span class="ticon" style="background:var(--pink)">${icon}</span>
+    <span class="tbody"><span class="tname">${esc(tm.name)}${tm.note ? ` <span class="notedot" aria-label="Has notes">${svg('note',12,2.2)}</span>` : ''}</span><span class="tmeta">${meta}</span></span>
+    <span class="tmbadge" aria-hidden="true">${tm.done ? svg('check', 14, 3) : ''}</span>
+    <div class="tmclock" data-tstart="${tm.start}" data-tend="${tm.done || 0}">${clockHTML(el)}</div>
+    ${tm.goal ? `<div class="wk tmwk">${bar(pct, 'var(--pink)')}<span class="wkn"><b>${Math.floor(Math.min(el, tm.goal * DAY_MS) / DAY_MS)}</b> of ${tm.goal} days</span></div>` : ''}
+  </div>`;
+}
+function timersView(){
+  const all = timersLive(), run = all.filter(t => !t.done).sort((a, b) => a.start - b.start), fin = all.filter(t => t.done).sort((a, b) => b.done - a.done);
+  const runShut = clOpen.has('shut:tm-run'), finOpen = clOpen.has('show:tm-done');
+  return `<div class="row between"><span class="muted small">${run.length} running${fin.length ? ` · ${fin.length} finished` : ''}</span></div>
+  <div class="tdgroup todgrp" data-tm="run">
+    <div class="tdhead"><button class="tdpill tod-any" data-clopen="shut:tm-run" aria-expanded="${!runShut}">${svg('timer',16,2.2)} RUNNING (${run.length})<span class="chev ${runShut ? 'up' : ''}">${svg('back',14,2.6)}</span></button><button class="tdplus" data-newtimer aria-label="New timer">${svg('plus',16,2.4)}</button></div>
+    ${runShut ? '' : run.length ? `<div class="list">${run.map(timerRow).join('')}</div>` : `<p class="how">Nothing counting yet. Tap + to start a timer for something you're keeping up or staying away from, like no drinking or days since you started a new routine.</p>`}
+  </div>
+  ${fin.length ? `<div class="tdgroup todgrp" data-tm="done"><div class="tdhead"><button class="tdpill tod-rest" data-clopen="show:tm-done" aria-expanded="${finOpen}">${svg('check',16,2.4)} FINISHED (${fin.length})<span class="chev ${finOpen ? '' : 'up'}">${svg('back',14,2.6)}</span></button></div>
+    ${finOpen ? `<div class="list">${fin.map(timerRow).join('')}</div>` : ''}</div>` : ''}
+  <p class="how">Timers count up from the day you start, with nothing to check off. Milestones pay XP and gold, more for longer ones. Reaching a goal pays double and finishes the timer. Resetting starts the count over and costs ${Math.round(TIMER_RESET_HP * 100)}% of your max HP and ${TIMER_RESET_G} G.</p>`;
+}
+// log milestones and goals a timer has reached (payouts are written once, so later edits never take them back)
+function timerSweep(){
+  const now = Date.now(); let got = [], ch = false;
+  for (const tm of timersLive()) for (const p of timerDue(tm, now)){
+    if (p.kind === 'goal'){ tm.done = p.at; ch = true; }
+    if (p.xp || p.g){ S.timerLog.push({tid: p.tid, key: p.key, ts: now, at: p.at, kind: p.kind, xp: p.xp, g: p.g}); got.push(`${tm.name}: ${p.kind === 'goal' ? 'goal reached' : p.m + ' day' + (p.m === 1 ? '' : 's')} +${p.xp} XP +${p.g} G`); ch = true; }
+  }
+  if (ch){ save(true); D = derive(); if (got.length) toast(got.join(' · ')); }
+}
+// the clocks tick every second; when one crosses a milestone the screen refreshes to pay it
+setInterval(() => {
+  if (document.hidden) return; const now = Date.now(); let due = false;
+  document.querySelectorAll('.tmclock[data-tstart]').forEach(c => { const end = +c.dataset.tend || now; const ps = clockParts(end - (+c.dataset.tstart)); c.querySelectorAll('.tmcell b').forEach((b, i) => { if (b.textContent !== String(ps[i])) b.textContent = ps[i]; }); });
+  document.querySelectorAll('[data-tnext]').forEach(r => { if (+r.dataset.tnext <= now) due = true; });
+  if (due) render();
+}, 1000);
 function renderToday(){
   const k = vday === 'today' ? D.today : D.yest;
   // an archived task that's already done for this day has nothing left to do, so it leaves the list right away
@@ -3359,13 +3457,13 @@ function renderToday(){
     <span><span class="k">${esc(a.k)}</span><p>${esc(a.p)}</p><span class="pillbtn">${esc(a.cta)}</span></span>
     <canvas id="bossMiniCv" width="64" height="52" aria-hidden="true"></canvas>
   </button><button class="cardtog" data-collapse="boss" aria-expanded="true" aria-label="Collapse the boss card">${svg('back',16,2.6)}</button></div>`}
-  <div class="tdtabs" role="tablist" aria-label="Which tasks"><button role="tab" class="tdtab ${todayTab === 'day' ? 'on' : ''}" data-todaytab="day" aria-selected="${todayTab === 'day'}">Dailies</button><button role="tab" class="tdtab ${todayTab === 'week' ? 'on' : ''}" data-todaytab="week" aria-selected="${todayTab === 'week'}">Habits</button></div>
-  <div class="row between"><span class="muted small" style="white-space:nowrap">${todayTab === 'day' ? `${doneD} of ${dueD.length} done` : `${weekLeft} left · ${wkRange}`}</span>
+  <div class="tdtabs" role="tablist" aria-label="Which tasks"><button role="tab" class="tdtab ${todayTab === 'day' ? 'on' : ''}" data-todaytab="day" aria-selected="${todayTab === 'day'}">Dailies</button><button role="tab" class="tdtab ${todayTab === 'week' ? 'on' : ''}" data-todaytab="week" aria-selected="${todayTab === 'week'}">Habits</button><button role="tab" class="tdtab ${todayTab === 'timer' ? 'on' : ''}" data-todaytab="timer" aria-selected="${todayTab === 'timer'}">Timers</button></div>
+  ${todayTab === 'timer' ? timersView() : `<div class="row between"><span class="muted small" style="white-space:nowrap">${todayTab === 'day' ? `${doneD} of ${dueD.length} done` : `${weekLeft} left · ${wkRange}`}</span>
     <div class="seg" role="group" aria-label="Which day to log"><button data-vday="today" class="${vday==='today'?'on':''}">Today</button><button data-vday="yest" class="${vday==='yest'?'on':''}">Yesterday</button></div></div>
   ${todayTab === 'day'
     ? `${hide && dailiesAll.length && !dailies.length ? '<p class="how">All done here.</p>' : ''}${todGroups(dailies, 'day', k)}`
     : `${hide && weekliesAll.length && !weeklies.length ? '<p class="how">All done here.</p>' : ''}${todGroups(weeklies, 'week', k)}`}
-  <p class="how">Each missed daily lets the boss hit you that night, so defense and dodge matter. Checking in every day keeps your streak and gives a mystery bonus. A perfect week earns a free rune.</p>`;
+  <p class="how">Each missed daily lets the boss hit you that night, so defense and dodge matter. Checking in every day keeps your streak and gives a mystery bonus. A perfect week earns a free rune.</p>`}`;
 }
 function skillTargets(id){
   const k = D.today;
@@ -4206,7 +4304,8 @@ function renderInner(){
       else if (r.item) ate.push((POTION_BY[r.item] || RUNE_BY[r.item] || {}).name || r.item); }
     save(true); D = derive(); if (ate.length) toast(`The Slump ate your ${ate.join(', ')}`); }
   if (!S.slumpFrom && !recoveryMode){ S.slumpFrom = D.today; save(true); D = derive(); }
-  if (!S.smogFrom && !recoveryMode){ S.smogFrom = D.today; save(true); D = derive(); }   // toxic air only counts nights after today   // the Slump only counts days from now on
+  if (!S.smogFrom && !recoveryMode){ S.smogFrom = D.today; save(true); D = derive(); }   // toxic air only counts nights after today
+  if (!recoveryMode) timerSweep();   // the Slump only counts days from now on
   const nf = Object.keys(D.newFaints || {}).filter(d => !S.faintLog[d]);
   if (nf.length){ nf.forEach(d => S.faintLog[d] = D.newFaints[d]); save(true); D = derive(); }
   // once today's fee is covered it's settled for good, so a later purchase can't undo past nights
@@ -4538,6 +4637,7 @@ function renderSheet(){
     body.innerHTML = `<div class="row between"><span class="d">Inventory</span><span class="row" style="gap:8px"><span class="goldpill sm">${D.balance} G</span><button class="btn ghost" data-close>Close</button></span></div>${sheetSwitch()}${renderInventory()}`;
     drawIcons(body); body.scrollTop = y;
   } else if (sheetMode === 'todo') renderTodoEditor();
+  else if (sheetMode === 'timer') renderTimerEditor();
   else renderEditor();
   sheetFull(sheetMode !== 'stats' && sheetMode !== 'inv');
 }
@@ -4627,7 +4727,7 @@ function readEditorFields(){
   if (draft.checklist) draft.checklist.forEach((c,i) => { const el = document.getElementById('clText'+i); if (el) c.text = el.value; });
 }
 function readStatFields(){ if (!statDraft) return; const n = document.getElementById('stName'), b = document.getElementById('stBlurb'); if (n) statDraft.name = n.value; if (b) statDraft.blurb = b.value; }
-function closeEditor(){ document.getElementById('sheet').hidden = true; sheetFull(false); tdraft = null; archArm = false; draft = null; sheetMode = null; statEdit = null; statDraft = null; document.querySelectorAll('.app, .nav').forEach(n => n.inert = false); showAward(); }
+function closeEditor(){ document.getElementById('sheet').hidden = true; sheetFull(false); tdraft = null; mdraft = null; archArm = false; draft = null; sheetMode = null; statEdit = null; statDraft = null; document.querySelectorAll('.app, .nav').forEach(n => n.inert = false); showAward(); }
 
 
 /* ---------- quick menu, to-do editor and quick add ---------- */
@@ -4641,7 +4741,8 @@ function openQuick(spec, rowEl){
   const [kind, a, b] = spec.split('|');
   if (kind === 't' && !S.tasks.find(t => t.id === a)) return;
   if (kind === 'd' && !todoFind(a, b).it) return;
-  qmCtx = {kind, id: a, lid: a, iid: b, del: false};
+  if (kind === 'm' && !timersLive().some(t => t.id === a)) return;
+  qmCtx = {kind, id: a, lid: a, iid: b, del: false, reset: false};
   renderQuick();
 }
 // the task / to-do menu: a sheet that slides up from the bottom
@@ -4651,6 +4752,8 @@ function renderQuick(){
   let html = '';
   if (qmCtx.kind === 't'){ const t = S.tasks.find(x => x.id === qmCtx.id);
     html = qmTop(t.name, t.note) + `${item('copy', 'copy', 'Make a copy')}${item('edit', 'pencil', 'Edit task')}${item('del', 'trash', qmCtx.del ? 'Tap again to delete' : 'Delete task', 'danger')}`; }
+  else if (qmCtx.kind === 'm'){ const tm = timersLive().find(x => x.id === qmCtx.id), cost = Math.min(TIMER_RESET_G, Math.max(0, D.balance));
+    html = qmTop(tm.name, tm.note) + item('edit', 'pencil', 'Edit timer') + (tm.done ? item('again', 'reroll', 'Start again') : item('reset', 'reroll', qmCtx.reset ? `Tap again to reset: −${Math.ceil(D.C.maxHP * TIMER_RESET_HP)} HP, −${cost} G` : 'Reset timer', qmCtx.reset ? 'danger' : '')) + item('del', 'trash', qmCtx.del ? 'Tap again to delete' : 'Delete timer', 'danger'); }
   else { const {L, it} = todoFind(qmCtx.lid, qmCtx.iid), plain = L.kind === 'plain';
     html = qmTop(it.text, it.note) + `${item('copy', 'copy', 'Make a copy')}${moveTargets(L, it).length ? item('move', 'move', 'Move to list') : ''}${item('edit', 'pencil', plain ? 'Edit item' : 'Edit to-do')}`
       + (todoDeletable(L, it) ? item('del', 'trash', qmCtx.del ? 'Tap again to delete' : (plain ? 'Delete item' : 'Delete to-do'), 'danger') : ''); }
@@ -4696,6 +4799,10 @@ function pickOpts(key){
       return {title: 'Every', opts: ns2.filter(n => n <= mx).map(n => pkOpt(n, `${n} ${u}${n === 1 ? '' : 's'}`, t.rep.every === n))}; }
     if (k === 'dom' && t.rep) return {title: 'On the', opts: [...[...Array(31)].map((_, i) => pkOpt(i + 1, ordinal(i + 1), t.rep.dom === i + 1)), pkOpt('last', 'Last day', t.rep.dom === 'last')]};
     if (k === 'icon') return {title: 'Icon', grid: true}; }
+  if (ns === 'tm' && mdraft){ const t = mdraft;
+    if (k === 'goal') return {title: 'Goal', custom: true, opts: [pkOpt(0, 'None', !t.goal, null, {sub: 'Counts up forever'}), ...TIMER_GOALS.concat(t.goal && !TIMER_GOALS.includes(t.goal) ? [t.goal] : []).sort((a, b) => a - b).map(n => { const r = timerReward(n); return pkOpt(n, `${n} days`, t.goal === n, null, {sub: `+${r.xp * 2} XP · +${r.g * 2} G, then it finishes`}); })]};
+    if (k === 'miles') return {title: 'Milestones', multi: true, opts: TIMER_MILES.map(n => { const r = timerReward(n); return pkOpt(n, `${n} day${n === 1 ? '' : 's'}`, (t.miles || []).includes(n), null, {sub: t.goal && n >= t.goal ? 'Past the goal' : `+${r.xp} XP · +${r.g} G`, dis: !!(t.goal && n >= t.goal)}); })};
+    if (k === 'icon') return {title: 'Icon', grid: true}; }
   return null;
 }
 function renderPick(){
@@ -4703,12 +4810,13 @@ function renderPick(){
   const P = pickOpts(pkCtx.key); if (!P){ closePick(); return; }
   const fresh = document.querySelector(`[data-pk="${pkCtx.key}"]`); if (fresh) pkCtx.el = fresh;
   let html = `<div class="pkh">${esc(P.title)}</div>`;
-  if (P.grid){ const t = draft;
-    html += `<div class="pkgrid"><button data-pick="t.icon|" class="${!t.icon ? 'on' : ''}" aria-pressed="${!t.icon}" aria-label="Use the main stat's icon">Auto</button>${TASK_ICONS.map(ic => `<button data-pick="t.icon|${ic}" class="${t.icon === ic ? 'on' : ''}" aria-pressed="${t.icon === ic}" aria-label="Icon ${ic}">${svg(ic, 18, 2)}</button>`).join('')}</div>
+  if (P.grid){ const tmr = pkCtx.key === 'tm.icon', t = tmr ? mdraft : draft, pre = tmr ? 'tm.icon' : 't.icon';
+    html += `<div class="pkgrid"><button data-pick="${pre}|" class="${!t.icon ? 'on' : ''}" aria-pressed="${!t.icon}" aria-label="${tmr ? 'Use the timer icon' : "Use the main stat's icon"}">Auto</button>${TASK_ICONS.map(ic => `<button data-pick="${pre}|${ic}" class="${t.icon === ic ? 'on' : ''}" aria-pressed="${t.icon === ic}" aria-label="Icon ${ic}">${svg(ic, 18, 2)}</button>`).join('')}</div>
       <input class="pkemoji" type="text" id="pkEmoji" maxlength="16" autocomplete="off" value="${t.icon && t.icon.startsWith('e:') ? esc(t.icon.slice(2)) : ''}" placeholder="Or type an emoji 🙂" aria-label="Emoji icon">`; }
   else for (const o of P.opts){
     if (o.h){ html += `<div class="pkh sec">${esc(o.h)}</div>`; continue; }
     html += `<button class="pkopt ${o.icon ? '' : 'noic'}" data-pick="${pkCtx.key}|${esc(o.v)}" role="${P.multi ? 'menuitemcheckbox' : 'menuitemradio'}" aria-checked="${o.on}" ${o.dis ? 'disabled' : ''}><span class="pkchk">${o.on ? svg('check', 14, 2.8) : ''}</span>${o.icon ? svg(o.icon, 17, 2) : ''}<span>${esc(o.l)}${o.sub ? `<small>${esc(o.sub)}</small>` : ''}</span></button>`; }
+  if (P.custom) html += `<form class="pkcustom" data-pkcustom="${pkCtx.key}"><input type="number" inputmode="numeric" min="1" max="100000" id="pkNum" placeholder="Or type days, like 75" aria-label="Custom number of days"><button type="submit" class="btn sm">Set</button></form>`;
   const keepScroll = !pk.hidden && card.dataset.key === pkCtx.key ? card.scrollTop : null;
   card.innerHTML = html; card.dataset.key = pkCtx.key; pk.hidden = false; placePick(card);
   if (keepScroll != null) card.scrollTop = keepScroll;
@@ -4735,6 +4843,11 @@ function applyPick(key, v){
   if (ns === 'm'){ const c = qmCtx; closePick(); if (!c) return; const {L, it} = todoFind(c.lid, c.iid), to = S.todos.lists.find(x => x.id === v); closeQuick();
     if (it && to && moveTodo(it, L, to)){ save(); render(); toast(`Moved to ${to.name}`); } return; }
   if (ns === 'd' && tdraft){ readTodoFields(); if (k === 'list' && S.todos.lists.some(x => x.id === v)) tdraft.toLid = v; if (k === 'pri' && PRI.some(p => p[0] === v)) tdraft.pri = v; closePick(); renderTodoEditor(); return; }
+  if (ns === 'tm' && mdraft){ readTimerFields();
+    if (k === 'miles'){ const n = parseInt(v) || 0, ms = mdraft.miles || (mdraft.miles = []), i = ms.indexOf(n); if (i >= 0) ms.splice(i, 1); else if (n > 0) ms.push(n); ms.sort((a, b) => a - b); renderTimerEditor(); renderPick(); return; }
+    if (k === 'goal'){ const n = parseInt(v) || 0; if (n > 0) mdraft.goal = clamp(n, 1, 100000); else delete mdraft.goal; }
+    if (k === 'icon') mdraft.icon = TASK_ICONS.includes(v) ? v : undefined;
+    closePick(); renderTimerEditor(); return; }
   if (ns === 't' && draft){
     if (k === 'stat'){ runAction({stat: v}); renderPick(); return; }   // pick up to two, so it stays open
     if (k === 'days'){ const pr = DAY_PRESETS.find(p => p[0] === v); if (pr){ readEditorFields(); draft.days = pr[2].slice(); renderEditor(); } else runAction({day: v}); renderPick(); return; }
@@ -4755,11 +4868,75 @@ function quickAct(act){
     if (act === 'edit'){ closeQuick(); openEditor(t); return; }
     if (act === 'copy'){ closeQuick(); openEditor(t); runAction({copytask: ''}); return; }
     if (act === 'del'){ if (!c.del){ c.del = true; renderQuick(); return; } closeQuick(); draft = clone(t); runAction({archive: '1', confirmed: '1'}); toast(`Deleted ${t.name}`); return; } }
+  if (c.kind === 'm'){ const tm = timersLive().find(x => x.id === c.id); if (!tm) return closeQuick();
+    if (act === 'edit'){ closeQuick(); openTimerEditor(tm.id); return; }
+    if (act === 'reset'){ if (!c.reset){ c.reset = true; c.del = false; renderQuick(); return; } closeQuick(); resetTimer(tm, true); return; }
+    if (act === 'again'){ closeQuick(); resetTimer(tm, false); return; }
+    if (act === 'del'){ if (!c.del){ c.del = true; c.reset = false; renderQuick(); return; } closeQuick(); tm.deleted = Date.now(); tm.edited = Date.now(); save(); render(); toast(`Deleted ${tm.name}`); return; } }
   if (c.kind === 'd'){ const {L, it} = todoFind(c.lid, c.iid); if (!it) return closeQuick();
     if (act === 'edit'){ closeQuick(); openTodoEditor(L.id, it.id); return; }
     if (act === 'copy'){ closeQuick(); openTodoEditor(L.id, it.id, true); return; }
     if (act === 'move'){ const b = document.querySelector('#qmcard [data-qmact="move"]'); if (b) openPick('m.move', b); return; }
     if (act === 'del'){ if (!todoDeletable(L, it)) return closeQuick(); if (!c.del){ c.del = true; renderQuick(); return; } closeQuick(); L.items = L.items.filter(x => x.id !== it.id); save(); render(); toast('Deleted'); return; } }
+}
+/* ---------- timer editor ---------- */
+let mdraft = null, tmDelArm = false;
+const localDT = ms => { const d = new Date(ms - new Date(ms).getTimezoneOffset() * 60000); return d.toISOString().slice(0, 16); };
+function resetTimer(tm, penalty){
+  const now = Date.now();
+  if (penalty){ const cost = Math.min(TIMER_RESET_G, Math.max(0, D.balance)), hp = Math.min(Math.ceil(D.C.maxHP * TIMER_RESET_HP), Math.max(0, D.hp - 1));
+    S.timerLog.push({tid: tm.id, key: 'reset|' + now, ts: now, kind: 'reset', cost, hp}); }
+  (tm.resets || (tm.resets = [])).push({at: now, from: tm.start}); tm.start = now; tm.payFrom = now; delete tm.done; tm.edited = now;
+  save(); render(); toast(penalty ? `${tm.name} starts over. It cost you some HP and gold.` : `${tm.name} starts again from now`);
+}
+function openTimerEditor(id){
+  const tm = id && timersLive().find(x => x.id === id), now = Date.now();
+  mdraft = tm ? {...clone(tm), isNew: false, start0: tm.start} : {id: 'm' + now.toString(36), name: '', start: now, miles: [7, 30, 100], isNew: true};
+  tmDelArm = false; sheetMode = 'timer'; renderTimerEditor(); showSheet(mdraft.isNew ? 'New timer' : 'Edit timer'); sheetFull(true);
+  setTimeout(() => { const n = document.getElementById('tmName'); if (n && mdraft && mdraft.isNew) n.focus(); }, 30);
+}
+function readTimerFields(){
+  if (!mdraft || document.getElementById('sheet').hidden) return;
+  const n = document.getElementById('tmName'); if (n) mdraft.name = n.value;
+  const no = document.getElementById('tmNote'); if (no) mdraft.note = no.value;
+  const st = document.getElementById('tmStart'); if (st && st.value){ const ms = new Date(st.value).getTime(); if (Number.isFinite(ms)) mdraft.start = Math.min(ms, Date.now()); }
+}
+function renderTimerEditor(){
+  const t = mdraft, now = Date.now(), tm = !t.isNew && timersLive().find(x => x.id === t.id);
+  const logged = new Set((S.timerLog || []).filter(x => x.tid === t.id).map(x => x.key));
+  const icon = t.icon ? (t.icon.startsWith('e:') ? `<span class="temoji">${esc(t.icon.slice(2))}</span>` : svg(t.icon, 18, 2)) : svg('timer', 18, 2);
+  const marks = (t.miles || []).filter(m => !t.goal || m < t.goal).map(m => ({m, goal: false})).concat(t.goal ? [{m: t.goal, goal: true}] : []);
+  const sameRun = tm && tm.start === t.start, from = sameRun ? (tm.payFrom || 0) : now;
+  const status = ({m, goal}) => { const at = t.start + m * DAY_MS, r = timerReward(m), xp = goal ? r.xp * 2 : r.xp, g = goal ? r.g * 2 : r.g;
+    if (at <= now){ const paid = sameRun && logged.has(t.start + '|' + (goal ? 'goal' : m)); return paid ? `${svg('check', 13, 3)} +${xp} XP, +${g} G` : at < from ? 'Passed before this start' : 'Reached'; }
+    return `In ${daysIn(at - now)} · +${xp} XP, +${g} G`; };
+  const resets = tm && tm.resets && tm.resets.length ? tm.resets : null;
+  document.getElementById('sheetBody').innerHTML = `
+    <div class="edhead"><button class="edx" data-close aria-label="Close without saving">${svg('x',20,2.4)}</button><b>${t.isNew ? 'New timer' : 'Edit timer'}</b><button class="edok" data-savetimer aria-label="Save">${svg('check',20,2.8)}</button></div>
+    <div class="ednamewrap"><input class="edname" type="text" id="tmName" maxlength="40" value="${esc(t.name)}" placeholder="What are you counting?" aria-label="Name"><button type="button" class="edicon" data-pk="tm.icon" style="background:var(--pink)" aria-label="Icon">${icon}</button></div>
+    <div class="edcard">
+      <label class="edrow" for="tmStart"><span>Started</span><input type="datetime-local" id="tmStart" max="${localDT(now)}" value="${localDT(t.start)}"></label>
+      ${edRow('tm.goal', 'Goal', t.goal ? `${t.goal} days` : 'None', 'star')}
+      ${edRow('tm.miles', 'Milestones', (t.miles || []).length ? t.miles.map(m => m + 'd').join(', ') : 'None', 'gift')}
+    </div>
+    ${marks.length ? `<div class="edcard"><div class="edhd">Rewards</div>${marks.map(x => `<div class="edrow"><span>${x.goal ? 'Goal · ' : ''}${x.m} day${x.m === 1 ? '' : 's'}</span><span class="edval plain">${status(x)}</span></div>`).join('')}</div>` : ''}
+    ${resets ? `<div class="edcard"><div class="edrow"><span>Resets</span><span class="edval plain">${resets.length} · last ${fmt(todayKeyAt(resets[resets.length - 1].at))}</span></div></div>` : ''}
+    <textarea class="ednote" id="tmNote" maxlength="500" rows="3" placeholder="Write your notes here…" aria-label="Notes">${esc(t.note || '')}</textarea>
+    <p class="how small" id="tmErr" role="alert"></p>
+    <div class="edfoot">${t.isNew ? '<span></span>' : `<button type="button" class="edtrashbtn ${tmDelArm ? 'armed' : ''}" data-tmdel aria-label="Delete timer">${svg('trash',18,2.2)}${tmDelArm ? '<span>Tap again to delete</span>' : ''}</button>`}<button type="button" class="edpill primary" data-savetimer>Save</button></div>`;
+}
+function saveTimerDraft(){
+  readTimerFields(); const t = mdraft, name = (t.name || '').trim().slice(0, 40), now = Date.now();
+  if (!name){ document.getElementById('tmErr').textContent = 'Give the timer a name first.'; return; }
+  const base = {name, start: t.start, miles: (t.miles || []).slice().sort((a, b) => a - b), edited: now};
+  if (t.goal) base.goal = t.goal; if (taskIconOk(t.icon)) base.icon = t.icon; if (t.note && t.note.trim()) base.note = t.note.slice(0, 500);
+  if (t.isNew){ S.timers.push({id: t.id, ...base, created: now, payFrom: now, resets: []}); }
+  else { const tm = S.timers.find(x => x.id === t.id); if (!tm) return closeEditor();
+    const moved = tm.start !== base.start;
+    Object.assign(tm, base); if (!t.goal) delete tm.goal; if (!base.icon) delete tm.icon; if (!base.note) delete tm.note;
+    if (moved) tm.payFrom = now;   // a new start date only pays for milestones reached from here on
+    if (tm.done && (moved || !tm.goal || tm.start + tm.goal * DAY_MS > now)) delete tm.done; }
+  save(); closeEditor(); todayTab = 'timer'; try { localStorage.setItem(TODAY_TAB_KEY, 'timer'); } catch(e){} render(); toast(t.isNew ? `Started ${name}` : 'Saved');
 }
 function insertTodo(L, it){
   if (L.kind === 'plain'){ delete it.pri; L.items.push(it); return; }
@@ -4874,6 +5051,9 @@ function onClick(e){
     if (c.kind === 'todo'){ openTodoEditor(c.lid, null, false, {text: txt, pri: c.pri}); return; }
     openEditor(null); draft = qaToDraft(txt, c); renderEditor(); setTimeout(() => { const n = document.getElementById('tName'); if (n){ n.focus(); n.setSelectionRange(n.value.length, n.value.length); } }, 40); return; }
   if (el.dataset.qadd){ openQuickAdd(el.dataset.qadd); return; }
+  if ('newtimer' in el.dataset){ openTimerEditor(null); return; }
+  if ('savetimer' in el.dataset){ saveTimerDraft(); return; }
+  if ('tmdel' in el.dataset && mdraft){ if (!tmDelArm){ tmDelArm = true; readTimerFields(); renderTimerEditor(); return; } const tm = S.timers.find(x => x.id === mdraft.id); if (tm){ tm.deleted = Date.now(); tm.edited = Date.now(); } save(); closeEditor(); render(); toast('Deleted'); return; }
   if ('savetodo' in el.dataset){ saveTodoDraft(); return; }
   if ('tdstepadd' in el.dataset && tdraft){ readTodoFields(); tdraft.steps.push({id: 's' + Date.now().toString(36), text: ''}); renderTodoEditor(); const inp = document.getElementById('tdStep' + (tdraft.steps.length - 1)); if (inp) inp.focus(); return; }
   if (el.dataset.tdedel && tdraft){ readTodoFields(); tdraft.steps.splice(parseInt(el.dataset.tdedel), 1); renderTodoEditor(); return; }
@@ -5031,7 +5211,7 @@ function onClick(e){
     render(); return; }
   if (el.dataset.buy){ const it = ITEM[el.dataset.buy]; if (it && !it.boss && it.price > 0 && inSeason(it, D.today) && D.balance >= it.price && !S.owned.includes(it.id) && meetsReq(it, D.statLv)){ S.owned.push(it.id); if (it.kind === 'hat') setHat(it.id); else S.equip[it.kind] = it.id; save(); render(); toast(`Bought ${it.name}. It's in your inventory.`); } return; }
   if (el.dataset.equip){ const it = ITEM[el.dataset.equip]; if (!it || !((it.boss || it.legendary) ? D.drops.has(it.id) : (S.owned.includes(it.id) || it.price === 0))) return; const slot = it.kind; if (slot === 'hat'){ setHat(S.equip.hat === it.id ? null : it.id); } else S.equip[slot] = it.id; save(); render(); return; }
-  if (el.dataset.todaytab){ todayTab = el.dataset.todaytab === 'week' ? 'week' : 'day'; try { localStorage.setItem(TODAY_TAB_KEY, todayTab); } catch(e){} render(); return; }
+  if (el.dataset.todaytab){ todayTab = ['week', 'timer'].includes(el.dataset.todaytab) ? el.dataset.todaytab : 'day'; try { localStorage.setItem(TODAY_TAB_KEY, todayTab); } catch(e){} render(); return; }
   if ('newtask' in el.dataset){ openEditor(null); const [nc, nt] = (el.dataset.newtask || '').split('|'); if (nc === 'week') draft.cad = 'week'; if (TOD_KEYS.includes(nt)) draft.tod = nt; if (nc === 'week' || nt) renderEditor(); return; }
   if (el.dataset.invtab){ invTab = el.dataset.invtab; if (sheetMode === 'inv' && !document.getElementById('sheet').hidden){ renderSheet(); return; } }
   if (el.dataset.plus){ if ('gopts' in el.dataset) statsSec = 'skills'; openPlus(el.dataset.plus); return; }
@@ -5267,15 +5447,18 @@ document.addEventListener('change', e => {
   if (e.target.id === 'petName'){ const v = e.target.value.trim().slice(0,16); if (v && v !== S.petName){ S.petName = v; save(); render(); } }
 });
 document.getElementById('sheet').addEventListener('click', e => { if (e.target.id === 'sheet') closeEditor(); });
-document.addEventListener('keydown', e => { if (e.key !== 'Escape') return; if (pkCtx){ closePick(); return; } if (qmCtx){ closeQuick(); return; } if (qaCtx){ closeQuickAdd(); return; } if (draft || tdraft) closeEditor(); });
+document.addEventListener('keydown', e => { if (e.key !== 'Escape') return; if (pkCtx){ closePick(); return; } if (qmCtx){ closeQuick(); return; } if (qaCtx){ closeQuickAdd(); return; } if (draft || tdraft || mdraft) closeEditor(); });
 // tapping the dimmed backdrop closes the quick menu or the quick-add bar
 document.getElementById('qm').addEventListener('click', e => { if (e.target.id === 'qm') closeQuick(); });
 document.getElementById('qa').addEventListener('click', e => { if (e.target.id === 'qa' && !pkCtx) closeQuickAdd(); });
 document.getElementById('pk').addEventListener('click', e => { if (e.target.id === 'pk') closePick(); });
 // the emoji box inside the icon picker
-document.getElementById('pk').addEventListener('input', e => { if (e.target.id !== 'pkEmoji' || !draft) return; readEditorFields(); const v = e.target.value.trim();
-  if (v){ const em = cleanEmoji(v); if (em) draft.icon = 'e:' + em; } else if (draft.icon && draft.icon.startsWith('e:')) draft.icon = undefined;
-  renderEditor(); document.querySelectorAll('#pkcard .pkgrid button').forEach(b => b.classList.toggle('on', !draft.icon && b.dataset.pick === 't.icon|')); });
+document.getElementById('pk').addEventListener('input', e => { if (e.target.id !== 'pkEmoji') return;
+  const tmr = pkCtx && pkCtx.key === 'tm.icon', dr = tmr ? mdraft : draft; if (!dr) return; if (tmr) readTimerFields(); else readEditorFields(); const v = e.target.value.trim();
+  if (v){ const em = cleanEmoji(v); if (em) dr.icon = 'e:' + em; } else if (dr.icon && dr.icon.startsWith('e:')) dr.icon = undefined;
+  if (tmr) renderTimerEditor(); else renderEditor(); document.querySelectorAll('#pkcard .pkgrid button').forEach(b => b.classList.toggle('on', !dr.icon && b.dataset.pick.endsWith('.icon|'))); });
+// a custom number typed into a picker (the timer goal)
+document.getElementById('pk').addEventListener('submit', e => { const f = e.target.closest('[data-pkcustom]'); if (!f) return; e.preventDefault(); const n = parseInt((document.getElementById('pkNum') || {}).value) || 0; if (n > 0) applyPick(f.dataset.pkcustom, String(n)); });
 // a step being typed in shows its trash can instead of the drag handle
 document.addEventListener('focusin', e => { const r = e.target.closest && e.target.closest('.edstep'); document.querySelectorAll('.edstep.editing').forEach(x => { if (x !== r) x.classList.remove('editing'); }); if (r) r.classList.add('editing'); });
 document.addEventListener('focusout', e => { const r = e.target.closest && e.target.closest('.edstep'); if (r) setTimeout(() => { if (!r.contains(document.activeElement)) r.classList.remove('editing'); }, 300); });
