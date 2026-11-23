@@ -930,7 +930,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '41152ec81a';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'a7be8dca98';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1416,6 +1416,13 @@ const ITEMS = [
   {id:'night', lvl:3,   kind:'bg',  name:'Pine Woods',  price:150},
   {id:'gym', lvl:4, kind:'bg',  name:'Iron Gym',     price:180},
   {id:'dungeon', lvl:8, kind:'bg',  name:'Boss Dungeon', price:220},
+  {id:'wr_laurel', lvl:5,  kind:'bg', name:'Laurel Wreath', price:220},
+  {id:'wr_roses',  lvl:6,  kind:'bg', name:'Thorn Roses',   price:240},
+  {id:'wr_stars',  lvl:8,  kind:'bg', name:'Star Ring',     price:260},
+  {id:'wr_tide',   lvl:10, kind:'bg', name:'Tide Ring',     price:280},
+  {id:'wr_solar',  lvl:12, kind:'bg', name:'Solar System',  price:320},
+  {id:'wr_flame',  lvl:14, kind:'bg', name:'Flame Halo',    price:340},
+  {id:'wr_arcane', lvl:16, kind:'bg', name:'Arcane Circle', price:360},
   {id:'axo',     kind:'color',name:'Classic',price:0},
   {id:'cosmic',  kind:'color',name:'Celestial', legendary:true},
   {id:'hydracrown', kind:'hat', name:'Hydra Crown',  boss:'hydra',     style:'war',  fx:{st:{MGT:4, HRT:3}}},
@@ -2761,7 +2768,104 @@ function drawOutdoor(bg, f, motion, night){
     for (let i = 0; i < 34; i++){ const hx = hash('snow' + i), x = (hx % SW + (t >> 2)) % SW, y = ((hx >>> 8) % G + (t >> 1)) % G; ink(x, y); }
   }
 }
+/* Wreath frames: no place at all, just an ornamental ring around the pet on a plain field with a quiet pattern
+   in the corners. The ring's bottom runs right under the pet's feet, so it still stands on something. */
+const WREATHS = ['wr_laurel', 'wr_roses', 'wr_solar', 'wr_stars', 'wr_tide', 'wr_flame', 'wr_arcane'];
+function drawWreath(bg, f, motion){
+  bg = bg.slice(3);
+  const t = motion ? f : 0, PK = '#eeb7d8', cx = 32, cy = 21, rx = 28, ry = 17;
+  const dark = bg !== 'laurel', P = dark ? PB : PW, I = dark ? PW : PB;
+  const ink = (x, y, w = 1, h = 1) => px(x, y, w, h, I), pink = (x, y, w = 1, h = 1) => px(x, y, w, h, PK);
+  const e = (x, y) => Math.hypot((x - cx) / rx, (y - cy) / ry);                       // 1 on the ring, below 1 inside
+  const at = (a, k = 1) => [Math.round(cx + Math.cos(a) * rx * k), Math.round(cy + Math.sin(a) * ry * k)];
+  const ring = (k, keep = () => true) => { for (let a = 0; a < Math.PI * 2; a += 0.012){ const [x, y] = at(a, k); if (keep(a)) ink(x, y); } };
+  const out = (x, y, m = 1.15) => e(x, y) > m;
+  const inkLeaf = (x0, y0, len, ang) => { const c = Math.cos(ang), sn = Math.sin(ang); for (let u = 0; u <= len; u++){ const half = Math.round(Math.sin(u / len * Math.PI) * Math.min(1.2, len * 0.3)); for (let k = -half; k <= half; k++) ink(x0 + c * u - sn * k, y0 + sn * u + c * k); } };
+  px(0, 0, SW, SH, P);
+  if (bg === 'laurel'){
+    // corners: a soft lattice of dots
+    for (let y = 0; y < SH; y++) for (let x = 0; x < SW; x++) if (out(x, y, 1.2) && ((x % 6 === 0 && y % 6 === 0) || (x % 6 === 3 && y % 6 === 3))) ink(x, y);
+    // two laurel branches climbing from the bottom, leaving a gap at the top
+    for (const s of [-1, 1]){
+      for (let u = 0.12; u < Math.PI - 0.5; u += 0.012){ const [x, y] = at(Math.PI / 2 + s * u); ink(x, y); }
+      let n = 0;
+      for (let u = 0.3; u < Math.PI - 0.55; u += 0.34, n++){
+        const a = Math.PI / 2 + s * u, [x, y] = at(a), tx = -Math.sin(a) * rx * s, ty = Math.cos(a) * ry * s;
+        for (const side of [1, -1]){ const ang = Math.atan2(ty, tx) + side * 0.7; inkLeaf(x, y, 5, ang); for (let v = 2; v < 5; v++) px(x + Math.cos(ang) * v, y + Math.sin(ang) * v, 1, 1, P); }
+        if (n % 3 === 1){ const [bx, by] = at(a, 1.12); pink(bx, by); }
+      }
+    }
+    // a pink ribbon tied under the pet's feet
+    ink(30, 38, 4, 3); pink(31, 39, 2, 1);
+    for (const s of [-1, 1]){ const x0 = s < 0 ? 26 : 34; ink(x0, 37, 4, 4); pink(x0 + 1, 38, 2, 2); ink(32 + s * 3, 41, 1, 2); ink(32 + s * 4, 42); }
+    // a glint travelling round the leaves
+    const g = at(-Math.PI / 2 + t * 0.04, 1.0), gl = (t >> 2) % 2; if (motion){ ink(g[0], g[1] - 2 - gl, 1, 1); ink(g[0], g[1] + 2 + gl); ink(g[0] - 2 - gl, g[1]); ink(g[0] + 2 + gl, g[1]); }
+  }
+  else if (bg === 'roses'){
+    // petals drifting down through the corners
+    for (let i = 0; i < 10; i++){ const h = hash('rp' + i), x = Math.round((h % SW + t * 0.2 + Math.sin((t + i * 9) * 0.1) * 2) % SW), y = Math.round(((h >>> 8) % SH + t * 0.4) % SH);
+      if (out(x, y, 1.18)) pink(x, y, (t + i) % 6 < 3 ? 2 : 1, 1); }
+    // two thorny vines twisting slowly around each other
+    const tw = t * 0.015;
+    for (const sg of [1, -1]) for (let a = 0; a < Math.PI * 2; a += 0.01){ const [x, y] = at(a, 1 + sg * 0.055 * Math.sin(a * 5 + tw)); ink(x, y); }
+    for (let n = 0; n < 34; n++){ const a = n * Math.PI * 2 / 34 + 0.05, sg = n % 2 ? 1 : -1, k = 1 + sg * 0.055 * Math.sin(a * 5 + tw);   // thorns
+      const [x1, y1] = at(a, k), [x2, y2] = at(a + sg * 0.035, k + sg * 0.07); wline(x1, y1, x2, y2, I); }
+    // roses that slowly open and close, each on its own beat
+    for (let i = 0; i < 7; i++){ const a = i * Math.PI * 2 / 7 - Math.PI / 2 + 0.45, [x, y] = at(a, 1), op = Math.sin(t * 0.03 + i * 1.7) > -0.3;
+      const [l1x, l1y] = at(a + 0.13, 1.06); inkLeaf(l1x, l1y, 3, a + 0.9);
+      if (op) ['.ppppp.', 'pp##ppp', 'p#pp#pp', 'p#p#p#p', 'pp#pp#p', 'ppp##pp', '.ppppp.'].forEach((r, dy) => [...r].forEach((c, dx) => { if (c !== '.') px(x - 3 + dx, y - 3 + dy, 1, 1, c === 'p' ? PK : PB); }));
+      else { disc(x, y, 2, PK); px(x, y - 1, 1, 2, PB); px(x - 1, y + 2, 3, 1, I); } }
+  }
+  else if (bg === 'solar'){
+    // you are the sun: planets on tilted orbits circle the pet at their own speeds
+    for (let i = 0; i < 30; i++){ const h = hash('sol' + i), x = h % SW, y = (h >>> 8) % SH; if (!motion || (t + i * 5) % 23 > 1) ink(x, y); }
+    const oc = [32, 25], orb = [[18, 7], [24, 10], [30, 14], [36, 18]];
+    for (const [ox, oy] of orb.slice(1)) for (let a = 0; a < Math.PI * 2; a += 0.02) if (Math.floor(a / 0.02) % 7 === 0) ink(Math.round(oc[0] + Math.cos(a) * ox), Math.round(oc[1] + Math.sin(a) * oy));
+    const pos = (o, a) => [Math.round(oc[0] + Math.cos(a) * orb[o][0]), Math.round(oc[1] + Math.sin(a) * orb[o][1])];
+    { const [x, y] = pos(0, 0.5 + t * 0.09); pink(x, y); }                                                             // a tiny fast inner planet
+    { const a = 2.2 + t * 0.055, [x, y] = pos(1, a); disc(x, y, 2, I); px(x - 1, y - 1, 2, 1, PB); const m = t * 0.25; ink(Math.round(x + Math.cos(m) * 4), Math.round(y + Math.sin(m) * 3)); }   // a planet with its moon
+    { const [x, y] = pos(2, 4.1 + t * 0.033); disc(x, y, 2, I); px(x - 5, y + 1, 11, 1, PK); px(x - 4, y, 1, 1, PK); px(x + 4, y + 2, 1, 1, PK); }      // the ringed one
+    { const [x, y] = pos(3, 0.9 + t * 0.02); disc(x, y, 3, I); px(x - 2, y - 1, 5, 1, PB); px(x - 3, y + 1, 7, 1, PB); pink(x + 1, y + 1, 2, 1); }   // a striped giant with a pink storm
+    const cp = (t % 160);                                                                                                 // now and then a comet streaks over the top
+    if (motion && cp < 30){ const x = 70 - cp * 2.6, y = 2 + cp * 0.35; for (let k = 0; k < 7; k++) px(Math.round(x + k * 1.6), Math.round(y - k * 0.3), 1, 1, k === 0 ? I : k < 3 ? PK : I); }
+  }
+  else if (bg === 'stars'){
+    for (let i = 0; i < 40; i++){ const h = hash('wst' + i), x = h % SW, y = (h >>> 8) % SH; if (out(x, y, 1.2) && (!motion || (t + i * 3) % 19 > 1)) ink(x, y); }
+    ring(1, a => Math.floor(a / 0.05) % 3 === 0);                                        // a faint dotted orbit
+    for (let i = 0; i < 20; i++){ const a = i * Math.PI / 10 + t * 0.008, [x, y] = at(a), kind = i % 4, tw = motion && (t + i * 7) % 30 < 3;
+      const col = i % 5 === 0 ? PK : I, dot = (X, Y) => px(X, Y, 1, 1, col);
+      if (kind === 0 && !tw){ dot(x, y); for (const d of [1, 2]){ dot(x - d, y); dot(x + d, y); dot(x, y - d); dot(x, y + d); } }
+      else if (kind === 2 || (kind === 0 && tw)){ dot(x, y); dot(x - 1, y); dot(x + 1, y); dot(x, y - 1); dot(x, y + 1); }
+      else dot(x, y);
+    }
+  }
+  else if (bg === 'tide'){
+    for (let i = 0; i < 14; i++){ const h = hash('bub' + i), x = h % SW, y = SH - 1 - ((((h >>> 8) % SH) + Math.floor(t * 0.3)) % SH); if (out(x, y, 1.22)) ink(x, y); }   // bubbles rising
+    for (const [k, ph] of [[0.86, 0], [0.94, 2], [1.02, 4]]) for (let a = 0; a < Math.PI * 2; a += 0.01){
+      const w = Math.sin(a * 12 + ph + t * 0.12), [x, y] = at(a, k + 0.025 * w); ink(x, y);
+      if (k > 1 && w > 0.97 && Math.floor(a * 100) % 3 === 0){ const [fx, fy] = at(a, k + 0.07); pink(fx, fy); }   // foam on the crests
+    }
+  }
+  else if (bg === 'flame'){
+    for (let i = 0; i < 16; i++){ const h = hash('emb' + i), x = (h % SW + Math.round(Math.sin((t + i * 13) * 0.08) * 2) + SW) % SW, y = SH - 1 - ((((h >>> 8) % SH) + Math.floor(t * 0.5)) % SH);
+      if (out(x, y, 1.25)) px(x, y, 1, 1, i % 3 ? I : PK); }                              // embers drifting up
+    ring(1);
+    for (let i = 0; i < 18; i++){ const a = i * Math.PI / 9, [x0, y0] = at(a), nx0 = Math.cos(a) / rx, ny0 = Math.sin(a) / ry, nl = Math.hypot(nx0, ny0), nx = nx0 / nl, ny = ny0 / nl;
+      const hgt = 4 + ((hash('fl' + i) + (t >> 1)) % 3);
+      for (let j = 0; j <= hgt; j++){ const wob = motion ? Math.sin(t * 0.3 + i + j * 0.6) * 0.6 : 0, w = Math.round((1 - j / hgt) * 2.2), X = x0 + nx * j - ny * wob, Y = y0 + ny * j + nx * wob;
+        for (let k = -w; k <= w; k++) px(Math.round(X - ny * k), Math.round(Y + nx * k), 1, 1, j < hgt * 0.5 && Math.abs(k) < w ? PK : I); }
+    }
+  }
+  else if (bg === 'arcane'){
+    ring(1); ring(1.07);
+    ring(0.88, a => (Math.floor((a + t * 0.01) / 0.08)) % 2 === 0);                    // an inner dashed ring turning
+    for (let i = 0; i < 12; i++){ const a = i * Math.PI / 6 - t * 0.006, [x1, y1] = at(a, 1.1), [x2, y2] = at(a, 1.2); wline(x1, y1, x2, y2, I); }   // spokes
+    for (let i = 0; i < 4; i++){ const a = i * Math.PI / 2 + Math.PI / 4 + t * 0.01, [x, y] = at(a, 0.94); disc(x, y, 2, PB); pink(x, y - 1, 1, 3); pink(x - 1, y, 3, 1); ink(x, y - 2); ink(x, y + 2); ink(x - 2, y); ink(x + 2, y); }   // four pink stones
+  }
+  return P;
+}
 function drawBg(bg, f, motion, night){
+  if (WREATHS.includes(bg)) return drawWreath(bg, f, motion);
   if (bg === 'gym' || bg === 'dungeon' || bg === 'inn'){ drawIndoor(bg, f, motion, night); return PB; }
   drawOutdoor(bg, f, motion, night); return night ? PB : PW;   // the scene's plain paper colour
 }
