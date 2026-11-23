@@ -684,7 +684,7 @@ html[data-mode="dark"] .pkcard{background:rgba(48,46,43,.94);box-shadow:0 14px 4
 .pkgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:2px 4px 6px}
 .pkgrid button{aspect-ratio:1;border:0;border-radius:12px;background:var(--track);color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer;font:inherit;font-size:11px;font-weight:700}
 .pkgrid button.on{background:var(--ink);color:var(--inv)}
-.pkemoji{margin:2px 4px 6px;border:0;border-radius:12px;background:var(--track);font:inherit;font-size:15px;color:var(--ink);padding:9px 12px}
+html .pkemoji{border:0 !important;background:var(--track) !important;width:auto;margin:2px 4px 6px;border:0;border-radius:12px;background:var(--track);font:inherit;font-size:15px;color:var(--ink);padding:9px 12px}
 .qa{position:fixed;inset:0;z-index:35;background:rgba(15,14,12,.3)}
 .qa[hidden]{display:none}
 .qabar{position:fixed;left:0;right:0;bottom:0;margin:0 auto;max-width:460px;background:var(--card);border-radius:22px 22px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;box-shadow:0 -10px 30px rgba(0,0,0,.18)}
@@ -699,48 +699,57 @@ html[data-mode="dark"] .qabar{background:#23211e}
 .sheet.full{align-items:stretch}
 .sheet.full .panel{max-height:100%;height:100%;border-radius:0;padding-top:calc(10px + env(safe-area-inset-top));padding-bottom:0;gap:12px}
 .sheet.full .panel > :last-child:not(.edfoot){margin-bottom:28px}
-.edhead{display:grid;grid-template-columns:40px 1fr 40px;align-items:center;position:sticky;top:calc(-10px - env(safe-area-inset-top));z-index:3;background:var(--bg);margin:-10px -18px 0;padding:10px 18px 8px}
-.edhead b{text-align:center;font-size:16px}
-.edx,.edok{width:40px;height:40px;border-radius:50%;border:0;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.edhead{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;position:sticky;top:calc(-10px - env(safe-area-inset-top));z-index:3;background:var(--bg);margin:-10px -18px 0;padding:10px 18px 10px}
+.edhead b{text-align:center;font-size:17px}
+.edx,.edok{width:44px;height:44px;border-radius:50%;border:0;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .edx{background:var(--track);color:var(--ink)}
 .edok{background:var(--ink);color:var(--inv)}
-.edname{font:inherit;font-size:18px;font-weight:600;border:0;border-radius:16px;background:var(--card);color:var(--ink);padding:14px 16px;width:100%;box-sizing:border-box}
-.edcard{background:var(--card);border-radius:18px;padding:2px 14px;display:flex;flex-direction:column}
-.edrow{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:46px;font-size:15px;color:var(--ink)}
-button.edrow{border:0;background:none;font:inherit;font-size:15px;width:100%;padding:0;text-align:left;cursor:pointer}
+.sheet.full .panel{gap:16px}
+html .sheet .edname{font:inherit;font-size:19px;font-weight:600;border:0;border-radius:22px;background:var(--card);color:var(--ink);padding:20px 20px;width:100%;box-sizing:border-box;outline:none}
+.edcard{background:var(--card);border-radius:24px;padding:6px 20px;display:flex;flex-direction:column}
+.edrow{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:58px;font-size:16px;color:var(--ink)}
+button.edrow{border:0;background:none;font:inherit;font-size:16px;width:100%;padding:0;text-align:left;cursor:pointer}
 .edrow + .edrow{border-top:1px solid var(--line)}
-.edrow.top{min-height:40px;font-size:13px;font-weight:600;color:var(--muted)}
-.edval{display:inline-flex;align-items:center;gap:6px;color:var(--ink);font-size:14.5px;text-align:right;max-width:62%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.edval svg{flex:none;opacity:.8}
-.edrow input[type=date]{border:0;background:transparent;font:inherit;font-size:14.5px;color:var(--ink);text-align:right}
-.edsub{font-size:12px;color:var(--muted);display:block;font-weight:400}
+.edhd{font-size:17px;font-weight:600;color:var(--ink);padding:14px 0 10px}
+.edval{display:inline-flex;align-items:center;gap:7px;color:var(--ink);font-size:15px;background:var(--track);border-radius:999px;padding:8px 14px;max-width:64%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.edval > span{overflow:hidden;text-overflow:ellipsis}
+.edval svg{flex:none;opacity:.85}
+.edval.plain{background:none;padding-right:0;color:var(--muted)}
+html .sheet .edrow input[type=date]{border:0;background:var(--track);border-radius:999px;padding:8px 14px;font:inherit;font-size:15px;color:var(--ink);text-align:right;width:auto}
+.edsub{font-size:12.5px;color:var(--muted);display:block;font-weight:400;margin-top:2px}
 .ednamewrap{position:relative}
-.ednamewrap .edname{padding-right:60px}
-.edicon{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:50%;border:0;background:var(--accent);color:#171614;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px}
-.edsteps{display:flex;flex-direction:column}
-.edstep{display:grid;grid-template-columns:22px 1fr 30px;align-items:center;gap:10px;min-height:44px;border-radius:14px;padding:0 2px}
-.edstep input{border:0;background:transparent;font:inherit;font-size:14.5px;font-weight:600;color:var(--ink);padding:8px 0;min-width:0;outline:none}
-.edstepdot{width:20px;height:20px;border-radius:50%;background:var(--track);display:flex;align-items:center;justify-content:center}
-.edstep.on .edstepdot{background:var(--ink);color:var(--inv)}
-.edstep .sgrip{padding:10px 8px;justify-self:end}
-.edstep .edtrash{display:none;justify-self:end;border:0;background:none;color:#c4495a;cursor:pointer;padding:6px;align-items:center}
+html .sheet .ednamewrap .edname{padding-right:70px}
+.edicon{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:42px;height:42px;border-radius:50%;border:0;background:var(--accent);color:#171614;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px}
+.edsteps{display:flex;flex-direction:column;gap:10px}
+.edstep{display:grid;grid-template-columns:30px 1fr 28px;align-items:center;gap:12px;height:58px;box-sizing:border-box;border-radius:18px;padding:0 14px 0 12px;border:1px solid var(--line);background:transparent}
+html .sheet .edstep input[type=text]{border:0;background:transparent;font:inherit;font-size:16px;font-weight:700;color:var(--ink);padding:10px 0;min-width:0;outline:none;border-radius:0}
+.edstepdot{width:30px;height:30px;border-radius:50%;background:var(--track);display:flex;align-items:center;justify-content:center;color:var(--inv)}
+html[data-mode="dark"] .edstepdot{background:var(--ink);opacity:.92}
+.edstep.on .edstepdot{background:var(--accent);color:#171614;opacity:1}
+.edstep .sgrip,.edstep .edtrash{width:28px;height:28px;box-sizing:border-box;padding:0;margin:0;justify-self:end;align-self:center}
+.edstep .sgrip{grid-template-columns:repeat(2,4px);grid-template-rows:repeat(2,4px);gap:3px;justify-content:center;align-content:center}
+.edstep .sgrip i{width:4px;height:4px}
+.edstep .edtrash{display:none;border:0;background:none;color:#c4495a;cursor:pointer;align-items:center;justify-content:center}
 html[data-mode="dark"] .edstep .edtrash{color:#f0939d}
-.edstep.editing{box-shadow:inset 0 0 0 1.5px var(--line);background:var(--bg)}
+.edstep{transition:border-color .15s}
+.edstep.editing{border-color:var(--muted)}
+html[data-mode="dark"] .edstep.editing{border-color:rgba(241,237,228,.6)}
 .edstep.editing .sgrip{display:none}
 .edstep.editing .edtrash{display:flex}
-.edadd{align-self:stretch;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);border-radius:14px;background:none;color:var(--muted);font:inherit;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:9px;margin:6px 0 10px;cursor:pointer}
-.edadd .plusdot{width:16px;height:16px;border-radius:50%;border:1px solid currentColor;display:inline-flex;align-items:center;justify-content:center}
-.ednote{font:inherit;font-size:15px;border:0;border-radius:18px;background:var(--card);color:var(--ink);padding:14px 16px;resize:vertical;min-height:90px;width:100%;box-sizing:border-box}
+.edadd{align-self:stretch;display:flex;align-items:center;justify-content:center;gap:10px;border:1.5px dashed var(--line);border-radius:18px;background:none;color:var(--muted);font:inherit;font-size:14px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;min-height:56px;margin:10px 0 16px;cursor:pointer}
+.edadd .plusdot{width:28px;height:28px;border-radius:50%;background:var(--track);color:var(--ink);display:inline-flex;align-items:center;justify-content:center}
+html .sheet .ednote{font:inherit;font-size:16px;border:0;border-radius:24px;background:var(--card);color:var(--ink);padding:18px 20px;resize:vertical;min-height:110px;width:100%;box-sizing:border-box;outline:none}
 .edfoot{display:flex;align-items:center;justify-content:space-between;gap:10px;position:sticky;bottom:0;margin:auto -18px 0;padding:18px 18px calc(14px + env(safe-area-inset-bottom));background:linear-gradient(to bottom,transparent,var(--bg) 35%);z-index:3}
 .edfoot .btn{display:inline-flex;align-items:center;gap:6px}
-.edtrashbtn{width:44px;height:44px;border-radius:50%;border:0;background:var(--card);color:#c4495a;display:flex;align-items:center;justify-content:center;cursor:pointer;font:inherit;font-size:12px;font-weight:700}
-html[data-mode="dark"] .edtrashbtn{color:#f0939d}
-.edtrashbtn.armed{width:auto;padding:0 14px;gap:6px;border-radius:999px;background:#c4495a;color:#fff}
-.tog{appearance:none;-webkit-appearance:none;flex:none;width:46px;height:28px;border-radius:999px;background:var(--track);position:relative;cursor:pointer;margin:0;transition:background .2s}
-.tog::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s}
+.edtrashbtn{width:52px;height:52px;border-radius:50%;border:0;background:var(--card);color:#c4495a;display:flex;align-items:center;justify-content:center;cursor:pointer;font:inherit;font-size:12px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+html[data-mode="dark"] .edtrashbtn{color:#f0939d;background:var(--track)}
+.edtrashbtn.armed{width:auto;padding:0 16px;gap:6px;border-radius:999px;background:#c4495a;color:#fff}
+.tog{appearance:none;-webkit-appearance:none;flex:none;width:50px;height:30px;border-radius:999px;background:var(--track);position:relative;cursor:pointer;margin:0;transition:background .2s;border:0}
+.tog::after{content:'';position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s}
 .tog:checked{background:var(--accent)}
-.tog:checked::after{transform:translateX(18px)}
-.edpill{border:0;border-radius:999px;background:var(--card);color:var(--ink);font:inherit;font-size:14px;font-weight:600;padding:12px 18px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.tog:checked::after{transform:translateX(20px)}
+.edpill{border:0;border-radius:999px;background:var(--card);color:var(--ink);font:inherit;font-size:15px;font-weight:600;padding:15px 22px;box-shadow:0 4px 14px rgba(0,0,0,.18);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+html[data-mode="dark"] .edpill:not(.primary){background:var(--track)}
 .edpill.primary{background:var(--ink);color:var(--inv)}
 .notedot{display:inline-flex;vertical-align:-1px;color:var(--muted)}
 .trow,.tditem{cursor:pointer}
@@ -779,7 +788,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'd4317156f1';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'e949976917';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -4498,7 +4507,7 @@ function renderEditor(){
     <div class="edhead"><button class="edx" data-close aria-label="Close without saving">${svg('x',20,2.4)}</button><b>${t.isNew ? (t.pool ? 'New roulette' : 'New task') : 'Edit task'}</b><button class="edok" data-savetask aria-label="Save">${svg('check',20,2.8)}</button></div>
     ${sheetMode ? sheetSwitch() : ''}
     <div class="ednamewrap"><input class="edname" type="text" id="tName" maxlength="40" value="${esc(t.name)}" placeholder="${t.pool ? 'Name this roulette' : 'What will you do?'}" aria-label="Name"><button type="button" class="edicon" data-pk="t.icon" style="background:${STATS[prim].c}" aria-label="Icon">${tIcon(t, prim, 18)}</button></div>
-    ${t.pool ? `<div class="edcard" style="padding:10px 14px;gap:8px"><span class="edrow top" style="min-height:0">Routines (each trains its own stats; ★ is main)</span>
+    ${t.pool ? `<div class="edcard" style="padding:10px 14px;gap:8px"><div class="edhd" style="padding-top:4px">Routines</div>
       ${t.pool.map((o,i) => `<div class="opt">
         <div class="row"><input type="text" id="oName${i}" maxlength="40" value="${esc(o.name)}" placeholder="Routine ${i+1}" aria-label="Routine ${i+1} name"><button class="btn danger" data-odel="${i}" ${t.pool.length<=2?'disabled':''} aria-label="Remove routine ${i+1}">✕</button></div>
         <div class="chips">${SK.map(k => { const j = o.stats.indexOf(k); return `<button class="chip ${j>=0?'on':''}" data-ostat="${i}:${k}" style="${j>=0?`background:${STATS[k].c};border-color:${STATS[k].c}`:''}" aria-pressed="${j>=0}">${j===0?'★ ':''}${esc(STATS[k].abbr)}</button>`; }).join('')}</div>
@@ -4508,6 +4517,7 @@ function renderEditor(){
       ${t.pool ? '' : edRow('t.stat', 'Trains', t.stats.map((k, i) => (i === 0 && t.stats.length > 1 ? '★ ' : '') + esc(STATS[k].name)).join(' · '), prim)}
       ${t.cad === 'week' ? '' : edRow('t.tod', 'Time of day', tod.label, tod.icon)}
       ${edRow('t.repeat', 'Repeat', repeatLabel(t), 'reroll')}
+      ${t.cad === 'week' ? (() => { const hb = !t.isNew && D.habits.lv[t.id]; return `<div class="edrow"><span>Habit level</span><span class="edval plain">${hb ? `${HABIT_LV[hb.lv].name} · ${hb.shown} pt${hb.shown === 1 ? '' : 's'}` : HABIT_LV[0].name}</span></div>`; })() : ''}
       ${t.cad === 'week' ? edRow('t.target', 'Weekly goal', `${t.target || 1}× a week`) + edRow('t.bonus', 'Bonus goal', t.bonus ? `${t.bonus}× a week` : 'None') : ''}
       ${t.rep ? edRow('t.every', 'Every', `${t.rep.every} ${t.rep.unit}${t.rep.every === 1 ? '' : 's'}`)
         + (t.rep.unit === 'month' ? edRow('t.dom', 'On the', t.rep.dom === 'last' ? 'Last day' : ordinal(t.rep.dom)) : '')
@@ -4515,13 +4525,10 @@ function renderEditor(){
       ${showDays ? edRow('t.days', t.rep ? 'Day of the week' : 'Days', daysLabel(t.days), 'calendar') : ''}
       <label class="edrow" for="tRandom"><span>Roulette<span class="edsub">Pick one routine at random each time</span></span><input type="checkbox" class="tog" id="tRandom" ${t.pool?'checked':''}></label>
     </div>
-    ${t.cad === 'week' ? (() => { const hb = !t.isNew && D.habits.lv[t.id]; return `<p class="how small">Habits are grouped by how far along they are: ${HABIT_LV.map(g => g.name).join(' → ')}. ${hb ? `This one is <b>${HABIT_LV[hb.lv].name}</b> with ${hb.shown} point${hb.shown === 1 ? '' : 's'}${hb.next != null ? ` (${HABIT_LV[hb.lv + 1].name} at ${hb.next})` : ''}.` : 'New ones start as New Habit.'} The check-offs that reach your weekly goal are worth ${HABIT_WEEK} points in total, so a once-a-week habit grows as fast as a daily one, and extra check-offs add a little more. Hitting the week's goal adds ${HABIT_HIT} more plus 1 per week of your streak, and hitting the bonus goal adds ${HABIT_BONUS} more. A missed week takes away ${HABIT_MISS}. Mastery adds stats.</p>`; })() : ''}
-    ${t.rep ? `<p class="how small">${t.rep.unit === 'month' ? 'Months without that date use their last day. ' : ''}It first comes up on the start date or the next matching day after it. On the days it comes up it works like a daily: same reward, and missing it lets the boss hit you that night. It only shows on Today when it's due.</p>` : ''}
-    <div class="edcard"><div class="edrow top"><span>Steps<span class="edsub">Finish every step to complete the task. Partway, each ticked step pays 1–2 G at day's end (up to ${STEP_CAP} G).</span></span></div>
-      <div class="edsteps" data-sdlist="editor">${(t.checklist || []).map((c,i) => `<div class="edstep" data-sid="${esc(c.id)}"><span class="edstepdot"></span><input type="text" id="clText${i}" maxlength="60" value="${esc(c.text)}" placeholder="Step" aria-label="Step ${i+1}">${edGrip}<button type="button" class="edtrash" data-cldel="${i}" aria-label="Remove step ${i+1}">${svg('trash',16,2.2)}</button></div>`).join('')}</div>
+    <div class="edcard"><div class="edhd">Steps</div>
+      <div class="edsteps" data-sdlist="editor">${(t.checklist || []).map((c,i) => `<div class="edstep" data-sid="${esc(c.id)}"><span class="edstepdot"></span><input type="text" id="clText${i}" maxlength="60" value="${esc(c.text)}" placeholder="Step" aria-label="Step ${i+1}">${edGrip}<button type="button" class="edtrash" data-cldel="${i}" aria-label="Remove step ${i+1}">${svg('trash',18,2)}</button></div>`).join('')}</div>
       ${(t.checklist || []).length < CHECK_MAX ? edAdd('data-cladd') : ''}</div>
     <textarea class="ednote" id="tNote" maxlength="500" rows="3" placeholder="Write your notes here…" aria-label="Notes">${esc(t.note || '')}</textarea>
-    ${!t.isNew ? '<p class="how small">Changes to days or how often start tomorrow, so today stays as it was. Deleting removes the task now if it’s done today; otherwise it stays until tonight, so it can’t be used to skip a daily.</p>' : ''}
     <p class="how small" id="edErr" role="alert"></p>
     <div class="edfoot">${t.isNew ? '<span></span>' : `<button type="button" class="edtrashbtn ${archArm ? 'armed' : ''}" data-archive aria-label="Delete task">${svg('trash',18,2.2)}${archArm ? '<span>Tap again to delete</span>' : ''}</button>`}<span class="row" style="gap:8px">${t.isNew ? '' : `<button type="button" class="edpill" data-copytask>${svg('copy',15,2.2)} Copy</button>`}<button type="button" class="edpill primary" data-savetask>Save</button></span></div>`;
 }
@@ -4715,8 +4722,8 @@ function renderTodoEditor(){
       ${edRow('d.list', 'List', esc(to.name), plain ? 'note' : 'list')}
       ${plain ? '' : edRow('d.pri', 'Priority', `${p[2] ? p[2] + ' ' : ''}${p[0] === 'none' ? 'None' : p[1]}`)}
     </div>
-    <div class="edcard"><div class="edrow top"><span>Steps</span><span>${t.steps.length ? `${t.steps.filter(x => x.done).length}/${t.steps.length} done` : ''}</span></div>
-      <div class="edsteps" data-sdlist="tded">${t.steps.map((x, i) => `<div class="edstep ${x.done ? 'on' : ''}" data-sid="${esc(x.id)}"><span class="edstepdot">${x.done ? svg('check',12,3) : ''}</span><input type="text" id="tdStep${i}" maxlength="60" value="${esc(x.text)}" placeholder="Step" aria-label="Step ${i + 1}">${edGrip}<button type="button" class="edtrash" data-tdedel="${i}" aria-label="Remove step ${i + 1}">${svg('trash',16,2.2)}</button></div>`).join('')}</div>
+    <div class="edcard"><div class="edhd row between"><span>Steps</span><span class="small muted" style="font-weight:500">${t.steps.length ? `${t.steps.filter(x => x.done).length}/${t.steps.length} done` : ''}</span></div>
+      <div class="edsteps" data-sdlist="tded">${t.steps.map((x, i) => `<div class="edstep ${x.done ? 'on' : ''}" data-sid="${esc(x.id)}"><span class="edstepdot">${x.done ? svg('check',12,3) : ''}</span><input type="text" id="tdStep${i}" maxlength="60" value="${esc(x.text)}" placeholder="Step" aria-label="Step ${i + 1}">${edGrip}<button type="button" class="edtrash" data-tdedel="${i}" aria-label="Remove step ${i + 1}">${svg('trash',18,2)}</button></div>`).join('')}</div>
       ${t.steps.length < CHECK_MAX ? edAdd('data-tdstepadd') : ''}</div>
     <textarea class="ednote" id="tdNote" maxlength="500" rows="4" placeholder="Write your notes here…" aria-label="Notes">${esc(t.note)}</textarea>
     <p class="how small" id="tdErr" role="alert"></p>
