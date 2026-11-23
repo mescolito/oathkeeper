@@ -777,7 +777,7 @@ button.edrow{border:0;background:none;font:inherit;font-size:16px;width:100%;pad
 .edval{display:inline-flex;align-items:center;gap:7px;color:var(--ink);font-size:15px;background:var(--track);border-radius:999px;padding:8px 14px;max-width:64%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .edval > span{overflow:hidden;text-overflow:ellipsis}
 .edval svg{flex:none;opacity:.85}
-.edval.plain{background:none;padding-right:0;color:var(--muted);white-space:normal;text-align:right;justify-content:flex-end;flex-wrap:wrap}
+.edval.plain{background:none;padding-right:0;color:var(--muted);white-space:normal;overflow:visible;max-width:68%;line-height:1.35;text-align:right;justify-content:flex-end;flex-wrap:wrap}
 html .sheet .edrow input[type=date]{border:0;background:var(--track);border-radius:999px;padding:8px 14px;font:inherit;font-size:15px;color:var(--ink);text-align:right;width:auto}
 .edsub{font-size:12.5px;color:var(--muted);display:block;font-weight:400;margin-top:2px}
 .ednamewrap{position:relative}
@@ -851,7 +851,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '8dc05b75ca';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'd00320c91f';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1183,7 +1183,7 @@ function timerDue(tm, now, lv){
   const wonTo = Math.max(0, ...(tm.won || []).map(w => w.goal));   // a finished goal already paid for its day; milestones up to it don't pay again
   for (const m of timerMarks(tm, end - start)){ const at = start + m * DAY_MS, key = start + '|' + m; if (at < from || has.has(key) || m <= wonTo) continue;
     const r = timerReward(tm.every, lv); out.push({tid: tm.id, key, at, kind: 'mile', m, xp: r.xp, g: r.g}); }
-  if (tm.goal && !tm.done && !has.has(start + '|goal|' + tm.goal)){ const at = start + tm.goal * DAY_MS; if (at <= now){ const r = timerReward(tm.goal, lv, true), pay = at >= from;
+  if (tm.goal && !tm.done && !has.has(start + '|goal|' + tm.goal)){ const at = start + tm.goal * DAY_MS; if (at <= now){ const r = timerReward(tm.goal, lv, true), pay = at >= Math.max(from, tm.goalFrom || 0);   // a goal set after its day had already passed pays nothing
     out.push({tid: tm.id, key: start + '|goal|' + tm.goal, at, kind: 'goal', m: tm.goal, xp: pay ? r.xp : 0, g: pay ? r.g : 0}); } }
   return out;
 }
@@ -1542,7 +1542,7 @@ function sanitize(s, created){
     if (t.goal != null && int(t.goal, 1, 100000, 0) > 0) o.goal = int(t.goal, 1, 100000, 0);
     { const ev = t.every != null ? int(t.every, 0, 100000, 0) : (Array.isArray(t.miles) && t.miles.length ? Math.min(...t.miles.map(m => int(m, 1, 100000, 1))) : 0); if (ev > 0) o.every = ev; }   // older timers kept a list of milestones: the shortest becomes the interval
     if (num(t.done, 0) > 0) o.done = num(t.done, 0); if (t.finished) o.finished = true;
-    if (Array.isArray(t.won)) o.won = t.won.filter(w => obj(w)).map(w => ({goal: int(w.goal, 1, 100000, 1), at: num(w.at, 0)})).slice(-50); if (num(t.deleted, 0) > 0) o.deleted = num(t.deleted, 0); if (num(t.edited, 0) > 0) o.edited = num(t.edited, 0);
+    if (Array.isArray(t.won)) o.won = t.won.filter(w => obj(w)).map(w => ({goal: int(w.goal, 1, 100000, 1), at: num(w.at, 0)})).slice(-50); if (num(t.deleted, 0) > 0) o.deleted = num(t.deleted, 0); if (num(t.edited, 0) > 0) o.edited = num(t.edited, 0); if (num(t.goalFrom, 0) > 0) o.goalFrom = num(t.goalFrom, 0);
     if (typeof t.icon === 'string' && taskIconOk(t.icon)) o.icon = t.icon; if (STAT_COLORS.includes(t.color)) o.color = t.color; if (typeof t.note === 'string' && t.note.trim()) o.note = t.note.slice(0, 500);
     return o; });
   out.timerLog = (Array.isArray(s.timerLog) ? s.timerLog : []).filter(x => obj(x) && typeof x.tid === 'string' && typeof x.key === 'string').map(x => { const o = {tid: str(x.tid, 40), key: str(x.key, 60), ts: num(x.ts, 0), kind: ['mile', 'goal', 'reset'].includes(x.kind) ? x.kind : 'mile'};
@@ -3435,13 +3435,13 @@ function timerRow(tm){
     <span class="tmbadge" aria-hidden="true">${tm.done ? svg('check', 14, 3) : ''}</span>
     <div class="tmclock" data-tstart="${tm.start}" data-tend="${tm.done || 0}">${clockHTML(el)}</div>
     ${tm.goal ? `<div class="wk tmwk">${bar(pct, tm.color || 'var(--pink)')}<span class="wkn"><b>${Math.floor(Math.min(el, tm.goal * DAY_MS) / DAY_MS)}</b> of ${tm.goal} days</span></div>` : ''}
-    ${ask ? `<div class="tmask"><span>Goal reached! Keep it counting?</span><span class="row" style="gap:6px"><button class="btn sm" data-tmfinish="${esc(tm.id)}">Finish</button><button class="btn sm primary" data-tmkeep="${esc(tm.id)}">Keep counting</button></span></div>` : ''}
+    ${ask ? `<div class="tmask"><span>Goal reached! Keep it going?</span><span class="row" style="gap:6px;flex-wrap:wrap"><button class="btn sm" data-tmfinish="${esc(tm.id)}">Finish</button><button class="btn sm" data-tmkeep="${esc(tm.id)}">Keep counting</button><button class="btn sm primary" data-tmnewgoal="${esc(tm.id)}">New goal</button></span></div>` : ''}
   </div>`;
 }
 function timerAskNote(){
   if (todayTab === 'timer') return '';
   const t = timersLive().find(x => x.done && !x.finished); if (!t) return '';
-  return `<div class="mystery tmnote">${svg('timer',18,2)} <span class="ntext"><b>${esc(t.name)} reached its ${t.goal}-day goal!</b> Keep it counting up, or finish it?</span><span class="row" style="gap:6px;margin-left:26px"><button class="btn sm" data-tmfinish="${esc(t.id)}">Finish</button><button class="btn sm primary" data-tmkeep="${esc(t.id)}">Keep counting</button></span></div>`;
+  return `<div class="mystery tmnote">${svg('timer',18,2)} <span class="ntext"><b>${esc(t.name)} reached its ${t.goal}-day goal!</b> Keep it going?</span><span class="row" style="gap:6px;margin-left:26px;flex-wrap:wrap"><button class="btn sm" data-tmfinish="${esc(t.id)}">Finish</button><button class="btn sm" data-tmkeep="${esc(t.id)}">Keep counting</button><button class="btn sm primary" data-tmnewgoal="${esc(t.id)}">New goal</button></span></div>`;
 }
 function timersView(){
   const all = timersLive(), run = all.filter(t => !t.done || !t.finished).sort((a, b) => ((b.done ? 1 : 0) - (a.done ? 1 : 0)) || a.start - b.start), fin = all.filter(t => t.done && t.finished).sort((a, b) => b.done - a.done);
@@ -4862,7 +4862,7 @@ function pickOpts(key){
     if (k === 'start') return {title: 'Starts on', cal: {sel: (t.rep ? t.rep.first : t.start) > D.today ? (t.rep ? t.rep.first : t.start) : D.today, min: D.today}};
     if (k === 'icon') return {title: 'Icon', grid: true}; }
   if (ns === 'tm' && mdraft){ const t = mdraft, lv = D.lv.level;
-    if (k === 'goal') return {title: 'Goal (days)', num: {val: t.goal || '', ph: 'Days, like 75'}, opts: [pkOpt(0, 'None', !t.goal, null, {sub: 'Counts up forever'})]};
+    if (k === 'goal'){ const past = Math.floor((Date.now() - t.start) / DAY_MS); return {title: 'Goal (days)', num: {val: t.goal || '', ph: past > 0 ? `More than ${past}` : 'Days, like 75'}, opts: [pkOpt(0, 'None', !t.goal, null, {sub: 'Counts up forever'})]}; }
     if (k === 'every') return {title: 'Milestone every', num: {val: t.every || '', ph: 'Days, like 7'}, opts: [pkOpt(0, 'None', !t.every, null, {sub: 'No milestone rewards'})]};
     if (k === 'start') return {title: 'Started', cal: {sel: calKey(t.start), max: calKey(Date.now()), today: calKey(Date.now()), time: true}};   // timers run on the clock, not the day rollover
     if (k === 'icon') return {title: 'Icon', grid: true, colors: true}; }
@@ -4923,7 +4923,7 @@ function applyPick(key, v){
   if (ns === 'd' && tdraft){ readTodoFields(); if (k === 'list' && S.todos.lists.some(x => x.id === v)) tdraft.toLid = v; if (k === 'pri' && PRI.some(p => p[0] === v)) tdraft.pri = v; closePick(); renderTodoEditor(); return; }
   if (ns === 'tm' && mdraft){ readTimerFields();
     if (k === 'every'){ const n = parseInt(v) || 0; if (n > 0) mdraft.every = clamp(n, 1, 100000); else delete mdraft.every; }
-    if (k === 'goal'){ const n = parseInt(v) || 0; if (n > 0) mdraft.goal = clamp(n, 1, 100000); else delete mdraft.goal; }
+    if (k === 'goal'){ const n = parseInt(v) || 0, past = Math.floor((Date.now() - mdraft.start) / DAY_MS); if (n > 0 && n <= past){ toast(`It's already at ${past} days. Pick more than that.`); return; } if (n > 0) mdraft.goal = clamp(n, 1, 100000); else delete mdraft.goal; }
     if (k === 'icon') mdraft.icon = TASK_ICONS.includes(v) ? v : undefined;
     if (k === 'color'){ if (STAT_COLORS.includes(v)) mdraft.color = v; renderTimerEditor(); renderPick(); return; }
     if (k === 'start' && /^\d{4}-\d{2}-\d{2}$/.test(v)){ const o = new Date(mdraft.start), [yy, mm, dd] = v.split('-').map(Number); mdraft.start = Math.min(Date.now(), new Date(yy, mm - 1, dd, o.getHours(), o.getMinutes()).getTime()); renderTimerEditor(); renderPick(); return; }
@@ -5015,9 +5015,10 @@ function saveTimerDraft(){
   if (!name){ document.getElementById('tmErr').textContent = 'Give the timer a name first.'; return; }
   const base = {name, start: t.start, edited: now};
   if (t.goal) base.goal = t.goal; if (t.every) base.every = t.every; if (taskIconOk(t.icon)) base.icon = t.icon; if (t.note && t.note.trim()) base.note = t.note.slice(0, 500); if (STAT_COLORS.includes(t.color)) base.color = t.color;
-  if (t.isNew){ S.timers.push({id: t.id, ...base, created: now, payFrom: now, resets: []}); }
+  if (t.isNew){ S.timers.push({id: t.id, ...base, created: now, payFrom: now, ...(t.goal ? {goalFrom: now} : {}), resets: []}); }
   else { const tm = S.timers.find(x => x.id === t.id); if (!tm) return closeEditor();
-    const moved = tm.start !== base.start;
+    const moved = tm.start !== base.start, newGoal = (t.goal || 0) !== (tm.goal || 0);
+    if (newGoal && t.goal) base.goalFrom = now;
     Object.assign(tm, base); delete tm.miles; if (!t.goal) delete tm.goal; if (!t.every) delete tm.every; if (!base.icon) delete tm.icon; if (!base.note) delete tm.note;
     if (moved) tm.payFrom = now;   // a new start date only pays for milestones reached from here on
     if (tm.done && (moved || !tm.goal || tm.start + tm.goal * DAY_MS > now)){ delete tm.done; delete tm.finished; } }
@@ -5139,7 +5140,11 @@ function onClick(e){
   if (el.dataset.qadd){ openQuickAdd(el.dataset.qadd); return; }
   if ('newtimer' in el.dataset){ openTimerEditor(null); return; }
   // after a goal: keep counting (the goal stays marked done, the timer runs on with no goal) or finish it
-  if (el.dataset.tmkeep){ const tm = timersLive().find(x => x.id === el.dataset.tmkeep); if (!tm || !tm.done) return; (tm.won || (tm.won = [])).push({goal: tm.goal, at: tm.done}); delete tm.goal; delete tm.done; tm.edited = Date.now(); save(); render(); toast(`${tm.name} keeps counting`); return; }
+  if (el.dataset.tmkeep || el.dataset.tmnewgoal){ const id = el.dataset.tmkeep || el.dataset.tmnewgoal, tm = timersLive().find(x => x.id === id); if (!tm || !tm.done) return;
+    (tm.won || (tm.won = [])).push({goal: tm.goal, at: tm.done}); delete tm.goal; delete tm.done; tm.edited = Date.now(); save(); render();
+    if (el.dataset.tmkeep){ toast(`${tm.name} keeps counting`); return; }
+    // a new goal: open the editor with the goal box ready to type in
+    openTimerEditor(tm.id); const g = document.querySelector('[data-pk="tm.goal"]'); if (g) openPick('tm.goal', g); return; }
   if (el.dataset.tmfinish){ const tm = timersLive().find(x => x.id === el.dataset.tmfinish); if (!tm || !tm.done) return; tm.finished = true; tm.edited = Date.now(); save(); render(); toast(`${tm.name} is finished`); return; }
   if ('savetimer' in el.dataset){ saveTimerDraft(); return; }
   if ('tmdel' in el.dataset && mdraft){ if (!tmDelArm){ tmDelArm = true; readTimerFields(); renderTimerEditor(); return; } const tm = S.timers.find(x => x.id === mdraft.id); if (tm){ tm.deleted = Date.now(); tm.edited = Date.now(); } save(); closeEditor(); render(); toast('Deleted'); return; }
