@@ -756,7 +756,12 @@ html[data-mode="dark"] .qmcard{background:#242220;box-shadow:0 -6px 40px rgba(0,
 @keyframes qmdown{to{transform:translateY(105%)}}
 .qmgrab{width:36px;height:4px;border-radius:2px;background:var(--line);margin:2px auto 6px}
 .qmhead{font-size:17px;font-weight:700;color:var(--ink);padding:4px 14px 12px;line-height:1.3;overflow-wrap:anywhere}
-.qmnote{margin:0 14px 6px;padding:12px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:14px;line-height:1.45;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere;max-height:30vh;overflow-y:auto}
+.qmsecs{margin:0 14px 6px;border-bottom:1px solid var(--line)}
+.qmsec{border-top:1px solid var(--line);padding:12px 0;font-size:14px;line-height:1.45;color:var(--ink);display:flex;flex-wrap:wrap;align-items:center;gap:6px;max-height:30vh;overflow-y:auto}
+.qmsec .qmnotetxt{color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere}
+.qmsec .pill{font-size:11px}
+/* the small print lives in the tap menu now, so rows stay clean */
+.trow .tbody > .tmeta,.tditem .tbody > .tmeta{display:none}
 .qmitem{display:flex;align-items:center;gap:14px;width:100%;border:0;background:none;color:var(--ink);font:inherit;font-size:15.5px;font-weight:500;text-align:left;padding:13px 14px;border-radius:16px;cursor:pointer}
 .qmitem svg{flex:none;opacity:.85}
 .qmitem:active,.qmitem:hover{background:var(--track)}
@@ -892,7 +897,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'fffebd8491';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '21800d8be6';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -3797,7 +3802,6 @@ function renderTodo(){
     return `<div class="tditem pri-${g} ${isD ? 'done' : ''}" data-item="${esc(it.id)}" data-qm="d|${esc(L.id)}|${esc(it.id)}">
       <span class="tdgrip pri-${g}" ${isD ? '' : `data-drag="${esc(it.id)}"`} aria-hidden="true"><i></i><i></i><i></i><i></i></span>
       <span class="tbody"><span class="tname">${esc(it.text)}${it.note ? ` <span class="notedot" aria-label="Has notes">${svg('note',12,2.2)}</span>` : ''}</span><span class="tmeta">${meta}${todoEdit && !isD && !(it.steps && it.steps.length) && !clOpen.has('td:' + it.id) ? `<button class="addsteps" data-clopen="td:${esc(it.id)}">+ Steps</button>` : ''}</span></span>
-      ${!isD ? `<button class="xbtn" data-delitem="${esc(L.id)}|${esc(it.id)}" aria-label="Delete ${esc(it.text)}">${svg('x',16,2.4)}</button>` : ''}
       <button class="check round" data-todo="${esc(L.id)}|${esc(it.id)}" aria-pressed="${isD}" aria-label="${isD ? 'Undo' : 'Complete'} ${esc(it.text)}" ${isD && !canUndo ? 'disabled' : ''}>${svg('check',18,2.8)}</button>
       ${todoSteps(L, it)}
     </div>`; };
@@ -3829,7 +3833,6 @@ function plainList(L, vis){
   const row = it => `<div class="tditem plain ${it.doneOn ? 'done' : ''}" data-item="${esc(it.id)}" data-qm="d|${esc(L.id)}|${esc(it.id)}">
       <span class="tdgrip pri-none" ${it.doneOn ? '' : `data-drag="${esc(it.id)}"`} aria-hidden="true"><i></i><i></i><i></i><i></i></span>
       <span class="tbody"><span class="tname">${esc(it.text)}${it.note ? ` <span class="notedot" aria-label="Has notes">${svg('note',12,2.2)}</span>` : ''}</span></span>
-      <button class="xbtn" data-delitem="${esc(L.id)}|${esc(it.id)}" aria-label="Delete ${esc(it.text)}">${svg('x',16,2.4)}</button>
       <button class="check round" data-todo="${esc(L.id)}|${esc(it.id)}" aria-pressed="${!!it.doneOn}" aria-label="${it.doneOn ? 'Uncheck' : 'Check off'} ${esc(it.text)}">${svg('check',18,2.8)}</button>
     </div>`;
   const menu = todoMenu ? `<div class="card tdmenu">
@@ -4877,7 +4880,8 @@ function openQuick(spec, rowEl){
   if (kind === 't' && !S.tasks.find(t => t.id === a)) return;
   if (kind === 'd' && !todoFind(a, b).it) return;
   if (kind === 'm' && !timersLive().some(t => t.id === a)) return;
-  qmCtx = {kind, id: a, lid: a, iid: b, del: false, reset: false};
+  const mt = rowEl && rowEl.querySelector('.tmeta');
+  qmCtx = {kind, id: a, lid: a, iid: b, del: false, reset: false, meta: mt ? mt.innerHTML.trim() : ''};   // the row's small print shows in the menu instead
   renderQuick();
 }
 // the task / to-do menu: a sheet that slides up from the bottom
@@ -4886,18 +4890,20 @@ function renderQuick(){
   const item = (act, icon, label, cls = '') => `<button class="qmitem ${cls}" data-qmact="${act}" role="menuitem">${svg(icon, 19, 2)}<span>${label}</span></button>`;
   let html = '';
   if (qmCtx.kind === 't'){ const t = S.tasks.find(x => x.id === qmCtx.id);
-    html = qmTop(t.name, t.note) + `${item('copy', 'copy', 'Make a copy')}${item('edit', 'pencil', 'Edit task')}${item('del', 'trash', qmCtx.del ? 'Tap again to delete' : 'Delete task', 'danger')}`; }
+    html = qmTop(t.name, t.note, '', qmCtx.meta) + `${item('copy', 'copy', 'Make a copy')}${item('edit', 'pencil', 'Edit task')}${item('del', 'trash', qmCtx.del ? 'Tap again to delete' : 'Delete task', 'danger')}`; }
   else if (qmCtx.kind === 'm'){ const tm = timersLive().find(x => x.id === qmCtx.id), cost = Math.min(TIMER_RESET_G, Math.max(0, D.balance));
     html = qmTop(tm.name, tm.note, timerInfo(tm)) + item('edit', 'pencil', 'Edit timer') + (tm.done ? item('again', 'reroll', 'Start again') : item('reset', 'reroll', qmCtx.reset ? `Tap again to reset: −${Math.ceil(D.C.maxHP * TIMER_RESET_HP)} HP, −${cost} G` : 'Reset timer', qmCtx.reset ? 'danger' : '')) + item('del', 'trash', qmCtx.del ? 'Tap again to delete' : 'Delete timer', 'danger'); }
   else { const {L, it} = todoFind(qmCtx.lid, qmCtx.iid), plain = L.kind === 'plain';
-    html = qmTop(it.text, it.note) + `${item('copy', 'copy', 'Make a copy')}${moveTargets(L, it).length ? item('move', 'move', 'Move to list') : ''}${item('edit', 'pencil', plain ? 'Edit item' : 'Edit to-do')}`
+    html = qmTop(it.text, it.note, '', qmCtx.meta) + `${item('copy', 'copy', 'Make a copy')}${moveTargets(L, it).length ? item('move', 'move', 'Move to list') : ''}${item('edit', 'pencil', plain ? 'Edit item' : 'Edit to-do')}`
       + (todoDeletable(L, it) ? item('del', 'trash', qmCtx.del ? 'Tap again to delete' : (plain ? 'Delete item' : 'Delete to-do'), 'danger') : ''); }
   card.innerHTML = `<div class="qmgrab" aria-hidden="true"></div>${html}`;
   clearTimeout(qmHideT); qm.classList.remove('closing'); qm.hidden = false;
 }
 let qmHideT = 0;
 // the name on top; a note, if there is one, sits between two dividers above the actions
-const qmTop = (name, note, info) => `<div class="qmhead">${esc(name)}</div>` + ((note && note.trim()) || info ? `<div class="qmnote">${info ? `<div class="qminfo">${esc(info)}</div>` : ''}${note && note.trim() ? esc(note.trim()) : ''}</div>` : '');
+// the name on top, then the small print and the note, each in its own section between light dividers
+const qmTop = (name, note, info, infoHtml) => { const secs = [infoHtml || (info ? esc(info) : ''), note && note.trim() ? `<span class="qmnotetxt">${esc(note.trim())}</span>` : ''].filter(Boolean);
+  return `<div class="qmhead">${esc(name)}</div>` + (secs.length ? `<div class="qmsecs">${secs.map(x => `<div class="qmsec">${x}</div>`).join('')}</div>` : ''); };
 function closeQuick(){ qmCtx = null; const qm = document.getElementById('qm'); if (qm.hidden) return;
   qm.classList.add('closing'); clearTimeout(qmHideT); qmHideT = setTimeout(() => { if (!qmCtx) qm.hidden = true; qm.classList.remove('closing'); }, 190); }
 const moveTargets = (L, it) => S.todos.lists.filter(x => !x.hidden && x.id !== L.id && !(it.doneOn && (x.kind === 'plain') !== (L.kind === 'plain')));
