@@ -52,7 +52,7 @@ h1,h2{margin:0;text-wrap:balance}
 canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block;width:100%}
 .game{background:#141312;border-radius:28px;padding:10px;display:flex;flex-direction:column;gap:10px;box-shadow:0 10px 30px rgba(23,22,20,.18)}
 .game canvas{border-radius:18px;aspect-ratio:64/44}
-.game.boss canvas{aspect-ratio:64/52}
+.game.boss canvas{aspect-ratio:1}
 .dlg{border:2px solid #f1eee4;padding:2px;border-radius:4px}
 .dlg-in{border:1px solid #f1eee4;padding:9px 11px;color:#f1eee4;font-family:var(--pixel);font-size:11px;line-height:1.5;display:flex;flex-direction:column;gap:6px}
 .dlg-h{display:flex;justify-content:space-between;gap:10px;text-transform:uppercase;font-size:12px}
@@ -81,7 +81,7 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block;width
 .assist .k{font-size:12.5px;font-weight:600;opacity:.75}
 .assist p{margin:4px 0 12px;font-size:17px;font-weight:600;line-height:1.3}
 .assist .pillbtn{display:inline-block;background:var(--ink);color:#fff;border-radius:999px;padding:8px 14px;font-weight:600;font-size:14px}
-.assist canvas{border-radius:16px;background:#141312;padding:4px;aspect-ratio:64/52}
+.assist canvas{border-radius:16px;background:#141312;padding:4px;aspect-ratio:1}
 
 /* sections + tasks */
 .sec-h{display:flex;justify-content:space-between;align-items:center;margin-top:4px}
@@ -606,7 +606,7 @@ details.howto .how{padding-bottom:12px;margin:0}
 .vmini .vm .pbar{flex:1;height:8px}
 .assistmini{background:var(--pink);color:#171614}
 .assistmini .minimain{color:#171614}
-.assistmini canvas{width:46px;height:auto;border-radius:10px;background:#141312;padding:3px;image-rendering:pixelated;aspect-ratio:64/52}
+.assistmini canvas{width:46px;height:auto;border-radius:10px;background:#141312;padding:3px;image-rendering:pixelated;aspect-ratio:1}
 .assistmini .minimain > span{display:flex;flex-direction:column;min-width:0}
 .assistmini .minitog{background:rgba(0,0,0,.08);color:#171614}
 
@@ -930,7 +930,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '703343a935';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'acda38f6a2';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1554,7 +1554,7 @@ function defaults(){
     log:{}, pickLog:{}, rerolls:{}, owned:['dawn','axo'], equip:{hat:null, bg:'dawn', color:'axo'},
     gear:{weapon:null, offhand:null, armor:null}, gearLog:[], bag:[], seenDrops:[],
     skills:{}, skillUnlock:{}, skillLog:[], waives:{}, lightens:{}, buys:[], snap:{}, firstTs:{}, picks:{}, results:{}, statMeta:{}, wkTg:{}, wkBn:{},
-    todos:{lists:[{id:'l_home', name:'House repairs', items:[]}]}, timers:[], timerLog:[], siren:[], potions:[], runeBuys:[], faintLog:{}, legends:{}, fchests:{}, altarUsed:{}, lrunes:{}, checks:{}, stepLog:{}, schema:SCHEMA, inn:[], pomo:{cfg:{focus:25, short:5, long:15, every:4, sound:true, music:true, lofi:'chill', haptic:true}, run:null}, pomoLog:[], settings:{theme:'light', rollover:0, hideDone:false, hideRest:false, collapse:{vitals:false, boss:false}, dismissed:{}}, sells:[], mig:7, updated:0};
+    todos:{lists:[{id:'l_home', name:'House repairs', items:[]}]}, timers:[], timerLog:[], siren:[], potions:[], runeBuys:[], faintLog:{}, legends:{}, fchests:{}, altarUsed:{}, lrunes:{}, checks:{}, stepLog:{}, schema:SCHEMA, inn:[], pomo:{cfg:{focus:25, short:5, long:15, every:4, sound:true, music:true, lofi:'chill', haptic:true}, run:null}, pomoLog:[], settings:{theme:'light', pop:'blush', rollover:0, hideDone:false, hideRest:false, collapse:{vitals:false, boss:false}, dismissed:{}}, sells:[], mig:7, updated:0};
 }
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const isDate = v => typeof v === 'string' && DATE_RE.test(v);
@@ -1695,7 +1695,7 @@ function sanitize(s, created){
   out.legends = {}; if (obj(s.legends)) for (const [id, ts] of Object.entries(s.legends)) if ((LEGENDARY_GEAR.includes(id) || id === LEGENDARY_PET) && Number.isFinite(Number(ts))) out.legends[id] = Number(ts);
   out.faintLog = {}; if (obj(s.faintLog)) for (const [d, f] of Object.entries(s.faintLog)) if (isDate(d) && obj(f)) out.faintLog[d] = {loss: int(f.loss, 0, 1e9, 0)};
   if (obj(s.settings)){ const st = s.settings, col = obj(st.collapse) ? st.collapse : {}, dis = obj(st.dismissed) ? st.dismissed : {};
-    out.settings = {theme: st.theme === 'dark' ? 'dark' : 'light', rollover: int(st.rollover, 0, 5, 0), hideDone: !!st.hideDone, hideRest: !!st.hideRest,
+    out.settings = {theme: st.theme === 'dark' ? 'dark' : 'light', pop: ['blush', 'sea', 'mint', 'gold', 'lilac', 'coral'].includes(st.pop) ? st.pop : 'blush', rollover: int(st.rollover, 0, 5, 0), hideDone: !!st.hideDone, hideRest: !!st.hideRest,
       collapse: {vitals: !!col.vitals, boss: !!col.boss}, dismissed: {}};
     for (const [k, v] of Object.entries(dis)) if (/^[a-z]{2,12}$/.test(k) && isDate(v)) out.settings.dismissed[k] = v; }
   // gear and looks sold back to the shop: you keep half the price; the purchase still counts as spent
@@ -3760,7 +3760,8 @@ const MB_HOB = [
   "...........####.....####",
   "..........#####.....#####",
   ".........#.#.#.......#.#.#"];
-function drawBoss(canvas, boss, f, motion, hurt, dead){
+function drawBoss(canvas, boss, f, motion, hurt, dead){ if (canvas.width === 128) return drawBossTile(canvas, boss, f, motion, hurt, dead); return drawBossOld(canvas, boss, f, motion, hurt, dead); }
+function drawBossOld(canvas, boss, f, motion, hurt, dead){
   ctx = canvas.getContext('2d');
   const BW = 64, BH = 52, m = new Uint8Array(BW*BH);
   B_(0,0,BW,BH);
@@ -4140,6 +4141,176 @@ function drawShopFront(cv, t){
   // a lantern on the left wall that flickers
   W_(5, 30, 1, 2); W_(4, 32, 3, 1); (((t >> 2) % 9) ? K : W_)(4, 33, 3, 3); W_(4, 36, 3, 1); W_(6, 29, 6, 1);
 }
+
+// Pilot v13: shape-first. The golem is drawn as an illustration from smooth curves (bezier drapes, curling sleeves, a
+// woven basket, a hanger, socks, bubbles) and only then snapped to the pixel grid, so pixels are the texture, not the
+// design. Gold-standard treatment: near-black silhouette, a few dark greys for detail, the pop colour for the eyes and
+// the puddle, a single flat-grey aura so it reads on a dark background.
+const POP_RAMPS = {
+  blush: ['#5e2a4c', '#a8457f', '#e07bb3', '#f6c2de', '#fff0f7'],
+  sea:   ['#1c4656', '#2f7f99', '#55b6d1', '#a6e3f0', '#effbfd'],
+  mint:  ['#1f4d3b', '#368a63', '#5fc191', '#ace6c7', '#f0fbf5'],
+  gold:  ['#5c4114', '#a1772a', '#d9a948', '#f1d895', '#fdf7e6'],
+  lilac: ['#352a63', '#6853a8', '#9a86dc', '#cdc2f2', '#f6f3fe'],
+  coral: ['#5e2820', '#a84b3a', '#e07a62', '#f5b8a7', '#fff1ec'],
+};
+function drawLaundryGolem(cv, f, accent){
+  f = Math.floor(f * 1.6);                                          // livelier timing: everything moves about 1.6x faster
+  const W = 128, H = 104, A = POP_RAMPS[accent] || POP_RAMPS.blush;
+  const AURA = '#9f9a93', AURA2 = '#8c877f', K = '#121110', G1 = '#211f1d', G2 = '#2e2a27', G3 = '#3f3a36', G4 = '#57514b', G5 = '#756e66', PALE = '#d8d3ca';
+  if (!drawLaundryGolem.sc){ drawLaundryGolem.sc = document.createElement('canvas'); drawLaundryGolem.sc.width = W; drawLaundryGolem.sc.height = H; }
+  const sc = drawLaundryGolem.sc, sx = sc.getContext('2d');
+  const buf = new Array(W * H).fill(null);
+  // draw one shape smoothly on a scratch canvas, then keep only the pixels it mostly covers, in one flat colour
+  const L = (color, fn, th = 120) => { sx.clearRect(0, 0, W, H); sx.fillStyle = '#fff'; sx.strokeStyle = '#fff'; sx.lineCap = 'round'; sx.lineJoin = 'round'; sx.lineWidth = 1;
+    sx.beginPath(); fn(sx); const d = sx.getImageData(0, 0, W, H).data; for (let i = 0; i < W * H; i++) if (d[i * 4 + 3] >= th) buf[i] = color; };
+  const ell = (x, y, rx, ry, rot = 0) => c => { c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); c.fill(); };
+  const path = (pts, close = true) => c => { c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); if (close){ c.closePath(); c.fill(); } };
+  const strokeP = (pts, w) => c => { c.lineWidth = w; c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.stroke(); };
+  const T = f * 0.13, bob = Math.sin(f * 0.14) * 1.6, by = bob;
+  const sw = a => Math.sin(T + a);
+  // ------------------------------------------------------------------ aura: one flat grey shape
+  const STICKER = drawLaundryGolem.sticker !== false;
+  if (!STICKER && drawLaundryGolem.aura !== false) L(AURA, c => { const r = 14; c.moveTo(14 + r, 4); c.arcTo(114, 4, 114, 100, 22); c.arcTo(114, 100, 14, 100, 22); c.arcTo(14, 100, 14, 4, 22); c.arcTo(14, 4, 114, 4, 22); c.fill(); });
+  // ------------------------------------------------------------------ the puddle it drips into, with splashes and a ripple
+  L(A[0], ell(64, 92, 31, 5.5)); L(A[1], ell(64, 92, 27, 4.2)); L(A[2], ell(63, 91.6, 18, 2.6));
+  const rp = (f % 40) / 40; L(rp < 0.5 ? A[3] : A[2], c => { c.lineWidth = 1; c.ellipse(64, 92, 8 + rp * 18, 1.4 + rp * 3, 0, 0, Math.PI * 2); c.stroke(); });
+  for (const [x, s, ph] of [[40, -1, 0], [46, 1, 1.4], [84, 1, 0.7], [90, -1, 2.2]]){ const h = 6 + 4 * (0.5 + 0.5 * Math.sin(f * 0.22 + ph));
+    L(A[2], strokeP([[x, 91], [x + s * 1, 91 - h * 0.6, x + s * 3, 91 - h]], 1.2)); L(A[3], ell(x + s * 3.5, 90 - h, 1.1, 1.1)); }
+  // drips falling from the basket into the puddle
+  for (const [x, ph] of [[54, 0], [71, 9], [62, 4]]){ const t = ((f * 0.55 + ph) % 16) / 16; L(A[2], ell(x, 80 + by * (1 - t) + t * 10, 0.9, 1.6)); }
+  const pre = buf.slice();
+  // basket colours: lighter than the body so the weave reads against a dark panel
+  const BK0 = drawLaundryGolem.basketLight ? '#4a4540' : G2, BK1 = drawLaundryGolem.basketLight ? '#35312d' : G1, BK2 = drawLaundryGolem.basketLight ? '#615b54' : G3, BK3 = drawLaundryGolem.basketLight ? '#8e867b' : G5;
+  // ------------------------------------------------------------------ the basket: a woven tub, wider at the top
+  const bTop = 55 + by, bBot = 81 + by;
+  const tub = c => { c.moveTo(40, bTop); c.bezierCurveTo(41, bTop + 14, 44, bBot - 2, 52, bBot); c.lineTo(76, bBot); c.bezierCurveTo(84, bBot - 2, 87, bTop + 14, 88, bTop); c.closePath(); };
+  L(BK0, c => { tub(c); c.fill(); });
+  // weave: curved horizontal bands, and staggered vertical stitches between them
+  for (let k = 0; k < 6; k++){ const y = bTop + 4 + k * 4; L(BK1, c => { c.lineWidth = 1.3; c.moveTo(41 + k * 0.6, y); c.quadraticCurveTo(64, y + 2.4, 87 - k * 0.6, y); c.stroke(); }, 110);
+    for (let i = 0; i < 9; i++){ const x = 45 + i * 4.5 + (k % 2 ? 2.2 : 0) - k * 0.2; if (x > 85 - k) continue; L(BK2, strokeP([[x, y + 1.5 + Math.sin((x - 64) / 30) * 0.4], [x, y + 3]], 1.2)); } }
+  // handle holes on each side
+  for (const s of [-1, 1]) L(K, ell(64 + s * 18, bTop + 6, 3.4, 1.6));
+  // the rim: a thick lip with a light top edge
+  L(BK2, c => { c.lineWidth = 3.2; c.moveTo(39, bTop - 0.5); c.quadraticCurveTo(64, bTop + 3, 89, bTop - 0.5); c.stroke(); });
+  L(BK3, c => { c.lineWidth = 1; c.moveTo(39.5, bTop - 2); c.quadraticCurveTo(64, bTop + 1.4, 88.5, bTop - 2); c.stroke(); });
+  // ------------------------------------------------------------------ the laundry heaped over the rim: the creature's body and head
+  const tl = sw(0), tr = sw(2);
+  const POSE = drawLaundryGolem.pose || 'rim';
+  // a cat paw seen from above: a rounded pad, three toe bumps along the front, dark toe gaps, claws that flick out
+  const paw = (x, y, s, press, claws) => {
+    L(G4, ell(x, y, 6.2, 4.6)); for (let k = -1; k <= 1; k++) L(G4, ell(x + k * 3.1, y + 2.6 + press * 0.5, 2.8, 2.6));   // a light edge so the paw reads against the basket
+    L(K, ell(x, y, 5.2, 3.6)); for (let k = -1; k <= 1; k++) L(K, ell(x + k * 3.1, y + 2.6 + press * 0.5, 1.9, 1.7));
+    for (const k of [-1.5, 1.5]) L(G4, strokeP([[x + k * 2.05, y + 1.6], [x + k * 2.05, y + 3.6 + press * 0.5]], 0.9));
+    L(G3, strokeP([[x - 3.2, y - 2.6], [x + 1.8, y - 3.2]], 0.9));
+    if (claws) for (let k = -1; k <= 1; k++) L(G4, strokeP([[x + k * 3.1, y + 4.2 + press * 0.5], [x + k * 3.1 + k * 0.3, y + 5.8 + press * 0.5]], 0.8));
+  };
+  drawLaundryGolem.later = null;
+  if (POSE === 'hips'){
+    const armL = [[44, 46 + by], [33, 46 + by, 25, 50 + by, 26, 56 + by]], armR = [[84, 46 + by], [95, 46 + by, 103, 50 + by, 102, 56 + by]];
+    L(K, strokeP(armL, 7)); L(K, strokeP(armR, 7));
+    L(K, strokeP([[26, 56 + by], [27, 61 + by, 32, 64 + by, 37, 63 + by]], 6)); L(K, strokeP([[102, 56 + by], [101, 61 + by, 96, 64 + by, 91, 63 + by]], 6));
+    for (const [x, y, s] of [[27, 51, -1], [101, 51, 1]]){ L(G2, strokeP([[x, y + by], [x + s * 3, y + 3 + by]], 1)); }
+    const tap = (f % 36) < 12 ? [0, 1, 0, 1, 0, 1][(f >> 1) % 6] : 0;
+    for (const [x, s, t] of [[39, 1, tap], [89, -1, 0]]){ L(K, ell(x, 63 + by - t, 3.6, 4.6)); for (let k = -1; k <= 1; k++) L(K, ell(x + s * 2.6, 63 + by + k * 2.7 - t, 1.7, 1.6)); for (const k of [-1.4, 1.4]) L(G2, strokeP([[x + s * 0.8, 63 + by + k * 1.9 - t], [x + s * 3.6, 63 + by + k * 1.9 - t]], 0.9)); }
+  } else {
+    drawLaundryGolem.later = () => { const kn = f % 24, pl = kn < 6 ? 1 : 0, pr = kn >= 12 && kn < 18 ? 1 : 0;
+      // forelegs reaching down over the front of the rim, paws kneading the basket one after the other
+      L(G4, strokeP([[50, 52 + by], [49, 58 + by, 50, 62 + by]], 8.2)); L(G4, strokeP([[78, 52 + by], [79, 58 + by, 78, 62 + by]], 8.2));
+      L(K, strokeP([[50, 52 + by], [49, 58 + by, 50, 62 + by]], 6.5)); L(K, strokeP([[78, 52 + by], [79, 58 + by, 78, 62 + by]], 6.5));
+      L(G2, strokeP([[47.5, 55 + by], [47.5, 60 + by]], 0.9)); L(G2, strokeP([[80.5, 55 + by], [80.5, 60 + by]], 0.9));
+      paw(50, 64 + by + pl, -1, pl, pl === 1); paw(78, 64 + by + pr, 1, pr, pr === 1); };
+  }
+  // the heap: a lumpy dome of clothes rising over the rim
+  L(K, c => { c.moveTo(38, bTop + 1); c.bezierCurveTo(36, 44 + by, 42, 34 + by, 50, 33 + by); c.bezierCurveTo(52, 26 + by, 60, 24 + by, 64, 25 + by); c.bezierCurveTo(70, 23 + by, 78, 26 + by, 79, 33 + by);
+    c.bezierCurveTo(87, 34 + by, 92, 44 + by, 90, bTop + 1); c.closePath(); c.fill(); });
+  // drapes hanging over the front of the rim, ragged ends
+  for (const [x, w, d, ph] of [[46, 7, 9, 0], [56, 6, 6, 1], [70, 7, 8, 2], [80, 6, 10, 3]]){ const dd = d + Math.sin(f * 0.16 + ph) * 0.8;
+    L(K, c => { c.moveTo(x - w / 2, bTop - 2); c.bezierCurveTo(x - w / 2, bTop + dd * 0.6, x - 1, bTop + dd, x, bTop + dd); c.bezierCurveTo(x + 1, bTop + dd, x + w / 2, bTop + dd * 0.6, x + w / 2, bTop - 2); c.closePath(); c.fill(); }); }
+  // cloth detail inside the heap: overlapping fold lines, a shirt collar, a zipper, a towel's fringed hem
+  for (const pts of [[[44, 46 + by], [50, 42 + by, 56, 43 + by]], [[72, 43 + by], [78, 41 + by, 85, 45 + by]], [[52, 34 + by], [58, 30 + by, 66, 31 + by]], [[66, 31 + by], [72, 30 + by, 77, 34 + by]], [[46, 52 + by], [52, 50 + by, 58, 52 + by]], [[70, 52 + by], [76, 50 + by, 82, 52 + by]]])
+    L(G2, strokeP(pts, 1));
+  L(G3, strokeP([[55, 37 + by], [59, 41 + by], [63, 37 + by]], 1)); L(G3, strokeP([[55, 37 + by], [57, 35 + by]], 1)); L(G3, strokeP([[63, 37 + by], [61, 35 + by]], 1));   // a collar
+  for (let k = 0; k < 6; k++) L(G4, ell(77 + (k % 2) * 0.8, 36 + k * 1.6 + by, 0.5, 0.5));                                                                         // a zipper
+  for (let k = 0; k < 5; k++) L(G3, strokeP([[40 + k * 1.6, 50 + by], [39.6 + k * 1.6, 53 + by]], 0.9));                                                              // towel fringe
+  if (drawLaundryGolem.later) drawLaundryGolem.later();
+  // sleeves and straps curling up off the top like smoke, thinning to a curl
+  const curl = (x0, y0, dir, len, ph, w) => { const s = sw(ph) * 2; const pts = [[x0, y0], [x0 + dir * 2 + s, y0 - len * 0.5, x0 + dir * 7 + s, y0 - len * 0.7, x0 + dir * 6 + s * 1.3, y0 - len]];
+    L(K, strokeP(pts, w)); const ex = x0 + dir * 6 + s * 1.3, ey = y0 - len; L(K, c => { c.lineWidth = w * 0.6; c.arc(ex - dir * 2, ey + 0.5, 2.2, dir > 0 ? -0.4 : Math.PI + 0.4, dir > 0 ? Math.PI : 0, dir < 0); c.stroke(); }); };
+  curl(52, 34 + by, -1, 12, 0.5, 2.6); curl(76, 34 + by, 1, 12, 2.1, 2.6); curl(60, 27 + by, -1, 9, 1.2, 2); curl(69, 27 + by, 1, 8, 3.3, 2);
+  // a wire hanger jammed in the top, its hook curling up like a crown
+  const HANG = drawLaundryGolem.hanger === 'dark' ? A[1] : drawLaundryGolem.hanger === 'white' ? '#f1eee4' : drawLaundryGolem.hanger === 'light' ? A[3] : A[2];
+  L(HANG, c => { c.lineWidth = 1.2; c.moveTo(56, 26 + by); c.lineTo(64, 20 + by); c.lineTo(72, 26 + by); c.stroke(); });
+  L(HANG, c => { c.lineWidth = 1.2; c.moveTo(64, 20 + by); c.lineTo(64, 17 + by); c.arc(66, 15 + by, 2.2, Math.PI * 0.9, Math.PI * 2.1); c.stroke(); });
+  // ------------------------------------------------------------------ the eyes: a cluster glowing in the dark of the heap
+  const look = [0, -1, 0, 1][(f >> 4) % 4], blink = f % 60 >= 56;
+  L(G1, ell(64, 41 + by, 13, 6.5));                                                                                   // a hollow in the clothes
+  // almond eyes slanted down toward the middle under a heavy fold, slit pupils: angry, not cute
+  const eye = (x, y, rx, ry, rot, big) => { if (blink && big){ L(A[2], strokeP([[x - rx, y + rot * 3], [x + rx, y - rot * 3]], 1)); return; }
+    L(A[0], ell(x, y, rx + 1, ry + 0.9, rot)); L(A[2], ell(x, y, rx, ry, rot)); L(A[3], ell(x - rx * 0.2, y - ry * 0.1, rx * 0.55, ry * 0.45, rot)); L(K, ell(x + look * 0.7, y + 0.2, 0.7, ry * 0.95, 0));
+    if (big){ L(G1, c => { c.moveTo(x - rx - 1.5, y - ry - 1.5 - rot * 5); c.lineTo(x + rx + 1.5, y - ry - 1.5 + rot * 5); c.lineTo(x + rx + 1.5, y - 1.4 + rot * 5); c.lineTo(x - rx - 1.5, y - 1.4 - rot * 5); c.closePath(); c.fill(); });   // the brow fold cuts the top of the eye
+      L(A[4], ell(x - rx * 0.4, y + ry * 0.2, 0.55, 0.55)); } };
+  if (drawLaundryGolem.dead){ for (const ex0 of [57.5, 70.5]){ L(A[0], ell(ex0, 42 + by, 5, 3.4)); L(A[2], strokeP([[ex0 - 3, 39.5 + by], [ex0 + 3, 44.5 + by]], 1.4)); L(A[2], strokeP([[ex0 + 3, 39.5 + by], [ex0 - 3, 44.5 + by]], 1.4)); } }   // defeated: X eyes
+  else { eye(57.5, 42 + by, 5, 3, 0.26, true); eye(70.5, 42 + by, 5, 3, -0.26, true); }
+  const post = buf.slice();
+  // ------------------------------------------------------------------ soap bubbles and lint floating up around it
+  for (let i = 0; i < 6; i++){ const t = ((f * 0.4 + i * 13) % 52) / 52, x = [30, 98, 22, 106, 38, 90][i] + Math.sin(t * 6 + i) * 2.4, y = 86 - t * 76, r = [2.2, 1.6, 1.2, 2.6, 1.4, 1.8][i];
+    if (t > 0.94) continue; L('#8f877c', c => { c.lineWidth = 0.9; c.arc(x, y, r, 0, Math.PI * 2); c.stroke(); }, 90); L('#c9c2b6', ell(x - r * 0.4, y - r * 0.4, 0.5, 0.5), 60); }
+  for (let i = 0; i < 7; i++){ const t = ((f * 0.3 + i * 9) % 40) / 40, x = [34, 94, 44, 86, 28, 100, 64][i] + Math.sin(t * 5 + i) * 1.6, y = 60 - t * 40 + (i % 3) * 4, s = [1.6, 1.2, 1, 1.4, 0.9, 1.1, 1][i];
+    if (t < 0.9) L(G4, c => { c.rect(Math.round(x), Math.round(y), Math.round(s + 0.4), Math.round(s + 0.4)); c.fill(); }); }
+  // ------------------------------------------------------------------ out
+  const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
+  if (STICKER){
+    // mascot-sticker outline: the whole silhouette grown by ~2px and filled with cream behind it, so it sits on any background
+    const R2 = drawLaundryGolem.outline || 1.8, r = Math.ceil(R2), OUT = drawLaundryGolem.outlineColor || '#f1eee4';
+    const grown = new Uint8Array(W * H);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (post[y * W + x] && post[y * W + x] !== pre[y * W + x])
+      for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++){ if (dx * dx + dy * dy > R2 * R2) continue; const X = x + dx, Y = y + dy; if (X >= 0 && Y >= 0 && X < W && Y < H) grown[Y * W + X] = 1; }
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (grown[y * W + x] && !buf[y * W + x]){ ctx.fillStyle = OUT; ctx.fillRect(x, y, 1, 1); }
+  }
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++){ const c = buf[y * W + x]; if (c){ ctx.fillStyle = c; ctx.fillRect(x, y, 1, 1); } }
+}
+
+const BAY8 = (() => { const b = [[0, 32, 8, 40, 2, 34, 10, 42], [48, 16, 56, 24, 50, 18, 58, 26], [12, 44, 4, 36, 14, 46, 6, 38], [60, 28, 52, 20, 62, 30, 54, 22], [3, 35, 11, 43, 1, 33, 9, 41], [51, 19, 59, 27, 49, 17, 57, 25], [15, 47, 7, 39, 13, 45, 5, 37], [63, 31, 55, 23, 61, 29, 53, 21]]; return b; })();
+
+/* ===================================================================================================================
+   New monster art (Art Style Guide, wiki page 13). Monsters listed in NEW_ART are drawn shape-first on a 128x128 tile:
+   a near-black figure with the player's pop colour on its eyes, one prop and the ground effect, sitting on a soft panel
+   that dithers away into the dark stage. Everything else still uses the old 64x52 art, scaled into the same tile.
+   =================================================================================================================== */
+const POP_IDS = ['blush', 'sea', 'mint', 'gold', 'lilac', 'coral'];
+const popId = () => (S && S.settings && POP_IDS.includes(S.settings.pop)) ? S.settings.pop : 'blush';
+const NEW_ART = {
+  golem: (cv, f, acc, dead) => { Object.assign(drawLaundryGolem, {pose: 'hips', hanger: 'light', basketLight: true, sticker: false, aura: false, dead}); drawLaundryGolem(cv, f, acc); },
+};
+let artLayer = null, oldArtCv = null;
+function drawBossTile(canvas, boss, f, motion, hurt, dead){
+  const N = 128, g = canvas.getContext('2d'); g.imageSmoothingEnabled = false;
+  g.fillStyle = PB; g.fillRect(0, 0, N, N);
+  const draw = NEW_ART[boss.shape];
+  if (!draw){
+    // not redrawn yet: the old art, doubled and centred
+    if (!oldArtCv){ oldArtCv = document.createElement('canvas'); oldArtCv.width = 64; oldArtCv.height = 52; }
+    drawBossOld(oldArtCv, boss, f, motion, false, dead);
+    g.drawImage(oldArtCv, 0, 12, 128, 104);
+  } else {
+    // the panel: solid behind the figure, dithered out to nothing at the tile's edges
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++){
+      const dx = (x + 0.5 - N / 2) / (N / 2), dy = (y + 0.5 - N / 2) / (N / 2), r = Math.hypot(dx, dy), e = Math.max(Math.abs(dx), Math.abs(dy)), u = (Math.max(r * 0.78, e) - 0.5) / 0.48;
+      if (u <= 0 || (u < 1 && (1 - u) * 64 > BAY8[y & 7][x & 7])){ g.fillStyle = '#2f2b28'; g.fillRect(x, y, 1, 1); } }
+    if (!artLayer){ artLayer = document.createElement('canvas'); artLayer.width = 128; artLayer.height = 104; }
+    const acc = popId(), A = POP_RAMPS[acc];
+    draw(artLayer, motion ? Math.floor(performance.now() / 100) : 0, acc, !!dead);
+    if (dead){
+      // defeated: it slumps down onto the floor and dizzy stars circle where its head was
+      const SQ = 0.6, GY = 92; g.drawImage(artLayer, 0, 0, 128, 104, 0, 13 + GY * (1 - SQ), 128, 104 * SQ);
+      const t = motion ? performance.now() / 100 : 0;
+      for (let i = 0; i < 3; i++){ const a = t * 0.12 + i * Math.PI * 2 / 3, x = Math.round(64 + Math.cos(a) * 18), y = Math.round(13 + GY * (1 - SQ) + 24 * SQ + Math.sin(a) * 3);
+        g.fillStyle = A[3]; g.fillRect(x, y, 1, 1); if (Math.sin(t * 0.3 + i * 2) > -0.3){ g.fillRect(x - 1, y, 1, 1); g.fillRect(x + 1, y, 1, 1); g.fillRect(x, y - 1, 1, 1); g.fillRect(x, y + 1, 1, 1); } }
+    } else g.drawImage(artLayer, 0, 13);
+  }
+  if (hurt){ g.globalCompositeOperation = 'difference'; g.fillStyle = '#ffffff'; g.fillRect(0, 0, N, N); g.globalCompositeOperation = 'source-over'; }
+}
 const ICON = {
   pencil:'<path d="M4 20l1-5L15.5 4.5a2.1 2.1 0 013 3L8 18z"/><path d="M13.5 6.5l3 3"/>',
   copy:'<rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2"/>',
@@ -4505,10 +4676,10 @@ function renderToday(){
   ${chestCard()}
   ${D.partial[D.yest] && !dismissed('partial') ? notice('partial', `Partial progress yesterday: <b>+${D.partial[D.yest].g} G</b> for ${D.partial[D.yest].n} step${D.partial[D.yest].n === 1 ? '' : 's'} on unfinished tasks`) : ''}
   ${D.tokens && !dismissed('tokens') ? notice('tokens', `${D.tokens} free rune${D.tokens===1?'':'s'} waiting in your inventory`) : ''}
-  ${S.settings.collapse.boss ? `<div class="mini assistmini"><button class="minimain" data-tab="battle"><canvas id="bossMiniCv" width="64" height="52" aria-hidden="true"></canvas><span><b>${esc(D.mini ? D.mini.m.name : D.cur.boss.name)}</b><span class="small">${D.mini ? `${D.mini.rem}/${D.mini.hp} HP` : D.cur.status === 'now' ? `${D.cur.rem}/${D.cur.hp} HP` : esc(a.k)}</span></span></button><button class="minitog" data-collapse="boss" aria-expanded="false" aria-label="Show the boss card">${svg('back',16,2.6)}</button></div>`
+  ${S.settings.collapse.boss ? `<div class="mini assistmini"><button class="minimain" data-tab="battle"><canvas id="bossMiniCv" width="128" height="128" aria-hidden="true"></canvas><span><b>${esc(D.mini ? D.mini.m.name : D.cur.boss.name)}</b><span class="small">${D.mini ? `${D.mini.rem}/${D.mini.hp} HP` : D.cur.status === 'now' ? `${D.cur.rem}/${D.cur.hp} HP` : esc(a.k)}</span></span></button><button class="minitog" data-collapse="boss" aria-expanded="false" aria-label="Show the boss card">${svg('back',16,2.6)}</button></div>`
   : `<div class="assistwrap"><button class="assist" id="bossmini" data-tab="battle">
     <span><span class="k">${esc(a.k)}</span><p>${esc(a.p)}</p><span class="pillbtn">${esc(a.cta)}</span></span>
-    <canvas id="bossMiniCv" width="64" height="52" aria-hidden="true"></canvas>
+    <canvas id="bossMiniCv" width="128" height="128" aria-hidden="true"></canvas>
   </button><button class="cardtog" data-collapse="boss" aria-expanded="true" aria-label="Collapse the boss card">${svg('back',16,2.6)}</button></div>`}
   <div class="tdtabs" role="tablist" aria-label="Which tasks"><button role="tab" class="tdtab ${todayTab === 'day' ? 'on' : ''}" data-todaytab="day" aria-selected="${todayTab === 'day'}">Dailies</button><button role="tab" class="tdtab ${todayTab === 'week' ? 'on' : ''}" data-todaytab="week" aria-selected="${todayTab === 'week'}">Habits</button><button role="tab" class="tdtab ${todayTab === 'timer' ? 'on' : ''}" data-todaytab="timer" aria-selected="${todayTab === 'timer'}">Timers</button></div>
   ${todayTab === 'timer' ? timersView() : `<div class="row between"><span class="muted small" style="white-space:nowrap">${todayTab === 'day' ? `${doneD} of ${dueD.length} done` : `${weekLeft} left · ${wkRange}`}</span>
@@ -4689,7 +4860,7 @@ function renderBattle(){
   const mm = D.mini;
   if (mm){ const ml = dayIdx(mm.flees) - dayIdx(D.today), n = dayIdx(upcoming[0].start) - dayIdx(D.today); return `
   <section class="game boss" aria-label="${esc(mm.m.name)}">
-    <canvas id="bossCv" width="64" height="52" role="img" aria-label="${esc(mm.m.name)}"></canvas>
+    <canvas id="bossCv" width="128" height="128" role="img" aria-label="${esc(mm.m.name)}"></canvas>
     <div class="dlg"><div class="dlg-in"><div class="dlg-h"><span class="dlg-name">${esc(mm.m.name)}</span><span>Mini-boss · ${ml}d left</span></div><p>${esc(mm.m.flavor)}</p></div></div>
   </section>
   <div>
@@ -4702,7 +4873,7 @@ function renderBattle(){
   ${battleBottom()}`; }
   return `
   <section class="game boss" aria-label="${esc(b.name)}">
-    <canvas id="bossCv" width="64" height="52" role="img" aria-label="${esc(b.name)}"></canvas>
+    <canvas id="bossCv" width="128" height="128" role="img" aria-label="${esc(b.name)}"></canvas>
     <div class="dlg"><div class="dlg-in"><div class="dlg-h"><span class="dlg-name">${esc(b.name)}</span><span class="${f.status==='won' ? 'dlg-won' : ''}">${f.status==='won' ? 'Defeated' : (b.seasonal ? 'Holiday · ' : b.titan ? 'Titan · ' : '') + daysLeft + 'd left'}</span></div><p>${esc(f.status === 'won' && b.beaten ? b.beaten : b.flavor)}</p></div></div>
   </section>
   <div>
@@ -4965,7 +5136,7 @@ function openNextBoss(){
   if (b.final || b.rite) tips.push('It heals itself, so gear that cuts boss healing helps.');
   el.innerHTML = `<div class="awardin chestbox nextbox" role="dialog" aria-modal="true" aria-label="Next boss: ${esc(b.name)}">
     <span class="kick">${kind} · ${n <= 0 ? 'arrives today' : n === 1 ? 'arrives tomorrow' : `arrives in ${n} days`}</span>
-    <canvas class="chestbig nbcv" width="64" height="52" aria-hidden="true"></canvas>
+    <canvas class="chestbig nbcv" width="128" height="128" aria-hidden="true"></canvas>
     <b class="awn">${esc(b.name)}</b>
     <p class="how">${esc(b.flavor)}</p>
     <div class="chips" style="justify-content:center">${(b.weak.length >= 5 ? ['ALL'] : b.weak).map(k => `<span class="chip-s" style="background:${k==='ALL' ? 'var(--yellow)' : STATS[k].c};font-size:13px;padding:5px 12px">Weak to ${k==='ALL' ? 'every stat' : esc(STATS[k].name)}</span>`).join('')}<span class="chip-s plain" style="background:var(--track);font-size:13px;padding:5px 12px">About ${hp} HP</span><span class="chip-s plain" style="background:var(--track);font-size:13px;padding:5px 12px">Hits ${hit} per missed daily</span></div>
@@ -5287,6 +5458,7 @@ function renderSettings(){
   return `${segHtml}
   <div class="sec-h"><h2>Appearance</h2></div>
   <div class="card"><div class="seg wide" role="group" aria-label="Theme"><button data-theme="light" class="${S.settings.theme!=='dark'?'on':''}">Light</button><button data-theme="dark" class="${S.settings.theme==='dark'?'on':''}">Dark</button></div></div>
+  <div class="card"><div class="small muted" style="margin-bottom:8px">Pop colour</div><div class="swatches" role="group" aria-label="Pop colour">${POP_IDS.map(k => `<button class="swatch${popId() === k ? ' on' : ''}" data-pop="${k}" style="background:${POP_RAMPS[k][2]}" aria-label="${k[0].toUpperCase() + k.slice(1)}" aria-pressed="${popId() === k}"></button>`).join('')}</div></div>
   <div class="sec-h"><h2>Lists</h2></div>
   <div class="card"><label class="checkrow" for="hideDone"><input type="checkbox" id="hideDone" ${S.settings.hideDone ? 'checked' : ''}> Hide finished tasks and to-dos</label>
     <label class="checkrow" for="hideRest"><input type="checkbox" id="hideRest" ${S.settings.hideRest ? 'checked' : ''}> Hide the "Not today" groups on Dailies and Habits</label></div>
@@ -6336,6 +6508,7 @@ function onClick(e){
   }
   if (el.dataset.settab){ setTab = el.dataset.settab; resetArmed = false; restoreArmed = false; render(); return; }
   if (el.dataset.tfilter){ taskFilter = el.dataset.tfilter; render(); return; }
+  if (el.dataset.pop){ if (POP_IDS.includes(el.dataset.pop)){ S.settings.pop = el.dataset.pop; save(); render(); } return; }
   if (el.dataset.theme){ S.settings.theme = el.dataset.theme === 'dark' ? 'dark' : 'light'; applySettings(); save(); render(); return; }
   if (el.dataset.rollover !== undefined && el.dataset.rollover !== ''){ const h = int(el.dataset.rollover, 0, 5, 0); if (rolloverLocked()){ toast('You can change this after 6 AM'); return; } if (h !== S.settings.rollover){ S.settings.rollover = h; applySettings(); save(); vday = 'today'; render(); toast(h ? `New days now start at ${h} AM` : 'New days now start at midnight'); } return; }
   if (el.dataset.sell){ const id = el.dataset.sell, it = GEAR_BY[id] || ITEM[id];
