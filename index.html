@@ -930,7 +930,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'dd4ed59850';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'e53c228b9d';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -4609,10 +4609,14 @@ function drawFogColossus(cv, f, accent){
   // ------------------------------------------------------------------ the beam: a long banded wedge sweeping out from the lens (behind everything)
                                                                                 // the lens
   if (!D){
-    const len = 18 + Math.abs(side) * 34, dir = side >= 0 ? 0 : Math.PI, ang = dir + 0.08 * (side >= 0 ? 1 : -1);
-    for (const [col, spread] of [[A[0], 0.14], [A[1], 0.08]]) L(col, c => { c.moveTo(LX, LY); c.lineTo(LX + Math.cos(ang - spread) * len, LY + Math.sin(ang - spread) * len); c.lineTo(LX + Math.cos(ang + spread) * len, LY + Math.sin(ang + spread) * len); c.closePath(); c.fill(); });
-    L(A[2], strokeP([[LX, LY], [LX + Math.cos(ang) * len * 0.7, LY + Math.sin(ang) * len * 0.7]], 1));
-    for (let k = 0; k < 4; k++){ const d = len + 3 + k * 4, sz = 3 - Math.min(2, k); L(k < 2 ? A[1] : A[0], rect(Math.round(LX + Math.cos(ang) * d), Math.round(LY + Math.sin(ang) * d) - 1, sz, sz)); }   // shrinking square dashes
+    // the beam swings round: it shortens smoothly to nothing as it turns toward you, the lens flares, then it grows out the other side
+    const ext = Math.abs(side), len = ext * 52, dir = side >= 0 ? 0 : Math.PI, ang = dir + 0.08 * (side >= 0 ? 1 : -1);
+    if (len > 3){
+      L(A[0], c => { const sp = 0.14; c.moveTo(LX, LY); c.lineTo(LX + Math.cos(ang - sp) * len, LY + Math.sin(ang - sp) * len); c.lineTo(LX + Math.cos(ang + sp) * len, LY + Math.sin(ang + sp) * len); c.closePath(); c.fill(); });
+      if (ext > 0.3) L(A[1], c => { const sp = 0.08, l2 = len * 0.92; c.moveTo(LX, LY); c.lineTo(LX + Math.cos(ang - sp) * l2, LY + Math.sin(ang - sp) * l2); c.lineTo(LX + Math.cos(ang + sp) * l2, LY + Math.sin(ang + sp) * l2); c.closePath(); c.fill(); });
+      if (ext > 0.5) L(A[2], strokeP([[LX, LY], [LX + Math.cos(ang) * len * 0.7, LY + Math.sin(ang) * len * 0.7]], 1));
+      const nd = Math.round(ext * 4); for (let k = 0; k < nd; k++){ const d = len + 3 + k * 4, sz = 3 - Math.min(2, k); L(k < 2 ? A[1] : A[0], rect(Math.round(LX + Math.cos(ang) * d), Math.round(LY + Math.sin(ang) * d) - 1, sz, sz)); }   // shrinking square dashes
+    }
   }
 
   // ------------------------------------------------------------------ the fog: a dark billowing mass, lit only on the crowns facing the lantern
@@ -4651,7 +4655,7 @@ function drawFogColossus(cv, f, accent){
   L(K, rect(cx - 0.5, 3 + bob, 1, 4)); L(K, rect(cx - 2, 3.6 + bob, 4, 1));                                     // the finial
   // the lens: one ringed eye behind the glass
   if (D){ L(G4, c => { c.lineWidth = 1.2; c.arc(LX, LY, 5, 0, Math.PI * 2); c.stroke(); }); L(G2, ell(LX, LY, 4, 4)); L(K, strokeP([[LX - 3, LY - 4], [LX - 0.5, LY - 0.6], [LX - 2, LY + 1.6], [LX + 1.6, LY + 4.4]], 1)); }   // beaten: a dull grey ring, cracked through
-  else { const pulse = (f % 32) < 3 ? 1 : 0, look = Math.round(side * 1.4);                                      // the pupil follows the beam
+  else { const facing = Math.sin(turn) > 0 && Math.abs(side) < 0.35, pulse = facing ? 1 : 0, look = Math.round(side * 1.4);   // the lens flares as the beam sweeps past you                                      // the pupil follows the beam
     L(A[0], ell(LX, LY, 7.4, 7.4)); L(A[1], ell(LX, LY, 6, 6)); L(A[2], ell(LX, LY, 4.8, 4.8)); L(A[3], c => { c.lineWidth = 0.8; c.arc(LX, LY, 4.4, 0, Math.PI * 2); c.stroke(); });
     L(K, rect(Math.round(LX - 1 + look), Math.round(LY - 0.5), 3, 2)); px(LX - 2 + look, LY - 1, A[4]);   // a small 3x2 pupil, set low, iris all round it, catchlight touching it upper-left
     const wide = (f % 48) < 3 ? 1 : 0; L(K, rect(LX - 8, LY - 8, 16, 4.2 - wide)); L(K, path([[LX - 8, LY + 4.2 + wide], [LX - 3, LY + 3.6 + wide], [LX + 3, LY + 3.6 + wide], [LX + 8, LY + 4.2 + wide], [LX + 8, LY + 8], [LX - 8, LY + 8]]));   // heavy upper and lower lids: a narrowed glare that snaps wider every few seconds
