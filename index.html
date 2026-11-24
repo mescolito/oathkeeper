@@ -930,7 +930,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'd0d4341b82';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '5a868eebca';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -4250,7 +4250,7 @@ function drawLaundryGolem(cv, f, accent){
     L(A[0], ell(x, y, rx + 1, ry + 0.9, rot)); L(A[2], ell(x, y, rx, ry, rot)); L(A[3], ell(x - rx * 0.2, y - ry * 0.1, rx * 0.55, ry * 0.45, rot)); L(K, ell(x + look * 0.7, y + 0.2, 0.7, ry * 0.95, 0));
     if (big){ L(G1, c => { c.moveTo(x - rx - 1.5, y - ry - 1.5 - rot * 5); c.lineTo(x + rx + 1.5, y - ry - 1.5 + rot * 5); c.lineTo(x + rx + 1.5, y - 1.4 + rot * 5); c.lineTo(x - rx - 1.5, y - 1.4 - rot * 5); c.closePath(); c.fill(); });   // the brow fold cuts the top of the eye
       L(A[4], ell(x - rx * 0.4, y + ry * 0.2, 0.55, 0.55)); } };
-  if (drawLaundryGolem.dead){ for (const ex0 of [57.5, 70.5]){ L('#57514b', strokeP([[ex0 - 3, 39.5 + by], [ex0 + 3, 44.5 + by]], 1.4)); L('#57514b', strokeP([[ex0 + 3, 39.5 + by], [ex0 - 3, 44.5 + by]], 1.4)); } }   // defeated: X eyes
+  if (drawLaundryGolem.dead){ for (const ex0 of [57.5, 70.5]){ L('#57514b', strokeP([[ex0 - 3, 39 + by], [ex0 + 3, 45 + by]], 2)); L('#57514b', strokeP([[ex0 + 3, 39 + by], [ex0 - 3, 45 + by]], 2)); } }   // defeated: X eyes
   else { eye(57.5, 42 + by, 5, 3, 0.26, true); eye(70.5, 42 + by, 5, 3, -0.26, true); }
   const post = buf.slice();
   // ------------------------------------------------------------------ soap bubbles and lint floating up around it
@@ -4291,18 +4291,27 @@ function drawCouchKraken(cv, f, accent){
   const C0 = '#615b54', C1 = '#4a4540', C2 = '#756e66', C3 = '#8e867b';           // the couch: the light-object ramp
   if (!drawCouchKraken.sc){ drawCouchKraken.sc = document.createElement('canvas'); drawCouchKraken.sc.width = W; drawCouchKraken.sc.height = H; }
   const sc = drawCouchKraken.sc, sx = sc.getContext('2d'), buf = new Array(W * H).fill(null);
-  const L = (color, fn, th = 120) => { sx.clearRect(0, 0, W, H); sx.fillStyle = '#fff'; sx.strokeStyle = '#fff'; sx.lineCap = 'round'; sx.lineJoin = 'round'; sx.lineWidth = 1;
+  let XF = null;   // an optional transform for the next shapes (the dropped remote)
+  const L = (color, fn, th = 120) => { sx.setTransform(1, 0, 0, 1, 0, 0); sx.clearRect(0, 0, W, H); if (XF) sx.setTransform(...XF); sx.fillStyle = '#fff'; sx.strokeStyle = '#fff'; sx.lineCap = 'round'; sx.lineJoin = 'round'; sx.lineWidth = 1;
     sx.beginPath(); fn(sx); const d = sx.getImageData(0, 0, W, H).data; for (let i = 0; i < W * H; i++) if (d[i * 4 + 3] >= th) buf[i] = color; };
   const ell = (x, y, rx, ry, rot = 0) => c => { c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); c.fill(); };
   const path = pts => c => { c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.closePath(); c.fill(); };
   const strokeP = (pts, w) => c => { c.lineWidth = w; c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.stroke(); };
   const rrect = (x, y, w, h, r) => c => { c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); c.fill(); };
-  const breathe = Math.sin(f * 0.11) * 1.2, br = breathe;
-  const click = (f % 44) < 4, flick = (f % 44) < 8;                                  // every few seconds it clicks to the next episode
+  const KD = !!drawCouchKraken.dead, breathe = Math.sin(f * 0.11) * 1.2, br = KD ? 6 + Math.sin(f * 0.05) * 0.4 : breathe;   // beaten: it sags deep into the cushions
+  const click = !KD && (f % 44) < 4, flick = !KD && (f % 44) < 8;   // every few seconds it clicks to the next episode (not once it's beaten)
   // ------------------------------------------------------------------ TV glow spilling across the floor (the ground effect)
   const glow = flick ? 1 : 0;
+  if (KD){
+    // beaten: the TV is left on dead air, a grey glow full of wiggling static
+    L(G2, path([[32, 99], [96, 99], [87, 88], [41, 88]])); L(G3, path([[41, 97], [87, 97], [81, 89], [47, 89]])); L(G4, strokeP([[44, 88.5], [84, 88.5]], 1));
+    for (let r = 0; r < 4; r++){ const y = 90.5 + r * 2.2, k = (y - 88) / 11, x0 = 44 - k * 9, x1 = 84 + k * 9, ph = f * 0.9 + r * 2.1;
+      L(r % 2 ? '#8f877c' : G5, c => { c.lineWidth = 1; c.moveTo(x0, y); for (let x = x0; x <= x1; x += 2) c.lineTo(x, y + Math.sin(x * 0.7 + ph) * 0.9 * (((x * 7 + f * 3 + r * 5) % 11) > 3 ? 1 : -1)); c.stroke(); }); }
+    for (let i = 0; i < 10; i++){ const h = (i * 37 + f * 13) % 97, x = 46 + (h * 7) % 36, y = 90 + (h % 8); L(i % 3 ? G5 : '#8f877c', rrect(x, y, 1, 1, 0)); }   // snow
+  } else {
   L(glow ? A[1] : A[0], path([[32, 99], [96, 99], [87, 88], [41, 88]])); L(glow ? A[2] : A[1], path([[41, 97], [87, 97], [81, 89], [47, 89]])); L(glow ? A[4] : A[3], strokeP([[44, 88.5], [84, 88.5]], 1)); L(glow ? A[3] : A[2], path([[52, 95], [76, 95], [73, 91], [55, 91]]));
   { const t = (f % 24) / 24, y = Math.round(89 + t * 9), k = (y - 88) / 11; L(glow ? A[4] : A[3], rrect(Math.round(41 - k * 9) + 2, y, Math.round(46 + k * 18) - 4, 1, 0)); }   // a scanline rolling down the glow
+  }
   // spilled popcorn on the floor; on a click the two kernels nearest the glow catch it
   for (const [x, y] of [[29, 93], [32.5, 95.5], [98, 94], [101, 91.5], [24, 96], [104, 96]]){ const lit = flick && (x === 32.5 || x === 98); L(lit ? A[1] : '#8f877c', ell(x, y + 0.4, 1.5, 1.1)); L('#c9c2b6', ell(x - 0.3, y - 0.3, 1.1, 0.9)); L('#c9c2b6', ell(x + 0.9, y + 0.2, 0.7, 0.6)); }
   // ------------------------------------------------------------------ the couch: back, arms, cushions, piping, little legs
@@ -4354,17 +4363,18 @@ function drawCouchKraken(cv, f, accent){
   // the short tentacles at its front, lazily curled on the seat; the right one holds the remote out toward you
   stamp(curl(legs([[[48, 65 + br], [44, 72], [39, 77], [33, 74]]]), 37.5, 71, 1.2, 1, sw * 0.25), 5.5, 1.3, -1, C0);
   const lift = click ? 1.5 : 0;
-  stamp(legs([[[80, 65 + br], [87, 71], [92, 68 - lift], [94.5, 60 - lift]]]), 5.5, 3.2, 1, C0);
+  stamp(legs(KD ? [[[80, 65 + br], [86, 72], [90, 71], [93.5, 66]]] : [[[80, 65 + br], [87, 71], [92, 68 - lift], [94.5, 60 - lift]]]), 5.5, 3.2, 1, C0);   // beaten: the arm sags
   { const R = Math.round(lift);
+    if (KD){ const a = 0.75, cs = Math.cos(a), sn = Math.sin(a), px = 94.5, py = 60; XF = [cs, sn, -sn, cs, px - cs * px + sn * py - 1, py + 6 - sn * px - cs * py]; }   // beaten: the remote has tipped over onto the seat
     L(K, rrect(89.5, 40 - R, 10, 20, 3)); L(G5, rrect(90.5, 41 - R, 8, 18, 2.4)); L('#8e867b', strokeP([[92, 41.6 - R], [97, 41.6 - R]], 1));   // the remote
-    L(A[1], rrect(92.5, 44 - R, 4, 4, 1)); L(click ? A[3] : A[2], rrect(93, 44.5 - R, 3, 3, 0.6)); L(click ? A[4] : A[3], rrect(93, 44.5 - R, 1, 1, 0));   // one big glowing button
+    if (KD){ L(G3, rrect(92.5, 44, 4, 4, 1)); L(G4, rrect(93, 44, 3, 3, 0.6)); } else { L(A[1], rrect(92.5, 44 - R, 4, 4, 1)); L(click ? A[3] : A[2], rrect(93, 44.5 - R, 3, 3, 0.6)); L(click ? A[4] : A[3], rrect(93, 44.5 - R, 1, 1, 0)); }   // one big button, glowing until it's beaten
     for (const [x, y] of [[92, 50.5], [96, 50.5], [92, 53], [96, 53]]) L(G3, rrect(x, y - R, 1.5, 1.5, 0));
-    L(click ? A[4] : A[2], rrect(94, 39 - R, 1, 1, 0));                                                    // the LED tip
-    { const t = f % 44; if (t < 3) for (let k = 0; k < 3; k++){ const r = 2.6 + k * 2 + t, a = -Math.PI * 0.62; L(t === 0 ? A[2] : t === 1 ? A[1] : A[0], c => { c.lineWidth = 1; c.arc(94.5, 39 - R, r, a - 0.3, a + 0.3); c.stroke(); }); } }   // the click: broken signal arcs off the tip, fading over 3 frames
-    L(K, strokeP([[94, 59.5 - R], [97.5, 59 - R, 99.5, 56 - R]], 2.6)); L(K, ell(99.2, 55.5 - R, 1.4, 1.4)); }   // the tentacle tip wrapped round its base
+    L(KD ? G3 : click ? A[4] : A[2], rrect(94, 39 - R, 1, 1, 0)); XF = null;                                                    // the LED tip
+    { const t = f % 44; if (!KD && t < 3) for (let k = 0; k < 3; k++){ const r = 2.6 + k * 2 + t, a = -Math.PI * 0.62; L(t === 0 ? A[2] : t === 1 ? A[1] : A[0], c => { c.lineWidth = 1; c.arc(94.5, 39 - R, r, a - 0.3, a + 0.3); c.stroke(); }); } }   // the click: broken signal arcs off the tip, fading over 3 frames
+    if (!KD){ L(K, strokeP([[94, 59.5 - R], [97.5, 59 - R, 99.5, 56 - R]], 2.6)); L(K, ell(99.2, 55.5 - R, 1.4, 1.4)); } }   // the tentacle tip wrapped round its base
   // ------------------------------------------------------------------ eyes: heavy-lidded, slanted, bored menace
   const lk = (f % 60), look = lk < 5 ? -2 : (lk > 30 && lk < 35) ? 2 : 0, droop = (f % 90) > 80 ? 1.5 : 0;   // a quick sideways glance, lids sag now and then
-  if (drawCouchKraken.dead) for (const ex0 of [56.5, 71.5]){ const ey = 45 + br; L(G4, strokeP([[ex0 - 3, ey - 2.5], [ex0 + 3, ey + 2.5]], 1.4)); L(G4, strokeP([[ex0 + 3, ey - 2.5], [ex0 - 3, ey + 2.5]], 1.4)); }   // defeated: X eyes
+  if (drawCouchKraken.dead) for (const ex0 of [56.5, 71.5]){ const ey = 45 + br; L(G4, strokeP([[ex0 - 3, ey - 3], [ex0 + 3, ey + 3]], 2)); L(G4, strokeP([[ex0 + 3, ey - 3], [ex0 - 3, ey + 3]], 2)); }   // defeated: X eyes
   else for (const [ex, rot] of [[56.5, 0.34], [71.5, -0.34]]){ const ey = 45 + br, rx = 5.6, ry = 3, sd = rot > 0 ? 1 : -1;   // sd: +1 left eye, inner corner on its right
     L(A[0], ell(ex, ey, rx + 1, ry + 0.9, rot)); L(A[2], ell(ex, ey, rx, ry, rot)); L(A[3], ell(ex + sd * rx * 0.15, ey + 0.4, rx * 0.5, ry * 0.4, rot)); L(K, ell(ex + look + sd * 0.6, ey + 0.3, 0.6, ry * 0.9, 0));
     // the brow fold: a hard wedge cutting down to the inner corner, so the eye narrows to a glare
@@ -4379,7 +4389,7 @@ function drawCouchKraken(cv, f, accent){
 
 const NEW_ART = {
   golem: (cv, f, acc, dead) => { Object.assign(drawLaundryGolem, {pose: 'hips', hanger: 'light', basketLight: true, sticker: false, aura: false, dead}); drawLaundryGolem(cv, f, acc); },
-  kraken: (cv, f, acc, dead) => { drawCouchKraken.dead = dead; drawCouchKraken(cv, f, acc); },
+  kraken: Object.assign((cv, f, acc, dead) => { drawCouchKraken.dead = dead; drawCouchKraken(cv, f, acc); }, {ownDead: true, starY: 34}),   // it slumps by itself, so the TV static isn't squashed
 };
 let artLayer = null, oldArtCv = null;
 function drawBossTile(canvas, boss, f, motion, hurt, dead){
@@ -4399,7 +4409,12 @@ function drawBossTile(canvas, boss, f, motion, hurt, dead){
     if (!artLayer){ artLayer = document.createElement('canvas'); artLayer.width = 128; artLayer.height = 104; }
     const acc = popId(), A = POP_RAMPS[acc];
     draw(artLayer, motion ? Math.floor(performance.now() / 100) : 0, acc, !!dead);
-    if (dead){
+    if (dead && draw.ownDead){
+      g.drawImage(artLayer, 0, 13);
+      const t = motion ? performance.now() / 100 : 0;
+      for (let i = 0; i < 3; i++){ const a = t * 0.12 + i * Math.PI * 2 / 3, x = Math.round(64 + Math.cos(a) * 18), y = Math.round(13 + draw.starY + Math.sin(a) * 3);
+        g.fillStyle = A[3]; g.fillRect(x, y, 1, 1); if (Math.sin(t * 0.3 + i * 2) > -0.3){ g.fillRect(x - 1, y, 1, 1); g.fillRect(x + 1, y, 1, 1); g.fillRect(x, y - 1, 1, 1); g.fillRect(x, y + 1, 1, 1); } }
+    } else if (dead){
       // defeated: it slumps down onto the floor and dizzy stars circle where its head was
       const SQ = 0.6, GY = 92; g.drawImage(artLayer, 0, 0, 128, 104, 0, 13 + GY * (1 - SQ), 128, 104 * SQ);
       const t = motion ? performance.now() / 100 : 0;
