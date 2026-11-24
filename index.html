@@ -930,7 +930,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'b9a1a25b7e';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '972547b322';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1315,7 +1315,8 @@ const BOSSES = [
   {id:'hunch',  name:'The Hunch',     weak:['MOB'],      shape:'hunch',  atk:6, beaten:'Shoulders back, head up. It shrinks into a dust bunny behind your monitor.', flavor:'Curls your spine toward the screen, one scroll at a time.', drop:'halo'},
   {id:'golem',  name:'Laundry Golem', weak:['HRT'],      shape:'golem',  atk:6, beaten:'Folded, sorted and put away. Nothing left but a single lonely sock.', flavor:'Built from every shirt you meant to fold.', drop:'basket'},
   {id:'sloth',  name:'Iron Sloth',    weak:['MGT'],      shape:'sloth',  atk:6, beaten:"You out-lifted it. It naps on the bench and won't bother you until next time.", flavor:'Heavy, slow, and only moves when you lift.', drop:'helm'},
-  {id:'wraith', name:'Riptide Wraith',weak:['STA','MOB'],shape:'wraith', atk:6, beaten:'You paddled past it and caught the set. It sinks back under the break.', flavor:'Drags tired paddlers out past the break.', drop:'fin'}
+  {id:'wraith', name:'Riptide Wraith',weak:['STA','MOB'],shape:'wraith', atk:6, beaten:'You paddled past it and caught the set. It sinks back under the break.', flavor:'Drags tired paddlers out past the break.', drop:'fin'},
+  {id:'deadweight', name:'Dead Weight', weak:['MGT','STA'], shape:'deadweight', atk:6, beaten:'Chin over the bar. It drops to the floor and stays there.', flavor:'Hangs off your pull-ups and drags them back down.', drop:'padlock'}
 ];
 const TITANS = [
   {id:'doldrums', name:'The Doldrums', weak:SK.slice(), shape:'titan', titan:true, atk:10, status:'para', beaten:'The wind picks up again. Your plans have somewhere to go.', flavor:'Titan of flat days and skipped plans. Miss two dailies and it paralyzes you.', drop:'tidecrown', drop2:'anchor'},
@@ -1396,6 +1397,7 @@ const ITEMS = [
   {id:'basket',  kind:'hat', name:'Basket Helm',  boss:'golem', style:'guard', fx:{st:{ARM:3}}},
   {id:'helm',    kind:'hat', name:'Iron Helm',    boss:'sloth', style:'guard', fx:{st:{ARM:2, MGT:1}}},
   {id:'fin',     kind:'hat', name:'Wraith Fin',   boss:'wraith', style:'rogue', fx:{st:{MOB:2}, crit:.03}},
+  {id:'padlock', kind:'hat', name:'Padlock Helm', boss:'deadweight', style:'war', fx:{st:{MGT:1, STA:1}}},
   {id:'tidecrown',kind:'hat',name:'Tide Crown',   boss:'doldrums', style:'cast', fx:{st:{HRT:3}, spell:.1}},
   {id:'jackhat', kind:'hat', name:'Jack-o’-Hat',  boss:'pumpkin', style:'cast', fx:{st:{HRT:2}, spell:.1}},
   {id:'pilgrim', kind:'hat', name:'Pilgrim Hat',  boss:'gobbler', style:'guard', fx:{st:{STA:2}}},
@@ -1537,10 +1539,13 @@ function seasonalFor(c){
   }
   return null;
 }
+const ROT2_FROM = 1;                    // boss cycle from which Dead Weight is in the rotation (never earlier: past fights keep their boss)
 const bossFor = c => {
   const sb = seasonalFor(c); if (sb) return sb;
   if ((((c%4)+4)%4) === 3){ const ti = Math.floor(c/4); return TITANS[(((ti + 1) % TITANS.length) + TITANS.length) % TITANS.length]; }
-  const n = c - Math.floor((c+1)/4); return BOSSES[((n % BOSSES.length) + BOSSES.length) % BOSSES.length];
+  const n = c - Math.floor((c+1)/4), md = (a, m) => ((a % m) + m) % m;
+  if (c < ROT2_FROM) return BOSSES[md(n, 6)];                                                  // the original six, exactly as before, for every earlier cycle
+  const n1 = ROT2_FROM - Math.floor((ROT2_FROM+1)/4); return BOSSES[md(md(n1, 6) + n - n1, BOSSES.length)];   // Dead Weight joins, continuing from where the old rotation was
 };
 const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -3254,6 +3259,7 @@ function drawHat(hat, cx, top, rx, ry, f, motion){
     basket: [[[cx-6,top-4,13,4],[cx-7,top,15,1]], Array.from({length:6}, (_,i) => [cx-5+i*2, top-3+(i%2), 1, 1])],
     helm:   [[[cx-1,top-5,3,3],[cx-4,top-2,9,1],[cx-6,top-1,13,3]], [[cx-6,top+1,13,1],[cx,top-4,1,2]]],
     fin:    [[...Array.from({length:6}, (_,i) => [cx-3, top-1-i, 6-i, 1])], [[cx-3,top-1,6,1]]],
+    padlock:[[[cx-4,top-5,9,5],[cx-3,top-8,1,3],[cx+3,top-8,1,3],[cx-2,top-9,5,1]], [[cx,top-4,1,2],[cx-4,top-1,9,1]]],
     jackhat:[[[cx-5,top-5,11,5],[cx-6,top-4,13,3],[cx-1,top-7,2,2]], [[cx-3,top-4,2,1],[cx+2,top-4,2,1],[cx-3,top-2,7,1],[cx-2,top-3,1,1],[cx+2,top-3,1,1],[cx,top-5,1,4]]],
     pilgrim:[[[cx-4,top-8,9,8],[cx-7,top-1,15,2]], [[cx-4,top-3,9,1],[cx-1,top-3,3,1]]],
     santa:  [[[cx-5,top-2,11,3],[cx-3,top-4,8,2],[cx+1,top-6,5,2],[cx+5,top-7,2,2]], [[cx-5,top-2,11,1],[cx-3,top-4,1,1],[cx+1,top-6,1,1]]],
@@ -5346,12 +5352,186 @@ function drawRiptideWraith(cv, f, accent){
   blitBuf(ctx, buf, W, H);
 }
 
+// ---- Dead Weight (style guide v1)
+// Dead Weight, drawn to the gold standards: one iconic vertical shape, no scenery. A heavy iron padlock hangs from a steel pull-up bar
+// by two gaunt hook arms; its body is a hanging chain ending in a cannonball that rests on, and cracks, the floor. One glowing keyhole
+// eye under a heavy iron brow. It sways like a slow pendulum; once a loop it strains to pull up, gets nowhere, and drops with a thud.
+// Pop: the keyhole eye and the glowing floor cracks only.
+function drawDeadWeight(cv, f, accent){
+  const LOOP = 64, P = (f % LOOP) / LOOP, TAU = Math.PI * 2, T = P * LOOP;                          // one seamless 6.4 s loop: every cycle a whole number of turns of P
+  const W = 128, H = 104, A = POP_RAMPS[accent] || POP_RAMPS.blush, D = !!drawDeadWeight.dead;
+  const K = '#121110', G1 = '#211f1d', G2 = '#2e2a27', G3 = '#3f3a36', G4 = '#57514b', G5 = '#756e66';
+  const B0 = '#4a4540', BD = '#35312d', B2 = '#615b54', B3 = '#8e867b';                                // light ramp: steel highlights
+  if (!drawDeadWeight.sc){ drawDeadWeight.sc = document.createElement('canvas'); drawDeadWeight.sc.width = W; drawDeadWeight.sc.height = H; }
+  const sc = drawDeadWeight.sc, sx = sc.getContext('2d', {willReadFrequently: true}), buf = new Array(W * H).fill(null);
+  let XF = null;
+  const L = shapeLayer(sx, W, H, buf, () => XF);
+  const ell = (x, y, rx, ry, rot = 0) => c => { c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); c.fill(); };
+  const path = pts => c => { c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.closePath(); c.fill(); };
+  const strokeP = (pts, w) => c => { c.lineWidth = w; c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.stroke(); };
+  const rect = (x, y, w, h) => c => { c.rect(x, y, w, h); c.fill(); };
+  const rrect = (x, y, w, h, r) => c => { c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); c.fill(); };
+  const px = (x, y, c) => L(c, cc => { cc.rect(Math.round(x), Math.round(y), 1, 1); cc.fill(); });
+  const rot = (a, cx, cy) => { const cs = Math.cos(a), sn = Math.sin(a); return [cs, sn, -sn, cs, cx - cs * cx + sn * cy, cy - sn * cx - cs * cy]; };
+  const mul = (m, n) => [m[0] * n[0] + m[2] * n[1], m[1] * n[0] + m[3] * n[1], m[0] * n[2] + m[2] * n[3], m[1] * n[2] + m[3] * n[3], m[0] * n[4] + m[2] * n[5] + m[4], m[1] * n[4] + m[3] * n[5] + m[5]];
+  const app = (m, x, y) => m ? [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]] : [x, y];
+  const sm = u => u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u);
+
+  // ------------------------------------------------------------------ timing: sway ... wind-up, STRAIN (tremble), give up, drop, THUD ... sway
+  let lift = 0, trem = 0, flash = 0, dust = -1;
+  if (!D){
+    if (T >= 34 && T < 44) lift = 4 * sm((T - 34) / 10);                                           // the arms haul, the lock creeps up toward the bar
+    else if (T >= 44 && T < 49){ lift = 4; trem = Math.sin(TAU * P * 16) * 0.8; }                    // stuck at the top, trembling
+    else if (T >= 49 && T < 51) lift = 4 - 5.5 * sm((T - 49) / 2);                                  // gives up: drops past rest
+    else if (T >= 51 && T < 57) lift = -1.5 + 1.5 * sm((T - 51) / 6);                               // sags on the arms, settles
+    if (T >= 51 && T < 55) flash = T < 53 ? 2 : 1;                                                  // the cracks flash on the thud
+    if (T >= 51 && T < 63) dust = T - 51;
+  }
+  const up = Math.max(0, lift), strain = !D && T >= 40 && T < 49;
+  const swF = p => Math.sin(TAU * p);                                                               // ONE pendulum swing per loop
+  const amp = D ? 0.7 : 2.6 * (1 - 0.55 * up / 4);
+  const rise = D ? 0 : (1 - Math.cos(TAU * P * 2)) * 0.5;                                          // a pendulum is highest at the ends of its swing
+  const slack = D ? 1 : (T >= 49 && T < 61) ? 1.6 * (1 - sm((T - 51) / 10)) + 0.2 : lift > 0.5 ? 0 : (1 - rise) * 0.6;
+
+  // ------------------------------------------------------------------ the floor: cracks radiating out under the ball, glowing in hard bands
+  const BX = 64, BR = 15, ballLift = !D && T >= 44 && T < 49 ? 1 : 0, BY = 83 - ballLift, FY = 98.6;
+  const cracks = [   // jagged 1px fissures radiating from where the ball sits: [polyline, segments that burn hottest]
+    [[[51, 98.5], [46, 97.5], [42, 98.5], [37, 97.5], [33, 98.5]], 2], [[[77, 98.5], [82, 97.5], [86, 98.5], [91, 97.5], [95, 98.5]], 2],
+    [[[56, 99.5], [51, 100.5], [48, 100.5], [45, 101.5]], 1], [[[72, 99.5], [77, 100.5], [80, 100.5], [83, 101.5]], 1],
+    [[[53, 96.5], [49, 95.5], [47, 95.5]], 1], [[[75, 96.5], [79, 95.5], [81, 95.5]], 1]];
+  if (D){ L(G1, ell(BX, FY, 18, 2.4)); for (const [c] of cracks) L(G3, strokeP(c, 1)); }
+  else {
+    L(A[0], ell(BX, FY, 17 + flash * 3, 2.4 + flash * 0.4)); L(A[1 + (flash ? 1 : 0)], ell(BX, FY + 0.4, 10 + flash * 2, 1.4));
+    for (const [c, hot] of cracks){ L(A[Math.min(4, 1 + flash)], strokeP(c, 1)); L(A[Math.min(4, 2 + flash)], strokeP(c.slice(0, hot + 1), 1)); }
+  }
+
+  // ------------------------------------------------------------------ the pull-up bar: a steel bar with end caps, ~60% of the width
+  const BRL = 29, BRR = 99, BAR = 4;
+  L(B0, rect(BRL, BAR, BRR - BRL, 3)); L(B2, rect(BRL, BAR, BRR - BRL, 1)); L(K, rect(BRL, BAR + 2, BRR - BRL, 1));
+  L(B3, rect(BRL + 3, BAR, 8, 1)); L(B3, rect(BRR - 11, BAR, 3, 1));
+  for (const x of [BRL - 4, BRR]){ L(K, rrect(x, BAR - 2, 4, 7, 1)); L(BD, rect(x + 1, BAR - 1, 2, 5)); L(B2, rect(x + 1, BAR - 1, 1, 2)); }
+
+  // ------------------------------------------------------------------ the lock's position: hangs and swings from the bar
+  const LX0 = D ? 60 + Math.sin(TAU * P) * 0.6 : 64 + amp * swF(P) + trem;
+  const lx = Math.round(LX0), ly = Math.round(D ? 24 : 20 - lift - rise * 0.9);
+  const DA = 0.34;                                                                                   // beaten: the lock hangs crooked from one hook
+  const LXF = D ? rot(DA, lx - 14, ly + 6) : null;                              // pivots on the shoulder still holding on
+  const W2 = (x, y) => app(LXF, x, y);                                                              // lock-local point -> figure layer
+
+  // ------------------------------------------------------------------ the chain: 4 big oval links, face-on and edge-on, lagging the swing
+  const top = W2(lx, ly + 21), botY = BY - BR - 2.5;
+  const links = [];
+  for (let i = 0; i < 4; i++){
+    const t = (i + 0.4) / 4, lag = D ? 0 : amp * (swF(P - 0.07 * t) - swF(P)) * (1 - t);           // lower links lag the swing more, and move less (the ball holds them)
+    const bow = slack * 1.8 * Math.sin(Math.PI * t);                                                // slack: the chain buckles out to one side
+    const x = top[0] + (BX - top[0]) * t + lag + bow, y = top[1] + (botY - top[1]) * t;
+    links.push([Math.round(x), Math.round(y), i % 2 === 1]);
+  }
+  // the ball's lug
+  L(K, c => { c.lineWidth = 2; c.ellipse(BX, botY + 0.5, 3, 2.2, 0, 0, TAU); c.stroke(); }); px(BX - 2, botY - 1, G4);
+  for (const [x, y, face] of links) if (!face){                                                    // edge-on links: a narrow bar seen side-on, banded down its lit side, threaded through the rings
+    L(K, rrect(x - 2, y - 5.5, 4, 11, 2)); L(G2, rect(x - 1, y - 3.5, 2, 7)); L(G4, rect(x - 1, y - 3.5, 1, 4)); px(x - 1, y - 4.5, G5);
+  }
+  for (const [x, y, face] of links) if (face){                                                     // face-on rings: an open oval with the hole showing through, banded lit edge
+    L(K, c => { c.lineWidth = 2.4; c.ellipse(x, y, 4.6, 5.4, 0, 0, TAU); c.stroke(); });
+    L(G3, c => { c.lineWidth = 1; c.ellipse(x, y, 5.1, 5.9, 0, Math.PI * 0.85, Math.PI * 1.45); c.stroke(); });
+    L(G2, c => { c.lineWidth = 1; c.ellipse(x, y, 4.1, 4.9, 0, Math.PI * 0.05, Math.PI * 0.55); c.stroke(); });
+    px(x - 2, y - 6, G5);
+  }
+
+  // ------------------------------------------------------------------ the cannonball: a heavy iron sphere, banded and riveted, rim-lit
+  const sq = !D && T >= 51 && T < 53 ? 1 : 0;
+  L(K, ell(BX, BY + sq * 0.5, BR + sq, BR - sq * 0.5));
+  L(G1, c => { c.arc(BX - 1.5, BY - 1.5, BR - 2.5, 0, TAU); c.fill(); });
+  L(G2, path([[BX - 12.5, BY], [BX - 12, BY - 9, BX - 5, BY - 13.6, BX + 3, BY - 13.4], [BX - 4, BY - 10.4, BX - 9, BY - 6, BX - 10, BY + 2]]));
+  L(G3, path([[BX - 12.6, BY - 4], [BX - 11, BY - 10, BX - 6, BY - 13.4, BX - 1, BY - 13.8], [BX - 6, BY - 12, BX - 9.6, BY - 9, BX - 11, BY - 3]]));
+  L(B2, rect(BX - 7, BY - 11, 3, 1)); px(BX - 8, BY - 10, B0);
+  L(G4, c => { c.lineWidth = 1; c.arc(BX, BY, BR - 0.6, -Math.PI * 0.16, Math.PI * 0.22); c.stroke(); });   // rim light on the far side
+  L(K, c => { c.lineWidth = 2.4; c.ellipse(BX, BY + 1.5, BR - 0.4, 4.4, 0, 0.04, Math.PI - 0.04); c.stroke(); });   // the iron band
+  L(G3, c => { c.lineWidth = 1; c.ellipse(BX, BY - 0.4, BR - 1, 4.2, 0, 0.3, Math.PI - 0.5); c.stroke(); });
+  for (const [x, y] of [[BX - 9, BY + 5], [BX, BY + 6], [BX + 9, BY + 5]]) px(x, y, G5);
+
+  // ------------------------------------------------------------------ the arms: gaunt iron hooks from the lock's shoulders over the bar
+  const HKX = 19, HY = BAR + 1;
+  const hook = (sd, hx) => {                                                                         // up the front of the bar, curled over the top, the point down behind
+    L(K, c => { c.lineWidth = 2.4; c.moveTo(hx, 11); c.lineTo(hx, HY); if (sd < 0) c.arc(hx + 2.3, HY, 2.3, Math.PI, TAU + 0.6); else c.arc(hx - 2.3, HY, 2.3, 0, -Math.PI - 0.6, true); c.stroke(); });
+    px(hx - sd, HY - 3, G4);
+  };
+  for (const sd of [-1, 1]){
+    const sh = W2(lx + sd * 14, ly + 6);
+    if (D && sd > 0){                                                                                // beaten: this arm has let go and dangles
+      const sw = Math.sin(TAU * P - 0.8) * 0.8, e = [sh[0] + 6 + sw * 0.4, sh[1] + 7], h = [sh[0] + 7 + sw, sh[1] + 18];
+      L(K, strokeP([[sh[0], sh[1]], e], 4)); L(K, strokeP([e, h], 3)); L(K, ell(e[0], e[1], 2.6, 2.6));
+      L(K, c => { c.lineWidth = 2; c.moveTo(h[0], h[1] - 1); c.arc(h[0] - 2.3, h[1], 2.3, 0, Math.PI * 1.1); c.stroke(); });   // the empty hook, curled up
+      L(G3, strokeP([[sh[0] + 1.4, sh[1] + 1], [e[0] + 1.4, e[1]]], 1)); px(e[0] - 1, e[1] - 1, G4);
+      continue;
+    }
+    const hx = 64 + sd * HKX, flare = up * 0.7;
+    const e = D ? [hx + sd * 2.5, 20] : [64 + sd * (27 + flare) + (LX0 - 64) * 0.45, 17 - up * 0.6 - rise * 0.5];
+    L(K, strokeP([[sh[0], sh[1]], e], 4)); L(K, strokeP([e, [hx, 11]], 3));
+    L(G3, strokeP([[sh[0] + sd * 1, sh[1] - 1.6], [e[0] - sd * 0.4, e[1] - 1.6]], 1));               // lit top edge of the upper arm
+    L(K, ell(e[0], e[1], 2.6, 2.6)); px(e[0] - 1, e[1] - 1, G5);                                      // a knuckled elbow
+    hook(sd, hx);
+  }
+
+  // ------------------------------------------------------------------ the lock: shackle loop on top, heavy body, one keyhole eye
+  XF = LXF;
+  const SY = ly - 3.5;
+  if (D){                                                                                            // beaten: the shackle has popped up, one leg free of the body
+    const S2 = SY - 4;
+    L(K, c => { c.lineWidth = 4; c.moveTo(lx - 7, ly + 1); c.lineTo(lx - 7, S2); c.arc(lx, S2, 7, Math.PI, TAU); c.lineTo(lx + 7, S2 + 3); c.stroke(); });
+    L(G4, c => { c.lineWidth = 1; c.arc(lx, S2, 7.6, Math.PI * 1.08, Math.PI * 1.45); c.stroke(); }); L(B2, rect(lx - 9, S2, 1, 4));
+  } else {
+    L(K, c => { c.lineWidth = 4; c.moveTo(lx - 7, ly + 1); c.lineTo(lx - 7, SY); c.arc(lx, SY, 7, Math.PI, TAU); c.lineTo(lx + 7, ly + 1); c.stroke(); });
+    L(G4, c => { c.lineWidth = 1; c.arc(lx, SY, 7.6, Math.PI * 1.08, Math.PI * 1.45); c.stroke(); }); L(B2, rect(lx - 9, SY, 1, 3));
+  }
+  L(K, rrect(lx - 14, ly, 28, 21, 4));
+  L(G1, rrect(lx - 13, ly + 1, 26, 17, 3));
+  L(G2, rect(lx - 12, ly + 5, 4, 12)); L(G3, rect(lx - 13, ly + 5, 1, 11));
+  L(G3, rect(lx + 12, ly + 10, 1, 7));                                                               // rim light, far edge
+  // the keyhole eye: the round top is the iris, in pop bands; a glint pulses in it
+  const EX = lx, EY = ly + 10;
+  if (D){
+    L(K, ell(EX, EY, 5.6, 5.6)); L(K, path([[EX - 2.5, EY + 2], [EX + 2.5, EY + 2], [EX + 3.5, EY + 9.5], [EX - 3.5, EY + 9.5]]));
+    L(G2, ell(EX, EY, 4.6, 4.6)); L(G2, path([[EX - 1.5, EY + 2], [EX + 1.5, EY + 2], [EX + 2.5, EY + 8.5], [EX - 2.5, EY + 8.5]]));
+  } else {
+    const hot = strain ? 1 : 0, pulse = Math.sin(TAU * P * 4) > 0.2 ? 1 : 0;
+    L(K, ell(EX, EY, 5.8, 5.8)); L(K, path([[EX - 2.5, EY + 2], [EX + 2.5, EY + 2], [EX + 3.5, EY + 9.5], [EX - 3.5, EY + 9.5]]));
+    L(A[0], path([[EX - 1.5, EY + 2], [EX + 1.5, EY + 2], [EX + 2.5, EY + 8.5], [EX - 2.5, EY + 8.5]]));
+    L(A[1 + hot], ell(EX, EY, 4.8, 4.8)); L(A[2 + hot], ell(EX, EY + 0.4, 3.6, 3.6)); L(A[3], c => { c.lineWidth = 0.8; c.arc(EX, EY + 0.4, 3.2, Math.PI * 0.9, Math.PI * 1.6); c.stroke(); });
+    L(A[1], rect(EX - 0.5, EY + 4, 1, 4));
+    L(K, rect(EX - 1, EY, 2, 2));                                                                    // a small dark pupil: the hole in the lock
+    L(A[4], rect(EX - 2, EY - 1, hot ? 2 : 1, hot ? 2 : 1)); if (pulse || hot) L(A[4], rect(EX + 1, EY + 2, 1, 1));   // a glint touching it, a second spark pulsing
+  }
+  // the heavy brow plate pressing down on it
+  const bd = strain ? 1 : 0;
+  L(K, rect(lx - 14, ly, 28, 7 + bd)); L(G2, rect(lx - 9, ly + 6 + bd, 18, 1));                       // a flat iron lid sitting on the eye, its lower lip catching a little light
+  L(G3, rect(lx - 11, ly, 20, 1)); L(G4, rect(lx - 11, ly, 7, 1));
+  px(lx - 11, ly + 2, G5); px(lx + 11, ly + 2, G4);
+  XF = null;
+  if (D){                                                                                            // the grey X over the dark keyhole, pixel-exact
+    const [cx, cy] = W2(EX, EY).map(Math.round);
+    for (const [dx, dy] of [[-2, -2], [-1, -2], [1, -2], [2, -2], [-1, -1], [0, -1], [1, -1], [0, 0], [-1, 1], [0, 1], [1, 1], [-2, 2], [-1, 2], [1, 2], [2, 2]]) px(cx + dx, cy + dy, G4);
+    const hd = W2(lx - 1, ly - 18); drawDeadWeight.deadHead = [Math.round(hd[0]), Math.round(hd[1])];
+  }
+
+  // ------------------------------------------------------------------ dust and chips popping up off the floor on the thud
+  if (dust >= 0) for (let k = 0; k < 8; k++){                                                      // chips kicked up from both sides, arcing out and falling back
+    const sd = k % 2 ? 1 : -1, j = k >> 1, v = 1.7 + (j % 3) * 0.45, x = BX + sd * (12 + j * 3 + dust * (0.55 + j * 0.2)), y = 97 - (v * dust - 0.2 * dust * dust);
+    if (y <= 97.5) L(j === 0 ? B2 : j === 1 ? G5 : G4, rect(Math.round(x), Math.round(y), j < 2 ? 2 : 1, j < 2 ? 2 : 1));
+  }
+
+  const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
+  blitBuf(ctx, buf, W, H);
+}
+
 const NEW_ART = {
   giant: Object.assign((cv, f, acc, dead) => { drawFogColossus.dead = dead; drawFogColossus(cv, f, acc); }, {ownDead: true, starY: 2, starX: 64, starRX: 14, starRY: 3}),
   hunch: Object.assign((cv, f, acc, dead) => { drawHunch.dead = dead; drawHunch(cv, f, acc); }, {ownDead: true, starY: 60, starX: 44, starRX: 15, starRY: 4}),
   eel: Object.assign((cv, f, acc, dead) => { drawUndertow.dead = dead; drawUndertow(cv, f, acc); }, {ownDead: true, starY: 2, starX: 64, starRX: 16, starRY: 3}),
   titan: Object.assign((cv, f, acc, dead) => { drawDoldrums.dead = dead; drawDoldrums(cv, f, acc); }, {ownDead: true, starY: 6, starX: 64, starRX: 16, starRY: 3}),
   wraith: Object.assign((cv, f, acc, dead) => { drawRiptideWraith.dead = dead; drawRiptideWraith(cv, f, acc); }, {ownDead: true, starY: 64, starX: 47, starRX: 11, starRY: 3}),
+  deadweight: Object.assign((cv, f, acc, dead) => { drawDeadWeight.dead = dead; drawDeadWeight(cv, f, acc); }, {ownDead: true, starY: 12, starX: 66, starRX: 12, starRY: 3}),
   golem: Object.assign((cv, f, acc, dead) => { Object.assign(drawLaundryGolem, {pose: 'hips', hanger: 'light', basketLight: true, sticker: false, aura: false, dead}); drawLaundryGolem(cv, f, acc); }, {ownDead: true, starY: 13}),
   gremlin: Object.assign((cv, f, acc, dead) => { drawKneeGremlin.dead = dead; drawKneeGremlin(cv, f, acc); }, {ownDead: true, starY: 50, starX: 62, starRX: 9, starRY: 3, starSmall: true}),
   kraken: Object.assign((cv, f, acc, dead) => { drawCouchKraken.dead = dead; drawCouchKraken(cv, f, acc); }, {ownDead: true, starY: 34}),   // it slumps by itself, so the TV static isn't squashed
