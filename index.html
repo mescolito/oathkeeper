@@ -930,7 +930,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '972547b322';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'ec5d4d3101';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -5352,6 +5352,165 @@ function drawRiptideWraith(cv, f, accent){
   blitBuf(ctx, buf, W, H);
 }
 
+// ---- Iron Sloth (style guide v1)
+// The Iron Sloth, drawn to the gold standards: its body IS a black kettlebell, and its two long shaggy arms rise off the shoulders and
+// hook their claws together over the top to make the handle loop, leaving a big open window. A pale sloth mask with dark tear-streak
+// patches, small sleepy dot eyes under heavy iron lids. Every few seconds: an ultra-slow blink, then one sudden heave as it lifts itself
+// off the floor by its own handle, and a thump of chalk when it drops. Pop: the eyes, the chalked claw grip, the chalk-dust glow.
+function drawIronSloth(cv, f, accent){
+  const LOOP = 64, P = (f % LOOP) / LOOP, TAU = Math.PI * 2; f = f % LOOP;                      // one seamless 6.4 s loop: every cycle a whole number of turns of P
+  const W = 128, H = 104, A = POP_RAMPS[accent] || POP_RAMPS.blush, D = !!drawIronSloth.dead;
+  const K = '#121110', G1 = '#211f1d', G2 = '#2e2a27', G3 = '#3f3a36', G4 = '#57514b', G5 = '#756e66';
+  const F0 = '#35312d', F1 = '#4a4540', F2 = '#615b54', F3 = '#8e867b', CH = '#8f877c', CH2 = '#c9c2b6';   // light-object ramp (claws only), chalk particles
+  if (!drawIronSloth.sc){ drawIronSloth.sc = document.createElement('canvas'); drawIronSloth.sc.width = W; drawIronSloth.sc.height = H; }
+  const sc = drawIronSloth.sc, sx = sc.getContext('2d', {willReadFrequently: true}), buf = new Array(W * H).fill(null);
+  let XF = null;
+  const L = shapeLayer(sx, W, H, buf, () => XF);
+  const ell = (x, y, rx, ry, rot = 0) => c => { c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); c.fill(); };
+  const path = pts => c => { c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.closePath(); c.fill(); };
+  const strokeP = (pts, w) => c => { c.lineWidth = w; c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.stroke(); };
+  const rect = (x, y, w, h) => c => { c.rect(x, y, w, h); c.fill(); };
+  const px = (x, y, c) => L(c, cc => { cc.rect(Math.round(x), Math.round(y), 1, 1); cc.fill(); });
+  const rot = (a, cx, cy) => { const cs = Math.cos(a), sn = Math.sin(a); return [cs, sn, -sn, cs, cx - cs * cx + sn * cy, cy - sn * cx - cs * cy]; };
+  const bez = (p0, p1, p2, p3, t) => { const u = 1 - t; return [u*u*u*p0[0] + 3*u*u*t*p1[0] + 3*u*t*t*p2[0] + t*t*t*p3[0], u*u*u*p0[1] + 3*u*u*t*p1[1] + 3*u*t*t*p2[1] + t*t*t*p3[1]]; };
+
+  // ------------------------------------------------------------------ timing: breathe ... ultra-slow blink ... wind-up, HEAVE, hang, sink, thump ... breathe
+  // heave table [arms/grip lift, body lift]: the grip leads, the bell follows a frame late, and the arms settle a frame after it lands
+  const HV = {40: [-1, -1], 41: [-1, -1], 42: [5, 1], 43: [6, 3], 44: [6, 4], 45: [6, 4], 46: [6, 4], 47: [5, 4], 48: [5, 3], 49: [4, 3], 50: [3, 2], 51: [2, 1], 52: [1, 0], 53: [0, -1], 54: [-1, 0], 55: [0, 0]};
+  const [hvA, hvB] = D ? [0, 0] : (HV[f] || [0, 0]);
+  const heaving = !D && f >= 42 && f <= 51, landed = !D && f >= 53 && f <= 58, land = f - 53;
+  const br = D ? 0 : Math.round(Math.sin(TAU * P * 2) * 1);                                      // breathing, two breaths a loop
+  const brL = D ? 0 : Math.round(Math.sin(TAU * P * 2 - 1.1) * 1);                               // the arms breathe a beat behind
+  const sway = D ? Math.sin(TAU * P) : 0;                                                         // beaten: only a tiny sway in the dropped arms
+  // lids: 0 = the usual sleepy half-lid, 1 = shut, -1 = wide open (during the heave)
+  const lid = D ? 0 : heaving ? -1 : f >= 12 && f < 20 ? (f - 11) / 8 : f >= 20 && f < 26 ? 1 : f >= 26 && f < 34 ? 1 - (f - 25) / 8 : 0;
+
+  const cx = 64, BY = (D ? 70 : 68) - hvB + br, GY = 93;                                       // bell centre, ground line
+  const gy = D ? 0 : -hvA + brL;                                                                  // the grip's offset
+
+  // ------------------------------------------------------------------ the ground: a pool of chalk dust glowing under the bell, hard bands
+  if (D){ L(G2, ell(cx, GY, 26, 2.6)); L(G1, ell(cx, GY, 14, 1.4)); }
+  else {
+    const far = Math.max(0, hvB - 1), fl = landed && land < 2 ? 1 : 0;                           // the pool shrinks while it's up, flares a band on the thump
+    L(A[0], ell(cx, GY, 30 - far * 2 + fl * 3, 4 - far * 0.3)); L(A[1 + fl], ell(cx, GY + 0.6, 22 - far * 2 + fl * 2, 2.6)); L(A[2 + fl], ell(cx, GY + 1, 10 - far, 1.4)); L(A[3], rect(cx - 3 + far, GY + 1, 6 - far * 2, 1));
+    for (let k = 0; k < 5; k++){ const t = (P * 2 + k * 0.2) % 1, x = cx - 24 + k * 12 + Math.sin(TAU * t) * 2; px(x, GY - 1 - Math.round(t * 3), t < 0.5 ? A[1] : A[0]); }   // dust motes simmering off the pool
+  }
+
+  // ------------------------------------------------------------------ the arms: long shaggy arms off the shoulders, up and over into the handle
+  const arm = sd => D
+    ? [[cx + sd * 19, BY - 10], [cx + sd * 32, BY - 8 + sway * 0.4], [cx + sd * 36 + sway, BY + 6], [cx + sd * 35 + sway, GY - 2]]   // beaten: unhooked, flopped down to the floor
+    : [[cx + sd * 20, BY - 9], [cx + sd * 33, BY - 26], [cx + sd * 31, 12 + gy], [cx + sd * 9, 11 + gy]];
+  const nrm = (S, t, sd) => { const [x, y] = bez(...S, t), [x2, y2] = bez(...S, t + 0.01), n = Math.hypot(x2 - x, y2 - y), s2 = D ? -sd : sd; return [x, y, -(y2 - y) / n * s2, (x2 - x) / n * s2, (x2 - x) / n, (y2 - y) / n]; };   // n: the outer side, t: along the arm
+  for (const sd of [-1, 1]){
+    const S = arm(sd), lit = sd < 0;                                                               // light from the upper left
+    L(K, ell(cx + sd * 21, BY - 7, 7, 8));                                                         // the shoulder
+    L(K, strokeP([S[0], [...S[1], ...S[2], ...S[3]]], 8));
+    L(K, strokeP([S[0], [...bez(...S, 0.12), ...bez(...S, 0.26), ...bez(...S, 0.4)]], 10.4));    // the upper arm thicker than the forearm
+    // shaggy fur: tufts hanging off the outer edge of the rising arm, and a fringe dripping off the underside of the handle into the window
+    const wv = j => D ? sway * 0.4 : Math.sin(TAU * P * 2 - 1.8 - j * 0.6) * 1.2 + (heaving ? 1.4 : 0);
+    for (const [t, len, j] of [[0.14, 6, 0], [0.3, 5.4, 1], [0.46, 4.4, 2]]){ const [x, y, nx, ny, tx, ty] = nrm(S, t, sd), w = wv(j), r = t < 0.3 ? 4.4 : 3.6;
+      L(K, path([[x + nx * (r - 1.4) - tx * 2.4, y + ny * (r - 1.4) - ty * 2.4], [x + nx * (r + 2.6) + sd * w * 0.5, y + ny * r + len], [x + nx * (r - 1.4) + tx * 2.4, y + ny * (r - 1.4) + ty * 2.4]])); }   // tufts hanging off the outer edge
+    if (!D) for (const [t, len, j] of [[0.7, 5, 3], [0.84, 6, 4]]){ const [x, y, nx, ny, tx, ty] = nrm(S, t, sd), w = wv(j), bx = x - nx * 2.6, by = y - ny * 2.6;
+      L(K, path([[bx - tx * 3, by - ty * 3], [bx + sd * w * 0.6 - sd * 1, by + 1 + len], [bx + tx * 3, by + ty * 3]])); }   // a fringe dripping off the underside of the handle
+    // a lit band along the outer edge (bright on the lit side only)
+    const edge = []; for (let i = 0; i <= 7; i++){ const [x, y, nx, ny] = nrm(S, 0.08 + i * 0.1, sd); edge.push([x + nx * 3, y + ny * 3]); }
+    L(lit ? G3 : G2, strokeP(edge, 1));
+    if (lit) L(G4, strokeP(edge.slice(2, 5), 1));
+  }
+  // ------------------------------------------------------------------ the hands and the hooked claw grip at the top (alive) / claws splayed on the floor (beaten)
+  if (!D){
+    const hy = 11 + gy;
+    // a tapered claw: a cubic curve swept with shrinking discs, thick at the root, sharp at the tip
+    const claw = (col, p0, p1, p2, p3, w0) => L(col, c => { for (let i = 0; i <= 14; i++){ const t = i / 14, [x, y] = bez(p0, p1, p2, p3, t), r = w0 * (1 - t * 0.78) / 2; c.moveTo(x + r, y); c.ellipse(x, y, r, r, 0, 0, Math.PI * 2); } c.fill(); });
+    L(K, ell(cx + 6, hy + 0.6, 4.8, 4.4));                                                                              // the far (right) hand, gripped under
+    for (const k of [0, 1]) claw(F1, [cx + 3, hy + 3], [cx + 1 - k, hy + 7.4], [cx - 4 - k * 3, hy + 7.4], [cx - 5.6 - k * 3.4, hy + 4.4 - k * 0.4], 2.2);   // its claws hooking up behind, tips peeking under the near hand
+    L(K, ell(cx - 6, hy, 5.2, 4.8));                                                                                    // the near (left) hand
+    L(G3, strokeP([[cx - 10.8, hy - 0.6], [cx - 10, hy - 3.6, cx - 7, hy - 4.6]], 1));                                  // its lit knuckle
+    // its three long claws arc OVER the far hand and hook down in front of it: the clasp that closes the handle
+    for (const k of [0, 1]) claw(k === 0 ? F2 : F1, [cx - 3, hy - 4 + k * 4], [cx + 1, hy - 11 + k * 4.4], [cx + 9 + k * 2, hy - 10 + k * 4.4], [cx + 9.6 + k * 2.2, hy - 3.4 + k * 4.2], 2.6);
+    L(F3, strokeP([[cx - 1, hy - 7.6], [cx + 2, hy - 9], [cx + 5, hy - 9]], 1));                                        // the lit top of the top claw
+    for (const k of [0, 1]) px(cx + 9.4 + k * 2.2, hy - 3.6 + k * 4.2, F3);                                             // tips
+    // chalk on the grip: the prop accent, dusted on the claws, puffing off when it heaves
+    for (const [x, y] of [[cx + 7, hy - 8], [cx + 3, hy - 9], [cx + 8, hy - 3]]) px(x, y, A[3]);
+    if (heaving && f < 48) for (let k = 0; k < 4; k++){ const t = (f - 42) / 6; L(k % 2 ? A[2] : A[3], rect(Math.round(cx - 6 + k * 4 + (k - 1.5) * t * 5), Math.round(hy - 9 - t * 6 - (k % 2) * 2), 1, 1)); }
+  } else {
+    for (const sd of [-1, 1]){ const [hx, hy] = arm(sd)[3]; L(K, ell(hx + sd * 1, hy, 5, 3.6));                       // a limp hand on the floor
+      for (const k of [0, 1]) { L(F1, strokeP([[hx + sd * (2 + k * 0.5), hy + 1 - k * 2.6], [hx + sd * (6 + k), hy + 2.4 - k * 2, hx + sd * (8 + k), hy + 3.2 - k]], 1.8)); px(hx + sd * (8.6 + k), hy + 3.4 - k, F3); } }   // claws slack, uncurled
+  }
+
+  // ------------------------------------------------------------------ the bell: a black cast-iron ball on a flat foot
+  const sq = !D && landed && land < 1 ? 1 : 0;
+  L(K, path([[cx - 17, BY + 16], [cx + 17, BY + 16], [cx + 19, GY - 1 - hvB], [cx - 19, GY - 1 - hvB]]));            // the foot
+  L(G2, ell(cx, BY, 25 + sq, 22 - sq));                                                                                 // the ball, one dark band on the lit side...
+  L(K, ell(cx + 2.4, BY + 2, 24.4 + sq, 21.4 - sq));                                                                    // ...left as a crescent by the black body
+  L(G3, c => { c.lineWidth = 1; c.ellipse(cx, BY, 24 + sq, 21 - sq, 0, Math.PI * 1.08, Math.PI * 1.36); c.stroke(); });          // a lit rim on the upper left
+  L(G4, c => { c.lineWidth = 1; c.ellipse(cx, BY, 24 + sq, 21 - sq, 0, Math.PI * 1.17, Math.PI * 1.27); c.stroke(); });
+  L(G1, rect(cx - 18, GY - hvB - 3, 36, 1));                                       // the foot's lit top edge, its groove
+  for (const x of [cx - 15, cx + 14]) px(x, GY - hvB - 5, G4);                                                               // rivets
+  L(G1, c => { c.lineWidth = 1; c.ellipse(cx, BY, 21, 18.4, 0, Math.PI * 0.18, Math.PI * 0.42); c.stroke(); });           // a cast seam on the shaded lower right
+
+  // ------------------------------------------------------------------ the face: a shadowed sloth mask, tear-streak patches, a V of iron brows over two narrow glaring bars
+  const o = BY - 68, yb = 66 + o;                                                                    // yb: the bottom row of both eyes
+  drawIronSloth.deadHead = [64, 44];                                                                 // beaten: figure-layer centre for the dizzy-star orbit (bell top is y 48)
+  L(G2, path([[cx - 16, 61 + o], [cx - 12, 57 + o, cx - 5, 57 + o, cx, 60.4 + o], [cx + 5, 57 + o, cx + 12, 57 + o, cx + 16, 61 + o],
+              [cx + 19.4, 66 + o, cx + 17, 77 + o, cx + 9, 79 + o], [cx + 3, 80.6 + o, cx - 3, 80.6 + o, cx - 9, 79 + o], [cx - 17, 77 + o, cx - 19.4, 66 + o, cx - 16, 61 + o]]));   // the mask, in shadow, its chin low enough to hold the sneer
+  L(G3, strokeP([[cx - 16.4, 63 + o], [cx - 13, 58.2 + o, cx - 7, 58 + o, cx - 3, 59.6 + o]], 1));                                   // a dim lit top edge, left lobe only
+  L(G1, path([[cx - 6, 60 + o], [cx, 61.4 + o], [cx + 6, 60 + o], [cx + 3, 67 + o], [cx - 3, 67 + o]]));                               // shadow pooled between the brows
+  for (const sd of [-1, 1]){
+    // the tear-streak patch: from above the eye, sweeping down and out off the mask into the black of the bell
+    L(K, path([[cx + sd * 3.4, 63 + o], [cx + sd * 5, 59 + o, cx + sd * 12, 58.6 + o, cx + sd * 14.6, 62 + o], [cx + sd * 17, 66 + o, cx + sd * 19, 72 + o, cx + sd * 19.6, 76.4 + o],
+               [cx + sd * 15, 74.6 + o, cx + sd * 10, 71 + o, cx + sd * 7, 69.4 + o], [cx + sd * 4, 68 + o, cx + sd * 3, 65.6 + o, cx + sd * 3.4, 63 + o]]));
+    // the brow: a heavy iron plate slanting DOWN to the nose, its underside biting into the top of the eye; hard bands, brightest on top, shadowed toward the eye
+    const dn = heaving ? 1 : (sd > 0 && (f >= 56 || f < 5)) ? 1 : 0;                                 // heave: crushed down; the right brow dips on the sideways glare
+    const ox = cx + sd * 17.4, ix = cx + sd * (D ? 3.4 : 1.4);
+    const [ob, ib, ot, it] = D ? [yb - 1.4, yb - 4.8, yb - 5.4, yb - 8.4] : [yb - 1.6 + dn, yb + 0.4 + dn, yb - 8.4 + dn, yb - 4 + dn];   // underside / top at the outer and inner ends; beaten: sagged flat, clear of the X
+    const band = (col, t0, t1) => L(col, path([[ox, ot + t0 + (ob - ot) * 0], [ix, it + t0], [ix, Math.min(ib, it + t1)], [ox, Math.min(ob, ot + t1)]]));
+    band(K, -1, 99); band(G4, 0, 1); band(G3, 1, 2.2); band(G2, 2.2, 3.4);                                                                    // plate: rim, bevel, shade, then black underside
+    if (sd < 0) L(G5, strokeP([[ox + 2, ot + 0.4], [ox + 6, ot + 1.6]], 1));                                                                  // light catching the outer end of the near brow
+    const X = c => sd < 0 ? cx - 14 + c : cx + 13 - c;                                               // eye column c: 0 at the outer tip .. 7 at the inner corner
+    if (D){
+      const x = Math.round(cx + sd * 9 - (sd < 0 ? 1 : 0)), y = yb - 1;
+      for (let k = -2; k <= 2; k++){ L(G4, rect(x + k, y + k, 2, 1)); L(G4, rect(x - k, y + k, 2, 1)); }           // grey X eyes, upright, pixel-snapped
+    } else {
+      // the eye: a flat-bottomed glowing bar, its top cut on a slant by the brow, so it narrows toward the nose
+      const twitch = sd > 0 && (f >= 56 || f < 5) ? 1 : 0;                                         // the right brow dips now and then: a sideways glare
+      const sq = heaving ? 1 : Math.round(Math.max(0, lid) * 3) + twitch * 0;                         // rows the lids squeeze shut (heave: crushed to a strained slit)
+      for (let c = 0; c <= 7; c++){
+        const h = Math.max(0, (c <= 2 ? 3 : c <= 6 ? 2 : 1) - sq - (twitch && c >= 4 ? 1 : 0));
+        if (!h) continue;
+        L(c === 0 ? A[0] : A[2], rect(X(c), yb - h + 1, 1, h));                                       // the dim outer tip, the bar
+        if (c >= 1 && c <= 5 && h >= 2) px(X(c), yb - 1, A[3]);                                       // a hot core along it
+      }
+      if (sq < 2) { L(A[4], rect(Math.min(X(6), X(7)), yb, 2, 1)); if (!sq && !twitch) px(X(6), yb - 1, A[4]); }   // a tiny white-hot pupil pressed into the inner corner
+      if (sq >= 3) L(A[0], rect(Math.min(X(1), X(6)), yb, 6, 1));                                    // shut: just a dim seam of light
+    }
+  }
+  L(K, rect(cx, 60 + o + (heaving ? 1 : 0), 1, 4));                                                                                 // the scowl furrow
+  // the nose, and a grim downturned sneer pulled up on the right, baring one long pale fang and a short one
+  L(K, path([[cx - 3.4, 67 + o], [cx + 3.4, 67 + o], [cx + 3, 70 + o, cx, 70.8 + o], [cx - 3, 70 + o, cx - 3.4, 67 + o]])); px(cx - 2, 67.4 + o, G3);
+  if (D){ L(K, ell(cx, 74.4 + o, 3, 2)); L(F2, rect(cx + 2, 72.6 + o, 1, 2)); }                                                    // beaten: jaw slack open, one fang still showing
+  else if (heaving){
+    L(K, path([[cx - 7.6, 74.4 + o], [cx - 5, 72 + o], [cx + 5, 71.6 + o], [cx + 7.6, 74 + o], [cx + 5, 76 + o], [cx - 5, 76 + o]]));    // the heave: lips peeled back
+    L(F2, rect(cx - 5, 73 + o, 10, 1)); L(F1, rect(cx - 4, 74 + o, 8, 1)); for (const x of [cx - 3, cx, cx + 3]) px(x, 73 + o, K);     // clenched teeth, upper row lit
+    L(F3, rect(cx + 3, 73 + o, 2, 2)); px(cx + 3, 75 + o, F3); L(F3, rect(cx - 5, 73 + o, 1, 2));                                      // fangs bared
+  } else {
+    L(K, path([[cx - 9, 77.4 + o], [cx - 4, 73.6 + o], [cx + 1, 72.8 + o], [cx + 6, 71.8 + o], [cx + 8.6, 74.4 + o], [cx + 6, 75.6 + o], [cx + 1, 75.2 + o], [cx - 4, 75.8 + o], [cx - 7.6, 78.6 + o]]));   // downturned on the left, lifted into a sneer on the right
+    L(F3, rect(cx + 3, 73 + o, 2, 2)); L(F3, rect(cx + 3, 75 + o, 1, 2)); px(cx + 4, 73 + o, F2);                                     // the long fang, over the lip
+    L(F2, rect(cx - 3, 74.4 + o, 1, 2));                                                                                              // a short one
+    L(G3, strokeP([[cx - 7.4, 79.6 + o], [cx - 3.6, 77.2 + o], [cx + 1, 76.8 + o]], 1));                                                       // a lit lower lip under the frown
+  }
+  // ------------------------------------------------------------------ chalk: flecks drifting up through the window and off the sides; a puff on the thump
+  if (!D){
+    for (let i = 0; i < 7; i++){ const t = (P * (i % 2 ? 1 : 2) + i * 0.143) % 1, x = [30, 98, 50, 82, 22, 106, 64][i] + Math.sin(TAU * (t + i * 0.3)) * 2.4, y = 86 - t * 70;
+      if (t > 0.05 && t < 0.9 && !(i === 6 && t < 0.62)) L(t < 0.35 ? CH2 : CH, rect(Math.round(x), Math.round(y), t < 0.3 && i % 3 === 0 ? 2 : 1, t < 0.3 && i % 3 === 0 ? 2 : 1)); }
+    if (landed) for (let k = 0; k < 6; k++){ const sd = k % 2 ? 1 : -1, j = k >> 1, x = cx + sd * (20 + land * (2.4 + j * 1.2)), y = GY - 1 - land * (0.6 + j * 0.5) + land * land * 0.08, s = land < 3 && j === 0 ? 2 : 1;
+      L(j === 0 ? A[3] : j === 1 ? A[2] : CH, rect(Math.round(x), Math.round(y) - s + 1, s, s)); }               // chalk thrown out from under the foot
+  }
+
+  const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
+  blitBuf(ctx, buf, W, H);
+}
+
 // ---- Dead Weight (style guide v1)
 // Dead Weight, drawn to the gold standards: one iconic vertical shape, no scenery. A heavy iron padlock hangs from a steel pull-up bar
 // by two gaunt hook arms; its body is a hanging chain ending in a cannonball that rests on, and cracks, the floor. One glowing keyhole
@@ -5531,6 +5690,7 @@ const NEW_ART = {
   eel: Object.assign((cv, f, acc, dead) => { drawUndertow.dead = dead; drawUndertow(cv, f, acc); }, {ownDead: true, starY: 2, starX: 64, starRX: 16, starRY: 3}),
   titan: Object.assign((cv, f, acc, dead) => { drawDoldrums.dead = dead; drawDoldrums(cv, f, acc); }, {ownDead: true, starY: 6, starX: 64, starRX: 16, starRY: 3}),
   wraith: Object.assign((cv, f, acc, dead) => { drawRiptideWraith.dead = dead; drawRiptideWraith(cv, f, acc); }, {ownDead: true, starY: 64, starX: 47, starRX: 11, starRY: 3}),
+  sloth: Object.assign((cv, f, acc, dead) => { drawIronSloth.dead = dead; drawIronSloth(cv, f, acc); }, {ownDead: true, starY: 44, starX: 64, starRX: 16, starRY: 3}),
   deadweight: Object.assign((cv, f, acc, dead) => { drawDeadWeight.dead = dead; drawDeadWeight(cv, f, acc); }, {ownDead: true, starY: 12, starX: 66, starRX: 12, starRY: 3}),
   golem: Object.assign((cv, f, acc, dead) => { Object.assign(drawLaundryGolem, {pose: 'hips', hanger: 'light', basketLight: true, sticker: false, aura: false, dead}); drawLaundryGolem(cv, f, acc); }, {ownDead: true, starY: 13}),
   gremlin: Object.assign((cv, f, acc, dead) => { drawKneeGremlin.dead = dead; drawKneeGremlin(cv, f, acc); }, {ownDead: true, starY: 50, starX: 62, starRX: 9, starRY: 3, starSmall: true}),
