@@ -930,7 +930,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '17b305a298';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '703343a935';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -3022,21 +3022,23 @@ function petSpr(rows, ox, oy, mirror){
   for (let r = -1; r <= rows.length; r++) for (let c = -1; c <= w; c++){ if (at(c, r) !== '.') continue; let n = false; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (at(c + dx, r + dy) !== '.') n = true; if (n) B_(ox + c, oy + r); }
   for (let r = 0; r < rows.length; r++) for (let c = 0; c < w; c++){ const ch = at(c, r); if (ch === '#') W_(ox + c, oy + r); else if (ch === 'b') B_(ox + c, oy + r); else if (ch === 'p') px(ox + c, oy + r, 1, 1, '#eeb7d8'); }
 }
-const PET_WING = [
-  "#...........",
-  "##..........",
-  "###.........",
-  "####........",
-  "#####.......",
-  ".######.....",
-  ".#######b...",
-  "..#####b###.",
-  "..####b#####",
-  "...##b######",
-  "...#b#b#####",
-  "....#b#b####",
-  ".....#.#b###",
-  "........#.##"];
+const PET_WING = [          // a raised angel wing (left side; mirrored for the right): a curved leading edge, a row of coverts, long primaries
+  ".....#######..",
+  "...##########.",
+  "..###########.",
+  ".####b#b#b####",
+  "####b#b#b#b###",
+  "###b##b##b####",
+  "##b###b###b###",
+  "#b#b###b###b#.",
+  "#b##b###b###..",
+  ".#b##b###b#...",
+  ".#b###b##b....",
+  "..#b###b#.....",
+  "..#b##b#......",
+  "...#b#b.......",
+  "...#b#........",
+  "....#........."];
 const PET_CAPE = [
   "..##############..",
   ".################.",
@@ -3096,7 +3098,7 @@ function drawPet(o){
   const inFace = (X,Y) => Y >= ey - 1 && Y <= ey + 4 && X >= L - 1 && X <= R + 2;
   if (o.shadow !== false) W_(x0 + sp.faceL + 3, ground + 1, fw - 6, 1);
   const KN = o.stage >= 3, LEG = o.stage >= 4, cls = o.cls || 'knight', tick = o.motion ? o.f : 0;
-  if (LEG && cls === 'knight'){ const fl2 = (tick >> 3) % 2; petSpr(PET_WING, x0 - 9, y0 + 1 - fl2); petSpr(PET_WING, x0 + 19, y0 + 1 - fl2, true); }   // seraph wings
+  if (LEG && cls === 'knight'){ const fl2 = (tick >> 3) % 2; petSpr(PET_WING, x0 - 11, y0 - 2 - fl2); petSpr(PET_WING, x0 + 19, y0 - 2 - fl2, true); }   // seraph wings
   if (LEG && cls === 'rogue'){ for (let i = 0; i < 9; i++){ const sx = x0 + 15 + i, sy = y0 + 10 + Math.round(Math.sin(i / 2 + tick * 0.3) * 1.5); W_(sx, sy, 1, 2); B_(sx, sy - 1); B_(sx, sy + 2); } }   // trailing scarf
   for (let r=0;r<h;r++) for (let c=0;c<w;c++){ if (!on(c,r)) continue; for (let dy=-1;dy<=1;dy++) for (let dx=-1;dx<=1;dx++) if (!on(c+dx,r+dy)) B_(x0+c+dx, y0+r+dy); }
   for (let r=0;r<h;r++) for (let c=0;c<w;c++){
