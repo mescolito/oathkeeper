@@ -930,7 +930,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '22ab571a26';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'd0d4341b82';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -4250,7 +4250,7 @@ function drawLaundryGolem(cv, f, accent){
     L(A[0], ell(x, y, rx + 1, ry + 0.9, rot)); L(A[2], ell(x, y, rx, ry, rot)); L(A[3], ell(x - rx * 0.2, y - ry * 0.1, rx * 0.55, ry * 0.45, rot)); L(K, ell(x + look * 0.7, y + 0.2, 0.7, ry * 0.95, 0));
     if (big){ L(G1, c => { c.moveTo(x - rx - 1.5, y - ry - 1.5 - rot * 5); c.lineTo(x + rx + 1.5, y - ry - 1.5 + rot * 5); c.lineTo(x + rx + 1.5, y - 1.4 + rot * 5); c.lineTo(x - rx - 1.5, y - 1.4 - rot * 5); c.closePath(); c.fill(); });   // the brow fold cuts the top of the eye
       L(A[4], ell(x - rx * 0.4, y + ry * 0.2, 0.55, 0.55)); } };
-  if (drawLaundryGolem.dead){ for (const ex0 of [57.5, 70.5]){ L(A[0], ell(ex0, 42 + by, 5, 3.4)); L(A[2], strokeP([[ex0 - 3, 39.5 + by], [ex0 + 3, 44.5 + by]], 1.4)); L(A[2], strokeP([[ex0 + 3, 39.5 + by], [ex0 - 3, 44.5 + by]], 1.4)); } }   // defeated: X eyes
+  if (drawLaundryGolem.dead){ for (const ex0 of [57.5, 70.5]){ L('#57514b', strokeP([[ex0 - 3, 39.5 + by], [ex0 + 3, 44.5 + by]], 1.4)); L('#57514b', strokeP([[ex0 + 3, 39.5 + by], [ex0 - 3, 44.5 + by]], 1.4)); } }   // defeated: X eyes
   else { eye(57.5, 42 + by, 5, 3, 0.26, true); eye(70.5, 42 + by, 5, 3, -0.26, true); }
   const post = buf.slice();
   // ------------------------------------------------------------------ soap bubbles and lint floating up around it
@@ -4364,7 +4364,7 @@ function drawCouchKraken(cv, f, accent){
     L(K, strokeP([[94, 59.5 - R], [97.5, 59 - R, 99.5, 56 - R]], 2.6)); L(K, ell(99.2, 55.5 - R, 1.4, 1.4)); }   // the tentacle tip wrapped round its base
   // ------------------------------------------------------------------ eyes: heavy-lidded, slanted, bored menace
   const lk = (f % 60), look = lk < 5 ? -2 : (lk > 30 && lk < 35) ? 2 : 0, droop = (f % 90) > 80 ? 1.5 : 0;   // a quick sideways glance, lids sag now and then
-  if (drawCouchKraken.dead) for (const ex0 of [56.5, 71.5]){ const ey = 45 + br; L(A[0], ell(ex0, ey, 5, 3.4)); L(A[2], strokeP([[ex0 - 3, ey - 2.5], [ex0 + 3, ey + 2.5]], 1.4)); L(A[2], strokeP([[ex0 + 3, ey - 2.5], [ex0 - 3, ey + 2.5]], 1.4)); }   // defeated: X eyes
+  if (drawCouchKraken.dead) for (const ex0 of [56.5, 71.5]){ const ey = 45 + br; L(G4, strokeP([[ex0 - 3, ey - 2.5], [ex0 + 3, ey + 2.5]], 1.4)); L(G4, strokeP([[ex0 + 3, ey - 2.5], [ex0 - 3, ey + 2.5]], 1.4)); }   // defeated: X eyes
   else for (const [ex, rot] of [[56.5, 0.34], [71.5, -0.34]]){ const ey = 45 + br, rx = 5.6, ry = 3, sd = rot > 0 ? 1 : -1;   // sd: +1 left eye, inner corner on its right
     L(A[0], ell(ex, ey, rx + 1, ry + 0.9, rot)); L(A[2], ell(ex, ey, rx, ry, rot)); L(A[3], ell(ex + sd * rx * 0.15, ey + 0.4, rx * 0.5, ry * 0.4, rot)); L(K, ell(ex + look + sd * 0.6, ey + 0.3, 0.6, ry * 0.9, 0));
     // the brow fold: a hard wedge cutting down to the inner corner, so the eye narrows to a glare
