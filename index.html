@@ -930,7 +930,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '8352efeeb9';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '4bf31f32c6';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -4400,6 +4400,14 @@ const NEW_ART = {
   kraken: Object.assign((cv, f, acc, dead) => { drawCouchKraken.dead = dead; drawCouchKraken(cv, f, acc); }, {ownDead: true, starY: 34}),   // it slumps by itself, so the TV static isn't squashed
 };
 let artLayer = null, oldArtCv = null;
+// beaten: three chunky four-point stars circling the head, a bright core with pop-coloured arms, twinkling as they go round
+function dizzyStars(g, cy, A, t){
+  for (let i = 0; i < 3; i++){ const a = t * 0.12 + i * Math.PI * 2 / 3, front = Math.sin(a) > -0.2, x = Math.round(64 + Math.cos(a) * 20), y = Math.round(cy + Math.sin(a) * 4);
+    const px = (dx, dy, c) => { g.fillStyle = c; g.fillRect(x + dx, y + dy, 1, 1); }, arm = front ? 3 : 2, tw = Math.sin(t * 0.5 + i * 2.1) > 0;
+    for (let k = 1; k <= arm; k++){ const c = k === arm ? A[1] : A[2]; px(k, 0, c); px(-k, 0, c); px(0, k, c); px(0, -k, c); }   // the four points
+    if (front){ px(1, 1, A[1]); px(-1, 1, A[1]); px(1, -1, A[1]); px(-1, -1, A[1]); }                                         // a fat middle
+    px(0, 0, A[4]); if (tw && front){ px(1, 0, A[3]); px(-1, 0, A[3]); px(0, 1, A[3]); px(0, -1, A[3]); } }                // the bright core, twinkling
+}
 function drawBossTile(canvas, boss, f, motion, hurt, dead){
   const N = 128, g = canvas.getContext('2d'); g.imageSmoothingEnabled = false;
   g.fillStyle = PB; g.fillRect(0, 0, N, N);
@@ -4420,14 +4428,12 @@ function drawBossTile(canvas, boss, f, motion, hurt, dead){
     if (dead && draw.ownDead){
       g.drawImage(artLayer, 0, 13);
       const t = motion ? performance.now() / 100 : 0;
-      for (let i = 0; i < 3; i++){ const a = t * 0.12 + i * Math.PI * 2 / 3, x = Math.round(64 + Math.cos(a) * 18), y = Math.round(13 + draw.starY + Math.sin(a) * 3);
-        g.fillStyle = A[3]; g.fillRect(x, y, 1, 1); if (Math.sin(t * 0.3 + i * 2) > -0.3){ g.fillRect(x - 1, y, 1, 1); g.fillRect(x + 1, y, 1, 1); g.fillRect(x, y - 1, 1, 1); g.fillRect(x, y + 1, 1, 1); } }
+      dizzyStars(g, 13 + draw.starY, A, t);
     } else if (dead){
       // defeated: it slumps down onto the floor and dizzy stars circle where its head was
       const SQ = 0.6, GY = 92; g.drawImage(artLayer, 0, 0, 128, 104, 0, 13 + GY * (1 - SQ), 128, 104 * SQ);
       const t = motion ? performance.now() / 100 : 0;
-      for (let i = 0; i < 3; i++){ const a = t * 0.12 + i * Math.PI * 2 / 3, x = Math.round(64 + Math.cos(a) * 18), y = Math.round(13 + GY * (1 - SQ) + 24 * SQ + Math.sin(a) * 3);
-        g.fillStyle = A[3]; g.fillRect(x, y, 1, 1); if (Math.sin(t * 0.3 + i * 2) > -0.3){ g.fillRect(x - 1, y, 1, 1); g.fillRect(x + 1, y, 1, 1); g.fillRect(x, y - 1, 1, 1); g.fillRect(x, y + 1, 1, 1); } }
+      dizzyStars(g, 13 + GY * (1 - SQ) + 24 * SQ, A, t);
     } else g.drawImage(artLayer, 0, 13);
   }
   if (hurt){ g.globalCompositeOperation = 'difference'; g.fillStyle = '#ffffff'; g.fillRect(0, 0, N, N); g.globalCompositeOperation = 'source-over'; }
