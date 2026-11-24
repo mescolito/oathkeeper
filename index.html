@@ -930,7 +930,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '5a868eebca';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '8352efeeb9';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -4167,23 +4167,24 @@ function drawLaundryGolem(cv, f, accent){
   const ell = (x, y, rx, ry, rot = 0) => c => { c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); c.fill(); };
   const path = (pts, close = true) => c => { c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); if (close){ c.closePath(); c.fill(); } };
   const strokeP = (pts, w) => c => { c.lineWidth = w; c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.stroke(); };
-  const T = f * 0.13, bob = Math.sin(f * 0.14) * 1.6, by = bob;
+  const GD = !!drawLaundryGolem.dead, T = f * 0.13, bob = Math.sin(f * 0.14) * 1.6, by = GD ? 6 + Math.sin(f * 0.05) * 0.3 : bob, bb = GD ? 0 : bob;   // beaten: the heap sinks 6px into a basket that stops bobbing
   const sw = a => Math.sin(T + a);
   // ------------------------------------------------------------------ aura: one flat grey shape
   const STICKER = drawLaundryGolem.sticker !== false;
   if (!STICKER && drawLaundryGolem.aura !== false) L(AURA, c => { const r = 14; c.moveTo(14 + r, 4); c.arcTo(114, 4, 114, 100, 22); c.arcTo(114, 100, 14, 100, 22); c.arcTo(14, 100, 14, 4, 22); c.arcTo(14, 4, 114, 4, 22); c.fill(); });
   // ------------------------------------------------------------------ the puddle it drips into, with splashes and a ripple
-  L(A[0], ell(64, 92, 31, 5.5)); L(A[1], ell(64, 92, 27, 4.2)); L(A[2], ell(63, 91.6, 18, 2.6));
+  if (GD){ L(G2, ell(64, 92, 31, 5.5)); L(G3, ell(64, 92, 27, 4.2)); L(G4, ell(63, 91.6, 18, 2.6)); }   // beaten: the puddle goes still and grey
+  else { L(A[0], ell(64, 92, 31, 5.5)); L(A[1], ell(64, 92, 27, 4.2)); L(A[2], ell(63, 91.6, 18, 2.6));
   const rp = (f % 40) / 40; L(rp < 0.5 ? A[3] : A[2], c => { c.lineWidth = 1; c.ellipse(64, 92, 8 + rp * 18, 1.4 + rp * 3, 0, 0, Math.PI * 2); c.stroke(); });
   for (const [x, s, ph] of [[40, -1, 0], [46, 1, 1.4], [84, 1, 0.7], [90, -1, 2.2]]){ const h = 6 + 4 * (0.5 + 0.5 * Math.sin(f * 0.22 + ph));
     L(A[2], strokeP([[x, 91], [x + s * 1, 91 - h * 0.6, x + s * 3, 91 - h]], 1.2)); L(A[3], ell(x + s * 3.5, 90 - h, 1.1, 1.1)); }
   // drips falling from the basket into the puddle
-  for (const [x, ph] of [[54, 0], [71, 9], [62, 4]]){ const t = ((f * 0.55 + ph) % 16) / 16; L(A[2], ell(x, 80 + by * (1 - t) + t * 10, 0.9, 1.6)); }
+  for (const [x, ph] of [[54, 0], [71, 9], [62, 4]]){ const t = ((f * 0.55 + ph) % 16) / 16; L(A[2], ell(x, 80 + by * (1 - t) + t * 10, 0.9, 1.6)); } }
   const pre = buf.slice();
   // basket colours: lighter than the body so the weave reads against a dark panel
   const BK0 = drawLaundryGolem.basketLight ? '#4a4540' : G2, BK1 = drawLaundryGolem.basketLight ? '#35312d' : G1, BK2 = drawLaundryGolem.basketLight ? '#615b54' : G3, BK3 = drawLaundryGolem.basketLight ? '#8e867b' : G5;
   // ------------------------------------------------------------------ the basket: a woven tub, wider at the top
-  const bTop = 55 + by, bBot = 81 + by;
+  const bTop = 55 + bb, bBot = 81 + bb;
   const tub = c => { c.moveTo(40, bTop); c.bezierCurveTo(41, bTop + 14, 44, bBot - 2, 52, bBot); c.lineTo(76, bBot); c.bezierCurveTo(84, bBot - 2, 87, bTop + 14, 88, bTop); c.closePath(); };
   L(BK0, c => { tub(c); c.fill(); });
   // weave: curved horizontal bands, and staggered vertical stitches between them
@@ -4206,12 +4207,18 @@ function drawLaundryGolem(cv, f, accent){
     if (claws) for (let k = -1; k <= 1; k++) L(G4, strokeP([[x + k * 3.1, y + 4.2 + press * 0.5], [x + k * 3.1 + k * 0.3, y + 5.8 + press * 0.5]], 0.8));
   };
   drawLaundryGolem.later = null;
-  if (POSE === 'hips'){
+  if (POSE === 'hips' && GD){
+    // beaten: the arms flop limp over the rim and hang down the basket's sides
+    for (const sd of [-1, 1]){ const X = x => 64 + sd * x;
+      L(K, strokeP([[X(18), 50 + by], [X(26), 52 + by, X(29), 56, X(29.5), 62]], 6.5)); L(K, strokeP([[X(29.5), 62], [X(29.5), 67, X(29), 70, X(29), 72]], 5.5));   // held clear of the basket wall
+      L(K, ell(X(30.5), 74.5, 3.6, 2.8)); for (const k of [-1, 0, 1]) L(K, ell(X(31) + sd * k * 2.2, 76.6, 1.4, 1.3));   // paws flopped outward
+      L(G2, strokeP([[X(31.2), 59], [X(31.4), 66]], 0.9)); }
+  } else if (POSE === 'hips'){
     const armL = [[44, 46 + by], [33, 46 + by, 25, 50 + by, 26, 56 + by]], armR = [[84, 46 + by], [95, 46 + by, 103, 50 + by, 102, 56 + by]];
     L(K, strokeP(armL, 7)); L(K, strokeP(armR, 7));
     L(K, strokeP([[26, 56 + by], [27, 61 + by, 32, 64 + by, 37, 63 + by]], 6)); L(K, strokeP([[102, 56 + by], [101, 61 + by, 96, 64 + by, 91, 63 + by]], 6));
     for (const [x, y, s] of [[27, 51, -1], [101, 51, 1]]){ L(G2, strokeP([[x, y + by], [x + s * 3, y + 3 + by]], 1)); }
-    const tap = (f % 36) < 12 ? [0, 1, 0, 1, 0, 1][(f >> 1) % 6] : 0;
+    const tap = !GD && (f % 36) < 12 ? [0, 1, 0, 1, 0, 1][(f >> 1) % 6] : 0;
     for (const [x, s, t] of [[39, 1, tap], [89, -1, 0]]){ L(K, ell(x, 63 + by - t, 3.6, 4.6)); for (let k = -1; k <= 1; k++) L(K, ell(x + s * 2.6, 63 + by + k * 2.7 - t, 1.7, 1.6)); for (const k of [-1.4, 1.4]) L(G2, strokeP([[x + s * 0.8, 63 + by + k * 1.9 - t], [x + s * 3.6, 63 + by + k * 1.9 - t]], 0.9)); }
   } else {
     drawLaundryGolem.later = () => { const kn = f % 24, pl = kn < 6 ? 1 : 0, pr = kn >= 12 && kn < 18 ? 1 : 0;
@@ -4237,11 +4244,12 @@ function drawLaundryGolem(cv, f, accent){
   // sleeves and straps curling up off the top like smoke, thinning to a curl
   const curl = (x0, y0, dir, len, ph, w) => { const s = sw(ph) * 2; const pts = [[x0, y0], [x0 + dir * 2 + s, y0 - len * 0.5, x0 + dir * 7 + s, y0 - len * 0.7, x0 + dir * 6 + s * 1.3, y0 - len]];
     L(K, strokeP(pts, w)); const ex = x0 + dir * 6 + s * 1.3, ey = y0 - len; L(K, c => { c.lineWidth = w * 0.6; c.arc(ex - dir * 2, ey + 0.5, 2.2, dir > 0 ? -0.4 : Math.PI + 0.4, dir > 0 ? Math.PI : 0, dir < 0); c.stroke(); }); };
-  curl(52, 34 + by, -1, 12, 0.5, 2.6); curl(76, 34 + by, 1, 12, 2.1, 2.6); curl(60, 27 + by, -1, 9, 1.2, 2); curl(69, 27 + by, 1, 8, 3.3, 2);
+  const CL = GD ? 0.5 : 1; curl(52, 34 + by, -1, 12 * CL, 0.5, 2.6); curl(76, 34 + by, 1, 12 * CL, 2.1, 2.6); curl(60, 27 + by, -1, 9 * CL, 1.2, 2); curl(69, 27 + by, 1, 8 * CL, 3.3, 2);   // beaten: the curls flop
   // a wire hanger jammed in the top, its hook curling up like a crown
   const HANG = drawLaundryGolem.hanger === 'dark' ? A[1] : drawLaundryGolem.hanger === 'white' ? '#f1eee4' : drawLaundryGolem.hanger === 'light' ? A[3] : A[2];
-  L(HANG, c => { c.lineWidth = 1.2; c.moveTo(56, 26 + by); c.lineTo(64, 20 + by); c.lineTo(72, 26 + by); c.stroke(); });
-  L(HANG, c => { c.lineWidth = 1.2; c.moveTo(64, 20 + by); c.lineTo(64, 17 + by); c.arc(66, 15 + by, 2.2, Math.PI * 0.9, Math.PI * 2.1); c.stroke(); });
+  { const ha = GD ? 0.5 : 0, hc = Math.cos(ha), hs = Math.sin(ha), R = (x, y) => [64 + (x - 64) * hc - (y - 26) * hs, 26 + by + (x - 64) * hs + (y - 26) * hc];   // beaten: knocked askew
+    L(HANG, c => { c.lineWidth = 1.2; c.moveTo(...R(56, 26)); c.lineTo(...R(64, 20)); c.lineTo(...R(72, 26)); c.stroke(); });
+    L(HANG, c => { c.lineWidth = 1.2; c.moveTo(...R(64, 20)); c.lineTo(...R(64, 17)); const [cx, cy] = R(66, 15); c.arc(cx, cy, 2.2, Math.PI * 0.9 + ha, Math.PI * 2.1 + ha); c.stroke(); }); }
   // ------------------------------------------------------------------ the eyes: a cluster glowing in the dark of the heap
   const look = [0, -1, 0, 1][(f >> 4) % 4], blink = f % 60 >= 56;
   L(G1, ell(64, 41 + by, 13, 6.5));                                                                                   // a hollow in the clothes
@@ -4253,10 +4261,10 @@ function drawLaundryGolem(cv, f, accent){
   if (drawLaundryGolem.dead){ for (const ex0 of [57.5, 70.5]){ L('#57514b', strokeP([[ex0 - 3, 39 + by], [ex0 + 3, 45 + by]], 2)); L('#57514b', strokeP([[ex0 + 3, 39 + by], [ex0 - 3, 45 + by]], 2)); } }   // defeated: X eyes
   else { eye(57.5, 42 + by, 5, 3, 0.26, true); eye(70.5, 42 + by, 5, 3, -0.26, true); }
   const post = buf.slice();
-  // ------------------------------------------------------------------ soap bubbles and lint floating up around it
-  for (let i = 0; i < 6; i++){ const t = ((f * 0.4 + i * 13) % 52) / 52, x = [30, 98, 22, 106, 38, 90][i] + Math.sin(t * 6 + i) * 2.4, y = 86 - t * 76, r = [2.2, 1.6, 1.2, 2.6, 1.4, 1.8][i];
+  // ------------------------------------------------------------------ soap bubbles and lint floating up around it (not once it's beaten)
+  if (!GD) for (let i = 0; i < 6; i++){ const t = ((f * 0.4 + i * 13) % 52) / 52, x = [30, 98, 22, 106, 38, 90][i] + Math.sin(t * 6 + i) * 2.4, y = 86 - t * 76, r = [2.2, 1.6, 1.2, 2.6, 1.4, 1.8][i];
     if (t > 0.94) continue; L('#8f877c', c => { c.lineWidth = 0.9; c.arc(x, y, r, 0, Math.PI * 2); c.stroke(); }, 90); L('#c9c2b6', ell(x - r * 0.4, y - r * 0.4, 0.5, 0.5), 60); }
-  for (let i = 0; i < 7; i++){ const t = ((f * 0.3 + i * 9) % 40) / 40, x = [34, 94, 44, 86, 28, 100, 64][i] + Math.sin(t * 5 + i) * 1.6, y = 60 - t * 40 + (i % 3) * 4, s = [1.6, 1.2, 1, 1.4, 0.9, 1.1, 1][i];
+  if (!GD) for (let i = 0; i < 7; i++){ const t = ((f * 0.3 + i * 9) % 40) / 40, x = [34, 94, 44, 86, 28, 100, 64][i] + Math.sin(t * 5 + i) * 1.6, y = 60 - t * 40 + (i % 3) * 4, s = [1.6, 1.2, 1, 1.4, 0.9, 1.1, 1][i];
     if (t < 0.9) L(G4, c => { c.rect(Math.round(x), Math.round(y), Math.round(s + 0.4), Math.round(s + 0.4)); c.fill(); }); }
   // ------------------------------------------------------------------ out
   const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
@@ -4388,7 +4396,7 @@ function drawCouchKraken(cv, f, accent){
 }
 
 const NEW_ART = {
-  golem: (cv, f, acc, dead) => { Object.assign(drawLaundryGolem, {pose: 'hips', hanger: 'light', basketLight: true, sticker: false, aura: false, dead}); drawLaundryGolem(cv, f, acc); },
+  golem: Object.assign((cv, f, acc, dead) => { Object.assign(drawLaundryGolem, {pose: 'hips', hanger: 'light', basketLight: true, sticker: false, aura: false, dead}); drawLaundryGolem(cv, f, acc); }, {ownDead: true, starY: 13}),
   kraken: Object.assign((cv, f, acc, dead) => { drawCouchKraken.dead = dead; drawCouchKraken(cv, f, acc); }, {ownDead: true, starY: 34}),   // it slumps by itself, so the TV static isn't squashed
 };
 let artLayer = null, oldArtCv = null;
