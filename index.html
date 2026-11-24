@@ -930,7 +930,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '08a6f29806';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'dd4ed59850';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -4584,7 +4584,7 @@ function drawKneeGremlin(cv, f, accent){
 // The Fog Colossus, drawn to the gold standards: one iconic shape, no scenery. A lighthouse lantern floats on a billowing cloud of fog,
 // its lens a single ringed eye throwing a sweeping beam. Hard colour bands, square debris pixels breaking off the fog. Pop: lens, beam, ground glow.
 function drawFogColossus(cv, f, accent){
-  f = Math.floor(f * 1.6);
+  const LOOP = 96, P = (f % LOOP) / LOOP, TAU = Math.PI * 2; f = f % LOOP;                        // one seamless 9.6 s loop: every motion is a whole number of cycles of P
   const W = 128, H = 104, A = POP_RAMPS[accent] || POP_RAMPS.blush, D = !!drawFogColossus.dead;
   const K = '#121110', G1 = '#211f1d', G2 = '#2e2a27', G3 = '#3f3a36', G4 = '#57514b', G5 = '#756e66';
   const F0 = '#35312d', F1 = '#4a4540', F2 = '#615b54', F3 = '#8e867b', F4 = '#a39b8f';                  // the fog: light-object ramp in hard bands
@@ -4599,12 +4599,12 @@ function drawFogColossus(cv, f, accent){
   const px = (x, y, c) => L(c, cc => { cc.rect(Math.round(x), Math.round(y), 1, 1); cc.fill(); });
   const rot = (a, cx, cy) => { const cs = Math.cos(a), sn = Math.sin(a); return [cs, sn, -sn, cs, cx - cs * cx + sn * cy, cy - sn * cx - cs * cy]; };
 
-  const bob = D ? 3 : Math.round(Math.sin(f * 0.09) * 1.5);               // a slow float, the beam sweeping side to side
-  const cx = 64, LX = 64, LY = 35 + bob, turn = D ? 0 : (f * 0.035) % (Math.PI * 2), side = Math.cos(turn);                        // the beam turns round the lantern; short when it faces you or away
+  const bob = D ? 3 : Math.round(Math.sin(TAU * P) * 1.5);               // a slow float, the beam sweeping side to side
+  const cx = 64, LX = 64, LY = 35 + bob, turn = D ? 0 : TAU * P, side = Math.cos(turn);                        // the beam turns round the lantern; short when it faces you or away
 
   // ------------------------------------------------------------------ the ground: a pool of lens-light far below, banded
   if (D){ L(G2, ell(cx, 96, 22, 2.6)); }
-  else { const fl = (f % 64) < 3 ? 1 : 0; L(A[0 + fl], ell(cx, 96, 26, 3)); L(A[1 + fl], ell(cx + side * 9, 96, 15, 2)); L(A[Math.min(4, (Math.abs(side) > 0.6 ? 3 : 2) + fl)], ell(cx + side * 14, 96, 6, 1)); }   // the pool flares a band on the glare   // the pool brightens on the side the beam faces
+  else { const fl = (f % 48) < 3 ? 1 : 0; L(A[0 + fl], ell(cx, 96, 26, 3)); L(A[1 + fl], ell(cx + side * 9, 96, 15, 2)); L(A[Math.min(4, (Math.abs(side) > 0.6 ? 3 : 2) + fl)], ell(cx + side * 14, 96, 6, 1)); }   // the pool flares a band on the glare   // the pool brightens on the side the beam faces
 
   // ------------------------------------------------------------------ the beam: a long banded wedge sweeping out from the lens (behind everything)
                                                                                 // the lens
@@ -4616,7 +4616,7 @@ function drawFogColossus(cv, f, accent){
   }
 
   // ------------------------------------------------------------------ the fog: a dark billowing mass, lit only on the crowns facing the lantern
-  const sag = D ? 5 : 0, dr = k => D ? 0 : Math.sin(f * 0.07 + k * 1.7);
+  const sag = D ? 5 : 0, dr = k => D ? 0 : Math.sin(TAU * P * 2 + k * 1.7);
   const Y = y => y + bob + sag, X = x => cx + x;
   // billows of different sizes and heights, overlapping: one big crown behind the lantern, two medium, two small at the ends
   const bills = [[0, 62, 10.5, 4], [-14, 66, 8, 3], [13, 67.5, 7, 5], [-25.5, 71, 5.2, 2], [24.5, 72, 4.6, 6], [-6, 69, 7, 1], [7, 70, 7, 7]];
@@ -4629,10 +4629,10 @@ function drawFogColossus(cv, f, accent){
   for (const [x, y0, len, bend, k] of [[-20, 78, 9, -1.4, 1], [-9, 80.4, 3.4, 0.6, 2], [3, 80.6, 10, 1.6, 3], [11, 79.4, 3, -0.4, 4], [19, 77.6, 4.2, 0.8, 5]]){   // two long, three stubby, curved, uneven
     const L2 = len + (D ? 3 : 0), ox = dr(k) * 0.6, bx = X(x) + ox, by0 = Y(y0), tx = bx + bend;
     L(G1, c => { c.moveTo(bx - 1.8, by0 - 1); c.quadraticCurveTo(bx - 1.4 + bend * 0.4, by0 + L2 * 0.7, tx, by0 + L2); c.quadraticCurveTo(bx + 1.6 + bend * 0.4, by0 + L2 * 0.7, bx + 1.8, by0 - 1); c.closePath(); c.fill(); });
-    if (len > 6){ const t = ((f * (D ? 0 : 0.3) + k * 9) % 30) / 30; L(G1, ell(tx, by0 + L2 + 2.4 + t * 6, 1.2, 1.4)); if (t > 0.4 && !D) L(G1, rect(Math.round(tx + 1), Math.round(by0 + L2 + 6 + t * 6), 1, 1)); } }
+    if (len > 6){ const t = D ? 0.3 : ((P * 2 + k * 0.29) % 1); L(G1, ell(tx, by0 + L2 + 2.4 + t * 6, 1.2, 1.4)); if (t > 0.4 && !D) L(G1, rect(Math.round(tx + 1), Math.round(by0 + L2 + 6 + t * 6), 1, 1)); } }
   // ragged wisps torn off the sides, detached by a gap, different lengths and tilts
   for (const [x0, x1, y, tilt, k] of [[-31, -52, 70, -2.4, 1], [-30, -44, 78, 1.6, 2], [30, 50, 74, 1.8, 3], [33, 43, 66, -1.4, 4]]){
-    const o = D ? 0 : Math.sin(f * 0.05 + k) * 1.6, a0 = X(x0) + o, a1 = X(x1) + o, yy = Y(y) + (D ? ((f * 0.06 + k * 3) % 6) : 0), sd = Math.sign(x1);
+    const o = D ? 0 : Math.sin(TAU * P + k) * 1.6, a0 = X(x0) + o, a1 = X(x1) + o, yy = Y(y) + (D ? ((P + k * 0.25) % 1) * 6 : 0), sd = Math.sign(x1);
     L(G1, c => { c.moveTo(a0, yy - 1.6); c.lineTo((a0 + a1) / 2, yy - 2.2 + tilt * 0.5); c.lineTo(a1, yy + tilt); c.lineTo((a0 + a1) / 2 + sd * 2, yy + 1 + tilt * 0.5); c.lineTo((a0 + a1) / 2 - sd * 2, yy + 2 + tilt * 0.3); c.lineTo(a0, yy + 1.8); c.closePath(); c.fill(); });
     L(G3, strokeP([[a0 + sd, yy - 1.6], [(a0 + a1) / 2, yy - 2 + tilt * 0.5]], 1)); }
 
@@ -4651,10 +4651,10 @@ function drawFogColossus(cv, f, accent){
   L(K, rect(cx - 0.5, 3 + bob, 1, 4)); L(K, rect(cx - 2, 3.6 + bob, 4, 1));                                     // the finial
   // the lens: one ringed eye behind the glass
   if (D){ L(G4, c => { c.lineWidth = 1.2; c.arc(LX, LY, 5, 0, Math.PI * 2); c.stroke(); }); L(G2, ell(LX, LY, 4, 4)); L(K, strokeP([[LX - 3, LY - 4], [LX - 0.5, LY - 0.6], [LX - 2, LY + 1.6], [LX + 1.6, LY + 4.4]], 1)); }   // beaten: a dull grey ring, cracked through
-  else { const pulse = (f % 30) < 3 ? 1 : 0, look = Math.round(side * 1.4);                                      // the pupil follows the beam
+  else { const pulse = (f % 32) < 3 ? 1 : 0, look = Math.round(side * 1.4);                                      // the pupil follows the beam
     L(A[0], ell(LX, LY, 7.4, 7.4)); L(A[1], ell(LX, LY, 6, 6)); L(A[2], ell(LX, LY, 4.8, 4.8)); L(A[3], c => { c.lineWidth = 0.8; c.arc(LX, LY, 4.4, 0, Math.PI * 2); c.stroke(); });
     L(K, rect(Math.round(LX - 1 + look), Math.round(LY - 0.5), 3, 2)); px(LX - 2 + look, LY - 1, A[4]);   // a small 3x2 pupil, set low, iris all round it, catchlight touching it upper-left
-    const wide = (f % 64) < 3 ? 1 : 0; L(K, rect(LX - 8, LY - 8, 16, 4.2 - wide)); L(K, path([[LX - 8, LY + 4.2 + wide], [LX - 3, LY + 3.6 + wide], [LX + 3, LY + 3.6 + wide], [LX + 8, LY + 4.2 + wide], [LX + 8, LY + 8], [LX - 8, LY + 8]]));   // heavy upper and lower lids: a narrowed glare that snaps wider every few seconds
+    const wide = (f % 48) < 3 ? 1 : 0; L(K, rect(LX - 8, LY - 8, 16, 4.2 - wide)); L(K, path([[LX - 8, LY + 4.2 + wide], [LX - 3, LY + 3.6 + wide], [LX + 3, LY + 3.6 + wide], [LX + 8, LY + 4.2 + wide], [LX + 8, LY + 8], [LX - 8, LY + 8]]));   // heavy upper and lower lids: a narrowed glare that snaps wider every few seconds
     L(K, rect(LX - 8, LY - 5, 2.4, 10)); L(K, rect(LX + 5.6, LY - 5, 2.4, 10)); }   // band ends cut square against the frame   // a heavy lid: an even bar across the top of the eye, drooping at the ends   // a hard horizontal bar pupil, a catchlight on one side
   XF = null;
 
@@ -4662,13 +4662,131 @@ function drawFogColossus(cv, f, accent){
   blitBuf(ctx, buf, W, H);
 }
 
+// ---- The Hunch (style guide v1)
+// The Hunch, drawn to the gold standards: a creature that IS a bent spine. Dark vertebrae stacked into a question mark, spikes off the
+// outer curve, arched ribs for legs, and a phone hanging from the end of it for a head, its screen showing a pixel scowl. Every few
+// seconds it flicks a scroll and the whole spine curls tighter over the screen. Pop: the screen, the ground spill.
+function drawHunch(cv, f, accent){
+  const LOOP = 56, TAU = Math.PI * 2; f = f % LOOP; const P = f / LOOP;                   // one seamless 5.6 s loop
+  const W = 128, H = 104, A = POP_RAMPS[accent] || POP_RAMPS.blush, D = !!drawHunch.dead;
+  const K = '#121110', G1 = '#211f1d', G2 = '#2e2a27', G3 = '#3f3a36', G4 = '#57514b', G5 = '#756e66';
+  if (!drawHunch.sc){ drawHunch.sc = document.createElement('canvas'); drawHunch.sc.width = W; drawHunch.sc.height = H; }
+  const sc = drawHunch.sc, sx = sc.getContext('2d', {willReadFrequently: true}), buf = new Array(W * H).fill(null);
+  let XF = null;
+  const L = shapeLayer(sx, W, H, buf, () => XF);
+  const ell = (x, y, rx, ry, rot = 0) => c => { c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); c.fill(); };
+  const path = pts => c => { c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.closePath(); c.fill(); };
+  const strokeP = (pts, w) => c => { c.lineWidth = w; c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.stroke(); };
+  const rect = (x, y, w, h) => c => { c.rect(x, y, w, h); c.fill(); };
+  const px = (x, y, c) => L(c, cc => { cc.rect(Math.round(x), Math.round(y), 1, 1); cc.fill(); });
+  const bez = (p0, p1, p2, p3, t) => { const u = 1 - t; return [u*u*u*p0[0] + 3*u*u*t*p1[0] + 3*u*t*t*p2[0] + t*t*t*p3[0], u*u*u*p0[1] + 3*u*u*t*p1[1] + 3*u*t*t*p2[1] + t*t*t*p3[1]]; };
+
+  // ------------------------------------------------------------------ timing: breathe ... scroll-flick (the spine curls tighter) ... breathe
+  const cyc = f % 56, flick = !D && cyc >= 40 && cyc < 50, cl = D ? 0 : flick ? Math.sin((cyc - 40) / 10 * Math.PI) : 0;   // 0..1..0 curl during the flick
+  const br = D ? 0 : Math.sin(TAU * P * 2) * 1;                                                                   // breathing
+
+  // ------------------------------------------------------------------ the spine's path: up from the floor, over the top, curling down into the head
+  // D: slumped, the curve collapses forward and down
+  const S1 = D ? [[86, 96], [96, 72], [90, 46], [72, 44]] : [[84, 96], [98, 66 - br], [94, 24 - br + cl * 2], [70, 20 - br + cl * 3]];
+  const S2 = D ? [[72, 44], [58, 44], [50, 56], [48, 66]] : [[70, 20 - br + cl * 3], [52, 18 - br + cl * 3], [44, 30 + cl * 3], [48, 40 + cl * 3]];
+  const pts = []; for (let i = 0; i <= 9; i++) pts.push(bez(...S1, i / 9)); for (let i = 1; i <= 4; i++) pts.push(bez(...S2, i / 4));
+  const N = pts.length, head = pts[N - 1];
+
+  // ------------------------------------------------------------------ the ground: screen light spilling under the phone, hard bands
+  const gx = head[0] - 2;
+  if (D){ L(G2, ell(gx + 6, 96, 22, 2.6)); }
+  else { const hot = flick ? 1 : 0; L(A[0], ell(gx, 96, 26, 3.2)); L(A[1 + hot], ell(gx, 96, 16, 2)); L(A[2 + hot], ell(gx, 96, 7, 1)); }
+
+  // ------------------------------------------------------------------ the lure's glow: a soft halo behind the phone head, like an anglerfish light (off when beaten)
+  if (!D){ const gx2 = head[0] - 2, gy2 = head[1] + 18, pul = (f % 28) < 14 ? 0 : 1;
+    L(A[0], ell(gx2, gy2, 21 + pul, 22 + pul)); L(A[1], ell(gx2, gy2, 16, 17));
+    for (let k = 0; k < 10; k++){ const a = k / 10 * Math.PI * 2 + TAU * P / 10, r = 23 + (k % 3); if ((k + (f >> 3)) % 4) L(A[0], rect(Math.round(gx2 + Math.cos(a) * r), Math.round(gy2 + Math.sin(a) * r * 1.05), 1, 1)); } }   // its edge breaking into motes
+  // ------------------------------------------------------------------ rib-legs: arched black ribs from the lower vertebrae down to the floor, tipped with points
+  for (const [i, sd, reach] of [[1, -1, 16], [1, 1, 14], [3, -1, 22], [3, 1, 18]]){
+    const [x, y] = pts[i], fx = x + sd * reach + (sd < 0 ? cl * -2 : 0), lag = D ? 0 : Math.sin(TAU * P * 2 - 0.8 + i) * 0.8;   // ribs settle a beat behind the breath
+    L(K, strokeP([[x, y], [x + sd * reach * 0.6, y - 8 + lag, fx, y + 2 + lag, fx + sd * 1, 95]], 4.4));
+    L(G3, strokeP([[x + sd * 2.4, y - 2.4 + lag * 0.5], [x + sd * reach * 0.55, y - 8.4 + lag, fx - sd * 1, y - 2 + lag]], 1));                              // a dark lit edge on the top of each rib
+    L(K, path([[fx + sd * 1 - 1.6, 94], [fx + sd * 2.6, 97.4], [fx + sd * 1 + 1.6, 94]]));                                      // pointed tips
+  }
+
+  // ------------------------------------------------------------------ the vertebrae: dark blocks stacked along the curve with gaps of panel between, spikes off the outer side
+  for (let i = 0; i < N - 1; i++){
+    const [x, y] = pts[i], [x2, y2] = pts[i + 1], a = Math.atan2(y2 - y, x2 - x), tx = Math.cos(a), ty = Math.sin(a), nx = -ty, ny = tx;   // n: the outer side of the curve
+    const hw = 7 - i * 0.26, hl = Math.hypot(x2 - x, y2 - y) * 0.4, cxv = (x + x2) / 2, cyv = (y + y2) / 2;
+    const quad = (w, l, o = 0) => [[cxv - tx * l + nx * (w + o), cyv - ty * l + ny * (w + o)], [cxv + tx * l + nx * (w + o), cyv + ty * l + ny * (w + o)], [cxv + tx * l - nx * (w - o), cyv + ty * l - ny * (w - o)], [cxv - tx * l - nx * (w - o), cyv - ty * l - ny * (w - o)]];
+    // the spinous process: a backward-raked spike off the outer edge, lagging the curl
+    const sl = (8 - i * 0.34) * (1 + cl * 0.15), rake = 0.55 + (D ? 0.5 : 0);
+    const sb = [cxv + nx * hw * 0.85, cyv + ny * hw * 0.85], tip = [sb[0] + (nx * Math.cos(rake) - tx * Math.sin(rake)) * sl, sb[1] + (ny * Math.cos(rake) - ty * Math.sin(rake)) * sl];
+    if (i % 2 === 1 && i >= 3 && i <= N - 4){ L(K, path([[sb[0] + tx * 2.4, sb[1] + ty * 2.4], tip, [sb[0] - tx * 2.4, sb[1] - ty * 2.4]])); L(G4, strokeP([[sb[0] + tx * 1.6, sb[1] + ty * 1.6], tip], 1)); }   // spikes only along the dorsal curve
+    // the body of the vertebra in hard bands: black, a dark band, a lit crescent on the outer edge
+    L(K, path(quad(hw, hl + 0.6)));
+    L(G2, path(quad(hw * 0.5, hl - 0.6, hw * 0.4)));                                                                             // dark band on the outer half
+    L(G3, path(quad(hw * 0.22, hl - 1, hw * 0.7)));                                                                              // lit band on the outer edge
+    L(G4, strokeP([[cxv - tx * (hl - 1.4) + nx * (hw - 0.9), cyv - ty * (hl - 1.4) + ny * (hw - 0.9)], [cxv + tx * (hl - 1.8) + nx * (hw - 0.9), cyv + ty * (hl - 1.8) + ny * (hw - 0.9)]], 1));   // bright crescent
+    L(K, ell(cxv - nx * 0.6, cyv - ny * 0.6, 1, 1));                                                                              // the spinal canal
+    // side processes: little knobs poking out of the inner edge
+  }
+  // the vertebra at the floor sits in a cracked socket
+  L(K, path([[78, 96], [82, 92], [90, 92], [94, 96]]));
+
+  // ------------------------------------------------------------------ the phone: hanging off the end of the spine by a short stalk of discs, its screen the face
+  const ph = D ? 0.5 : 0.08 + cl * 0.12, cs = Math.cos(ph), sn = Math.sin(ph);                                                   // it tilts toward you; tips over when beaten
+  const PX = head[0] - 2, PY = head[1] + 3;                                                                                       // pivot: where the stalk meets the phone's top
+  XF = [cs, sn, -sn, cs, PX - cs * PX + sn * PY, PY - sn * PX - cs * PY];
+  const pw = 23, phh = 31, X0 = PX - pw / 2, Y0 = PY;
+  L(K, c => { c.moveTo(X0 + 3, Y0); c.arcTo(X0 + pw, Y0, X0 + pw, Y0 + phh, 3); c.arcTo(X0 + pw, Y0 + phh, X0, Y0 + phh, 3); c.arcTo(X0, Y0 + phh, X0, Y0, 3); c.arcTo(X0, Y0, X0 + pw, Y0, 3); c.closePath(); c.fill(); });   // body
+  L(G3, strokeP([[X0 + 1.2, Y0 + 3], [X0 + 1.2, Y0 + phh - 3]], 1)); L(G2, strokeP([[X0 + 3, Y0 + 1.2], [X0 + pw - 3, Y0 + 1.2]], 1));   // lit edges
+  L(G4, rect(X0 + pw / 2 - 2, Y0 + 1.6, 4, 1)); L(G4, rect(X0 + pw - 4, Y0 + 1.6, 1, 1));                                       // speaker slot, camera
+  const SX = X0 + 2.4, SY = Y0 + 4, SW = pw - 4.8, SH = phh - 8.4;
+  if (D){
+    L(G3, c => { c.lineWidth = 1; c.rect(X0 + 0.5, Y0 + 0.5, pw - 1, phh - 1); c.stroke(); });                                       // a bezel rim so the dead phone reads
+    L(G1, rect(SX, SY, SW, SH));
+    L(G3, strokeP([[SX + SW - 1, SY + SH - 7], [SX + SW - 4, SY + SH - 4], [SX + SW - 2.6, SY + SH]], 0.8));                    // a thin crack in one lower corner, clear of the eyes
+    { const m = XF; XF = null;                                                                                                    // X eyes drawn upright and pixel-snapped, placed on the tilted screen
+      for (const ex of [SX + 4.6, SX + SW - 4.6]){ const ey = SY + 7, x = Math.round(m[0] * ex + m[2] * ey + m[4]), y = Math.round(m[1] * ex + m[3] * ey + m[5]);
+        for (let k = -2; k <= 2; k++){ L(G4, rect(x + k, y + k, 2, 1)); L(G4, rect(x - k, y + k, 2, 1)); } }
+      XF = m; }
+  } else {
+    // the screen in hard pop bands, scanlines scrolling (fast during the flick)
+    L(A[0], rect(SX, SY, SW, SH)); L(G1, rect(SX + 1, SY + 1, SW - 2, SH - 2));
+    const scroll = flick ? (cyc - 40) * 3 : Math.floor(f / 4);
+    const faceRow = y => (y >= SY + 4 && y <= SY + 11) || (y >= SY + SH - 7.6 && y <= SY + SH - 1.4);
+    for (let k = 0; k < 6; k++){ const y = Math.round(SY + 1 + ((k * 3.4 - scroll) % (SH - 2) + (SH - 2)) % (SH - 2)); if (!faceRow(y)) L(A[0], rect(SX + 1, y, SW - 2, 1)); }   // dim scanlines scrolling up the dark screen
+    // the face: square pixel eyes with a stepped brow cutting down toward the middle, a jagged pixel grin of fangs
+    const blink = f === 20 || f === 21, ey = SY + 5;
+    for (const [ex, sd] of [[SX + 2.4, -1], [SX + SW - 7.4, 1]]){
+      if (blink){ L(A[3], rect(ex, ey + 2, 5, 1)); continue; }
+      L(A[3], rect(ex, ey, 5, 5)); L(A[2], rect(ex, ey + 4, 5, 1)); L(A[4], rect(ex + (sd < 0 ? 1 : 3), ey + 1, 1, 1));                                                               // the eye, lit from the top
+      L(K, rect(ex + (sd < 0 ? 3 : 1), ey + 2, 1.4, 2));                                     // the pupil, glancing at the scroll
+      L(G1, rect(sd < 0 ? ex + 2 : ex, ey, 3, 1)); L(G1, rect(sd < 0 ? ex + 4 : ex, ey + 1, 1, 1)); L(A[2], rect(ex - 1, ey + 5, 7, 1));                           // the brow stepping down to the inner corner
+    }
+    const my = SY + SH - 6;
+    L(A[2], rect(SX + 2.4, my - 0.6, SW - 4.8, 4.2)); L(K, rect(SX + 3, my, SW - 6, 3));                                                                                           // the mouth, a dark slot
+    for (let k = 0; k < 4; k++){ const x = SX + 3.6 + k * (SW - 8) / 3; L(A[4], path([[x, my], [x + 1.6, my], [x + 0.8, my + 2]])); }   // pixel fangs
+  }
+  XF = null;
+  // the stalk: three discs joining the last vertebra to the phone, so the head can't float free
+  for (let k = 0; k < 3; k++){ const t = (k + 1) / 4, x = head[0] + (PX - head[0]) * t, y = head[1] + (PY - head[1]) * t; L(K, ell(x, y, 3 - k * 0.3, 1.8)); L(G3, rect(Math.round(x - 2), Math.round(y - 1.6), 3, 1)); }
+
+  // ------------------------------------------------------------------ floating: vertebra chips and square debris breaking off the outer curve, scroll ticks rising off the screen
+  if (!D){
+    for (let i = 0; i < 6; i++){ const t = ((P * 2 + i * 0.25) % 1), [bx, by] = pts[2 + i], x = bx + 7 + t * 10 + (i % 2) * 2, y = by - 4 - t * 12, s = t < 0.35 ? 2 : 1;
+      if (t < 0.85) L(t < 0.4 ? G3 : G2, rect(Math.round(x), Math.round(y), s, s)); }
+    for (let i = 0; i < 3; i++){ const t = ((P * 3 + i * 0.33) % 1), x = PX - 18 - i * 2, y = PY + 20 - t * 26; if (t < 0.9) L('#8f877c', rect(Math.round(x), Math.round(y), 3 - i, 1)); }
+  }
+
+  const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
+  blitBuf(ctx, buf, W, H);
+}
+
 const NEW_ART = {
   giant: Object.assign((cv, f, acc, dead) => { drawFogColossus.dead = dead; drawFogColossus(cv, f, acc); }, {ownDead: true, starY: 2, starX: 64, starRX: 14, starRY: 3}),
+  hunch: Object.assign((cv, f, acc, dead) => { drawHunch.dead = dead; drawHunch(cv, f, acc); }, {ownDead: true, starY: 60, starX: 44, starRX: 15, starRY: 4}),
   golem: Object.assign((cv, f, acc, dead) => { Object.assign(drawLaundryGolem, {pose: 'hips', hanger: 'light', basketLight: true, sticker: false, aura: false, dead}); drawLaundryGolem(cv, f, acc); }, {ownDead: true, starY: 13}),
   gremlin: Object.assign((cv, f, acc, dead) => { drawKneeGremlin.dead = dead; drawKneeGremlin(cv, f, acc); }, {ownDead: true, starY: 50, starX: 62, starRX: 9, starRY: 3, starSmall: true}),
   kraken: Object.assign((cv, f, acc, dead) => { drawCouchKraken.dead = dead; drawCouchKraken(cv, f, acc); }, {ownDead: true, starY: 34}),   // it slumps by itself, so the TV static isn't squashed
 };
-let artLayer = null, oldArtCv = null, panelCv = null, artKey = '';
+let artLayer = null, oldArtCv = null, panelCv = null, artKey = '', bossTick = -1;   // bossTick: the steady boss frame counter (−1 = derive from the clock)
 // beaten: three chunky four-point stars circling the head, a bright core with pop-coloured arms, twinkling as they go round
 function dizzyStars(g, cy, A, t, cx = 64, rx = 20, ry = 4, small = false){
   for (let i = 0; i < 3; i++){ const a = t * 0.12 + i * Math.PI * 2 / 3, front = Math.sin(a) > -0.2, x = Math.round(cx + Math.cos(a) * rx), y = Math.round(cy + Math.sin(a) * ry);
@@ -4696,7 +4814,7 @@ function drawBossTile(canvas, boss, f, motion, hurt, dead){
     g.drawImage(panelCv, 0, 0);
     if (!artLayer){ artLayer = document.createElement('canvas'); artLayer.width = 128; artLayer.height = 104; }
     const acc = popId(), A = POP_RAMPS[acc];
-    const af = motion ? Math.floor(performance.now() / 100) : 0, key = boss.shape + '|' + af + '|' + acc + '|' + !!dead;
+    const af = motion ? (bossTick >= 0 ? bossTick : Math.floor(performance.now() / 100)) : 0, key = boss.shape + '|' + af + '|' + acc + '|' + !!dead;
     if (key !== artKey){ draw(artLayer, af, acc, !!dead); artKey = key; }   // the mini and full boss canvases share one render per frame
     if (dead && draw.ownDead){
       g.drawImage(artLayer, 0, 13);
@@ -6085,14 +6203,22 @@ function draw(){
   const hurt = now < hurtUntil && Math.floor(now/90)%2 === 0;
   const foe = D.mini ? D.mini.m : D.cur.boss, down = !D.mini && D.cur.status === 'won';
   const fx = (typeof conf !== 'undefined' && conf && conf.raf) || (typeof stars !== 'undefined' && stars && stars.raf);   // hold the boss still while confetti or stars are flying, so they stay smooth
-  if (!fx || hurt){ const m = document.getElementById('bossMiniCv'); if (m) drawBoss(m, foe, frame, motionOK, hurt, down);
-  const b = document.getElementById('bossCv'); if (b) drawBoss(b, foe, frame, motionOK, hurt, down); }
+  if ((!fx || hurt) && !(foe && NEW_ART[foe.shape])){ const m = document.getElementById('bossMiniCv'); if (m) drawBoss(m, foe, frame, motionOK, hurt, down);
+  const b = document.getElementById('bossCv'); if (b) drawBoss(b, foe, frame, motionOK, hurt, down); }   // redrawn bosses run on their own steady 10 fps loop below
   const sp = document.getElementById('spaceCv'); if (sp) drawSpace(sp);
   const nc = document.getElementById('nightCv'); if (nc) drawNight(nc);
   const shc = document.getElementById('shopCv'); if (shc) drawShopFront(shc, motionOK ? frame : 0);
   const rc = document.getElementById('riffCv'); if (rc){ ctx = rc.getContext('2d'); ctx.imageSmoothingEnabled = false; ctx.clearRect(0, 0, rc.width, rc.height); drawRiffAt(2, 3, motionOK ? frame : 0); }
 }
 setInterval(() => { frame++; if (motionOK || Date.now() < jumpUntil + 200 || Date.now() < hurtUntil + 200) draw(); }, 140);
+// redrawn bosses animate at exactly 10 fps (their frames are designed at 100 ms), so they step one frame per tick and loop cleanly
+function drawNewBoss(){ if (recoveryMode || !D) return; const foe = D.mini ? D.mini.m : D.cur.boss; if (!foe || !NEW_ART[foe.shape]) return;
+  const now = Date.now(), hurt = now < hurtUntil && Math.floor(now / 90) % 2 === 0, down = !D.mini && D.cur.status === 'won';
+  const fx = (typeof conf !== 'undefined' && conf && conf.raf) || (typeof stars !== 'undefined' && stars && stars.raf);
+  if (fx && !hurt) return;
+  bossTick = (bossTick < 0 ? 0 : bossTick) + 1;
+  for (const id of ['bossMiniCv', 'bossCv']){ const cv = document.getElementById(id); if (cv) drawBoss(cv, foe, frame, motionOK, hurt, down); } }
+setInterval(drawNewBoss, 100);
 setInterval(() => { if (recoveryMode || !D) return; let nd; try { nd = derive(); } catch(e){ render(); return; } if (nd.today !== D.today || nd.mood !== D.mood) render(); }, 60000);
 function floatAt(x, y, html){
   // keep it on screen; a zero rect means the button was re-rendered away, so use the middle
