@@ -930,7 +930,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'acda38f6a2';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'efeda93377';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -4280,8 +4280,105 @@ const BAY8 = (() => { const b = [[0, 32, 8, 40, 2, 34, 10, 42], [48, 16, 56, 24,
    =================================================================================================================== */
 const POP_IDS = ['blush', 'sea', 'mint', 'gold', 'lilac', 'coral'];
 const popId = () => (S && S.settings && POP_IDS.includes(S.settings.pop)) ? S.settings.pop : 'blush';
+// ---------------------------------------------------------------- Couch Kraken (style guide v1)
+// Couch Kraken, drawn to the Art Style Guide: shape-first, near-black figure, light-object ramp for the couch,
+// pop colour on the eyes, the remote's button and the TV glow on the floor.
+function drawCouchKraken(cv, f, accent){
+  f = Math.floor(f * 1.6);
+  const W = 128, H = 104, A = POP_RAMPS[accent] || POP_RAMPS.blush;
+  const K = '#121110', G1 = '#211f1d', G2 = '#2e2a27', G3 = '#3f3a36', G4 = '#57514b', G5 = '#756e66';
+  const C0 = '#615b54', C1 = '#4a4540', C2 = '#756e66', C3 = '#8e867b';           // the couch: the light-object ramp
+  if (!drawCouchKraken.sc){ drawCouchKraken.sc = document.createElement('canvas'); drawCouchKraken.sc.width = W; drawCouchKraken.sc.height = H; }
+  const sc = drawCouchKraken.sc, sx = sc.getContext('2d'), buf = new Array(W * H).fill(null);
+  const L = (color, fn, th = 120) => { sx.clearRect(0, 0, W, H); sx.fillStyle = '#fff'; sx.strokeStyle = '#fff'; sx.lineCap = 'round'; sx.lineJoin = 'round'; sx.lineWidth = 1;
+    sx.beginPath(); fn(sx); const d = sx.getImageData(0, 0, W, H).data; for (let i = 0; i < W * H; i++) if (d[i * 4 + 3] >= th) buf[i] = color; };
+  const ell = (x, y, rx, ry, rot = 0) => c => { c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); c.fill(); };
+  const path = pts => c => { c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.closePath(); c.fill(); };
+  const strokeP = (pts, w) => c => { c.lineWidth = w; c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.stroke(); };
+  const rrect = (x, y, w, h, r) => c => { c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); c.fill(); };
+  const breathe = Math.sin(f * 0.11) * 1.2, br = breathe;
+  const click = (f % 44) < 4, flick = (f % 44) < 8;                                  // every few seconds it clicks to the next episode
+  // ------------------------------------------------------------------ TV glow spilling across the floor (the ground effect)
+  const glow = flick ? 1 : 0;
+  L(glow ? A[1] : A[0], path([[32, 99], [96, 99], [87, 88], [41, 88]])); L(glow ? A[2] : A[1], path([[41, 97], [87, 97], [81, 89], [47, 89]])); L(glow ? A[4] : A[3], strokeP([[44, 88.5], [84, 88.5]], 1)); L(glow ? A[3] : A[2], path([[52, 95], [76, 95], [73, 91], [55, 91]]));
+  { const t = (f % 24) / 24, y = Math.round(89 + t * 9), k = (y - 88) / 11; L(glow ? A[4] : A[3], rrect(Math.round(41 - k * 9) + 2, y, Math.round(46 + k * 18) - 4, 1, 0)); }   // a scanline rolling down the glow
+  // spilled popcorn on the floor; on a click the two kernels nearest the glow catch it
+  for (const [x, y] of [[29, 93], [32.5, 95.5], [98, 94], [101, 91.5], [24, 96], [104, 96]]){ const lit = flick && (x === 32.5 || x === 98); L(lit ? A[1] : '#8f877c', ell(x, y + 0.4, 1.5, 1.1)); L('#c9c2b6', ell(x - 0.3, y - 0.3, 1.1, 0.9)); L('#c9c2b6', ell(x + 0.9, y + 0.2, 0.7, 0.6)); }
+  // ------------------------------------------------------------------ the couch: back, arms, cushions, piping, little legs
+  L(G1, rrect(31, 84, 4, 4, 1)); L(G1, rrect(93, 84, 4, 4, 1));                           // legs
+  L(C1, rrect(24, 46, 80, 32, 9));                                                         // back (shaded)
+  L(C0, rrect(26, 44, 76, 30, 9));
+  L(C3, c => { c.lineWidth = 1; c.moveTo(34, 44.5); c.lineTo(94, 44.5); c.stroke(); });      // lit rim along the back
+  for (const x of [51, 77]) L(C1, strokeP([[x, 48], [x, 66]], 1));                         // back cushion seams
+  for (const x of [38, 64, 90]) for (const y of [52, 60]) { L(C1, ell(x, y + 0.5, 1, 0.9)); L(C2, ell(x - 0.3, y - 0.2, 0.6, 0.6)); }   // tufts
+  L(C1, rrect(26, 66, 76, 18, 5)); L(C0, rrect(27, 65, 74, 16, 5));                        // seat
+  L(C1, strokeP([[64, 66], [64, 80]], 1)); L(C3, strokeP([[32, 65.5], [96, 65.5]], 1));        // cushion split, front piping
+  for (const s of [-1, 1]){ const ax = 64 + s * 44;                                         // the arms: rolled, with a lit curl
+    L(C1, ell(ax, 66, 8, 16)); L(C0, ell(ax - s * 0.5, 65, 7, 15)); L(C2, c => { c.lineWidth = 1; c.ellipse(ax, 53, 5, 3.4, 0, Math.PI, Math.PI * 2); c.stroke(); }); L(C3, ell(ax - s * 2, 51.5, 1.3, 0.7)); L(C3, c => { c.lineWidth = 1; c.ellipse(ax, 51.2, 6.4, 2.6, 0, Math.PI * 1.1, Math.PI * 1.9); c.stroke(); }); L(C2, strokeP([[ax - 6, 79], [ax + 6, 79]].map(([x, y]) => [x, y]), 1)); }
+  // a throw blanket over the right side of the back, with a fringed hem
+  { const BL = '#4a4540', BS = '#35312d';
+    const drape = c => { c.moveTo(82, 69); c.bezierCurveTo(88, 66.5, 95, 66.5, 101, 68); c.lineTo(101.5, 80); c.bezierCurveTo(99, 82.5, 97, 81, 95, 83); c.bezierCurveTo(93, 85, 90, 82.5, 88, 84); c.bezierCurveTo(86, 85.5, 84, 83, 82.5, 83.5); c.closePath(); c.fill(); };
+    L(BL, drape);
+    for (const y of [74, 80]) L(BS, c => { c.lineWidth = 1.1; c.moveTo(82.5, y); c.quadraticCurveTo(92, y + 2, 101.3, y - 0.5); c.stroke(); });   // two stripes bowed over the roll
+    L('#615b54', c => { c.lineWidth = 1; c.moveTo(83, 71.5); c.bezierCurveTo(89, 69.8, 95, 69.8, 100.5, 71); c.stroke(); });   // the roll over the seat front
+    for (const [x, y, h] of [[83, 83.5, 2], [85, 84.6, 1], [87, 84.2, 2], [89, 84.4, 1], [91, 84.2, 2], [93, 85, 1], [95, 83.6, 2], [97, 82.6, 1], [99, 81.4, 2]]) L('#615b54', rrect(x, Math.round(y), 1, h + 1, 0)); }
+  // ------------------------------------------------------------------ the kraken: a slumped mantle sunk into the seat
+  // two tentacles draped over the couch arms, sliding down to the floor
+  const sw = Math.sin(f * 0.13);
+  const bez = (p0, p1, p2, p3, t) => { const u = 1 - t; return [u*u*u*p0[0] + 3*u*u*t*p1[0] + 3*u*t*t*p2[0] + t*t*t*p3[0], u*u*u*p0[1] + 3*u*u*t*p1[1] + 3*u*t*t*p2[1] + t*t*t*p3[1]]; };
+  const taper = (segs, w0, w1, suckers, side) => { const n = segs.length; let k = 0;
+    segs.forEach((sg, si) => { for (let i = 0; i <= 24; i++){ const t = i / 24, [x, y] = bez(...sg, t), w = w0 + (w1 - w0) * ((si + t) / n); L(K, ell(x, y, w / 2, w / 2));
+      if (suckers && i % 6 === 3 && w > 3){ const [x2, y2] = bez(...sg, Math.min(1, t + 0.02)), nx = -(y2 - y), ny = x2 - x, nl = Math.hypot(nx, ny) || 1, o = (w / 2 - 0.6) * side; k++;
+        L(G4, ell(x + nx / nl * o, y + ny / nl * o, 1, 0.7)); L(G5, ell(x + nx / nl * o - 0.3, y + ny / nl * o - 0.3, 0.45, 0.4)); } } }); };
+  // a tentacle = a dense centreline (bezier legs, then a tight spiral curl at the tip), stamped with tapering discs
+  const curl = (pts, cx, cy, turns, dir, phase) => { const [x0, y0] = pts[pts.length - 1], r0 = Math.hypot(x0 - cx, y0 - cy), a0 = Math.atan2(y0 - cy, x0 - cx);
+    for (let i = 1; i <= 40; i++){ const t = i / 40, a = a0 + dir * t * turns * Math.PI * 2 + phase * t, r = r0 * (1 - t * (turns < 1 ? 0.35 : 0.6)); pts.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]); } return pts; };
+  const legs = segs => { const pts = []; for (const sg of segs) for (let i = 0; i <= 20; i++) pts.push(bez(...sg, i / 20)); return pts; };
+  const stamp = (pts, w0, w1, side, gap) => { const n = pts.length; if (gap) pts.forEach(([x, y], i) => i > n * 0.45 && L(gap, ell(x, y, (w0 + (w1 - w0) * i / n) / 2 + 1.4, (w0 + (w1 - w0) * i / n) / 2 + 1.4))); pts.forEach(([x, y], i) => L(K, ell(x, y, (w0 + (w1 - w0) * i / n) / 2, (w0 + (w1 - w0) * i / n) / 2)));
+    pts.forEach(([x, y], i) => { const w = w0 + (w1 - w0) * i / n; if (i % 8 !== 4 || w < 3.4 || i > n * 0.8) return; const [x2, y2] = pts[Math.min(n - 1, i + 1)], nx = -(y2 - y), ny = x2 - x, nl = Math.hypot(nx, ny) || 1, o = Math.max(0, w / 2 - 1.9) * side, r = 0.55 + w * 0.06;
+      L(G4, ell(x + nx / nl * o, y + ny / nl * o, r * 1.25, r)); if (w > 5) L(G5, ell(x + nx / nl * o - 0.3, y + ny / nl * o - 0.3, 0.45, 0.45)); }); };
+  for (const s of [-1, 1]){ const X = x => 64 + s * x, ph = (s < 0 ? sw : -sw) * 0.35;
+    // root at the mantle, flopped over the rolled arm, hanging down its front, ending in a lazy spiral
+    stamp(curl(legs([[[X(16), 62 + br], [X(26), 50 + br * 0.5], [X(38), 46], [X(44), 49]], [[X(44), 49], [X(48.5), 51], [X(49), 58], [X(48.5), 64]]]), X(44), 68, 0.72, s, ph), 9, 2, s);
+  }
+  // the mantle: a heavy dome sagging into the cushions
+  L(K, c => { c.moveTo(45, 70); c.bezierCurveTo(38, 60 + br, 38, 30 + br, 64, 27 + br); c.bezierCurveTo(90, 33 + br, 90, 63 + br, 83, 70); c.closePath(); c.fill(); });
+  L(K, ell(64, 70, 21, 5));
+  // a soft ridge band, a lit grey edge down its left flank, a few freckles in negative space
+  for (const [y, w, d] of [[33, 8, 2.5], [56, 5, -1.4]]) L(G2, c => { c.lineWidth = 1; c.moveTo(64 - w, y + br); c.quadraticCurveTo(64, y + d + br, 64 + w, y + br); c.stroke(); });
+  L(G3, c => { c.lineWidth = 1.6; c.ellipse(64, 50 + br, 21.5, 21, 0, Math.PI * 0.94, Math.PI * 1.34); c.stroke(); });
+  L(G3, c => { c.lineWidth = 1; c.ellipse(64, 47 + br, 20.5, 18.5, 0, Math.PI * 1.3, Math.PI * 1.62); c.stroke(); });   // rim light carried over the crown
+  L(G2, strokeP([[67, 29 + br], [71, 30.5 + br, 73, 33 + br]], 1)); L(G4, ell(52, 33 + br, 1.6, 1));
+  for (const [x, y] of [[58, 31], [71, 32], [75, 39], [54, 39]]) L(G2, ell(x, y + br, 0.9, 0.7));
+  // the short tentacles at its front, lazily curled on the seat; the right one holds the remote out toward you
+  stamp(curl(legs([[[48, 65 + br], [44, 72], [39, 77], [33, 74]]]), 37.5, 71, 1.2, 1, sw * 0.25), 5.5, 1.3, -1, C0);
+  const lift = click ? 1.5 : 0;
+  stamp(legs([[[80, 65 + br], [87, 71], [92, 68 - lift], [94.5, 60 - lift]]]), 5.5, 3.2, 1, C0);
+  { const R = Math.round(lift);
+    L(K, rrect(89.5, 40 - R, 10, 20, 3)); L(G5, rrect(90.5, 41 - R, 8, 18, 2.4)); L('#8e867b', strokeP([[92, 41.6 - R], [97, 41.6 - R]], 1));   // the remote
+    L(A[1], rrect(92.5, 44 - R, 4, 4, 1)); L(click ? A[3] : A[2], rrect(93, 44.5 - R, 3, 3, 0.6)); L(click ? A[4] : A[3], rrect(93, 44.5 - R, 1, 1, 0));   // one big glowing button
+    for (const [x, y] of [[92, 50.5], [96, 50.5], [92, 53], [96, 53]]) L(G3, rrect(x, y - R, 1.5, 1.5, 0));
+    L(click ? A[4] : A[2], rrect(94, 39 - R, 1, 1, 0));                                                    // the LED tip
+    { const t = f % 44; if (t < 3) for (let k = 0; k < 3; k++){ const r = 2.6 + k * 2 + t, a = -Math.PI * 0.62; L(t === 0 ? A[2] : t === 1 ? A[1] : A[0], c => { c.lineWidth = 1; c.arc(94.5, 39 - R, r, a - 0.3, a + 0.3); c.stroke(); }); } }   // the click: broken signal arcs off the tip, fading over 3 frames
+    L(K, strokeP([[94, 59.5 - R], [97.5, 59 - R, 99.5, 56 - R]], 2.6)); L(K, ell(99.2, 55.5 - R, 1.4, 1.4)); }   // the tentacle tip wrapped round its base
+  // ------------------------------------------------------------------ eyes: heavy-lidded, slanted, bored menace
+  const lk = (f % 60), look = lk < 5 ? -2 : (lk > 30 && lk < 35) ? 2 : 0, droop = (f % 90) > 80 ? 1.5 : 0;   // a quick sideways glance, lids sag now and then
+  if (drawCouchKraken.dead) for (const ex0 of [56.5, 71.5]){ const ey = 45 + br; L(A[0], ell(ex0, ey, 5, 3.4)); L(A[2], strokeP([[ex0 - 3, ey - 2.5], [ex0 + 3, ey + 2.5]], 1.4)); L(A[2], strokeP([[ex0 + 3, ey - 2.5], [ex0 - 3, ey + 2.5]], 1.4)); }   // defeated: X eyes
+  else for (const [ex, rot] of [[56.5, 0.34], [71.5, -0.34]]){ const ey = 45 + br, rx = 5.6, ry = 3, sd = rot > 0 ? 1 : -1;   // sd: +1 left eye, inner corner on its right
+    L(A[0], ell(ex, ey, rx + 1, ry + 0.9, rot)); L(A[2], ell(ex, ey, rx, ry, rot)); L(A[3], ell(ex + sd * rx * 0.15, ey + 0.4, rx * 0.5, ry * 0.4, rot)); L(K, ell(ex + look + sd * 0.6, ey + 0.3, 0.6, ry * 0.9, 0));
+    // the brow fold: a hard wedge cutting down to the inner corner, so the eye narrows to a glare
+    L(K, c => { const o = ex - sd * (rx + 2), i = ex + sd * (rx + 2); c.moveTo(o, ey - ry - 3); c.lineTo(i, ey - ry - 3); c.lineTo(i, ey + 0.6 + droop * 0.4); c.lineTo(o, ey - 2.2 + droop); c.closePath(); c.fill(); });
+    L(G3, strokeP([[ex - sd * (rx + 1.5), ey - 2.9 + droop], [ex + sd * (rx + 1), ey + 0.1 + droop * 0.4]], 0.9));     // a cold lit edge on the brow
+    L(A[4], ell(ex - sd * rx * 0.35, ey + ry * 0.35, 0.55, 0.55)); }
+  // ------------------------------------------------------------------ dust motes drifting in the TV light
+  for (let i = 0; i < 6; i++){ const t = ((f * 0.3 + i * 11) % 50) / 50, x = [42, 86, 50, 78, 36, 92][i] + Math.sin(t * 6 + i) * 2, y = 92 - t * 40; if (t < 0.9) L(t < 0.4 ? '#c9c2b6' : '#8f877c', ell(x, y, 0.6, 0.6), 60); }
+  const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++){ const c = buf[y * W + x]; if (c){ ctx.fillStyle = c; ctx.fillRect(x, y, 1, 1); } }
+}
+
 const NEW_ART = {
   golem: (cv, f, acc, dead) => { Object.assign(drawLaundryGolem, {pose: 'hips', hanger: 'light', basketLight: true, sticker: false, aura: false, dead}); drawLaundryGolem(cv, f, acc); },
+  kraken: (cv, f, acc, dead) => { drawCouchKraken.dead = dead; drawCouchKraken(cv, f, acc); },
 };
 let artLayer = null, oldArtCv = null;
 function drawBossTile(canvas, boss, f, motion, hurt, dead){
