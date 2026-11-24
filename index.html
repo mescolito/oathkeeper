@@ -930,7 +930,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '1b379d71aa';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '95b029f6c9';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -4436,13 +4436,14 @@ function drawCouchKraken(cv, f, accent){
 }
 
 // ---------------------------------------------------------------- Knee Gremlin (style guide v1)
-// Knee Gremlin, drawn to the Art Style Guide: a chunky gremlin hunched over a giant bent knee, jaws clamped on the kneecap,
-// gnawing until it swings round to grin at you. Pop colour: eyes, the pain sparks at the bite, the cracked-floor glow.
+// Knee Gremlin, drawn to the Art Style Guide. The giant bent leg is the main light shape: a thick thigh rising out of a cracked floor
+// to a high knee, the kneecap on the outline, a slim shin dropping to a sneaker. A small gremlin clings koala-like to the joint and
+// gnaws the cap from the side, then turns to grin at you. Pop colour: eyes, the pain sparks off the cap, the cracked-floor glow.
 function drawKneeGremlin(cv, f, accent){
   f = Math.floor(f * 1.6);
   const W = 128, H = 104, A = POP_RAMPS[accent] || POP_RAMPS.blush, D = !!drawKneeGremlin.dead;
   const K = '#121110', G1 = '#211f1d', G2 = '#2e2a27', G3 = '#3f3a36', G4 = '#57514b', G5 = '#756e66';
-  const B0 = '#4a4540', BD = '#35312d', B2 = '#615b54', B3 = '#8e867b';                                // the leg: the light-object ramp, flat bands
+  const B0 = '#4a4540', BD = '#35312d', B2 = '#615b54', B3 = '#8e867b';
   if (!drawKneeGremlin.sc){ drawKneeGremlin.sc = document.createElement('canvas'); drawKneeGremlin.sc.width = W; drawKneeGremlin.sc.height = H; }
   const sc = drawKneeGremlin.sc, sx = sc.getContext('2d', {willReadFrequently: true}), buf = new Array(W * H).fill(null);
   let XF = null;
@@ -4454,100 +4455,126 @@ function drawKneeGremlin(cv, f, accent){
   const px = (x, y, c) => L(c, cc => { cc.rect(Math.round(x), Math.round(y), 1, 1); cc.fill(); });
   const rot = (a, cx, cy) => { const cs = Math.cos(a), sn = Math.sin(a); return [cs, sn, -sn, cs, cx - cs * cx + sn * cy, cy - sn * cx - cs * cy]; };
 
-  // ------------------------------------------------------------------ timing: gnaw ... gnaw ... then swing round and grin
-  const cyc = f % 64, gnawing = !D && cyc < 42, snap = Math.floor(cyc / 7), ph = cyc % 7, open = gnawing ? [3, 2, 0, 0, 0, 1, 2][ph] : 0, bite = gnawing && ph >= 2 && ph <= 3;
-  const grin = !D && cyc >= 46 && cyc < 62, bob = D ? 0 : Math.sin(f * 0.14) * 1;
+  // ------------------------------------------------------------------ timing: gnaw ... gnaw ... then turn and grin
+  const cyc = f % 64, gnawing = !D && cyc < 42, snap = Math.floor(cyc / 7), ph = cyc % 7, open = gnawing ? [2, 1, 0, 0, 0, 1, 2][ph] : 0, bite = gnawing && ph >= 2 && ph <= 3;
+  const grin = !D && cyc >= 46 && cyc < 62, bob = D ? 0 : Math.sin(f * 0.14) * 0.8;
 
   // ------------------------------------------------------------------ the cracked floor where the thigh burst through
-  const BX = 37, BY = 95;                                                                                  // the break point
+  const BX = 30, BY = 96;
   const P = D ? [G2, G3, G4, G4] : [A[0], bite ? A[2] : A[1], bite ? A[3] : A[2], bite ? A[4] : A[3]];
-  L(P[0], ell(BX + 4, BY + 0.5, 28, 4.6)); L(P[1], ell(BX + 3, BY + 0.3, 20, 3.2)); L(P[2], ell(BX + 2, BY, 11, 1.8));
-  for (const pts of [[[BX - 8, BY], [BX - 14, BY - 1.6], [BX - 19, BY - 0.6], [BX - 24, BY - 1.4]], [[BX + 9, BY + 0.6], [BX + 15, BY + 2.4], [BX + 22, BY + 1.6], [BX + 29, BY + 2.8]], [[BX + 2, BY + 2], [BX + 1, BY + 4], [BX + 4, BY + 5.6]], [[BX - 4, BY + 1.6], [BX - 8, BY + 3.6], [BX - 12, BY + 4]]]){
+  L(P[0], ell(BX + 26, BY + 0.4, 48, 4.6)); L(P[1], ell(BX + 14, BY + 0.2, 30, 3.2)); L(P[2], ell(BX + 4, BY, 15, 1.9));
+  for (const pts of [[[BX - 10, BY], [BX - 15, BY - 1.6], [BX - 20, BY - 0.6], [BX - 24, BY - 1.4]], [[BX + 11, BY + 0.6], [BX + 20, BY + 2.6], [BX + 32, BY + 1.4], [BX + 44, BY + 3], [BX + 56, BY + 2]], [[BX + 3, BY + 2], [BX + 2, BY + 4], [BX + 5, BY + 5.6]], [[BX - 5, BY + 1.6], [BX - 9, BY + 3.6], [BX - 13, BY + 4]], [[BX + 26, BY + 1.8], [BX + 30, BY + 4], [BX + 36, BY + 4.6]]]){
     L(K, strokeP(pts, 1.2)); L(P[3], strokeP([pts[0], pts[1]], 0.8), 150); }
-  // floor slabs tipped up by the break
-  L(G3, path([[BX - 16, BY - 2.5], [BX - 10, BY - 4.5], [BX - 9, BY - 2.2], [BX - 15, BY - 0.6]])); L(G4, strokeP([[BX - 16, BY - 2.6], [BX - 10, BY - 4.6]], 0.8));
-  L(G3, path([[BX + 12, BY - 3], [BX + 19, BY - 2], [BX + 18, BY + 0.2], [BX + 12, BY - 0.8]])); L(G4, strokeP([[BX + 12, BY - 3.1], [BX + 19, BY - 2.1]], 0.8));
+  for (const [x, y, w, h] of [[BX - 19, BY - 1.4, 7, 2.6], [BX + 15, BY - 1.6, 7, 2.4], [BX + 33, BY - 0.6, 6, 2]]){                  // slabs tipped up, lit edges
+    L(G3, path([[x, y], [x + w, y - h], [x + w, y + 1.2], [x, y + 1.6]])); L(B3, strokeP([[x, y], [x + w, y - h]], 0.8)); }
 
-  // ------------------------------------------------------------------ the giant leg: thigh up out of the floor, knee bent high, shin dropping to a sneaker
-  L(BD, path([[BX - 9, BY], [BX - 6, 82, 46, 64, 56, 52], [68, 49], [70, 58], [58, 66, 50, 80, BX + 8, BY]]));
-  L(B0, path([[BX - 7, BY - 1], [BX - 4, 82, 47, 65, 57, 53.5], [66, 51], [67.5, 57.5], [57, 65, 49, 79, BX + 6, BY - 1]]));
-  for (const t of [0.35, 0.6]){ const y = BY - t * 40, x = BX - 6 + t * 24; L(BD, strokeP([[x + 1, y], [x + 11 - t * 3, y + 3]], 1)); }   // banding
-  L(B3, strokeP([[BX - 6.4, BY - 2], [BX - 3.6, 82, 47, 65, 56.5, 53.8]], 1));                               // one lit rim
-  L(BD, path([[66, 54], [74, 53], [79, 62, 83, 72, 84.5, 86], [93.5, 86], [91, 74, 88, 64, 82, 56], [74, 51], [66, 53]]));
-  L(B0, path([[67, 55], [74, 54.5], [78.5, 63, 82, 72, 85.5, 85], [92, 85], [89.5, 73, 86.5, 64, 81, 57.5], [74, 52.5], [67, 54]]));
-  L(BD, strokeP([[80, 66], [87, 64.5]], 1)); L(BD, strokeP([[82.5, 74], [89.5, 73]], 1));                     // banding
-  L(B3, strokeP([[74.4, 54.4], [79.2, 63, 82.6, 72, 85.8, 84.6]], 1));
-  // the sneaker: toe cap, sole stripe, lace ticks
-  L(BD, path([[82, 85], [88, 82.5, 95, 82.5, 97, 86], [104, 87, 110, 89, 110, 93], [110, 97], [82, 97]]));
-  L(B0, path([[83, 86], [88, 83.6, 94.5, 83.6, 96, 87], [103, 88, 108.6, 90, 108.6, 93], [83, 93]]));
-  L(B2, path([[100, 88.6], [105, 89.4, 108.6, 91, 108.6, 93], [100, 93]])); L(BD, strokeP([[100, 88.6], [100, 93]], 0.9));   // toe cap
-  L(G2, rrect(81.5, 93, 29.5, 4, 1.4)); L(B3, strokeP([[83, 94.6], [109.5, 94.6]], 0.9));                       // sole with a light stripe
-  for (const [x, y] of [[89, 85], [92, 85.6], [95, 86.6]]) L(G2, strokeP([[x, y], [x + 1.6, y + 1.4]], 0.9));     // lace ticks
+  if (!D){ const by = bob;                                                                                                           // the gremlin's back leg, wrapped round behind the shin
+    L(K, strokeP([[102.6, 54 + by], [99, 60], [80, 64], [70, 64.6]], 3)); }                                                         // it runs behind the shin; the foot is drawn over the calf's back edge below
+  // ------------------------------------------------------------------ the giant leg: the dominant light shape
+  L(BD, path([[BX - 10, BY], [BX + 10, BY], [52, 72, 66, 56, 74, 50], [70, 34], [62, 36, 46, 52, 36, 66], [28, 78, 22, 88, BX - 10, BY]]));   // thigh, ~16px thick
+  L(B0, path([[BX - 8, BY - 1], [BX + 8, BY - 1], [51, 71.5, 65, 55.5, 73, 49.5], [69.4, 35.6], [61.6, 37.8, 46.5, 53, 37, 67], [29, 78.5, 23.4, 88.6, BX - 8, BY - 1]]));
+  L(B3, strokeP([[BX - 7.4, BY - 2], [23.6, 88, 29, 78, 37, 66.4], [46.6, 52.4, 61, 37.4, 69, 35.4]], 1));                     // its lit top edge
+  for (const [x, y] of [[33, 82], [44, 66]]) L(BD, strokeP([[x, y], [x + 11, y + 6]], 1));                                     // banding
+  L(BD, ell(78, 42, 11, 10)); L(B0, ell(77.6, 41.6, 10, 9)); L(B3, c => { c.lineWidth = 1; c.ellipse(77.6, 41.6, 9.6, 8.6, 0, Math.PI * 1.08, Math.PI * 1.62); c.stroke(); });   // the knee joint
+  L(BD, path([[71, 48], [68, 58, 69, 68, 76, 76], [84, 86], [96, 86], [93, 72, 92, 58, 89, 47]]));                               // shin with a calf
+  L(B0, path([[72.4, 48.6], [69.6, 58.4, 70.6, 67.6, 77, 75.4], [85, 84.8], [94.6, 84.8], [91.8, 72, 90.8, 58.4, 88, 48]]));
+  L(B3, strokeP([[89, 50], [91.6, 60, 92.6, 72, 95, 84]], 1));
+  L(BD, strokeP([[73.4, 60], [79, 59]], 1)); L(BD, strokeP([[76.6, 70], [84, 69]], 1)); L(BD, strokeP([[70.6, 51.6], [72.6, 54.4]], 1));
+  L(BD, ell(86, 40.5, 6.4, 7.4, 0.15)); L(B2, ell(85.6, 40.2, 5.4, 6.4, 0.15)); L(B3, c => { c.lineWidth = 1; c.ellipse(85.6, 40.2, 5.4, 6.4, 0.15, Math.PI * 1.25, Math.PI * 2.2); c.stroke(); });   // the kneecap on the outline
+  for (const y of [37, 40.5]) L(BD, ell(80.6, y, 0.9, 0.9));                                                                     // tooth marks
+  L(G2, strokeP([[64, 41], [70, 50]], 3.2)); L(G4, strokeP([[64.6, 40.4], [70.6, 49.4]], 0.6));                                 // brace straps
+  L(G2, strokeP([[73, 54], [90, 53]], 3.2)); L(G4, strokeP([[73, 53.2], [90, 52.2]], 0.6));
+  for (const [hx, hy] of [[71, 47.4], [79.6, 53.6]]){ L(G1, ell(hx, hy, 2.2, 2.2)); L(G4, c => { c.lineWidth = 0.9; c.arc(hx, hy, 1.5, 0, Math.PI * 2); c.stroke(); }); px(hx, hy, G5); }
+  const tsw = D ? 0 : Math.sin(f * 0.2 - 0.9) * 2.4, se = D ? [68, 59] : [70 + tsw, 66];                                                         // the chewed-through strap end
+  if (D) L(B3, strokeP([[79.6, 55.6], [77, 61, 71, 62, se[0], se[1]]], 2));   // the strap arcing down across the shadow to its paw else L(B2, strokeP([[73.6, 54.6], [71 + tsw * 0.4, 60, se[0], se[1]]], 2.2)); L(B3, strokeP([[74, 54.6], [71.6 + tsw * 0.4, 60, se[0] + 0.4, se[1] - 0.6]], 0.6), 150);
+  L(B2, path([[se[0] - 1.2, se[1] - 0.4], [se[0] + 1.2, se[1] - 0.4], [se[0] + 1.4, se[1] + 2], [se[0] + 0.4, se[1] + 1], [se[0] - 0.2, se[1] + 2.6], [se[0] - 1, se[1] + 1.2]]));
+  L(BD, path([[82, 86], [88, 83.6, 95, 83.6, 97, 87], [104, 88, 110, 90, 110, 94], [110, 98], [82, 98]]));                         if (!D){                                                                                                                          // the back foot: ankle out from behind the calf, toes curled round its edge
+    L(G3, path([[68.6, 60.6], [65, 61.4], [62.4, 63.6], [63, 67], [68.6, 67.2]]));                                                   // rim, so the heel reads against the dark wedge
+    L(K, path([[68.6, 61.6], [65.4, 62.2], [63.4, 64], [64, 66.2], [68.6, 66.2]]));                                                  // ankle and heel coming out from behind the calf
+    for (const k of [0, 1, 2]) L(K, ell(69.6, 62.4 + k * 1.6, 1.4, 0.8)); L(G2, strokeP([[69.4, 63.2], [70.6, 63.2]], 0.6)); L(G2, strokeP([[69.4, 64.8], [70.6, 64.8]], 0.6)); }   // toes curled over the calf's edge
+  // the sneaker
+  L(B0, path([[83, 87], [88, 84.6, 94.5, 84.6, 96, 88], [103, 89, 108.6, 91, 108.6, 94], [83, 94]]));
+  L(B2, path([[100, 89.6], [105, 90.4, 108.6, 92, 108.6, 94], [100, 94]])); L(BD, strokeP([[100, 89.6], [100, 94]], 0.9));
+  L(G2, rrect(81.5, 94, 29.5, 4, 1.4)); L(B3, strokeP([[83, 95.6], [109.5, 95.6]], 0.9));
+  for (const [x, y] of [[88, 86], [91, 86.6], [94, 87.6]]) L(G2, strokeP([[x, y], [x + 1.6, y + 1.4]], 0.9));
 
-  // ------------------------------------------------------------------ the gremlin, hunched over the knee
-  const HB = 38 + bob;                                                                                     // the hump of its back rises above its lowered head
-  for (const [fx, fy, sd] of [[47, 64, -1], [83, 63, 1]]){ L(K, ell(fx, fy, 4.6, 3.2, sd * 0.5)); for (const k of [-1, 0, 1]) L(K, ell(fx + sd * 2.4 + k * 1.4, fy + 2.4 - sd * k * 1.2, 1.4, 1.4)); }   // feet braced on the slopes
-  L(K, ell(52, 55 + bob * 0.5, 6, 6.5)); L(K, ell(77, 55 + bob * 0.5, 6, 6.5));                               // haunches
-  L(K, ell(64, HB, 15, 12));                                                                               // the hunched back
-  for (const [x, y] of [[56, -9], [60.5, -11], [67.5, -11], [72, -9]]) L(G2, c => { c.lineWidth = 0.9; c.arc(x, HB + y + 1, 1.8, Math.PI * 1.1, Math.PI * 1.9); c.stroke(); });   // spine ridges
-  L(G3, strokeP([[50.5, HB - 4], [49.4, HB + 2, 50.6, HB + 7]], 1.2));                                     // a cold lit edge down the left flank
-  for (const [x, y, s] of [[52, HB + 10, -1], [76, HB + 10, 1]]) L(G2, strokeP([[x, y], [x + s * 2.2, y + 2.6]], 0.9));   // haunch folds
-
-  // ------------------------------------------------------------------ the kneecap, braced: a hinged cap crossed by two straps
-  L(BD, ell(64, 55, 9.5, 8)); L(B0, ell(64, 54.5, 8.5, 7)); L(B2, ell(63, 53.2, 6.6, 5.2)); L(B3, ell(60.6, 51.2, 1.6, 1));
-  L(G2, strokeP([[55, 52.6], [73, 52.6]], 2.4)); L(G2, strokeP([[55.6, 58.6], [72.4, 58.6]], 2.4));        // brace straps
-  L(G4, strokeP([[56, 51.8], [72, 51.8]], 0.6)); L(G4, strokeP([[56.4, 57.8], [71.6, 57.8]], 0.6));
-  for (const sd of [-1, 1]){ L(G1, ell(64 + sd * 9.6, 55.6, 2.4, 2.4)); L(G4, c => { c.lineWidth = 0.9; c.arc(64 + sd * 9.6, 55.6, 1.6, 0, Math.PI * 2); c.stroke(); }); px(64 + sd * 9.6, 55.6, G5); }   // hinges
-  for (const x of [61, 64, 67]) L(BD, ell(x, 48.4, 1, 0.8));                                               // tooth marks in the cap's top
-  // the strap it chewed through, swinging from the outer hinge
-  const tsw = D ? 0 : Math.sin(f * 0.2 - 0.9) * 2.2;
-  L(B2, c => { c.lineWidth = 2.2; c.moveTo(74, 57); c.quadraticCurveTo(76 + tsw * 0.3, 63, 76.5 + tsw, 67.5); c.stroke(); });
-  L(B2, path([[75.4 + tsw, 67], [77.8 + tsw, 67], [77.6 + tsw, 69.6], [76.8 + tsw, 68.4], [76.2 + tsw, 70.2]]));   // its ragged end
-  L(BD, strokeP([[74.6, 59], [76 + tsw * 0.5, 64]], 0.7));
-
-  // ------------------------------------------------------------------ the head: lowered so the jaw clamps the cap; swings round to grin
-  const HX = grin ? 67 : 64, HY = D ? 43 : grin ? 36 : 40 + bob * 0.5 + (bite ? 0.8 : 0);
-  if (D) XF = rot(0.3, 64, 47);                                                                           // beaten: head tipped over onto the kneecap
-  const earT = Math.sin(f * 0.2 - 1.2) * 1.2;                                                             // ears twitch a beat behind
-  for (const sd of [-1, 1]){ const X = x => HX + sd * x, big = grin && sd > 0 ? 1.25 : 1, lag = D ? 7 : sd * earT, tipY = HY - 11 * big + lag;
-    L(K, path([[X(7), HY - 3], [X(15 * big), HY - 8 * big + lag * 0.5, X(22 * big), tipY + 1, X(26 * big), tipY], [X(22 * big), HY - 4 + lag * 0.6, X(16 * big), HY + 2, X(8), HY + 3]]));
-    L(G2, strokeP([[X(10), HY - 1], [X(17 * big), HY - 5 * big + lag * 0.5, X(22 * big), tipY + 3]], 1));
-    L(G1, strokeP([[X(14 * big), HY - 2.6 + lag * 0.4], [X(15 * big), HY - 0.4 + lag * 0.4]], 0.9)); }      // a notch bitten out
-  L(K, ell(HX, HY, 11, 8.6));
-  for (const sd of [-1, 1]){ const X = x => HX + sd * x;                                                  // stubby horns curling back
-    L(K, path([[X(3), HY - 6], [X(4), HY - 10.5, X(6.5), HY - 14, X(9.5), HY - 15], [X(8.6), HY - 12, X(8.6), HY - 8.6, X(8), HY - 6.2]])); L(G3, strokeP([[X(4.4), HY - 7.6], [X(5.4), HY - 11, X(7.6), HY - 13.6]], 0.9)); }
-  const eyeY = HY - 1;
-  if (D) for (const sd of [-1, 1]){ const ex = HX + sd * 5; L(G4, strokeP([[ex - 3, eyeY - 3], [ex + 3, eyeY + 3]], 2)); L(G4, strokeP([[ex + 3, eyeY - 3], [ex - 3, eyeY + 3]], 2)); }
-  else if (grin) for (const sd of [-1, 1]){ const ex = HX + sd * 5; L(A[0], strokeP([[ex - 4, eyeY - sd * 0.6], [ex + 4, eyeY + sd * 0.6]], 2.4)); L(A[2], strokeP([[ex - 3.4, eyeY - sd * 0.6], [ex + 3.4, eyeY + sd * 0.6]], 1)); px(ex - sd * 1.6, eyeY, A[4]);
-    L(K, path([[ex - 5, eyeY - 4], [ex + 5, eyeY - 4], [ex - sd * 5, eyeY - 1.2], [ex + sd * 5, eyeY - 2.8]])); }          // squinting to a glinting slit
-  else for (const sd of [-1, 1]){ const ex = HX + sd * 5, ro = -sd * 0.36, rx = 3.6, ry = 2.2;
-    L(A[0], ell(ex, eyeY, rx + 1, ry + 0.9, ro)); L(A[2], ell(ex, eyeY, rx, ry, ro)); L(A[3], ell(ex + sd * 0.6, eyeY + 0.3, rx * 0.5, ry * 0.42, ro)); L(K, ell(ex - sd * 0.8, eyeY + 0.3, 0.6, ry * 0.9, 0));
-    L(K, c => { const o = ex + sd * (rx + 2), i = ex - sd * (rx + 2); c.moveTo(o, eyeY - ry - 3); c.lineTo(i, eyeY - ry - 3); c.lineTo(i, eyeY + 0.2); c.lineTo(o, eyeY - 2.6); c.closePath(); c.fill(); });
-    L(G3, strokeP([[ex + sd * (rx + 1.4), eyeY - 3.3], [ex - sd * (rx + 1), eyeY - 0.3]], 0.9)); px(ex + sd * rx * 0.35, eyeY + ry * 0.35, A[4]); }
-  const tooth = (x, y, dn) => L(G5, path([[x - 1, y], [x + 1, y], [x, y + (dn ? 2 : -2)]]));
-  if (D){ L(G1, strokeP([[HX - 4, HY + 5], [HX, HY + 6, HX + 4, HY + 5]], 1)); tooth(HX + 2, HY + 5.4, true); }
-  else if (grin){ L(G1, c => { c.moveTo(HX - 6, HY + 3); c.quadraticCurveTo(HX, HY + 6, HX + 6, HY + 3); c.quadraticCurveTo(HX, HY + 10, HX - 6, HY + 3); c.closePath(); c.fill(); });
-    for (let k = 0; k < 5; k++){ const x = HX - 4.4 + k * 2.2, y = HY + 3.6 + Math.sin(k / 4 * Math.PI) * 1.4; tooth(x, y, true); } }
-  else { const my = HY + 5.6;                                                                             // jaw on the cap: upper fangs fixed, lower jaw drops `open` px
-    L(G1, c => { c.moveTo(HX - 5, my - 0.4); c.lineTo(HX + 5, my - 0.4); c.lineTo(HX + 4, my + open + 0.6); c.lineTo(HX - 4, my + open + 0.6); c.closePath(); c.fill(); });
-    for (const x of [HX - 3.4, HX - 1.1, HX + 1.1, HX + 3.4]) tooth(x, my - 0.4, true);
-    if (open > 0) for (const x of [HX - 2.2, HX + 2.2]) tooth(x, my + open + 0.6, false); }
-  XF = null;
-  // paws gripping the knee either side of the cap: chunky, notched fingers
-  for (const sd of [-1, 1]){ const X = x => 64 + sd * x, py = D ? 72 : 57;
-    L(K, strokeP([[X(12), HB + 4], [X(15), py - 6], [X(11.5), py]], 4.4));
-    L(K, ell(X(11), py + 1, 3, 3)); for (const k of [-1, 0, 1]) L(K, ell(X(9) - sd * 0.2, py + 1 + k * 1.8, 1.3, 1.1));
-    for (const k of [-0.9, 0.9]) L(G2, strokeP([[X(10.6), py + 1 + k], [X(8.6), py + 1 + k]], 0.7)); }
-
-  // ------------------------------------------------------------------ pain sparks off the bite: jagged bolts, different every snap
-  if (bite){
-    const seed = n => { const v = Math.sin(snap * 12.9898 + n * 78.233) * 43758.5453; return v - Math.floor(v); };
-    for (let i = 0; i < 4; i++){ const sd = i % 2 ? 1 : -1, x0 = 64 + sd * (5 + seed(i) * 2), y0 = 47 + seed(i + 9) * 3, len = 3 + Math.floor(seed(i + 3) * 3), ang = -Math.PI / 2 + sd * (0.6 + seed(i + 5) * 0.9);
-      let x = x0, y = y0; const pts = [[x, y]];
-      for (let k = 0; k < len; k++){ const a = ang + (k % 2 ? 0.7 : -0.7) * (seed(i * 7 + k) > 0.5 ? 1 : -1); x += Math.cos(a) * 2; y += Math.sin(a) * 2; pts.push([x, y]); }
-      L(A[3], strokeP(pts, 1)); px(pts[pts.length - 1][0], pts[pts.length - 1][1], A[2]); if (seed(i + 20) > 0.6) px(pts[1][0], pts[1][1], A[4]); }
-  } else if (gnawing && ph === 5) for (const sd of [-1, 1]) px(64 + sd * 6, 48, A[1]);                    // a dull throb between bites
-  if (!D) for (let i = 0; i < 5; i++){ const t = ((f * 0.5 + i * 11) % 44) / 44, x = 58 + i * 3 + Math.sin(t * 7 + i) * 2, y = 50 + t * 42; if (t < 0.9 && (x < 52 || x > 76 || y > 64)) px(x, y, i % 2 ? '#8f877c' : '#c9c2b6'); }   // bone dust sifting down
+  // ------------------------------------------------------------------ the gremlin, about 30px tall
+  if (D){
+    // beaten: hanging by one raised paw from the chewed strap, head lolled under that arm, legs swinging slowly
+    const sw = Math.sin(f * 0.08) * 1, pw = se, pre = buf.slice();
+    L(K, strokeP([[pw[0], pw[1] + 1], [pw[0] - 0.2, pw[1] + 7.4]], 2.2));                                                      // the raised arm, 2px, straight up
+    L(K, rrect(pw[0] - 1.8, pw[1] - 1.8, 3.8, 3.8, 1.2)); L(G2, strokeP([[pw[0] - 1.4, pw[1]], [pw[0] + 1.4, pw[1]]], 0.8));   // the paw gripping the strap, notched
+    for (const [y, len] of [[69, 3.4], [73.4, 4.2], [77.8, 3.6]]) { L(K, path([[71, y - 1.6], [72.6 + len * 0.4, y + len * 0.9], [72.8, y + 0.6]])); L(G3, strokeP([[71.4, y - 1.2], [72.4 + len * 0.4, y + len * 0.9]], 0.8)); }   // spikes down its back, limp
+    XF = rot(0.2, 67, 74); L(K, ell(67, 75, 5.4, 6.6)); L(G3, c => { c.lineWidth = 1; c.ellipse(67, 75, 5.4, 6.6, 0, Math.PI * 1.55, Math.PI * 2.15); c.stroke(); }); XF = null;   // body
+    for (const dx of [-2.4, 1.6]){ const fx = 67 + dx - 1.4 + sw; L(K, strokeP([[67 + dx, 80], [67 + dx - 1.2 + sw, 84]], 2.6));   // legs ~10 degrees off vertical, swinging
+      L(K, rrect(fx - 1.4, 83, 3, 6, 1.2)); for (const k of [-1, 0, 1]) L(K, ell(fx + k * 1.1, 89.2, 0.7, 0.9)); }                    // big flat feet hanging toes-down
+    L(K, strokeP([[63, 77], [61.4 + sw * 0.5, 82], [61.2 + sw * 0.5, 85]], 2.2));                                                // the other arm limp
+    const HX = 63.6, HY = 69, tilt = 0.47;
+    XF = rot(tilt, HX, HY);                                                                                                        // the same wide flat head as when it's fighting, lolled over
+    for (const sd of [-1, 1]) L(K, path([[HX + sd * 7, HY - 2], [HX + sd * 11, HY - 0.6, HX + sd * 13, HY + 3, HX + sd * 13.4, HY + 6.4], [HX + sd * 11, HY + 4, HX + sd * 9, HY + 2.6, HX + sd * 7, HY + 2]]));   // ears drooping down at the sides
+    L(K, path([[HX - 8, HY - 1.6], [HX - 7.6, HY - 5, HX + 7.6, HY - 5, HX + 8, HY - 1.6], [HX + 8.4, HY + 2.4, HX + 4, HY + 4.4, HX, HY + 4.4], [HX - 4, HY + 4.4, HX - 8.4, HY + 2.4, HX - 8, HY - 1.6]]));
+    for (const sd of [-1, 1]) L(K, strokeP([[HX + sd * 3, HY - 3.8], [HX + sd * 4.2, HY - 5.4]], 1.8));                                 // small horn nubs
+    L(G1, strokeP([[HX - 2.6, HY + 3], [HX, HY + 3.6, HX + 2.6, HY + 3]], 1));
+    XF = null;
+    { const cs = Math.cos(tilt), sn = Math.sin(tilt);                                                                               // X eyes upright and crisp, placed along the tilted face
+      for (const sd of [-1, 1]){ const lx = sd * 4, ly = -0.8, cx = Math.round(HX + lx * cs - ly * sn), cy = Math.round(HY + lx * sn + ly * cs);
+        for (let k = -2; k <= 2; k++){ px(cx + k, cy + k, G4); px(cx + k + 1, cy + k, G4); px(cx + k, cy - k, G4); px(cx + k + 1, cy - k, G4); } } }   // 2px strokes so they read small
+    for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++){ const i = y * W + x; if (buf[i] === K && pre[i] !== K) for (const j of [i - 1, i + 1, i - W, i + W]) if (buf[j] !== K && pre[j] === buf[j]) buf[j] = 'rim'; }
+    for (let i = 0; i < W * H; i++) if (buf[i] === 'rim') buf[i] = G3;                                                             // a 1px rim so it stands off the dark wedge
+    L(K, rrect(62, 93, 7, 1, 0));                                                                                                 // its shadow on the floor slab
+  } else {
+    // ------------------------------------------------------------------ the gremlin: goblin-built, clinging to the front of the knee. Black limbs only over the light leg, gaps of panel elsewhere.
+    const by = bob, HX = grin ? 98 : 96, HY = (grin ? 28.6 : 30.5) + bob * 0.5 + (bite ? 0.8 : 0);
+    // legs: one braced on the shin with a big flat foot, the other dangling free (a panel gap between them)
+    L(K, strokeP([[97, 54 + by], [95, 59], [94, 63.6]], 3)); L(K, rrect(90, 63.6, 8.4, 3.2, 1.2));
+    for (const k of [0, 1, 2]) L(K, ell(90.6 + k * 2.3, 67.2, 1, 0.9)); L(G2, strokeP([[92.2, 66.2], [92.2, 67.6]], 0.6)); L(G2, strokeP([[94.5, 66.2], [94.5, 67.6]], 0.6));   // three toes
+    // a row of spikes down its spine, jutting out against the panel, each with a lit leading edge
+    for (const [t, len] of [[0.05, 7.4], [0.45, 8], [0.85, 7]]){ const a = -1.1 + t * 1.5, cx = 100.4 + Math.cos(a) * 6, cy = 46 + by + Math.sin(a) * 9.4, nx = 0.8, ny = 0.6, nl = 1, tx = -0.6 * 2.2, ty = 0.8 * 2.2;                                                              // swept downward along the back
+      const tip = [cx + nx / nl * len, cy + ny / nl * len], tipR = [cx + nx / nl * (len + 1.2), cy + ny / nl * (len + 1.2)];
+      L(G3, path([[cx - tx * 1.5, cy - ty * 1.5], tipR, [cx + tx * 1.5, cy + ty * 1.5]]));                                          // a rim so the spike stands off the dark panel
+      L(K, path([[cx - tx, cy - ty], tip, [cx + tx, cy + ty]])); L(G5, strokeP([[cx - tx * 0.5, cy - ty * 0.5], tip], 1)); }   // a solid body-black spike, lit along its leading edge
+    // the pot-bellied torso, to the right of the cap
+    L(K, ell(100.4, 46 + by, 6.4, 10)); L(G3, strokeP([[105.4, 41 + by], [107, 46 + by, 105.4, 52.4 + by]], 1.2));
+    L(G3, strokeP([[101, 47.4 + by], [101.4, 49 + by]], 1)); L(G2, strokeP([[97, 43 + by], [99, 43.6 + by]], 0.8));                    // navel, a rib
+    // the near arm hooks across the face of the cap, black on light; the far arm hides behind, only its fingers show at the cap's left edge
+    L(K, strokeP([[95.4, 40 + by], [93, 47, 87, 48, 82.6, 45.4]], 2.8)); L(K, ell(90.4, 47, 1.8, 1.6));                                   // knobbly elbow
+    L(K, rrect(79.6, 42.4, 4, 4.2, 1.4)); L(G2, strokeP([[80.2, 43.8], [82.6, 43.8]], 0.7)); L(G2, strokeP([[80.2, 45.2], [82.6, 45.2]], 0.7));
+    for (const k of [0, 1, 2]) L(K, ell(80.6, 37.4 + k * 1.7, 1.1, 0.8));                                                                 // the far hand's fingers
+    // the head: wide and flat (~16x9), ears jutting out sideways against the panel, horn nubs, the jaw clamped on the cap
+    const earT = Math.sin(f * 0.2 - 1.2) * 0.9;
+    for (const sd of [-1, 1]){ const lag = sd * earT, root = [HX + sd * 7.4, HY - 0.6], tip = [HX + sd * (grin && sd < 0 ? 19 : 17.6), HY + 0.8 + lag];
+      L(K, path([[root[0], root[1] - 2.6], [root[0] + sd * 4, root[1] - 4.4, tip[0] - sd * 3, tip[1] - 1.4, tip[0], tip[1]], [tip[0] - sd * 2, tip[1] + 1.6, root[0] + sd * 4, root[1] + 3, root[0], root[1] + 2.4]]));
+      L(G2, strokeP([[root[0] + sd * 1.6, root[1] - 0.2], [tip[0] - sd * 2.6, tip[1] + 0.2]], 0.9));
+      L(G1, strokeP([[root[0] + sd * 5.4, root[1] - 3.2 + lag * 0.4], [root[0] + sd * 5.8, root[1] - 1 + lag * 0.4]], 0.9)); }
+    L(K, path([[HX - 8, HY - 1.6], [HX - 7.6, HY - 5, HX + 7.6, HY - 5, HX + 8, HY - 1.6], [HX + 8.4, HY + 2.4, HX + 4, HY + 4.4, HX, HY + 4.4], [HX - 4, HY + 4.4, HX - 8.4, HY + 2.4, HX - 8, HY - 1.6]]));
+    for (const sd of [-1, 1]) L(K, strokeP([[HX + sd * 3, HY - 3.8], [HX + sd * 5, HY - 6]], 2.2));
+    L(G2, strokeP([[HX - 2.6, HY - 3.4], [HX, HY - 2.8, HX + 2.6, HY - 3.4]], 0.8));
+    L(G3, strokeP([[HX - 7.4, HY - 2.4], [HX - 6.8, HY - 4.6, HX - 3, HY - 4.8]], 0.9));
+    const eyeY = HY - 1;
+    if (grin) for (const sd of [-1, 1]){ const ex = HX + sd * 3.8, ix = ex - sd * 1.8, ox = ex + sd * 2.4; L(A[0], strokeP([[ix, eyeY + 0.6], [ox, eyeY - 1]], 1.8)); L(A[2], strokeP([[ix, eyeY + 0.6], [ox, eyeY - 1]], 0.8)); px(ix, eyeY + 0.6, A[4]); }
+    else for (const sd of [-1, 1]){ const ex = HX + sd * 3.8, ro = -sd * 0.38, rx = 2.7, ry = 1.7;
+      L(A[0], ell(ex, eyeY, rx + 0.8, ry + 0.7, ro)); L(A[2], ell(ex, eyeY, rx, ry, ro)); L(A[3], ell(ex + sd * 0.4, eyeY + 0.3, rx * 0.5, ry * 0.42, ro)); L(K, ell(ex - 0.8, eyeY + 0.2, 0.5, ry * 0.9, 0));
+      L(K, c => { const o = ex + sd * (rx + 1.4), i = ex - sd * (rx + 1.4); c.moveTo(o, eyeY - ry - 2.4); c.lineTo(i, eyeY - ry - 2.4); c.lineTo(i, eyeY + 0.1); c.lineTo(o, eyeY - 2); c.closePath(); c.fill(); });
+      px(ex + sd * rx * 0.4, eyeY + ry * 0.3, A[4]); }
+    L(G2, strokeP([[HX - 0.6, HY + 0.8], [HX - 1.4, HY + 2]], 0.8));
+    const tooth = (x, y, dn) => L(G5, path([[x - 0.8, y], [x + 0.8, y], [x, y + (dn ? 1.6 : -1.6)]]));
+    if (grin){ L(G1, c => { c.moveTo(HX - 6.4, HY + 2.2); c.quadraticCurveTo(HX, HY + 4.2, HX + 6.4, HY + 2.2); c.quadraticCurveTo(HX, HY + 8, HX - 6.4, HY + 2.2); c.closePath(); c.fill(); });
+      for (let k = 0; k < 6; k++) tooth(HX - 5 + k * 2, HY + 2.8 + Math.sin(k / 5 * Math.PI) * 1, true); }
+    else {                                                                                                                                // the jaw: its widest part, dropped onto the cap's top-right edge
+      L(K, path([[HX - 6, HY + 1.4], [HX + 3, HY + 3], [HX + 1.4, HY + 5.4 + open], [HX - 9.6, HY + 5.6 + open], [HX - 10.6, HY + 3]]));
+      L(G1, path([[HX - 9, HY + 3.4], [HX + 1, HY + 3.6], [HX, HY + 4.4 + open * 0.8], [HX - 8.6, HY + 4.4 + open * 0.8]]));
+      for (const x of [HX - 8.4, HX - 5.8]){ L(K, path([[x - 1.3, HY + 4.6], [x + 1.3, HY + 4.6], [x, HY + 8 + open * 0.6]])); L(G5, path([[x - 0.8, HY + 4.8], [x + 0.8, HY + 4.8], [x, HY + 7.2 + open * 0.6]])); }   // two fangs sunk into the cap
+      for (const x of [HX - 3, HX - 0.8]) tooth(x, HY + 3.6, true); }
+    if (bite){
+      const seed = n => { const v = Math.sin(snap * 12.9898 + n * 78.233) * 43758.5453; return v - Math.floor(v); }, ox = 86, oy = 40, n = 2 + (seed(30) > 0.5 ? 1 : 0);
+      const bases = [-2.45, -2.0, 2.55];
+      for (let i = 0; i < n; i++){ const ang = bases[(i + snap) % 3] + (seed(i) - 0.5) * 0.2, zz = seed(i + 8) > 0.5 ? 1 : -1;
+        let x = ox + Math.cos(ang) * 7.4, y = oy + Math.sin(ang) * 7.4; const pts = [[x, y]]; px(x, y, A[4]);
+        for (let k = 0; k < 3; k++){ const a = ang + (k % 2 ? -0.3 : 0.3) * zz; x += Math.cos(a) * 2.2; y += Math.sin(a) * 2.2; pts.push([x, y]); }
+        L(A[3], strokeP(pts, 1)); px(x, y, A[2]); }
+    } else if (gnawing && ph === 5) px(79, 34, A[1]);
+    for (let i = 0; i < 4; i++){ const t = ((f * 0.5 + i * 11) % 44) / 44, x = 86 + i * 1.6 + Math.sin(t * 7 + i) * 1.4, y = 50 + t * 34; if (t < 0.9 && y > 52) px(x, y, i % 2 ? '#8f877c' : '#c9c2b6'); }
+  }
 
   const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
   blitBuf(ctx, buf, W, H);
@@ -4555,13 +4582,15 @@ function drawKneeGremlin(cv, f, accent){
 
 const NEW_ART = {
   golem: Object.assign((cv, f, acc, dead) => { Object.assign(drawLaundryGolem, {pose: 'hips', hanger: 'light', basketLight: true, sticker: false, aura: false, dead}); drawLaundryGolem(cv, f, acc); }, {ownDead: true, starY: 13}),
+  gremlin: Object.assign((cv, f, acc, dead) => { drawKneeGremlin.dead = dead; drawKneeGremlin(cv, f, acc); }, {ownDead: true, starY: 50, starX: 62, starRX: 9, starRY: 3, starSmall: true}),
   kraken: Object.assign((cv, f, acc, dead) => { drawCouchKraken.dead = dead; drawCouchKraken(cv, f, acc); }, {ownDead: true, starY: 34}),   // it slumps by itself, so the TV static isn't squashed
 };
 let artLayer = null, oldArtCv = null, panelCv = null, artKey = '';
 // beaten: three chunky four-point stars circling the head, a bright core with pop-coloured arms, twinkling as they go round
-function dizzyStars(g, cy, A, t){
-  for (let i = 0; i < 3; i++){ const a = t * 0.12 + i * Math.PI * 2 / 3, front = Math.sin(a) > -0.2, x = Math.round(64 + Math.cos(a) * 20), y = Math.round(cy + Math.sin(a) * 4);
+function dizzyStars(g, cy, A, t, cx = 64, rx = 20, ry = 4, small = false){
+  for (let i = 0; i < 3; i++){ const a = t * 0.12 + i * Math.PI * 2 / 3, front = Math.sin(a) > -0.2, x = Math.round(cx + Math.cos(a) * rx), y = Math.round(cy + Math.sin(a) * ry);
     const px = (dx, dy, c) => { g.fillStyle = c; g.fillRect(x + dx, y + dy, 1, 1); }, arm = front ? 3 : 2, tw = Math.sin(t * 0.5 + i * 2.1) > 0;
+    if (small){ px(0, 0, A[4]); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) px(dx, dy, A[3]); continue; }   // a small monster gets small 3x3 stars
     for (let k = 1; k <= arm; k++){ const c = k === arm ? A[1] : A[2]; px(k, 0, c); px(-k, 0, c); px(0, k, c); px(0, -k, c); }   // the four points
     if (front){ px(1, 1, A[1]); px(-1, 1, A[1]); px(1, -1, A[1]); px(-1, -1, A[1]); }                                         // a fat middle
     px(0, 0, A[4]); if (tw && front){ px(1, 0, A[3]); px(-1, 0, A[3]); px(0, 1, A[3]); px(0, -1, A[3]); } }                // the bright core, twinkling
@@ -4589,7 +4618,7 @@ function drawBossTile(canvas, boss, f, motion, hurt, dead){
     if (dead && draw.ownDead){
       g.drawImage(artLayer, 0, 13);
       const t = motion ? performance.now() / 100 : 0;
-      dizzyStars(g, 13 + draw.starY, A, t);
+      dizzyStars(g, 13 + draw.starY, A, t, draw.starX, draw.starRX, draw.starRY, draw.starSmall);
     } else if (dead){
       // defeated: it slumps down onto the floor and dizzy stars circle where its head was
       const SQ = 0.6, GY = 92; g.drawImage(artLayer, 0, 0, 128, 104, 0, 13 + GY * (1 - SQ), 128, 104 * SQ);
