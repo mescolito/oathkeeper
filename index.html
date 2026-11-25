@@ -930,7 +930,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'c9e3abcb43';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'cd4392bec9';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -4706,6 +4706,13 @@ function drawFogColossus(cv, f, accent){
   const strokeP = (pts, w) => c => { c.lineWidth = w; c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.stroke(); };
   const rect = (x, y, w, h) => c => { c.rect(x, y, w, h); c.fill(); };
   const px = (x, y, c) => L(c, cc => { cc.rect(Math.round(x), Math.round(y), 1, 1); cc.fill(); });
+  // polish tools: these write straight into the pixel buffer (cheap), reading a snapshot so passes don't feed each other
+  let snap = buf; const at = (x, y) => (x < 0 || y < 0 || x >= W || y >= H) ? null : snap[y * W + x];
+  const put = (c, x, y, w = 1, h = 1) => { x = Math.round(x); y = Math.round(y); for (let yy = Math.max(0, y); yy < Math.min(H, y + h); yy++) for (let xx = Math.max(0, x); xx < Math.min(W, x + w); xx++) buf[yy * W + xx] = c; };
+  const KS = new Set([K]), DARK = new Set([K, G1]);
+  // rim light: recolour edge pixels facing up-left (tl) or up (t); oy keeps the dither pattern glued to the part as it moves
+  const rim = (x0, y0, x1, y1, col, mode, from, skip, oy) => { for (let y = Math.max(0, y0); y <= Math.min(H - 1, y1); y++) for (let x = Math.max(0, x0); x <= Math.min(W - 1, x1); x++){ const c = at(x, y); if (!c || !from.has(c)) continue; const up = !at(x, y - 1);
+      const hit = mode === 't' ? up : (!at(x - 1, y - 1) && (up || !at(x - 1, y))); if (hit && !(skip && ((x + (y - oy) * 3) % skip === 0))) buf[y * W + x] = col; } };
   const rot = (a, cx, cy) => { const cs = Math.cos(a), sn = Math.sin(a); return [cs, sn, -sn, cs, cx - cs * cx + sn * cy, cy - sn * cx - cs * cy]; };
 
   const bob = D ? 3 : Math.round(Math.sin(TAU * P) * 1.5);               // a slow float, the beam sweeping side to side
@@ -4714,6 +4721,11 @@ function drawFogColossus(cv, f, accent){
   // ------------------------------------------------------------------ the ground: a pool of lens-light far below, banded
   if (D){ L(G2, ell(cx, 96, 22, 2.6)); }
   else { const fl = (f % 48) < 3 ? 1 : 0; L(A[0 + fl], ell(cx, 96, 26, 3)); L(A[1 + fl], ell(cx + side * 9, 96, 15, 2)); L(A[Math.min(4, (Math.abs(side) > 0.6 ? 3 : 2) + fl)], ell(cx + side * 14, 96, 6, 1)); }   // the pool flares a band on the glare   // the pool brightens on the side the beam faces
+
+  // polish: a hot crescent and a sparkle on the side the beam faces, a lit far lip, loose flecks round the pool (beaten: a few grey flecks)
+  for (const [dx, dy, w] of [[-27, 0, 3], [25, 1, 3], [-31, 1, 1], [30, 0, 1], [-13, 4, 2], [11, 5, 2], [0, 5, 1]]){ if (D && Math.abs(dx) > 26) continue; put(D ? G2 : A[dy > 3 ? 1 : 0], cx + dx, 95 + dy, w, 1); }
+  if (!D){ const px0 = cx + (side - 1) * 6; L(A[3], c => { c.lineWidth = 1; c.ellipse(px0, 95.4, 13.6, 2.2, 0, Math.PI * 0.2, Math.PI * 0.62); c.stroke(); });
+    L(A[2], c => { c.lineWidth = 1; c.ellipse(cx, 95, 17.6, 2.8, 0, Math.PI * 1.15, Math.PI * 1.5); c.stroke(); }); put(A[4], px0 + 3.5, 97, 3, 1); }
 
   // ------------------------------------------------------------------ the beam: a long banded wedge sweeping out from the lens (behind everything)
                                                                                 // the lens
@@ -4725,6 +4737,12 @@ function drawFogColossus(cv, f, accent){
       if (ext > 0.3) L(A[1], c => { const sp = 0.08, l2 = len * 0.92; c.moveTo(LX, LY); c.lineTo(LX + Math.cos(ang - sp) * l2, LY + Math.sin(ang - sp) * l2); c.lineTo(LX + Math.cos(ang + sp) * l2, LY + Math.sin(ang + sp) * l2); c.closePath(); c.fill(); });
       if (ext > 0.5) L(A[2], strokeP([[LX, LY], [LX + Math.cos(ang) * len * 0.7, LY + Math.sin(ang) * len * 0.7]], 1));
       const nd = Math.round(ext * 4); for (let k = 0; k < nd; k++){ const d = len + 3 + k * 4, sz = 3 - Math.min(2, k); L(k < 2 ? A[1] : A[0], rect(Math.round(LX + Math.cos(ang) * d), Math.round(LY + Math.sin(ang) * d) - 1, sz, sz)); }   // shrinking square dashes
+      // polish. Everything here sits at a fraction of the beam's length and a multiple of its spread, so it sweeps round and shrinks to nothing with the beam
+      const ca = Math.cos(ang), sa = Math.sin(ang), bp = (d, off) => [LX + ca * d - sa * off * (side >= 0 ? 1 : -1), LY + sa * d + off];
+      if (ext > 0.5){ L(A[3], strokeP([bp(len * 0.27, -1.6), bp(len * 0.69, -2.4)], 1)); L(A[4], strokeP([bp(len * 0.23, -1.4), bp(len * 0.4, -1.8)], 1)); }       // a hard hot core just above the centre line
+      [[0.54, 0.03], [0.69, -0.108], [0.81, 0.038], [0.92, -0.058]].forEach(([fr, c], i) => { const u = (fr + P * 4) % 1, d = u * len; if (d > 14 && i < nd) put(A[3], ...bp(d, c * d)); });   // motes carried out along it
+      if (len > 26) for (const [fr, w] of [[0.77, 1], [0.89, 2]]){ const gx = Math.round(LX + ca * fr * len) - (side < 0 ? w - 1 : 0); for (let y = LY - 12; y < LY + 16; y++) for (let x = gx; x < gx + w; x++) if (y >= 0 && y < 90) buf[y * W + x] = null; }   // the far end sliced up by fog
+      [[4, -5.5, 2], [8, -1.8, 2], [5, 2.4, 1], [10, -7, 1]].forEach(([d, off, sz], k) => { if (k < nd){ const [x, y] = bp(len + d, off); put(A[0], x - (side < 0 ? sz - 1 : 0), y, sz, sz); } });   // and scattered past it
     }
   }
 
@@ -4767,9 +4785,32 @@ function drawFogColossus(cv, f, accent){
   else { const facing = Math.sin(turn) > 0 && Math.abs(side) < 0.35, pulse = facing ? 1 : 0, look = Math.round(side * 1.4);   // the lens flares as the beam sweeps past you                                      // the pupil follows the beam
     L(A[0], ell(LX, LY, 7.4, 7.4)); L(A[1], ell(LX, LY, 6, 6)); L(A[2], ell(LX, LY, 4.8, 4.8)); L(A[3], c => { c.lineWidth = 0.8; c.arc(LX, LY, 4.4, 0, Math.PI * 2); c.stroke(); });
     L(K, rect(Math.round(LX - 1 + look), Math.round(LY - 0.5), 3, 2)); px(LX - 2 + look, LY - 1, A[4]);   // a small 3x2 pupil, set low, iris all round it, catchlight touching it upper-left
+    L(A[3], c => { c.lineWidth = 1; c.arc(LX, LY - 1, 4.4, Math.PI * 1.05, Math.PI * 1.55); c.stroke(); }); put(A[4], LX - 4, LY - 4, 2, 1); put(A[4], LX + 1 + look, LY);   // polish: a second iris band and a catchlight, under the lids; a glint in the pupil
     const wide = (f % 48) < 3 ? 1 : 0; L(K, rect(LX - 8, LY - 8, 16, 4.2 - wide)); L(K, path([[LX - 8, LY + 4.2 + wide], [LX - 3, LY + 3.6 + wide], [LX + 3, LY + 3.6 + wide], [LX + 8, LY + 4.2 + wide], [LX + 8, LY + 8], [LX - 8, LY + 8]]));   // heavy upper and lower lids: a narrowed glare that snaps wider every few seconds
-    L(K, rect(LX - 8, LY - 5, 2.4, 10)); L(K, rect(LX + 5.6, LY - 5, 2.4, 10)); }   // band ends cut square against the frame   // a heavy lid: an even bar across the top of the eye, drooping at the ends   // a hard horizontal bar pupil, a catchlight on one side
+    L(K, rect(LX - 8, LY - 5, 2.4, 10)); L(K, rect(LX + 5.6, LY - 5, 2.4, 10));
+    put(A[0], LX - 5, LY + 4 + wide, 10, 1); put(G3, LX - 6, LY - 8, 12, 1);                                    // polish: a lower lid line, a lit upper lid
+    for (const x of [56, 72]) put(G1, x, 26 + bob, 1, 18); }                                                  // polish: glazing bars   // band ends cut square against the frame   // a heavy lid: an even bar across the top of the eye, drooping at the ends   // a hard horizontal bar pupil, a catchlight on one side
   XF = null;
+
+  // ------------------------------------------------------------------ polish: rim light, ironwork, lit crowns on the fog. Keyed to bob (and the beaten tilt), so it all rides the float
+  { snap = buf.slice(); const cy0 = 52 + bob, cs = Math.cos(-0.22), sn = Math.sin(-0.22), lean = D ? 11 : 0;
+    const R2 = (x, y) => D ? [Math.floor(cx + cs * (x + 0.5 - cx) - sn * (y + 0.5 - cy0)), Math.floor(cy0 + sn * (x + 0.5 - cx) + cs * (y + 0.5 - cy0))] : [x, y];   // beaten, the lantern is knocked askew: its details go with it
+    rim(44 - lean, 2 + bob, 84, 50 + bob + (D ? 6 : 0), G3, 'tl', DARK, 0, bob); rim(44 - lean, 2 + bob, 66 - lean, 20 + bob, G4, 'tl', KS, 2, bob);                    // lantern
+    for (let x = 54; x < 74; x++){ const [a, b] = R2(x, 22 + bob); put(x < 60 ? G4 : G3, a, b); }                                                                         // a lit line under the cornice
+    for (let x = 50; x < 80; x += 4){ const [a, b] = R2(x, 47 + bob); put(G4, a, b); }                                                                                    // gallery rail studs
+    for (const y of [14, 18]) for (let x = 53; x <= 76; x += 2){ const [a, b] = R2(x, y + bob); if (at(a, b) === K && at(a - 2, b) && at(a + 2, b) && at(a, b - 2) && at(a, b + 1)) buf[b * W + a] = G1; }   // riveted seams round the dome
+    const FOG = new Set([G3, F0, G2, G1, K]), y0 = 52 + bob + sag + (D ? 4 : 0);
+    rim(10, y0, 116, 72 + bob + sag, G4, 'tl', FOG, 0, bob); rim(10, y0, 116, 66 + bob + sag, G3, 't', DARK, 2, bob);                                                     // lit crowns on the billows and wisps
+    snap = buf; }
+  // loose fog: shreds drifting at the sides (beaten: sunk and still), rain off the belly and round puffs adrift in the beam's path (beaten: gone)
+  [[5, 62, 8, K], [4, 68, 5, G3], [112, 60, 10, K], [116, 66, 6, G3], [10, 76, 6, G1]].forEach(([x, y, w, c], i) => put(c, x + (D ? 0 : Math.round(Math.sin(TAU * P + i * 1.9) * 1.4)), y + bob + sag, w, 2));
+  if (!D){
+    for (let i = 0; i < 11; i++){ const x = Math.round(30 + i * 6.6), l = 2 + (i * 5) % 5, y = 80 + bob + (i % 2) * 2 + Math.round(((P * 8 + i * 0.37) % 1) * 10), c = i % 3 ? K : G3;
+      for (let k = 0; k < l; k++) if (!buf[(y + k) * W + x]) put(c, x, y + k); if (!buf[(y + l + 3) * W + x]) put(K, x, y + l + 3); }
+    [[18, 36, 3], [104, 54, 2.4], [26, 48, 2], [100, 14, 2]].forEach(([x0, y0, r], i) => { const x = Math.round(x0 + Math.cos(TAU * P + i * 1.3) * 1.6), y = Math.round(y0 + Math.sin(TAU * P * 2 + i * 1.9) * 1.6);
+      L(K, ell(x, y, r + 1, r + 1)); L(G1, ell(x, y, r, r)); put(G3, x - 1, y - r + 1, 2, 1); });
+    [[105, 15, 1], [121, 54, 2], [21, 56, 1], [26, 9, 1], [17, 60, 2]].forEach(([x, y, sz], i) => put(K, x + Math.round(Math.sin(TAU * P + i * 2.1) * 0.8), y + Math.round(Math.cos(TAU * P + i * 1.3) * 0.8), sz, sz));
+  }
 
   const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
   blitBuf(ctx, buf, W, H);
@@ -4949,6 +4990,13 @@ function drawUndertow(cv, f, accent){
   const line = (pts, w) => c => { c.lineWidth = w; c.moveTo(...pts[0]); for (const p of pts.slice(1)) c.lineTo(...p); c.stroke(); };
   const rect = (x, y, w, h) => c => { c.rect(x, y, w, h); c.fill(); };
   const px = (x, y, c) => L(c, cc => { cc.rect(Math.round(x), Math.round(y), 1, 1); cc.fill(); });
+  // polish tools: these write straight into the pixel buffer (cheap), reading a snapshot so passes don't feed each other
+  let snap = buf; const at = (x, y) => (x < 0 || y < 0 || x >= W || y >= H) ? null : snap[y * W + x];
+  const put = (c, x, y, w = 1, h = 1) => { x = Math.round(x); y = Math.round(y); for (let yy = Math.max(0, y); yy < Math.min(H, y + h); yy++) for (let xx = Math.max(0, x); xx < Math.min(W, x + w); xx++) buf[yy * W + xx] = c; };
+  const PALE = '#b8b0a2', KS = new Set([K]), DARK = new Set([K, G1]), POPS = new Set(A);
+  // rim light: recolour edge pixels facing up-left (tl) or left (l); oy keeps the dither pattern glued to the part as it moves
+  const rim = (x0, y0, x1, y1, col, mode, from, skip, oy) => { for (let y = Math.max(0, y0); y <= Math.min(H - 1, y1); y++) for (let x = x0; x <= x1; x++){ const c = at(x, y); if (!c || !from.has(c)) continue; const lf = !at(x - 1, y);
+      const hit = mode === 'l' ? lf : (!at(x - 1, y - 1) && (lf || !at(x, y - 1))); if (hit && !(skip && ((x + (y - oy) * 3) % skip === 0))) buf[y * W + x] = col; } };
   const rot = (a, cx, cy) => { const cs = Math.cos(a), sn = Math.sin(a); return [cs, sn, -sn, cs, cx - cs * cx + sn * cy, cy - sn * cx - cs * cy]; };
   const bz = (a, b, c, d, t) => { const u = 1 - t; return [u*u*u*a[0] + 3*u*u*t*b[0] + 3*u*t*t*c[0] + t*t*t*d[0], u*u*u*a[1] + 3*u*u*t*b[1] + 3*u*t*t*c[1] + t*t*t*d[1]]; };
   const ss = u => u <= 0 ? 0 : u >= 1 ? 1 : u - Math.sin(TAU * u) / TAU;                          // a smooth 0 -> 1 ramp
@@ -4982,6 +5030,9 @@ function drawUndertow(cv, f, accent){
     for (let k = 0; k < 3; k++){ const a = spin + k * TAU / 3 + 0.5, r = 30 - tight * 0.6; px(cx + Math.cos(a) * r, PY + 2.4 + Math.sin(a) * r * 0.19, A[3]); }   // spray glints riding the arms
     L(A[2], arc(cx, WLC, HW + 2, 3.2, Math.PI, TAU));                                                        // the foam collar: its far half, behind him
     { const r = ripR(0); L(r < 0.4 ? A[2] : A[1], arc(cx, WLC + 0.4, HW + 5 + r * 14, 3.8 + r * 2.8, Math.PI + 0.2, TAU - 0.2)); }
+    // polish: a hot crescent on the near turn with a glint sliding along it, and loose arcs of foam flung round outside the lip (they turn with the pool)
+    L(A[3], arc(cx, PY + 3, 22 - tight, 3, Math.PI * 0.15, Math.PI * 0.7)); { const ga = Math.PI * (0.52 + 0.14 * Math.sin(TAU * P * 2)); put(A[4], cx + Math.cos(ga) * (22 - tight) - 2, PY + 3 + Math.sin(ga) * 3, 4, 1); }
+    for (const [a0, a1, rx, ry, dy] of [[0.9, 1.12, 56, 10, 2], [1.88, 2.1, 56, 10, 2], [0.3, 0.44, 50, 9, 4]]) L(A[0], arc(cx, PY + dy, rx - tight, ry - tight * 0.2, Math.PI * a0 + spin, Math.PI * a1 + spin));
   }
 
   const under = buf.slice();
@@ -5046,6 +5097,8 @@ function drawUndertow(cv, f, accent){
   L(G2, strokeP([[cx - 14, 27.4 + hy], [cx - 4, 31 + hy]], 1));
   L(G2, strokeP([[cx, 38 + hy], [cx - 1, 43 + hy], [cx + 1, 44 + hy]], 1));                                                            // nose ridge
   L(G1, strokeP([[cx - 4, 46.6 + hy], [cx, 47.4 + hy], [cx + 4, 46.6 + hy]], 1));                                                      // grim mouth, mostly lost in the beard
+  if (!D) for (const x of [56, 71]){ const onCoin = (c, X, y) => { if (POPS.has(buf[y * W + X])) put(c, X, y); };                                   // polish: a banded coin, a catchlight, a lower lid, a tear run
+    put(A[0], x - 4, 38 + hy, 8, 1); onCoin(A[4], x - 2, 33 + hy); for (let k = -1; k <= 1; k++) onCoin(A[3], x + k, 34 + hy); put(A[1], x, 40 + hy, 1, 2); }
   const CD = '#615b54', C0 = '#8e867b', C2 = '#b3aa9c', C3 = '#d6cebf';                                                // the crown, tarnished pale
   const cr = 21 + hy;                                                                                                                  // the crown
   for (let k = 0; k < 5; k++){ const x = 50.6 + k * 6.7, h = k === 2 ? 15 : k % 2 ? 8 : 11, broken = k === 3, tip = broken ? [x + 1, cr - h + 4] : [x, cr - h];
@@ -5054,7 +5107,7 @@ function drawUndertow(cv, f, accent){
   L(CD, rect(48, cr - 1, 32, 5)); L(C0, rect(48, cr - 1, 32, 2)); L(C2, rect(48, cr - 1, 32, 1));
   for (const x of [52, 58, 70, 76]) { px(x, cr + 2, G4); px(x, cr + 1, C3); }
   if (D) L(G3, ell(cx, cr + 0.4, 1.8, 1.8));
-  else { L(A[2], ell(cx, cr + 0.4, 2, 2)); L(A[3], ell(cx - 0.4, cr, 1.1, 1.1)); px(cx - 1, cr - 1, A[4]); }
+  else { L(A[2], ell(cx, cr + 0.4, 2, 2)); L(A[3], ell(cx - 0.4, cr, 1.1, 1.1)); px(cx - 1, cr - 1, A[4]); put(A[4], cx - 1, cr - 2); put(A[0], cx - 2, cr + 2, 4, 1); }                                                                   // polish: the gem's hot corner and its shadow
   XF = null;
   if (D){                                                                                                        // beaten: crisp 5x5 X's with 2px strokes in the sockets
     for (const sd of [-1, 1]){ const [xx, yy] = tp([cx + sd * 7, 35.4 + hy]), X = Math.round(xx), Yy = Math.round(yy) + 1;
@@ -5079,14 +5132,20 @@ function drawUndertow(cv, f, accent){
     L(G3, poly(band(1, -1, 0, 1)));
     L(G4, poly(band(1, 0.1, 0, 0.9)));                                                                          // the lit half, following the blade's curve
     L(G5, line(T(pts.filter(p => p.s > 0.1 && p.s < 0.5).map(p => at(p, 0.85))), 1));                             // the bright edge, upper blade only
-    L(G2, line(T(pts.filter(p => p.s > 0.12 && p.s < 0.8).map(p => at(p, -0.9))), 1)); };                           // a dark shaded edge, so overlapping blades part
+    L(G2, line(T(pts.filter(p => p.s > 0.12 && p.s < 0.8).map(p => at(p, -0.9))), 1));
+    return i => tp([pts[i].x, pts[i].y]); };                           // a dark shaded edge, so overlapping blades part
   const RIB = [[0.04, 11, 3.4, 1.6, 0.0], [0.96, 10, 3.2, -1.4, 5.0], [0.21, 19, 4.6, -2.2, 0.9], [0.79, 16, 4.4, 2.0, 4.2], [0.39, 24, 5.2, 2.4, 1.8], [0.61, 27, 5.4, -2.2, 3.0]];   // t on the jaw, length, width, S-bend, lag; outer blades first
+  const bulbs = [];
   for (const [t, len, w, bend, ph] of RIB){
     const p0 = TOP(t), j = JAW(t), tx = 2 * (1 - t) * (64 - 51.4) + 2 * t * (76.6 - 64), ty = 2 * (1 - t) * (63.2 - 42) + 2 * t * (42 - 63.2), m = Math.hypot(tx, ty);
     let dx = -ty / m * 0.5, dy = tx / m * 0.5 + 1; const dm = Math.hypot(dx, dy); dx /= dm; dy /= dm;              // hang down, splayed out along the jaw's normal
     const ln = len - (D ? 4 : 0);
-    ribbon([p0[0], p0[1] - 1], [j[0], j[1]], [j[0] + dx * ln * 0.45, j[1] + dy * ln * 0.45], [j[0] + dx * ln, j[1] + dy * ln], w, bend, ph); }
+    const on = ribbon([p0[0], p0[1] - 1], [j[0], j[1]], [j[0] + dx * ln * 0.45, j[1] + dy * ln * 0.45], [j[0] + dx * ln, j[1] + dy * ln], w, bend, ph);
+    const bi = {0.21: 15, 0.79: 16, 0.39: 18, 0.61: 13}[t]; if (bi) bulbs.push(on(bi)); }
   for (const sd of [-1, 1]) ribbon([cx + sd * 1.2, 44.6 + hy], [cx + sd * 6.4, 44.8 + hy], [cx + sd * 10, 48.4 + hy], [cx + sd * 11.4, 57 + hy - (D ? 4 : 0)], 3, sd * 0.9, sd < 0 ? 0.4 : 2.0);   // the moustache, drooping over the mouth corners
+
+  // polish: kelp bladders riding the ribbons (a pale glint on each, a drip hanging off it); the water below still swallows them
+  for (const [bx, by] of bulbs){ const x = Math.round(bx), y = Math.round(by); put(K, x - 1, y - 1, 3, 4); put(G5, x, y, 1, 2); put(PALE, x, y); put(K, x, y + 4, 1, 2); }
 
   // ------------------------------------------------------------------ the water closes over him below a ragged waterline
   for (let x = 24; x < 105; x++){ const s = wl(x); for (let y = Math.floor(s) + 1; y < H; y++){ const i = y * W + x; if (buf[i] !== preBody[i]) buf[i] = preBody[i]; } }
@@ -5097,6 +5156,8 @@ function drawUndertow(cv, f, accent){
     L(A[3], c => { c.lineWidth = 1; for (let x = cx - HW; x <= cx + HW; x++){ const y = wl(x); if ((x * 5 + Math.floor(f / 4)) % 8 < 5){ c.rect(x, y, 1, 1); } } c.fill(); });   // a broken foam line right where he goes in
     L(A[2], arc(cx, WLC + 0.6, HW + 2, 3.2, 0.05, Math.PI - 0.05));                                           // the foam collar: its near half, over his waist
     { const r = ripR(0); L(r < 0.4 ? A[2] : A[1], arc(cx, WLC + 0.4, HW + 5 + r * 14, 3.8 + r * 2.8, 0.2, Math.PI - 0.2)); }   // a ripple ring spreading out in front of him
+    [[46, 4, 2], [50, 6, 3], [78, 6, 3], [82, 4, 2], [42, 2, 1], [86, 2, 1]].forEach(([x, h0, c], k) => { const t = (P * 4 + k * 0.31) % 1, h = Math.max(1, Math.round((h0 + yk) * (1 - t * 0.6))), top = Math.round(wl(x)) - 4 - h - Math.round(t * 3);   // polish: spray thrown up where he breaks the surface, in pulses
+      put(A[c], x, top, 1, h); if (t < 0.7) put(A[c], x, top - 2 - Math.round(t * 2)); });
   }
 
   // ------------------------------------------------------------------ the chains: from his fists down into the water; beaten, sagging across it
@@ -5108,8 +5169,24 @@ function drawUndertow(cv, f, accent){
     L(A[2], arc(ex, ey + 0.4, 5 + yk * 0.6, 1.4, 0.15, Math.PI - 0.15)); L(A[1], arc(ex, ey + 0.2, 7 + yk, 1.8, Math.PI + 0.3, TAU - 0.3));   // a foam ring where each anchor goes under
     if (yk >= 2) for (const k of [-1, 1]) px(ex + k * (3 + yk), ey - 2 - yk, A[3]); });                       // the yank throws up spray
 
+  // ------------------------------------------------------------------ polish: rim light, wet highlights, bone texture. All keyed to B, so they ride the bob
+  { snap = buf.slice(); const BE = new Set([G4, G3]), IR = new Set([G4, G3, B0]);
+    rim(44, 22 + B, 84, 46 + B, G3, 'tl', DARK, 0, B); rim(44, 22 + B, 60, 34 + B, G4, 'tl', KS, 2, B);                 // skull
+    if (!D) rim(30, 46 + B, 98, 76 + B, G3, 'tl', KS, 2, B);                                                              // shoulders and arms
+    rim(46, 6 + B, 82, 22 + B, PALE, 'tl', new Set([C0, G5]), 0, B);                                                      // crown
+    rim(48, 40 + B, 80, 78 + B, G5, 'l', BE, 3, B);                                                                       // wet beard
+    if (!D){ rim(20, 50, 34, 86, G5, 'tl', IR, 0, 0); rim(94, 50, 108, 86, G5, 'tl', IR, 0, 0);                           // anchors and chains
+      for (let y = 58 + B; y <= Math.min(H - 3, 80 + B); y++) for (let x = 48; x <= 82; x++){ if ((y - B) % 5 !== 2 || Math.abs(x - 64) <= 3 || (x + y - B) % 2) continue;   // dotted rib shadows, on plain black well inside him
+        if (at(x, y) === K && at(x - 1, y) && at(x + 1, y) && at(x, y - 1) && at(x, y + 1) && at(x - 2, y) && at(x + 2, y) && at(x, y - 2)) buf[y * W + x] = G1; } }
+    snap = buf; }
   // rising bubbles in the pull and square debris drifting off his shoulders
   if (!D){
+    // polish: dark bubbles dragged up with him (they rise, swell and pop), drops of spray falling back, black specks hanging in the pull
+    [[24, 48, 2.4], [104, 52, 2], [16, 36, 1.4], [100, 34, 1.6], [36, 32, 1.4], [112, 68, 1.4]].forEach(([x0, y0, r0], i) => { const t = (P + i * 0.17) % 1; if (t > 0.9) return;
+      const x = Math.round(x0 + Math.sin(TAU * (P * 2 + i * 0.3)) * 1.2), y = Math.round(y0 - t * 26), r = t < 0.15 ? r0 * 0.6 : r0;
+      L(K, c => { c.lineWidth = 1.4; c.arc(x, y, r, 0, TAU); c.stroke(); }); put(G4, x - r, y - r); });
+    [[38, 66], [92, 68], [12, 70]].forEach(([x, y], i) => { const t = (P * 4 + i * 0.37) % 1; if (t < 0.7) put(A[1], x, y - 4 + t * t * 14, 1, 2); });
+    [[104, 13], [31, 7], [19, 63], [44, 6], [19, 32], [115, 60], [31, 11], [116, 35]].forEach(([x, y], i) => put(K, x + Math.round(Math.sin(TAU * P + i * 2.1) * 0.8), y - Math.round(Math.cos(TAU * P + i * 1.3) * 0.8), i === 2 ? 2 : 1, i === 2 ? 2 : 1));
     for (let i = 0; i < 6; i++){ const t = (P * 2 + i * 0.37) % 1, x = cx + [-28, -24, 23, 27, -33, 31][i] + Math.sin(TAU * t + i) * 1.2, y = PY + 4 - t * 40;
       if (t < 0.8){ const r = t < 0.3 ? 0.8 : 1.4; L(G4, c => { c.lineWidth = 0.9; c.arc(x, y, r, 0, Math.PI * 2); c.stroke(); }); if (r > 1) px(x - 0.6, y - 0.6, G5); } }
     for (let i = 0; i < 4; i++){ const t = (P * 4 + i * 0.27) % 1, sd = i % 2 ? 1 : -1, x = cx + sd * (32 + t * 6), y = Y(49) - t * 10 - (i >> 1) * 3; if (t < 0.9) L(t < 0.4 ? K : G1, rect(Math.round(x), Math.round(y), t < 0.5 ? 2 : 1, t < 0.5 ? 2 : 1)); }
@@ -5137,6 +5214,15 @@ function drawDoldrums(cv, f, accent){
   const strokeP = (pts, w) => c => { c.lineWidth = w; c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.stroke(); };
   const rect = (x, y, w, h) => c => { c.rect(x, y, w, h); c.fill(); };
   const px = (x, y, c) => L(c, cc => { cc.rect(Math.round(x), Math.round(y), 1, 1); cc.fill(); });
+  // polish tools: these write straight into the pixel buffer (cheap), reading a snapshot so passes don't feed each other
+  let snap = buf; const at = (x, y) => (x < 0 || y < 0 || x >= W || y >= H) ? null : snap[y * W + x];
+  const put = (c, x, y, w = 1, h = 1) => { x = Math.round(x); y = Math.round(y); for (let yy = Math.max(0, y); yy < Math.min(H, y + h); yy++) for (let xx = Math.max(0, x); xx < Math.min(W, x + w); xx++) buf[yy * W + xx] = c; };
+  const KS = new Set([K]), DARK = new Set([K, G1]);
+  // rim light: recolour edge pixels facing up-left (tl) or up (t); oy keeps the dither pattern glued to the part as it moves
+  const rim = (x0, y0, x1, y1, col, mode, from, skip, oy) => { for (let y = Math.max(0, y0); y <= Math.min(H - 1, y1); y++) for (let x = x0; x <= x1; x++){ const c = at(x, y); if (!c || !from.has(c)) continue; const up = !at(x, y - 1);
+      const hit = mode === 't' ? up : (!at(x - 1, y - 1) && (up || !at(x - 1, y))); if (hit && !(skip && ((x + (y - oy) * 3) % skip === 0))) buf[y * W + x] = col; } };
+  // surface texture: only on plain black pixels well inside a shape
+  const tex = (x0, y0, x1, y1, f, oy) => { for (let y = Math.max(2, y0); y <= Math.min(H - 2, y1); y++) for (let x = x0; x <= x1; x++){ if (at(x, y) !== K) continue; if (!at(x - 1, y) || !at(x + 1, y) || !at(x, y - 1) || !at(x, y + 1) || !at(x - 2, y) || !at(x + 2, y) || !at(x, y - 2)) continue; if (f(x, y - oy)) buf[y * W + x] = G1; } };
 
   // ------------------------------------------------------------------ timing
   // a slow breath (the giant rises and settles against the fixed waterline); every few seconds the vanes try to turn, creak, and stop dead,
@@ -5158,6 +5244,12 @@ function drawDoldrums(cv, f, accent){
   if (!D) L(A[1], c => { for (const [y, x0, x1] of [[R0 + 2, 40, 54], [R0 + 2, 70, 90], [R0 + 5, 48, 60], [R0 + 5, 66, 78], [R0 + 8, 54, 74]]) c.rect(x0, y, x1 - x0, 1); c.fill(); });   // glints breaking it up
   if (!D){ for (const sd of [-1, 1]) L(A[0], rect(64 + sd * 6 - 2, R0 + 7, 4, 1)); }
   // a single ripple ring spreading out from the right hand on the beat
+  // polish: a hotter core to the band, broken far ends, slow sparkles, loose ripple lines under the reflection
+  if (D){ put(G3, 4, WY + 1, 4, 1); put(G3, 120, WY + 1, 5, 1); put(G2, 46, R0 + 10, 12, 1); put(G2, 66, R0 + 10, 9, 1); put(G2, 56, R0 + 12, 12, 1); }
+  else { put(A[3], 44, WY + 1, 40, 1); put(A[0], 4, WY + 1, 4, 1); put(A[0], 120, WY + 1, 5, 1);
+    if (Math.cos(TAU * p * 2) > -0.5) put(A[4], 30, WY, 2, 1); if (Math.cos(TAU * p * 3) > -0.5) put(A[4], 96, WY + 2, 3, 1);
+    const dr = k => Math.round(Math.sin(TAU * p + k));
+    put(A[2], 58 + dr(1), R0 + 6, 3, 1); put(A[1], 44 + dr(2), R0 + 10, 14, 1); put(A[1], 66 + dr(2), R0 + 10, 10, 1); put(A[0], 56 - dr(2), R0 + 12, 12, 1); }
   if (!D && rp >= 0){ const r = 3 + rp * 12; L(rp < 0.5 ? A[2] : A[1], c => { c.lineWidth = 1; c.ellipse(101, WY + 1.5, r, r * 0.2, 0, 0, Math.PI * 2); c.stroke(); }); }
 
   // ------------------------------------------------------------------ the giant: chest-deep in a dead-calm sea, arms laid flat and heavy along the water, a slack sail hung on a broken yard
@@ -5203,10 +5295,18 @@ function drawDoldrums(cv, f, accent){
       if (h > 1.1) L(A[1], rect(X, t + 1, 1, bt - t - 1));
       if (h > 1.9) L(A[2], rect(X, t + 2, 1, Math.max(1, bt - t - 3)));
       const d = Math.abs(x - gx); if (d < 1.6 && h > 1.1) L(A[3], rect(X, t + 1, 1, bt - t - 1)); if (d < 0.6 && h > 1.9) L(A[4], rect(X, t + 1, 1, bt - t - 1)); }
+    // polish, inside the lens only so the lid covers it as it sags: a lower band, a smear trailing the glint, iris ticks, a fixed catchlight
+    { const ep = (c, X, y) => { const h = half(X - 64); if (h > 0.2 && y >= Math.round(eyeY - h) && y <= Math.round(eyeY + h)) put(c, X, y); }, g0 = 64 + Math.round(gx);
+      for (let X = 55; X < 75; X++) ep(A[0], X, eyeY + 2);
+      for (let k = 3; k <= 10; k++){ if (k < 10) ep(A[3], g0 - k, eyeY - 1); ep(A[3], g0 + k, eyeY - 1); }
+      for (const X of [57, 71]) for (let y = -3; y <= 1; y++) ep(A[0], X, eyeY + y);
+      ep(A[4], 61, eyeY - 2); }
     const lidY = eyeY - 3.4 + (3 - open) * 1.15;                                                                 // the heavy upper lid, sagging down over the lens
     L(K, path([[64 - EW - 2, eyeY - 4], [64 + EW + 2, eyeY - 4], [64 + EW + 2, eyeY + 0.4], [64 + EW - 1, lidY + 0.6], [64, lidY + 1.2], [64 - EW + 1, lidY + 0.6], [64 - EW - 2, eyeY + 0.4]]));
     L(G2, strokeP([[64 - EW + 1, lidY + 0.6], [64, lidY + 1.2], [64 + EW - 1, lidY + 0.6]], 1));                // a grey lit rim along the lid edge
-    L(G2, strokeP([[64 - EW, eyeY - 5], [64, eyeY - 6], [64 + EW, eyeY - 5]], 1)); }                          // the fold of skin above it
+    L(G2, strokeP([[64 - EW, eyeY - 5], [64, eyeY - 6], [64 + EW, eyeY - 5]], 1));                            // the fold of skin above it
+    const ty = eyeY - 1 + Math.round(sag); put(A[1], 52, ty); put(A[1], 77, ty); }                               // polish: the corners of the eye, sinking with the lid
+  put(G3, 55, Y(36), 20, 1); put(G4, 57, Y(36), 6, 1);                                                          // polish: a lit line along the brow
 
   // ------------------------------------------------------------------ the crown: a solid iron band and five short weathervane spires, all pointing the same dead way
   L(K, rect(53, Y(29.4), 22, 2)); L(G3, rect(53, Y(29.4), 22, 1)); for (const x of [57, 64, 71]) px(x, Y(30.4), G4);                      // a 2px band, three rivets
@@ -5230,7 +5330,26 @@ function drawDoldrums(cv, f, accent){
     L(K, strokeP([[75, Y(29.4)], [81, Y(15.4)], [86, Y(15.4)]], 1)); L(K, rect(86, Y(15.4), 1, ly - Y(15.4) - 1));   // the arm and its hanger
     if (!D){ const fl2 = Math.sin(TAU * p * 3) > 0.92 ? 1 : 0; for (const [dx, dy] of [[-1, 2], [-1, 4], [5, 2], [5, 4], [1, 7], [2, 7]]) px(lx + dx + 1, ly + dy, A[2 - fl2]); }   // a thin halo
     L(K, rect(lx, ly, 6, 1)); L(K, rect(lx + 1, ly - 1, 4, 1)); px(lx + 2, ly - 2, G4); px(lx + 3, ly - 2, G4);                        // cap and ring
-    L(K, rect(lx + 1, ly + 1, 4, 5)); L(D ? G3 : A[3], rect(lx + 2, ly + 2, 2, 3)); if (!D) px(lx + 2, ly + 2, A[4]); L(K, rect(lx + 0.6, ly + 6, 4.8, 1)); }   // body, glass, base
+    L(K, rect(lx + 1, ly + 1, 4, 5)); L(D ? G3 : A[3], rect(lx + 2, ly + 2, 2, 3)); if (!D) px(lx + 2, ly + 2, A[4]); L(K, rect(lx + 0.6, ly + 6, 4.8, 1));
+    if (!D){ put(A[4], lx + 2, ly + 1);                                                                           // polish: a hot wick, and sparks drifting up off the lamp
+      [[0, -1, 0], [6, 6, 0], [10, -3, 1], [13, 4, 0]].forEach(([dx, dy, c], i) => { const t = (p * 2 + i * 0.19) % 1; if (t < 0.8) put(A[c], lx + dx, ly + dy - Math.round(t * 3)); }); } }   // body, glass, base
+  // ------------------------------------------------------------------ polish: rim light, cloth and skin texture, sail details. All keyed to by, so they ride the breath
+  { snap = buf.slice(); const below = (y, h) => Math.max(0, Math.min(h, WY - 1 - y));                              // nothing hangs below the waterline
+    rim(46, 22 + by, 82, 40 + by, G3, 'tl', DARK, 0, by); rim(46, 22 + by, 60, 32 + by, G4, 'tl', KS, 2, by);         // head
+    rim(20, 44 + by, 104, WY - 1, G3, 'tl', KS, 3, by);                                                             // shoulders and arms
+    rim(36, 6 + by, 96, 30 + by, G4, 't', KS, 2, by);                                                               // crown, vanes, lamp arm
+    tex(24, 52 + by, 44, WY - 2, (x, y) => (x + y * 2) % 9 === 0 && y % 3 === 0, by); tex(76, 54 + by, 100, WY - 4, (x, y) => (x * 2 + y) % 11 === 0, by);
+    for (let i = 0; i < 9; i++){ const x = 32 + i * 7.4, y = Math.round(48 + i * 2.9) + by; if (y < WY - 1) put(G5, x, y); if (i % 2) put(G3, x + 1, y + 4, 1, below(y + 4, 3)); }   // a stitched boom
+    { const x = 70, y = 62 + by; if (y + 5 < WY - 1){ put(G4, x, y, 6, 1); put(G4, x, y + 4, 6, 1); put(G4, x, y, 1, 5); put(G4, x + 5, y, 1, 5); put(G5, x, y, 2, 1); } }      // a patch
+    for (const [x, y0, l] of [[48, 70, 4], [60, 72, 3], [84, 74, 3]]){ const y = y0 + by; put(G5, x, y, 1, below(y, l)); put(G4, x, y + l, 1, below(y + l, 1)); }                    // reef points hanging
+    if (!D) for (const x of [24, 102]){ put(A[2], x - 5, WY - 1, 10, 1); put(A[1], x - 8, WY - 2, 3, 1); put(A[1], x + 5, WY - 2, 3, 1); }                                   // wet rings where the arms rest
+    snap = buf; }
+  // becalmed air: level dashes that hang where they are, and a telltale hanging straight down (it stirs on the creak). Beaten, the wind is back: the dashes blow through and the telltale streams out
+  [[6, 28, 8, G3], [10, 42, 5, G1], [4, 58, 6, G3], [106, 34, 9, G3], [112, 46, 6, G1], [110, 60, 8, G3], [22, 14, 5, G1]].forEach(([x, y, w, c], i) => {
+    if (D){ const xx = 4 + Math.round(x - 4 + p * 120 * (1 + i % 2)) % 120; put(c, xx, y, Math.min(w, 124 - xx), 1); } else put(c, Math.max(4, x + Math.round(Math.sin(TAU * p + i * 1.3) * 0.8)), y, w, 1); });
+  if (D){ for (let k = 0; k < 10; k++) put(k < 8 ? K : G4, 28 + k, 20 + Math.round(Math.sin(TAU * p * 4 - k * 0.8) * k / 9 * 1.5)); }
+  else { const tw = Math.round(twitch * 1.2); put(K, 28, 20, 1, 5); put(K, 28 + (tw ? 1 : 0), 25, 1, 3); put(G4, 28 + tw, 28, 1, 2); }
+  [[100, 9], [20, 22], [112, 41], [8, 53], [80, 5], [17, 26]].forEach(([x, y], i) => put(K, D ? 4 + Math.round(x - 4 + p * 120 * (1 + i % 2)) % 120 : x + Math.round(Math.sin(TAU * p + i * 2.1) * 0.8), y));   // black specks
   // dust hanging dead in the still air: square motes that barely move (beaten: blown away sideways)
   for (let i = 0; i < 9; i++){ const bx = 16 + (i * 41) % 96, byy = 10 + (i * 23) % 44; if (Math.abs(bx - 64) < 22 && byy > 26) continue;
     const x = D ? (bx + p * 120 + i * 9) % 120 + 4 : bx + Math.round(Math.sin(TAU * p + i) * 1), y = byy + (D ? Math.sin(i + TAU * p * 3) : 0);
@@ -6475,35 +6594,7 @@ function drawKrampus(cv, f, accent){
   if (!drawKrampus.sc){ drawKrampus.sc = document.createElement('canvas'); drawKrampus.sc.width = W; drawKrampus.sc.height = H; }
   const sc = drawKrampus.sc, sx = sc.getContext('2d', {willReadFrequently: true}), buf = new Array(W * H).fill(null);
   let XF = null;
-  // a local shape layer: the same rasteriser as the shared shapeLayer (same canvas calls, same alpha threshold), but it reads back only the
-  // shape's bounding box even under a transform (the shared one reads the whole canvas for every transformed shape, which was most of the frame cost)
-  const L = (() => { const E = {x0: 0, y0: 0, x1: 0, y1: 0, lw: 1};
-    const ext = (x, y, r = 0) => { if (x - r < E.x0) E.x0 = x - r; if (x + r > E.x1) E.x1 = x + r; if (y - r < E.y0) E.y0 = y - r; if (y + r > E.y1) E.y1 = y + r; };
-    const c = { set lineWidth(v){ if (v > E.lw) E.lw = v; sx.lineWidth = v; }, get lineWidth(){ return sx.lineWidth; },
-      moveTo(x, y){ ext(x, y); sx.moveTo(x, y); }, lineTo(x, y){ ext(x, y); sx.lineTo(x, y); },
-      quadraticCurveTo(a, b, x, y){ ext(a, b); ext(x, y); sx.quadraticCurveTo(a, b, x, y); },
-      bezierCurveTo(a, b, e, g, x, y){ ext(a, b); ext(e, g); ext(x, y); sx.bezierCurveTo(a, b, e, g, x, y); },
-      ellipse(x, y, rx, ry, ...r){ ext(x, y, Math.max(rx, ry)); sx.ellipse(x, y, rx, ry, ...r); },
-      arc(x, y, r, ...a){ ext(x, y, r); sx.arc(x, y, r, ...a); },
-      rect(x, y, w, h){ ext(x, y); ext(x + w, y + h); sx.rect(x, y, w, h); },
-      closePath(){ sx.closePath(); }, fill(){ sx.fill(); }, stroke(){ sx.stroke(); } };
-    let prev = null;
-    return (color, fn, th = 120) => {
-      sx.setTransform(1, 0, 0, 1, 0, 0); if (prev) sx.clearRect(prev[0], prev[1], prev[2], prev[3]); else sx.clearRect(0, 0, W, H);
-      const xf = XF; if (xf) sx.setTransform(xf[0], xf[1], xf[2], xf[3], xf[4], xf[5]);
-      sx.fillStyle = '#fff'; sx.strokeStyle = '#fff'; sx.lineCap = 'round'; sx.lineJoin = 'round'; sx.lineWidth = 1;
-      E.x0 = Infinity; E.y0 = Infinity; E.x1 = -Infinity; E.y1 = -Infinity; E.lw = 1;
-      sx.beginPath(); fn(c);
-      if (!isFinite(E.x0)){ prev = null; return; }
-      let ax = E.x0, ay = E.y0, bx = E.x1, by = E.y1, pd = E.lw / 2 + 2;
-      if (xf){ const xs = [xf[0] * ax + xf[2] * ay, xf[0] * bx + xf[2] * ay, xf[0] * ax + xf[2] * by, xf[0] * bx + xf[2] * by], ys = [xf[1] * ax + xf[3] * ay, xf[1] * bx + xf[3] * ay, xf[1] * ax + xf[3] * by, xf[1] * bx + xf[3] * by];
-        ax = Math.min(...xs) + xf[4]; bx = Math.max(...xs) + xf[4]; ay = Math.min(...ys) + xf[5]; by = Math.max(...ys) + xf[5]; pd = E.lw / 2 * Math.max(1, Math.hypot(xf[0], xf[1]), Math.hypot(xf[2], xf[3])) + 2; }
-      const x0 = Math.max(0, Math.floor(ax - pd)), y0 = Math.max(0, Math.floor(ay - pd)), x1 = Math.min(W, Math.ceil(bx + pd)), y1 = Math.min(H, Math.ceil(by + pd));
-      const w = x1 - x0, h = y1 - y0; if (w <= 0 || h <= 0){ prev = null; return; }
-      prev = [x0, y0, w, h];
-      const d = sx.getImageData(x0, y0, w, h).data;
-      for (let yy = 0; yy < h; yy++){ const row = (y0 + yy) * W + x0, ri = yy * w * 4 + 3; for (let xx = 0; xx < w; xx++) if (d[ri + xx * 4] >= th) buf[row + xx] = color; }
-    }; })();
+  const L = shapeLayer(sx, W, H, buf, () => XF);
   const ell = (x, y, rx, ry, rot = 0) => c => { c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); c.fill(); };
   const path = pts => c => { c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.closePath(); c.fill(); };
   const strokeP = (pts, w) => c => { c.lineWidth = w; c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.stroke(); };
