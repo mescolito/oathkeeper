@@ -962,7 +962,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'ac6636a56e';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '78348cb003';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -10492,6 +10492,19 @@ function renderBattle(){
   <p class="how">Prize: +${mm.g} G, +${mm.xp} XP and ${miniPrizeTxt(mm)}. No Keystones from tasks while it's here. Runs off when ${esc((D.nextRite || bossFor(f.c+1)).name)} arrives ${fmtDow(mm.flees)}.</p>
   ${runRow()}
   ${battleBottom()}`; }
+  const md = miniDown();
+  if (md){ const n = dayIdx(upcoming[0].start) - dayIdx(D.today), hp = md.hp || 0; return `
+  <section class="game boss" aria-label="${esc(md.m.name)}">
+    <canvas id="bossCv" width="128" height="128" role="img" aria-label="${esc(md.m.name)}, beaten"></canvas>
+    <div class="dlg"><div class="dlg-in"><div class="dlg-h"><span class="dlg-name">${esc(md.m.name)}</span><span class="dlg-won">Defeated</span></div><p>${esc(md.m.beaten || md.m.flavor)}</p></div></div>
+  </section>
+  <div>
+    <div class="hprow"><div class="bignum"><b>0</b><span>${hp ? `of ${hp} HP` : 'HP'}</span></div><button class="nextboss" data-nextboss>Next boss · ${n <= 0 ? 'today' : n === 1 ? 'tomorrow' : `in ${n}d`} ›</button></div>
+    <div style="margin-top:10px">${bar(0, 'var(--pink)', 'thick')}</div>
+  </div>
+  ${inLull() ? altarPanel() : ''}
+  <div class="chips">${md.m.weak.map(s => `<span class="chip-s" style="background:${STATS[s].c};font-size:13px;padding:5px 12px">Weak to ${esc(STATS[s].name)}</span>`).join('')}</div>
+  ${battleBottom()}`; }
   return `
   <section class="game boss" aria-label="${esc(b.name)}">
     <canvas id="bossCv" width="128" height="128" role="img" aria-label="${esc(b.name)}"></canvas>
@@ -11350,9 +11363,9 @@ function draw(){
   const hurt = now < hurtUntil && Math.floor(now/90)%2 === 0;
   const foe = D.mini ? D.mini.m : D.cur.boss, down = !D.mini && D.cur.status === 'won';
   const fx = (typeof conf !== 'undefined' && conf && conf.raf) || (typeof stars !== 'undefined' && stars && stars.raf);   // hold the boss still while confetti or stars are flying, so they stay smooth
-  const tf = todayFoe();   // the Today card can show a beaten mini-boss; the Battle page keeps the boss
+  const tf = todayFoe();   // the Today card and the Battle page both show a mini-boss you just beat, until the next boss or mini-boss
   if (!fx || hurt){ const m = document.getElementById('bossMiniCv'); if (m && !NEW_ART[tf.foe.shape]) drawBoss(m, tf.foe, frame, motionOK, hurt, tf.down);
-  const b = document.getElementById('bossCv'); if (b && !(foe && NEW_ART[foe.shape])) drawBoss(b, foe, frame, motionOK, hurt, down); }   // redrawn bosses run on their own steady 10 fps loop below
+  const b = document.getElementById('bossCv'); if (b && !NEW_ART[tf.foe.shape]) drawBoss(b, tf.foe, frame, motionOK, hurt, tf.down); }   // redrawn bosses run on their own steady 10 fps loop below
   const sp = document.getElementById('spaceCv'); if (sp) drawSpace(sp);
   const nc = document.getElementById('nightCv'); if (nc) drawNight(nc);
   const shc = document.getElementById('shopCv'); if (shc) drawShopFront(shc, motionOK ? frame : 0);
@@ -11365,7 +11378,7 @@ function drawNewBoss(still){ if (recoveryMode || !D) return; const foe = D.mini 
   const fx = (typeof conf !== 'undefined' && conf && conf.raf) || (typeof stars !== 'undefined' && stars && stars.raf);
   if (still !== true){ if (fx && !hurt) return; bossTick = (bossTick < 0 ? 0 : bossTick) + 1; }   // still: paint the current frame straight after a redraw, so the picture never blinks
   const m = document.getElementById('bossMiniCv'); if (m && NEW_ART[tf.foe.shape]) drawBoss(m, tf.foe, frame, motionOK, hurt, tf.down);
-  const b = document.getElementById('bossCv'); if (b && NEW_ART[foe.shape]) drawBoss(b, foe, frame, motionOK, hurt, down); }
+  const b = document.getElementById('bossCv'); if (b && NEW_ART[tf.foe.shape]) drawBoss(b, tf.foe, frame, motionOK, hurt, tf.down); }
 setInterval(() => drawNewBoss(), 100);
 setInterval(() => { if (recoveryMode || !D) return; let nd; try { nd = derive(); } catch(e){ render(); return; } if (nd.today !== D.today || nd.mood !== D.mood) render(); }, 60000);
 function floatAt(x, y, html){
