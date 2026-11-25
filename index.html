@@ -962,7 +962,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'a2d36912a1';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '829b29c3b7';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -10686,11 +10686,18 @@ function renderShop(){
       foot: own ? (s.eq ? 'Equipped' : 'Owned') : `${it.price} G`,
       detail: {title: it.name, secs: [`${styleTag(it)}${tierTag(it)}${own ? `<span class="tagtier">${s.eq ? 'Equipped' : 'Owned'}</span>` : ''}${have ? `<span class="tagtier">${have} in bag</span>` : ''}${seasonTag(it)}`, `<span class="qmnotetxt">${esc(it.text)}${(it.req || it.lvl) && !s.owned && !s.eq ? ` · needs ${reqText(it)}` : ''}</span>`], btn}};
   });
+  // the Weather Machine is a shop item like any other: it sits with the potions
+  const sm = D.smog;
+  if (sm && (shopCat === 'all' || shopCat === 'potion') && shopStyle === 'all' && shopTier === 'all' && !(shopAfford && (sm.owned || D.balance < sm.price))){
+    const wm = {id: 'weather', name: 'Weather Machine', kind: 'weather'}, can = !sm.owned && D.balance >= sm.price;
+    cards.unshift({key: 's:weather', art: itemArt(wm), name: 'Weather Machine' + (sm.owned ? ' (1)' : ''), cls: !sm.owned && !can ? 'locked' : '', foot: `${sm.price} G`,
+      detail: {title: 'Weather Machine', secs: [sm.owned ? '<span class="tagtier">1 in bag</span>' : '', '<span class="qmnotetxt">Clears toxic air. Hold 1.</span>'],
+        btn: sm.owned ? (sm.pts ? '<button class="btn gold" data-weatheruse>Use</button>' : '') : `<button class="btn gold" data-weatherbuy ${can ? '' : 'disabled'}>Buy · ${sm.price} G</button>`}});
+  }
   return `<div class="shopfront"><canvas id="shopCv" width="112" height="56" role="img" aria-label="The shop, seen from the street"></canvas></div>
   <div class="bignum"><b>${D.balance}</b><span>gold to spend</span></div>
   <button class="card bagrow" data-plus="inv"><span><b>Inventory</b><span class="muted small" style="display:block">Equip gear, drink potions and set runes (${D.activeRunes.length}/${RUNE_SLOTS} active)</span></span><span class="bagopen">Open ›</span></button>
   ${smogNote()}
-  ${weatherShopCard()}
   ${riffShopCard()}
   ${D.tokens && !dismissed('tokens') ? notice('tokens', `${D.tokens} free rune${D.tokens===1?'':'s'} in your inventory`) : ''}
   <div class="filters">
@@ -10702,7 +10709,7 @@ function renderShop(){
       <button class="catpill ${shopAfford ? 'on' : ''}" data-shoptog="afford" aria-pressed="${shopAfford}" title="Only what you can buy right now">${shopAfford ? svg('check',14,3) + ' ' : ''}Can buy now</button>
     </div>
   </div>
-  ${items.length ? tileGrid(cards) : `<p class="how">Nothing fits that filter.</p>`}
+  ${cards.length ? tileGrid(cards) : `<p class="how">Nothing fits that filter.</p>`}
   `;
 }
 function itemArt(it, small){
@@ -12187,7 +12194,6 @@ function onClick(e){
     if (!weatherArm){ weatherArm = true; render(); return; }
     weatherArm = false; S.buys.push({kind: 'weather', id: 'weather', ts: Date.now(), g: sm.price, date: D.today}); save(); render(); toast(`The Weather Machine cleared the air. −${sm.price} G`); return; }
   if ('weatherbuy' in el.dataset){ const sm = D.smog; if (!sm || sm.owned || D.balance < sm.price) return;
-    if (weatherArm !== 'shop'){ weatherArm = 'shop'; render(); return; }
     weatherArm = false; S.buys.push({kind: 'weatherbuy', id: 'weather', ts: Date.now(), g: sm.price, date: D.today}); save(); render(); toast(`Weather Machine is in your bag. −${sm.price} G`); return; }
   if ('weatheruse' in el.dataset){ const sm = D.smog; if (!sm || !sm.owned || !sm.pts) return;
     S.buys.push({kind: 'weatheruse', id: 'weather', ts: Date.now(), g: 0, date: D.today}); save(); render(); toast('The Weather Machine cleared the air.'); return; }
