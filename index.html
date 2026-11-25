@@ -930,7 +930,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '492c243e94';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '61d3ac4046';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1354,7 +1354,10 @@ const MINIS = [
   {id:'humdrum', name:'Humdrum Hobgoblin', days:2, weak:['MOB','HRT'], shape:'hobgob',  flavor:'Hums one flat note until every day sounds the same.', beaten:'It loses the tune and wanders off, muttering.'},
   {id:'fogre',   name:'Brain-Fog Ogre',    days:2, weak:['ARM','HRT'], shape:'ogre',    flavor:'Breathes a grey haze that makes simple things feel heavy.', beaten:'The haze lifts. It lumbers off coughing up the last of the fog.'},
   {id:'tedium',  name:'Tedium Troll',      days:3, weak:['MGT','HRT'], shape:'troll',   flavor:'Squats on the bridge between you and anything interesting.', beaten:'Off the bridge at last. It sulks back under it.'},
-  {id:'rut',     name:'Rut Troll',         days:3, weak:['STA','ARM'], shape:'ruttroll',flavor:'Digs the same groove deeper every day and dares you to climb out.', beaten:'You climbed out. It keeps digging somewhere else.'}
+  {id:'rut',     name:'Rut Troll',         days:3, weak:['STA','ARM'], shape:'ruttroll',flavor:'Digs the same groove deeper every day and dares you to climb out.', beaten:'You climbed out. It keeps digging somewhere else.'},
+  // added later: only days on or after `from` can roll these, so earlier days keep the mini-boss they had
+  {id:'monotone', name:'The Monotone',     days:2, weak:['MOB','STA'], shape:'humbar',  from:'2026-11-26', flavor:'One dead-level line that marches in place and never rises or falls.', beaten:'The line finally breaks. Something like a melody leaks out.'},
+  {id:'lockout',  name:'The Lockout',      days:3, weak:['HRT','ARM'], shape:'keyhole', from:'2026-11-26', flavor:'A locked door with nothing behind it but an eye, watching you try every key.', beaten:'It topples. There was never a lock, only the looking.'}
 ];
 const MINI_BY = Object.fromEntries(MINIS.map(m => [m.id, m]));
 const miniHp = (m, lvl) => m.days * (125 + 9 * (lvl - 1));
@@ -1362,7 +1365,7 @@ const miniGold = (m, lvl) => 10 * m.days + lvl;
 const miniXp = (m, lvl) => 15 * m.days + lvl;
 const miniPrize = from => roll('miniprize|' + from) < 0.5 ? 'keys' : 'chests';
 const miniChestIds = from => [1, 2, 3].map(n => MINI_CHEST0 + dayIdx(from) * 10 + n);
-const miniPick = (d, prev) => { const pool = MINIS.filter(m => m.id !== prev); return pool[hash('minipick|' + d) % pool.length]; };
+const miniPick = (d, prev) => { const pool = MINIS.filter(m => m.id !== prev && (!m.from || d >= m.from)); return pool[hash('minipick|' + d) % pool.length]; };
 // once your level reaches a rite, it's your boss every fight until you beat it (its HP carries over between fights)
 // rites only take fights that start on or after the day they were added, so a fight already under way never changes
 const RITES_FROM = '2026-11-18';
@@ -7248,6 +7251,1482 @@ function drawMaw(cv, f, accent){
   blitBuf(ctx, buf, W, H);
 }
 
+// ---- The Hydra of Someday (style guide v1)
+// The Hydra of Someday ("cut off one 'later' and two more grow back"), concept 10B "the shared eye".
+// A wreath of blind, stitched-socket horned heads on six scaled necks coils around ONE great clock-dial eye held up in a ticked wheel.
+// Its single hand ticks toward the hour and always slips back just before it gets there. The low right neck has been cut: the stump
+// glows and two small heads already sprout from it. Pop: the shared eye, the stump's glow, the ground pool. Nothing else.
+function drawHydra(cv, f, accent){
+  const LOOP = 64, P = (f % LOOP) / LOOP, TAU = Math.PI * 2;                                             // one seamless 6.4 s loop: every motion is a whole number of cycles of P
+  const W = 128, H = 104, A = POP_RAMPS[accent] || POP_RAMPS.blush, D = !!drawHydra.dead;
+  const K = '#121110', G1 = '#211f1d', G2 = '#2e2a27', G3 = '#3f3a36', G4 = '#57514b', G5 = '#756e66';
+  const T1 = '#4a4540', T2 = '#615b54', T3 = '#8e867b', T4 = '#c9c2b6';                                  // the light ramp: teeth and stitches only
+  if (!drawHydra.sc){ drawHydra.sc = document.createElement('canvas'); drawHydra.sc.width = W; drawHydra.sc.height = H; }
+  const sc = drawHydra.sc, sx = sc.getContext('2d', {willReadFrequently: true}), buf = new Array(W * H).fill(null);
+  let XF = null;
+  const L = shapeLayer(sx, W, H, buf, () => XF);
+  const ell = (x, y, rx, ry, rot = 0) => c => { c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); c.fill(); };
+  const path = pts => c => { c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.closePath(); c.fill(); };
+  const strokeP = (pts, w) => c => { c.lineWidth = w; c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.stroke(); };
+  const rect = (x, y, w, h) => c => { c.rect(x, y, w, h); c.fill(); };
+  const px = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < W && y < H) buf[y * W + x] = c; };
+  const ring = (x, y, r, w, a0 = 0, a1 = TAU) => c => { c.lineWidth = w; c.moveTo(x + r * Math.cos(a0), y + r * Math.sin(a0)); c.arc(x, y, r, a0, a1); c.stroke(); };
+  const bz = (p, t) => { const u = 1 - t; return [u*u*u*p[0] + 3*u*u*t*p[2] + 3*u*t*t*p[4] + t*t*t*p[6], u*u*u*p[1] + 3*u*u*t*p[3] + 3*u*t*t*p[5] + t*t*t*p[7]]; };
+  const samp = (p, n) => { const S = []; for (let i = 0; i <= n; i++){ const t = i / n, [x, y] = bz(p, t), [xa, ya] = bz(p, Math.max(0, t - 0.01)), [xb, yb] = bz(p, Math.min(1, t + 0.01)); const m = Math.hypot(xb - xa, yb - ya) || 1; S.push([x, y, (xb - xa) / m, (yb - ya) / m, t]); } return S; };
+  const taper = (p, w0, w1, n = 24) => c => { for (let i = 0; i <= n; i++){ const t = i / n, [x, y] = bz(p, t), r = Math.max(0.35, (w0 + (w1 - w0) * t) / 2); c.moveTo(x + r, y); c.arc(x, y, r, 0, TAU); } c.fill(); };
+  const sm = x => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
+  const bump = (a, b, c, d) => sm((P - a) / (b - a)) * (1 - sm((P - c) / (d - c)));
+
+  // ------------------------------------------------------------------ the clockwork of the loop
+  // idle: the necks sway in a wave round the wreath, the hand ticks up toward 12. the beat: it nearly gets there, the eye flares, every
+  // head strains inward... and the hand slips back. the two sprouts twitch, swell a little, and settle.
+  const strain = D ? 0 : bump(0.56, 0.74, 0.775, 0.82), recoil = D ? 0 : bump(0.785, 0.83, 0.84, 0.96);
+  const grow = D ? 0 : bump(0.80, 0.86, 0.89, 1.0), twitch = D ? 0 : Math.sin(TAU * P * 16) * bump(0.785, 0.81, 0.86, 0.93);
+  const stair = x => { const s = x - Math.sin(TAU * x) / TAU; return s - Math.sin(TAU * s) / TAU; };        // a smooth staircase: the hand ticks without a floor()
+  const HA0 = -2.2, HA1 = -0.13;
+  let hand;
+  if (D) hand = Math.PI + Math.sin(TAU * P) * 0.05;
+  else if (P < 0.78) hand = HA0 + (HA1 - HA0) * stair(Math.min(1, P / 0.74) * 9) / 9 + Math.sin(TAU * P * 16) * 0.035 * strain;
+  else { const v = Math.min(1, (P - 0.78) / 0.09), e = 1 + 2.70158 * Math.pow(v - 1, 3) + 1.70158 * Math.pow(v - 1, 2); hand = HA1 + (HA0 - HA1) * e; }
+  const bob = D ? 0 : Math.round(Math.sin(TAU * P * 2) * 1);                                              // the wheel breathes
+  const EX = 64, EY = (D ? 51 : 47) + bob;
+  const sw = (i, lag = 0) => D ? 0 : Math.sin(TAU * P - i * TAU / 6 - lag);                               // the wave round the wreath: each neck lags the last
+
+  // ------------------------------------------------------------------ the ground: a pool of the eye's light
+  if (D){ L(G1, ell(64, 97.5, 44, 3)); L(G3, c => { c.lineWidth = 1; c.ellipse(64, 97.5, 40, 2.2, 0, 0, TAU); c.stroke(); }); }
+  else { const fl = strain > 0.75 ? 1 : 0, rp = (P * 2) % 1;
+    L(A[0], ell(64, 97.5, 46 + fl * 2, 3.4)); L(A[1], ell(64, 97.8, 30 + strain * 6, 2.3)); L(A[2 + fl], ell(64, 98, 12 + strain * 6, 1.2));
+    L(A[1], c => { c.lineWidth = 1; c.ellipse(64, 97.5, 30 + rp * 14, 2.4 + rp * 0.8, 0, Math.PI * 0.1, Math.PI * 0.9); c.stroke(); }); }   // a ripple running out
+
+  // ------------------------------------------------------------------ parts
+  // a serpent neck in hard bands: a scalloped ridge of scales down the back, a black back, a dark flank, a paler belly cut into scutes,
+  // and one lit edge on the side that faces the eye. side = which normal of the curve the belly is on.
+  const neck = (p, w0, w1, side, o = {}) => { const n = 44, S = samp(p, n).map(([x, y, tx, ty, t]) => [x, y, tx, ty, w0 + (w1 - w0) * t, -ty * side, tx * side]);
+    let len = 0; for (let i = 1; i <= n; i++) len += Math.hypot(S[i][0] - S[i - 1][0], S[i][1] - S[i - 1][1]);
+    const at = d => { let a = 0; for (let i = 1; i <= n; i++){ const l = Math.hypot(S[i][0] - S[i - 1][0], S[i][1] - S[i - 1][1]); if (a + l >= d){ const u = (d - a) / (l || 1); return S[i - 1].map((v, k) => v + (S[i][k] - v) * u); } a += l; } return S[n]; };
+    const d0 = o.d0 || 3, d1 = len - (o.d1 || 2.5), step = o.step || 4;
+    L(K, c => { for (const [x, y, , , w] of S){ c.moveTo(x + w / 2, y); c.arc(x, y, w / 2, 0, TAU); }
+      for (let d = d0 + step / 2; d < d1; d += step){ const [x, y, , , w, nx, ny] = at(d), bx = x - nx * (w / 2 - 0.5), by = y - ny * (w / 2 - 0.5); c.moveTo(bx + 1.7, by); c.arc(bx, by, 1.7, 0, TAU); } c.fill(); });   // body, and the ridge: one raised scale per scute
+    L(G3, c => { c.lineWidth = 1; for (let d = d0 + step / 2; d < d1; d += step){ const [x, y, tx, ty, w, nx, ny] = at(d), bx = x - nx * (w / 2 + 0.5), by = y - ny * (w / 2 + 0.5); c.moveTo(bx - tx * 0.9, by - ty * 0.9); c.lineTo(bx + tx * 0.9, by + ty * 0.9); } c.stroke(); });   // each ridge scale catches a little light
+    const band = (col, off, rr) => L(col, c => { for (let d = d0; d <= d1; d += 0.8){ const [x, y, , , w, nx, ny] = at(d), r = Math.max(0.6, w * rr); c.moveTo(x + nx * w * off + r, y + ny * w * off); c.arc(x + nx * w * off, y + ny * w * off, r, 0, TAU); } c.fill(); });
+    band(G1, 0.2, 0.28); band(G3, 0.32, 0.13);                                                                    // flank, belly
+    L(K, c => { c.lineWidth = 1; for (let d = d0 + 0.5; d < d1; d += step){ const [x, y, , , w, nx, ny] = at(d); c.moveTo(x + nx * w * 0.12, y + ny * w * 0.12); c.lineTo(x + nx * (w / 2), y + ny * (w / 2)); } c.stroke(); });   // scutes
+    L(o.lit || G5, c => { c.lineWidth = 1; let first = true; for (let d = d0; d <= d1; d += 1){ const [x, y, , , w, nx, ny] = at(d), ex = x + nx * (w / 2 - 0.5), ey = y + ny * (w / 2 - 0.5); first ? c.moveTo(ex, ey) : c.lineTo(ex, ey); first = false; } c.stroke(); });   // the lit edge
+    for (let d = d0 + 0.5 + step / 2; d < d1; d += step){ const [x, y, , , w, nx, ny] = at(d); if (w > 6) px(x - nx * w * 0.1, y - ny * w * 0.1, G3); }   // a row of scales along the flank
+    return S[n]; };
+  // a ridged horn
+  const horn = (p, w0, w1, n, sd = 1) => { L(K, taper(p, w0 + 1.6, w1 + 0.8)); L(T2, taper(p, w0, w1));                                 // dark bone on a black root
+    L(T3, c => { c.lineWidth = 0.9; for (let i = 0; i <= 12; i++){ const t = 0.1 + 0.8 * i / 12, [x, y] = bz(p, t), [xa, ya] = bz(p, t - 0.02), [xb, yb] = bz(p, t + 0.02), m = Math.hypot(xb - xa, yb - ya) || 1, l = Math.max(0, (w0 + (w1 - w0) * t) * 0.5 - 0.5) * sd; const qx = x + (yb - ya) / m * l, qy = y - (xb - xa) / m * l; i ? c.lineTo(qx, qy) : c.moveTo(qx, qy); } c.stroke(); });   // its lit upper edge
+    if (n) L(K, c => { c.lineWidth = 0.9; for (let i = 0; i < n; i++){ const t = n === 1 ? 0.45 : 0.28 + 0.4 * i / (n - 1), [x, y] = bz(p, t), [xa, ya] = bz(p, t - 0.02), [xb, yb] = bz(p, t + 0.02), m = Math.hypot(xb - xa, yb - ya) || 1, tx = (xb - xa) / m, ty = (yb - ya) / m, l = (w0 + (w1 - w0) * t) * 0.5 + 0.3;
+      c.moveTo(x + ty * l, y - tx * l); c.lineTo(x - ty * l, y + tx * l); } c.stroke(); }); };                                             // the ridges, cut in dark
+  // a blind head in profile. local space: +u is forward, -v is up. M maps left-space points to the canvas (mirrors the right side).
+  const head = (hx, hy, a, s, jaw, M, o = {}) => { const ca = Math.cos(a), sa = Math.sin(a), fv = o.flipV ? -1 : 1;
+    const T = (u, v) => M([hx + (u * ca - v * fv * sa) * s, hy + (u * sa + v * fv * ca) * s]), Tp = pts => pts.map(([u, v]) => T(u, v)), Tb = p => [].concat(T(p[0], p[1]), T(p[2], p[3]), T(p[4], p[5]), T(p[6], p[7]));
+    const jw = (u, v) => T(u, v + jaw * Math.max(0, u + 6) / 15), small = s < 0.75, B = K;
+    const hsd = (M === MR ? -1 : 1) * fv;
+    if (!small){ horn(Tb([-3.4, -6, -4.4, -11.6, -8.6, -13.4, -14, -11.2]), 5.6 * s, 2, 2, hsd);                // the great horn, swept up and back
+      horn(Tb([-7.2, 1.6, -9.6, 2.2, -10.6, 4, -10, 6.6]), 2.6 * s, 1, 0, hsd); }                                 // the cheek spur
+    else horn(Tb([-3.2, -6.4, -4, -10.4, -6.6, -12.4, -10, -12]), 3.6 * s + 0.6, 1.2, 1, hsd);
+    const skull = Tp([[-8, -2.5], [-7, -6], [-2, -8], [3, -7.2], [6.5, -5.2], [8.6, -5.8], [10.6, -4.6], [12.6, -2], [12.8, 0.8], [11.4, 2.8], [10, 1], [-6, 1.8]]);   // skull and hooked upper jaw, a bump of nostril
+    const lower = [jw(-8.6, -0.5), jw(-3, 2), jw(9, 2.6), jw(10.4, 3.6), jw(8.6, 5.2), jw(1, 6), jw(-7.4, 4.6)], hinge = Tp([[-8.6, -2.6], [-4, -3], [-3, 4 + jaw * 0.25], [-8, 4]]);   // the lower jaw, hinged at the back
+    L(B, path(skull)); L(B, path(lower)); L(B, path(hinge));
+    L(G5, strokeP(Tp([[-6.7, -5.6], [-2, -7.5], [3, -6.7], [6.3, -4.8]]), 1)); L(G4, strokeP(Tp([[8.7, -5.3], [10.4, -4.2], [12.1, -1.9]]), 1));                    // lit brow, lit snout
+    if (!small) L(G3, strokeP([jw(-5.6, 5), jw(1, 5.4), jw(8, 4.7)], 1));                   // the lip, the jaw's edge
+    // teeth: light, hard, uneven
+    if (small){ for (const u of [2.4, 6, 9.8]) L(D ? T2 : T4, path([T(u - 1.3, 1.2), T(u + 1.3, 1.2), T(u + 0.3, 4)])); }
+    else { [0.4, 3.2, 6, 8.5].forEach((u, i) => L(T3, path([T(u - 1.1, 1.2), T(u + 1.1, 1.2), T(u + 0.35, 4 - (i % 2) * 0.7)]))); L(T4, path([T(9.9, 1.1), T(12, 1.4), T(11.2, 4.8)]));
+      [1.8, 4.6, 7.3].forEach(u => L(T2, path([jw(u - 1.1, 2.8), jw(u + 1.1, 2.8), jw(u, 0.2)]))); }
+    // the socket: a hollow, sewn shut
+    if (small){ L(K, ell(...T(1.8, -3.8), 2.6 * s + 0.4, 1.9 * s + 0.3)); L(D ? G5 : T3, strokeP([T(-0.6, -3.9), T(4.2, -3.7)], 0.9)); }
+    else { const [ox, oy] = T(1.6, -3.9); L(G3, ell(ox, oy, 3.7 * s, 2.7 * s)); L(K, ell(ox, oy, 2.8 * s, 1.8 * s));
+      L(D ? G5 : T3, strokeP([T(-1.5, -4), T(4.7, -3.8)], 0.9)); for (const u of [0, 3.2]){ px(...T(u, -5.3), G5); px(...T(u + 1.4, -2.5), G5); } } };
+
+  // ------------------------------------------------------------------ the six necks. all given in LEFT-side space; the right ones are mirrored.
+  // i orders them round the wreath for the wave: low-L 0, mid-L 1, top-L 2, top-R 3, mid-R 4, the cut one 5.
+  const ML = p => p, MR = p => [128 - p[0], p[1]];
+  const DEF = {
+    top: {H: [43, 20.5], a: 0.26, s: 1, push: 2.2, P0: [56, 88], P1: [35, 83], P2: [36, 36], w: [10.4, 8], dH: [20.5, 35], da: 1.52, dP0: [56, 88], dP1: [47, 16], dP2: [20, 6]},
+    mid: {H: [19, 34], a: 0.36, s: 0.92, push: 3, P0: [48, 90], P1: [30, 76], P2: [34, 50], w: [9.6, 7.4], dH: [12, 66], da: 1.62, dP0: [48, 90], dP1: [37, 54], dP2: [11, 46]},
+    low: {H: [20.5, 72], a: -0.12, s: 0.92, push: 3, P0: [40, 90.5], P1: [28, 95.5], P2: [9, 95.5], w: [9.4, 7.4], dH: [22, 91.5], da: Math.PI - 0.05, dP0: [44, 90], dP1: [40, 94], dP2: [34, 95], dFlip: true},
+  };
+  const pose = (key, i, M) => { const q = DEF[key]; let Hh, a, P0, P1, P2;
+    if (D){ Hh = q.dH.slice(); a = q.da; P0 = q.dP0; P1 = q.dP1; P2 = q.dP2; Hh[0] += Math.round(Math.sin(TAU * P + i) * 0.6); }
+    else { const ix = 64 - q.H[0], iy = 47 - q.H[1], m = Math.hypot(ix, iy), ux = ix / m, uy = iy / m, tx = -uy, ty = ux;                     // inward and tangent, round the eye
+      const push = q.push * strain - 1.5 * recoil, s0 = sw(i), s1 = sw(i, -0.8);
+      Hh = [q.H[0] + tx * 1.8 * s0 + ux * push, q.H[1] + ty * 1.8 * s0 + uy * push + bob * 0.5]; a = q.a + 0.07 * sw(i, 0.9) + (key === 'low' ? -0.1 : 0.08) * strain;
+      P0 = q.P0; P1 = [q.P1[0] + tx * 0.5 * s1, q.P1[1] + ty * 0.5 * s1]; P2 = [q.P2[0] + tx * 1.3 * s1 + ux * push * 0.6, q.P2[1] + ty * 1.3 * s1 + uy * push * 0.6]; }
+    const fv = D && q.dFlip ? -1 : 1, ca = Math.cos(a), sa = Math.sin(a), at = [Hh[0] + (-5.4 * ca - 1.6 * fv * sa) * q.s, Hh[1] + (-5.4 * sa + 1.6 * fv * ca) * q.s];   // the neck joins under the back of the skull
+    return {p: [].concat(M(P0), M(P1), M(P2), M(at)), H: Hh, a, M, w: q.w, s: q.s, flipV: fv < 0, jaw: D ? 2.2 : 1.1 + 1.5 * strain + 0.25 * sw(i, 1.6)}; };
+  const NK = [pose('top', 2, ML), pose('top', 3, MR), pose('mid', 1, ML), pose('mid', 4, MR), pose('low', 0, ML)];
+  for (const n of NK) neck(n.p, n.w[0], n.w[1], n.M === ML ? 1 : -1);
+  // the cut neck (right): a stump with a raw glowing face, two small heads sprouting from it
+  const cs = sw(5), cP = D ? [].concat(MR([40, 90.5]), MR([27, 95.5]), MR([12, 96]), MR([14, 87])) : [].concat(MR([40, 90.5]), MR([27, 95.5]), MR([12.5 - cs * 0.6, 96]), MR([15.5 + cs * 0.8, 79 + bob * 0.5]));
+  const cE = neck(cP, 9.4, 9.4, -1, {d1: 1});
+
+  // ------------------------------------------------------------------ the knot they all rise from, and the trunk that carries the wheel
+  const coil = (cx, cy, rx, ry, n) => { L(K, ell(cx, cy, rx, ry)); L(G1, c => { c.ellipse(cx, cy + ry * 0.3, rx - 2.2, ry * 0.52, 0, 0, Math.PI); c.fill(); });
+    L(K, c => { c.lineWidth = 0.9; for (let i = 1; i < n; i++){ const x = cx - rx + 2 * rx * i / n, lean = (x - cx) / rx * 2.4; c.moveTo(x, cy + 0.6); c.lineTo(x + lean, cy + ry); } c.stroke(); });
+    L(G4, c => { c.lineWidth = 1; c.ellipse(cx, cy, rx - 0.6, ry - 0.6, 0, Math.PI * 1.08, Math.PI * 1.62); c.stroke(); }); L(G3, c => { c.lineWidth = 1; c.ellipse(cx, cy, rx - 0.6, ry - 0.6, 0, Math.PI * 1.7, Math.PI * 1.9); c.stroke(); });
+    for (let i = 1; i < n; i += 2) px(cx - rx + 2 * rx * (i + 0.5) / n, cy - ry * 0.35, G3); };
+  coil(64, 90, 33, 5.6, 17); coil(63, 85, 22, 4.6, 11);
+  { const p = [84, 91, 97, 95, 101, 88, 95, 86.5]; L(K, taper(p, 4.6, 1.2)); L(G4, strokeP([[88, 90.6], [96, 91.6, 97.6, 88.6]], 0.8)); }      // the tail tip, curled out of the pile
+  const ty0 = EY + 15;
+  L(K, path([[57, 88], [58.4, ty0 + 8], [59.6, ty0], [68.4, ty0], [69.6, ty0 + 8], [71, 88]]));                               // the trunk
+  L(G1, path([[61.4, 87], [62, ty0 + 2], [66, ty0 + 2], [66.6, 87]])); for (let y = 85; y > ty0 + 3; y -= 3) L(K, rect(60, y, 8, 1));   // its scutes, seen front-on
+  L(G4, strokeP([[58.2, 85], [59.4, ty0 + 9], [60.2, ty0 + 3]], 1)); for (let y = 83.5; y > ty0 + 6; y -= 6) px(69, y, G3);
+  // the yoke that cradles the wheel: two horn-tipped arms
+  for (const sd of [-1, 1]){ L(K, c => { c.lineWidth = 3; c.arc(EX, EY, 18.8, Math.PI / 2, Math.PI / 2 + sd * 1.05, sd < 0); c.stroke(); });
+    const a = Math.PI / 2 + sd * 1.05; L(K, path([[EX + Math.cos(a) * 17.3, EY + Math.sin(a) * 17.3], [EX + Math.cos(a + sd * 0.36) * 20.8, EY + Math.sin(a + sd * 0.36) * 20.8], [EX + Math.cos(a) * 20.3, EY + Math.sin(a) * 20.3]])); }
+  L(G4, c => { c.lineWidth = 1; c.arc(EX, EY, 19.8, Math.PI / 2 + 0.25, Math.PI / 2 + 1.0); c.stroke(); });
+
+  // ------------------------------------------------------------------ the wheel of ticks and the shared eye: a clock dial with one hand
+  L(K, c => { for (let i = 0; i < 12; i++){ const a = i * TAU / 12, r1 = i % 3 === 0 ? 19.4 : 18.2, hw = i % 3 === 0 ? 0.13 : 0.1; if (i === 3) continue;   // hour thorns round the rim (the bottom one is the trunk)
+    c.moveTo(EX + Math.cos(a - hw) * 15.5, EY + Math.sin(a - hw) * 15.5); c.lineTo(EX + Math.cos(a) * r1, EY + Math.sin(a) * r1); c.lineTo(EX + Math.cos(a + hw) * 15.5, EY + Math.sin(a + hw) * 15.5); c.closePath(); } c.fill(); });
+  L(K, ell(EX, EY, 16.4, 16.4)); L(D ? G3 : G4, ring(EX, EY, 15.4, 1));
+  L(D ? G3 : G5, c => { c.lineWidth = 1; for (let i = 0; i < 24; i++){ const a = i * TAU / 24, r0 = i % 2 ? 13.6 : 12.8; c.moveTo(EX + Math.cos(a) * r0, EY + Math.sin(a) * r0); c.lineTo(EX + Math.cos(a) * 14.5, EY + Math.sin(a) * 14.5); } c.stroke(); });
+  const hx = Math.sin(hand), hy = -Math.cos(hand);
+  if (D){
+    L(G2, ell(EX, EY, 11.6, 11.6)); L(G3, ring(EX, EY, 11.2, 1)); L(G1, ell(EX + 1, EY + 1.4, 8.6, 8.6));
+    L(G3, c => { c.lineWidth = 1; for (let i = 0; i < 12; i++){ const a = i * TAU / 12; c.moveTo(EX + Math.cos(a) * 8.6, EY + Math.sin(a) * 8.6); c.lineTo(EX + Math.cos(a) * 10, EY + Math.sin(a) * 10); } c.stroke(); });
+    L(K, strokeP([[EX, EY + 2], [EX + hx * 9, EY + hy * 9]], 1.4)); L(K, path([[EX + hx * 10.4, EY + hy * 10.4], [EX + hx * 7 - hy * 1.6, EY + hy * 7 + hx * 1.6], [EX + hx * 7 + hy * 1.6, EY + hy * 7 - hx * 1.6]]));   // the hand hangs at six
+    L(K, strokeP([[EX - 6, EY - 8.5], [EX - 3.4, EY - 5.4], [EX - 5, EY - 3.6]], 0.9));                                          // a crack
+    L(G1, rect(EX - 3, EY - 3, 7, 7));
+    for (const [dx, dy] of [[-2, -2], [-1, -2], [1, -2], [2, -2], [-1, -1], [0, -1], [1, -1], [0, 0], [-1, 1], [0, 1], [1, 1], [-2, 2], [-1, 2], [1, 2], [2, 2]]) px(EX + dx, EY + dy, G4);   // the grey X, pixel-exact, upright
+    drawHydra.deadHead = [EX, EY - 23];
+  } else {
+    const fl = strain > 0.55 ? 1 : 0, fl2 = strain > 0.9 ? 1 : 0, c = k => A[Math.min(4, k)];
+    L(c(0 + fl), ell(EX, EY, 11.8, 11.8)); L(c(1 + fl), ell(EX, EY, 10.8, 10.8)); L(c(2 + fl2), ell(EX, EY, 9.6, 9.6));
+    L(c(3), ell(EX - 1.3, EY - 1.5, 6.6 + strain * 2.4, 6.6 + strain * 2.4)); if (fl2) L(c(4), ell(EX - 1.6, EY - 1.8, 4.4, 4.4));
+    L(c(4), ell(EX - 4.6, EY - 4.8, 2, 1.4, -0.7));                                                                       // the wet catchlight
+    L(c(0), cc => { cc.lineWidth = 1; for (let i = 0; i < 12; i++){ const a = i * TAU / 12 - Math.PI / 2; if (i === 0) continue; cc.moveTo(EX + Math.cos(a) * 8.8, EY + Math.sin(a) * 8.8); cc.lineTo(EX + Math.cos(a) * 10.6, EY + Math.sin(a) * 10.6); } cc.stroke(); });   // the hours
+    L(K, path([[EX - 1.9, EY - 11.2], [EX + 1.9, EY - 11.2], [EX, EY - 7.4]]));                                              // twelve: the hour it never reaches
+    L(K, strokeP([[EX - hx * 2.6, EY - hy * 2.6], [EX + hx * 7.6, EY + hy * 7.6]], 1.5));                                    // the one hand
+    L(K, path([[EX + hx * 9.8, EY + hy * 9.8], [EX + hx * 6.4 - hy * 1.7, EY + hy * 6.4 + hx * 1.7], [EX + hx * 6.4 + hy * 1.7, EY + hy * 6.4 - hx * 1.7]]));
+    L(K, ell(EX, EY, 2, 2)); px(EX - 1, EY - 1, A[4]);
+  }
+
+  // ------------------------------------------------------------------ the stump's raw face and its two sprouts
+  { const [x, y, tx, ty] = cE, rot = Math.atan2(tx, -ty) , g = 1 + 0.22 * grow;
+    L(K, ell(x - tx * 0.6, y - ty * 0.6, 6, 3.2, rot)); L(G4, c => { c.lineWidth = 1; c.ellipse(x - tx * 1.2, y - ty * 1.2, 5.6, 2.8, rot, Math.PI * 0.15, Math.PI * 0.85); c.stroke(); });                                                                    // a flared collar of cut hide
+    const fx = x + tx * 0.6, fy = y + ty * 0.6;
+    // sprouts: thin necks, small blind heads, already straining for the eye
+    const SP = D ? [{c1: [3, -3], c2: [9, -3], e: [12, 3], a: 0.9, s: 0.66}, {c1: [-1, -5], c2: [-5, -6], e: [-5, 1], a: 1.9, s: 0.6, fv: true}]
+                 : [{c1: [2, -5], c2: [10, -3], e: [9, -12.5], a: -0.4, s: 0.68}, {c1: [-1.5, -8], c2: [-7, -11], e: [0, -24], a: -0.6, s: 0.6}];
+    SP.forEach((q, k) => { const tw = twitch * (k ? -1 : 1), gk = D ? 1 : g, ex = q.e[0] + tw * 0.9, ey = q.e[1] * gk;
+      const hs = q.s * gk, a = q.a + tw * 0.25 + 0.08 * sw(5 + k, 1) - 0.12 * strain, ca = Math.cos(a), sa = Math.sin(a), fv = q.fv ? -1 : 1, Hh = [128 - (fx - ex), fy + ey];   // head centre, in left-space so it can use the mirror map
+      const jx = Hh[0] + (-5.4 * ca - 1.6 * fv * sa) * hs, jy = Hh[1] + (-5.4 * sa + 1.6 * fv * ca) * hs, o = (k ? -1.8 : 1.8);
+      const p = [fx + o, fy, fx + o + q.c1[0], fy + q.c1[1] * gk, fx + q.c2[0] * gk, fy + q.c2[1] * gk, 128 - jx, jy], w0 = 4.4, w1 = 3.6 * gk, S = samp(p, 12);
+      L(K, taper(p, w0 + 1.4, w1 + 1.2, 20)); L(G1, taper(p, w0 - 0.6, w1 - 0.8, 20));                                         // young necks: thin, already scaled
+      L(D ? G3 : G5, c => { c.lineWidth = 0.9; S.forEach(([x2, y2, ttx, tty], i2) => { if (i2 < 1 || i2 > 11) return; const sd = k ? 1 : -1, qx = x2 + tty * sd * 1.5, qy = y2 - ttx * sd * 1.5; i2 === 1 ? c.moveTo(qx, qy) : c.lineTo(qx, qy); }); c.stroke(); });
+      L(K, c => { c.lineWidth = 0.9; for (const i2 of [3, 6, 9]){ const [x2, y2, ttx, tty] = S[i2]; c.moveTo(x2 - tty * 2.2, y2 + ttx * 2.2); c.lineTo(x2 + tty * 2.2, y2 - ttx * 2.2); } c.stroke(); });
+      head(Hh[0], Hh[1], a, hs, D ? 1.8 : 1.4 + 1.2 * strain + Math.abs(tw) * 1.4, MR, {flipV: !!q.fv}); });
+    if (D){ L(G3, ell(fx, fy, 5, 2.2, rot)); L(G1, ell(fx, fy, 3.6, 1.3, rot)); }
+    else { const pl = Math.sin(TAU * P * 2) > 0.3 ? 1 : 0, hot = grow > 0.3 || strain > 0.75 ? 1 : 0;
+      L(A[1], ell(fx, fy, 5.2, 2.4, rot)); L(A[2 + hot], ell(fx, fy, 4, 1.6, rot)); L(A[3 + hot], ell(fx - 0.6, fy, 2 + pl * 0.6, 0.8, rot));
+      for (const [ox, k] of [[4.6, 0], [-3.8, 0.5]]){ const t = (P * 2 + k) % 1, yy = fy + 1.5 + t * (95 - fy); px(fx + ox, yy, A[2]); if (t > 0.12) px(fx + ox, yy - 1, A[1]); }   // raw light drips off the cut
+    } }
+
+  // ------------------------------------------------------------------ heads last, so nothing hides them
+  for (const n of NK) head(n.H[0], n.H[1], n.a, n.s, n.jaw, n.M, {flipV: n.flipV});
+
+  // ------------------------------------------------------------------ pixel debris: scales shed off the necks, drifting up
+  if (!D) for (const [x, y, k, sz, col] of [[10, 62, 0.1, 2, K], [112, 24, 0.55, 2, K], [28, 68, 0.8, 1, K], [99, 70, 0.3, 1, K], [14, 28, 0.45, 2, K], [64, 16, 0.2, 1, K]]){
+    const t = (P + k) % 1; if (t > 0.85) continue; L(col, rect(Math.round(x + Math.sin(TAU * (P + k)) * 1.2), Math.round(y - t * 7), t > 0.6 ? 1 : sz, t > 0.6 ? 1 : sz)); }
+
+  const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
+  blitBuf(ctx, buf, W, H);
+}
+
+// ---- The Burnout (style guide v1)
+// The Burnout ("the hollow candle"): a gaunt wax giant burnt down to the frame. No legs: below the ribs it is a candle column in melted
+// tiers. Its open ribcage holds the last coals; long arms hang to the ground; the head is a slumped candle stub with a dead bent wick and
+// two pinprick ember eyes sunk in drip-shadowed hollows. Wax sheets and long strands hang off everything. Pop: ember eyes, coals, ground pool
+// (and a few sparks). Signature beat: the wick catches, the coals blaze, the whole figure melts a few pixels lower, the flame gutters out.
+function drawBurnout(cv, f, accent){
+  const LOOP = 64, P = (f % LOOP) / LOOP, TAU = Math.PI * 2; f = f % LOOP;
+  const W = 128, H = 104, A = POP_RAMPS[accent] || POP_RAMPS.blush, D = !!drawBurnout.dead;
+  const K = '#121110', G1 = '#211f1d', G2 = '#2e2a27', G3 = '#3f3a36', G4 = '#57514b', G5 = '#756e66';
+  if (!drawBurnout.sc){ drawBurnout.sc = document.createElement('canvas'); drawBurnout.sc.width = W; drawBurnout.sc.height = H; }
+  const sc = drawBurnout.sc, sx = sc.getContext('2d', {willReadFrequently: true}), buf = new Array(W * H).fill(null);
+  let XF = null;
+  const L0 = shapeLayer(sx, W, H, buf, () => XF);
+  // a section offset: every part of the body moves by whole pixels, so the bands never shimmer
+  let OX = 0, OY = 0;
+  const off = fn => c => { const dx = OX, dy = OY; if (!dx && !dy) return fn(c);
+    fn({ set lineWidth(v){ c.lineWidth = v; }, get lineWidth(){ return c.lineWidth; },
+      moveTo: (x, y) => c.moveTo(x + dx, y + dy), lineTo: (x, y) => c.lineTo(x + dx, y + dy),
+      quadraticCurveTo: (a, b, x, y) => c.quadraticCurveTo(a + dx, b + dy, x + dx, y + dy),
+      bezierCurveTo: (a, b, e, g, x, y) => c.bezierCurveTo(a + dx, b + dy, e + dx, g + dy, x + dx, y + dy),
+      ellipse: (x, y, ...r) => c.ellipse(x + dx, y + dy, ...r), arc: (x, y, ...r) => c.arc(x + dx, y + dy, ...r),
+      rect: (x, y, w, h) => c.rect(x + dx, y + dy, w, h), closePath: () => c.closePath(), fill: () => c.fill(), stroke: () => c.stroke() }); };
+  const L = (col, fn) => L0(col, off(fn));
+  const ell = (x, y, rx, ry, rot = 0) => c => { c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); c.fill(); };
+  const path = pts => c => { c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.closePath(); c.fill(); };
+  const strokeP = (pts, w) => c => { c.lineWidth = w; c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.stroke(); };
+  const rect = (x, y, w, h) => c => { c.rect(x, y, w, h); c.fill(); };
+  const px = (x, y, col, w = 1, h = 1) => L(col, c => { c.rect(Math.round(x), Math.round(y), w, h); c.fill(); });
+  const bz = (p, t) => { const u = 1 - t; return [u*u*u*p[0] + 3*u*u*t*p[2] + 3*u*t*t*p[4] + t*t*t*p[6], u*u*u*p[1] + 3*u*u*t*p[3] + 3*u*t*t*p[5] + t*t*t*p[7]]; };
+  const taper = (p, w0, w1, n = 26) => c => { for (let i = 0; i <= n; i++){ const t = i / n, [x, y] = bz(p, t), r = Math.max(0.35, (w0 + (w1 - w0) * t) / 2); c.moveTo(x + r, y); c.arc(x, y, r, 0, TAU); } c.fill(); };
+  const rotXF = (a, cx, cy, tx = 0, ty = 0) => { const cs = Math.cos(a), sn = Math.sin(a); return [cs, sn, -sn, cs, cx - cs * cx + sn * cy + tx, cy - sn * cx - cs * cy + ty]; };
+  const ss = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  const cl = i => A[Math.max(0, Math.min(4, i))];
+  // a hanging wax strand: a thin taper ending in a bead; sw bends the tip
+  const strand = (x, y, l, w = 1.6, sw = 0, col = K, bead = true) => { L(col, taper([x, y, x + 0.3, y + l * 0.35, x - 0.2 + sw * 0.5, y + l * 0.7, x + sw, y + l], w, Math.max(0.8, w * 0.55))); if (bead) L(col, ell(x + sw, y + l, w * 0.4 + 0.35, w * 0.45 + 0.45)); };
+
+  // ------------------------------------------------------------------ timing
+  const br = D ? 0 : Math.sin(TAU * P * 2), brL = D ? 0 : Math.sin(TAU * P * 2 - 0.9);          // slow heavy breath, two a loop; head and strands lag
+  const flame = D ? 0 : ss(0.50, 0.56, P) * (1 - ss(0.775, 0.80, P));                              // the wick catches...
+  const blaze = D ? 0 : ss(0.52, 0.62, P) * (1 - ss(0.78, 0.93, P));                               // ...the coals blaze...
+  const sagE = D ? 0 : ss(0.56, 0.78, P) * (1 - ss(0.84, 0.985, P));                               // ...the figure melts lower, then settles back
+  const puff = D ? -1 : (P >= 0.795 && P < 0.97 ? (P - 0.795) / 0.175 : -1);                       // the puff of smoke when it gutters
+  const dyH = Math.round(-brL * 0.9 + sagE * 5), dyS = Math.round(-br * 0.9 + sagE * 4), dyR = Math.round(sagE * 3), dy1 = Math.round(sagE * 2), dy2 = Math.round(sagE * 1);
+  const spread = Math.round(sagE * 2);
+  const sway = k => D ? 0 : Math.sin(TAU * P * 2 - 1.3 - k * 0.7) * 0.9;
+
+  // ================================================================== parts
+  // the candle-stub head. Local frame: stub spans x 55..73, y 9.5..24; wick tip at about (68, 6.5)
+  const head = (dead) => {
+    // the stub: a fat cylinder of wax, its top melted to a tilted pool, the foot spread into a skirt
+    L(K, path([[54, 11], [54.2, 8.4, 60, 7.4, 65, 7.8], [70, 8.2, 74, 9.6, 74, 12.4], [74, 21], [75, 24, 77.4, 25.6, 80.4, 26.8], [47.6, 26.8], [50.6, 25.6, 53, 24, 54, 21]]));
+    L(G3, path([[55.6, 12], [71, 13], [71, 22], [71.6, 24, 72.6, 25, 74, 25.8], [52.6, 25.8], [54.4, 25, 55.4, 24, 55.6, 22]]));                  // the lit front of the stub
+    L(G1, path([[66.4, 13], [71, 13], [71, 22], [71.6, 24, 72.6, 25, 74, 25.8], [66, 25.8]]));                                                                             // the shaded side of the cylinder
+    L(G3, ell(64, 10.6, 8.8, 2, 0.1)); L(K, ell(64.6, 11, 5.8, 1.1, 0.1)); px(56, 10, G4, 2, 1);                                                 // the top: a lit rim round the dark melt pool
+    // wax poured over the rim: a brow of it sagging down the face in runs of different lengths, the two longest swelling into the eye hollows
+    L(K, path([[54.6, 11.6], [73.6, 12.6], [73.6, 25], [72.4, 25.4], [71.8, 24.6, 71.4, 23, 71.4, 16.4], [70.6, 15.2, 66.2, 15.4, 65.8, 16.6], [65.6, 18.4, 64.4, 18.4, 64.2, 16.6], [63.6, 15, 59.6, 15, 59, 16.2], [58.8, 21.4, 58.4, 22.6, 57.4, 22.8], [56.4, 22.6, 56, 21.4, 55.8, 16]]));
+    L(K, ell(61.5, 19, 2.7, 2.9)); L(K, ell(68.2, 20, 2.7, 2.9)); L(K, ell(57.3, 22.6, 1.2, 1.4));
+    L(K, path([[71, 9.4], [76, 10.6, 77.6, 13, 77.4, 16.4], [77.4, 20.4], [74, 20.4], [73.6, 12]])); L(K, ell(76.2, 20.6, 1.8, 2.4));              // the rim gave way on the right: a fat run down the outside
+    L(K, path([[54.6, 9.6], [52, 10.6, 51.4, 12.6, 51.6, 15], [54.4, 15]])); L(K, ell(52.5, 15.2, 1.5, 1.7));                                    // and a short one on the left
+    // lit edges: the left wall, the bead of each run, the skirt
+    L(G4, strokeP([[55.3, 13.4], [55.3, 21.6]], 0.8)); L(G3, strokeP([[54.6, 24], [52.6, 25.4, 50, 26.2]], 0.8)); px(51, 12, G3, 1, 3); px(76, 13, G3, 1, 6); px(76, 21, G4); px(54, 25, G4, 2, 1);
+    L(K, strokeP([[60, 24.4], [60, 26]], 1)); L(K, strokeP([[67.4, 23.6], [67.6, 26]], 1)); L(K, ell(60, 26, 1, 1)); L(K, rect(53, 26, 22, 1));                         // old runs set hard down the front
+    if (!dead){ L(K, strokeP([[64.4, 11], [63.6, 8.6, 63.4, 6.4, 64.6, 5], [65.6, 3.8, 67.6, 4, 68.2, 5.6], [68.6, 6.6, 68.6, 7.4, 68.4, 8.2]], 1.9)); px(64, 5, G3); }   // the wick: blackened, curled over like a crook
+    else { L(K, strokeP([[64.4, 11], [63.8, 9, 63.6, 8, 63.8, 7.2]], 1.9)); }                                                                       // snapped short
+  };
+  // the ribcage and the hollow. Local frame: cavity x 44..84, y 33..65. lv(k) gives each coal's heat (-1 dim, 0, 1 bright, 2+ blazing)
+  const ribs = (dead, lv, bw, cdy = 0) => {
+    L(K, path([[44, 33], [84, 33], [86, 47, 82, 59, 76, 65], [52, 65], [46, 59, 42, 47, 44, 33]]));
+    const C = dead ? (i => [G1, G1, G4, G5, G5][Math.max(0, Math.min(4, i))]) : cl;
+    L(dead ? G3 : A[0], path([[48, 37], [80, 37], [81, 47, 78, 57, 73, 62], [55, 62], [50, 57, 47, 47, 48, 37]]));                              // the hollow: a dull glow off the back wall
+    if (!dead && lv(0) >= 1) L(A[1], path([[52, 46], [76, 46], [76.6, 54, 74, 59, 71, 61.4], [57, 61.4], [54, 59, 51.4, 54, 52, 46]]));     // the glow climbs when they flare
+    if (!dead && lv(0) >= 2) L(A[2], path([[55, 51], [73, 51], [73, 57, 71, 60, 69, 61.4], [59, 61.4], [57, 60, 55, 57, 55, 51]]));
+    // the coals: a heap of angular lumps, each with a dark crust, a hot face and a cracked-open core
+    const coals = [[54.8, 59.4, 4.6, 3.2, 0.25, 0], [73, 59.2, 4.6, 3.4, -0.35, 1], [63.8, 59.8, 5.6, 3.4, 0.08, 2], [59, 54.4, 4, 2.8, -0.3, 3], [69, 54.6, 4.2, 2.8, 0.35, 4]];
+    for (const [x, yc, rx, ry, a, k] of coals){ const y = yc + cdy, v = lv(k), ca = Math.cos(a), sa = Math.sin(a), q = (u, w) => [x + u * rx * ca - w * ry * sa, y + u * rx * sa + w * ry * ca];
+      L(K, path([q(-1.15, 0.2), q(-0.6, -1.15), q(0.5, -1.2), q(1.2, -0.2), q(0.8, 1.1), q(-0.7, 1.15)]));
+      L(C(1 + v), path([q(-0.92, 0.15), q(-0.5, -0.92), q(0.42, -0.97), q(0.97, -0.2), q(0.62, 0.88), q(-0.52, 0.92)]));
+      L(C(2 + v), path([q(-0.55, 0.05), q(-0.25, -0.62), q(0.42, -0.6), q(0.6, 0.1), q(0.1, 0.6)]));
+      if (v >= 0) L(C(3 + v), rect(Math.round(q(0.05, -0.1)[0] - 1), Math.round(q(0.05, -0.1)[1] - 0.5), 2, 1));
+      L(K, strokeP([q(-0.95, -0.55), q(-0.3, 0.05), q(-0.05, 0.95)], 0.7)); }                                                                 // a crack across each lump
+    if (!dead) for (const [x, y, k] of [[51.4, 53, 1], [76.6, 52.4, 3], [57, 48.6, 0], [71.6, 48.4, 4], [61, 44, 2], [67, 41, 0]]) if (lv(k) >= 0) px(x, y, cl(2 + lv(k)));   // loose embers
+    // ash bed
+    if (!dead) L(K, path([[52.6, 62.6], [56, 61.6, 60, 62.4, 64, 62.2], [68, 62.4, 72, 61.6, 75.4, 62.6], [74, 64], [54, 64]]));
+    // sternum and ribs over the hollow
+    L(K, strokeP([[64, 33], [64, 50]], 3)); L(K, path([[62.5, 49], [65.5, 49], [64.6, 53.6], [63.4, 53.6]])); for (const y of [39, 43.6, 48]) px(63, y, G3, 2, 1);
+    for (let k = 0; k < 4; k++){ const y = 37 + k * 4.5, w = 15.6 - k * 1.2 - (k === 0 ? 1.2 : 0) + bw;
+      for (const sd of [-1, 1]){ L(K, strokeP([[64, y], [64 + sd * w * 0.6, y - 1.7, 64 + sd * (w + 1.6), y + 3.4]], 2.2));
+        if (sd < 0) L(G3, strokeP([[64 - 2.4, y - 0.8], [64 - w * 0.6, y - 2.5, 64 - w - 0.4, y + 1.4]], 0.8)); else L(G1, strokeP([[64 + 2.4, y - 0.8], [64 + w * 0.6, y - 2.5, 64 + w + 0.4, y + 1.4]], 0.8)); } }
+    // wax hanging off the ribs: short strands in silhouette against the glow
+    for (const [x, y, l] of [[53.4, 44.6, 3], [57.6, 49, 2.4], [71.4, 44.4, 2.4], [74.4, 49.4, 4.4], [52, 53, 2.4]]) strand(x, y, l, 1.3, 0);
+    L(G3, strokeP([[44.6, 35], [43, 47, 46, 58, 52, 64.4]], 0.9));
+  };
+
+  // one melted drum of the candle column, lopsided: its top runs from yl (left) to yr (right) and sags at dipx; a lip of wax overhangs both ends;
+  // runs = [x, length, width] of wax down its face (long ones bridge onto the tier below)
+  const tier = (xl, xr, yl, yr, y1, dipx, dip, runs, hl = G3) => { const yd = yl + (yr - yl) * (dipx - xl) / (xr - xl) + dip, m1 = (xl + dipx) / 2, m2 = (dipx + xr) / 2;
+    const top = x => x < dipx ? yl + (yd - yl) * (x - xl) / (dipx - xl) : yd + (yr - yd) * (x - dipx) / (xr - dipx);
+    L(K, path([[xl + 1.6, yl + 1], [dipx, yd + 1], [xr - 1.6, yr + 1], [xr + 1.4, y1], [xl - 1.4, y1]]));
+    L(K, path([[xl - 2.6, yl + 3], [xl - 1.4, yl - 0.8, m1, yl - 1.6, dipx, yd - 1], [m2, yr - 2.2, xr + 1.4, yr - 0.6, xr + 2.8, yr + 3.4], [xr + 2.4, yr + 6.2], [xr, yr + 4.8], [dipx, yd + 5], [xl, yl + 4.8], [xl - 2.4, yl + 5.6]]));
+    L(K, ell(xl - 1.8, yl + 5.8, 1.6, 2.2)); L(K, ell(xr + 1.9, yr + 6.6, 1.7, 2.6));
+    L(G1, path([[xl - 1.4, yl + 3.6], [xl - 0.4, yl + 0.4, m1, yl - 0.4, dipx, yd + 0.2], [m2, yr - 1, xr + 0.6, yr + 0.6, xr + 1.6, yr + 4.4], [xr + 0.6, yr + 5.2], [dipx, yd + 3.8], [xl - 0.6, yl + 4.8]]));
+    L(hl, strokeP([[xl - 0.8, yl + 2.6], [xl - 0.2, yl + 0.5, m1, yl - 0.3, dipx - 2, yd + 0.2]], 0.9)); px(xl - 3, yl + 4, hl, 1, 2);
+    for (const [x, l, w] of runs){ const y0 = top(x) + 3; strand(x, y0, l, w || 2.6, 0, G1); if (l > 5){ px(x - 1, y0 + l - 0.4, hl, 1, 2); px(x - 1, y0 + 2, G3, 1, 2); } else if (Math.round(x * 3 + l * 5) % 3 === 0) px(x - 1, y0 + l - 0.4, G3); } };
+
+  // ================================================================== BEATEN: slumped into a heap of melted tiers
+  if (D){
+    const sw = Math.round(Math.sin(TAU * P) * 0.5);                                                                                           // at most a 1px sway of the head
+    const P0 = '#8e867b';
+    L(G1, ell(64, 96.6, 56, 2.6)); L(G3, strokeP([[14, 97.2], [30, 97.8, 46, 98, 56, 97.8]], 0.8));
+    // the arms: long melted trails run out across the floor, the fingers still just fingers
+    for (const sd of [-1, 1]){ const X = x => 64 + sd * x, a = sd < 0 ? 0 : 0.8;
+      L(K, taper([X(30), 91 + a, X(38), 88.6 + a, X(44), 94.4, X(52), 93], 5.6, 3.2)); L(K, ell(X(41), 94.6, 5, 1.6)); L(K, ell(X(52), 94.2, 2.6, 1.7));
+      for (const [dy, l, up] of [[-1, 5.6, 2.6], [0.2, 7.4, 0.8], [1.2, 6, 0]]) L(K, taper([X(52), 94 + dy * 0.4, X(54), 94 + dy * 0.7, X(54 + l * 0.5), 94.4 + dy, X(52.6 + l), 95 + dy * 0.6 - up], 1.7, 0.9));
+      L(sd < 0 ? G4 : G3, strokeP([[X(31), 88.6 + a], [X(38), 86.6 + a, X(44), 92, X(51.6), 91.4]], 0.8)); px(X(47) - 0.5, 96, K, 2, 1); }
+    // the ribcage: empty now, half sunk in the mound and tipped over to the right; every rib a dark arc with a pale lit edge
+    const ca = 0.28, ccx = 64, ccy = 49, ctx_ = 8, cty = 26, TC = (x, y) => { const cs = Math.cos(ca), sn = Math.sin(ca); return [ccx + (x - ccx) * cs - (y - ccy) * sn + ctx_, ccy + (x - ccx) * sn + (y - ccy) * cs + cty]; };
+    XF = rotXF(ca, ccx, ccy, ctx_, cty);
+    L(K, path([[43, 32], [85, 32], [87, 47, 82, 59, 76, 65], [52, 65], [46, 59, 41, 47, 43, 32]]));
+    L(G1, path([[48, 37], [80, 37], [81, 47, 78, 57, 73, 62], [55, 62], [50, 57, 47, 47, 48, 37]]));
+    L(K, strokeP([[64, 33], [64, 52]], 3.2)); for (const y of [38.6, 43, 47.6]) px(63, y, G4, 2, 1);
+    for (let k = 0; k < 4; k++){ const y = 37.4 + k * 4.6, w = 15.8 - k * 1.2 - (k === 0 ? 1.2 : 0);
+      for (const sd of [-1, 1]){ L(K, strokeP([[64, y], [64 + sd * w * 0.6, y - 1.7, 64 + sd * (w + 1.6), y + 3.4]], 2.6));
+        L(sd < 0 ? G5 : G4, strokeP([[64 + sd * 2.6, y - 0.9], [64 + sd * w * 0.6, y - 2.6, 64 + sd * (w + 0.2), y + 1.2]], 0.9)); } }
+    L(K, path([[40, 34.6], [44, 30.4, 54, 29.6, 64, 31], [74, 29.6, 84, 30.4, 88, 34.6], [86, 37], [42, 37]]));                                // what is left of the yoke across its top
+    L(G5, strokeP([[41.4, 33.6], [45, 30.8, 54, 30.2, 62, 31.4]], 0.9)); L(G3, strokeP([[68, 31], [76, 30.2, 83, 31, 86.4, 33.6]], 0.8));
+    L(G4, strokeP([[43.4, 37], [41.8, 47, 45.4, 57, 50, 62]], 0.9));
+    XF = null;
+    for (const [lx, ly, l, w] of [[42.4, 36, 10, 1.8], [46, 37, 5, 1.5], [86.4, 36, 8, 1.8], [82, 37, 4, 1.4]]){ const [x, y] = TC(lx, ly); strand(x, y, l, w, 0); }   // strands off the yoke, hanging plumb
+    // the mound: the candle column run down into two wide slumped tiers and a puddle, the right side lower
+    tier(35, 93, 75.4, 82.4, 91, 56, 1.8, [[39.6, 3], [44, 7.6, 2], [49, 2.2], [54, 4], [70, 2.4], [77, 5.6, 2], [83, 2.6], [89, 3.6]], G4);
+    tier(24, 104, 86.4, 89, 96, 78, 1.2, [[27, 3], [32, 5.4, 2], [38, 2.4], [45, 4], [58, 2.2], [88, 4.6, 2], [94, 2.4], [100, 3.4]], G4);
+    L(K, path([[26, 93], [22, 94.6, 19, 95.6, 16, 96.2], [112, 96.2], [109, 95.6, 106, 94.6, 102, 93]])); L(K, ell(64, 96.2, 50, 1.5));
+    // the coals: dead grey clinker, spilled out of the cage down the front of the mound
+    for (const [x, y, rx, ry, a, lit] of [[60, 85.6, 4.2, 3, 0.2, 1], [69.4, 87.4, 4.8, 3.2, -0.3, 0], [78.4, 90.6, 3.8, 2.8, 0.3, 1], [52.4, 91.6, 3.4, 2.6, -0.2, 0], [65, 92.8, 3.2, 2.4, 0.1, 0], [86.6, 94, 2.6, 2, -0.3, 0], [73, 83.4, 2.6, 2, 0.4, 0]]){
+      const cs = Math.cos(a), sn = Math.sin(a), q = (u, w) => [x + u * rx * cs - w * ry * sn, y + u * rx * sn + w * ry * cs];
+      L(K, path([q(-1.2, 0.2), q(-0.6, -1.2), q(0.5, -1.25), q(1.25, -0.2), q(0.8, 1.15), q(-0.7, 1.2)]));
+      L(G3, path([q(-0.92, 0.15), q(-0.5, -0.92), q(0.42, -0.97), q(0.97, -0.2), q(0.62, 0.88), q(-0.52, 0.92)]));
+      L(G4, path([q(-0.6, -0.1), q(-0.35, -0.75), q(0.35, -0.78), q(0.5, -0.1), q(-0.1, 0.2)]));
+      if (lit) px(q(-0.2, -0.5)[0] - 0.5, q(-0.2, -0.5)[1] - 0.5, G5, 2, 1);
+      L(K, strokeP([q(-0.1, -0.9), q(0.2, 0), q(0.6, 0.9)], 0.7)); }
+    for (const [x, y] of [[56, 93], [82, 86], [91, 91], [47, 88], [75, 95]]) px(x, y, G4);                                                        // crumbs
+    // the head, tipped over on the high end of the cage
+    const ha = -0.5, hcx = 64, hcy = 26, htx = -4 + sw, hty = 31.6; XF = rotXF(ha, hcx, hcy, htx, hty);
+    head(true);
+    XF = null;
+    const TP = (x, y) => { const cs = Math.cos(ha), sn = Math.sin(ha); return [hcx + (x - hcx) * cs - (y - hcy) * sn + htx, hcy + (x - hcx) * sn + (y - hcy) * cs + hty]; };
+    for (const [ex, ey] of [[61.5, 19.2], [68.2, 20.2]]){ const [tx, ty] = TP(ex, ey), x0 = Math.round(tx - 0.5) - 2, y0 = Math.round(ty - 0.5) - 2;       // upright grey X's, 5x5 with 2px strokes
+      L(K, rect(x0 - 1, y0 - 1, 7, 7));
+      for (let i = 0; i < 5; i++){ px(x0 + i, y0 + i, G4); px(x0 + 4 - i, y0 + i, G4); if (i < 4){ px(x0 + i + 1, y0 + i, G4); px(x0 + 3 - i, y0 + i, G4); } } }
+    // the snapped wick lying on the floor, and one last thread of smoke off the stump
+    L(K, strokeP([[104, 84.4], [107, 82.4, 109.4, 82.6, 110.6, 84.4]], 1.6)); px(110, 85, G5); px(104, 84, G4);
+    const [wx0, wy0] = TP(63.8, 6.8), wx = Math.round(wx0), wy = Math.round(wy0); px(wx, wy, G5);
+    for (let i = 1; i <= 9; i++){ const x = wx + Math.round(Math.sin(TAU * P - i * 0.7) * Math.min(1.3, i * 0.3)) + (i > 5 ? 1 : 0); if ((i + Math.floor(P * 8)) % 5 !== 4) px(x, wy - i, i < 3 ? G5 : i < 7 ? G4 : G3); }
+    const top = TP(64, 7); drawBurnout.deadHead = [Math.round(top[0]) + 4 - sw, Math.round(top[1]) - 6];
+    const ctx0 = cv.getContext('2d'); ctx0.clearRect(0, 0, W, H); blitBuf(ctx0, buf, W, H); return;
+  }
+
+  // ================================================================== ALIVE
+  // ---- the ground: a pool of coal-light under the wax
+  const gp = blaze > 0.5 ? 1 : 0, gb = Math.round((br * 0.5 + 0.5) * 2);
+  L(cl(0 + gp), ell(64, 96, 40 + spread, 3.4)); L(cl(1 + gp), ell(64, 96, 24 + gb + spread * 2, 2.3)); L(cl(2 + gp), ell(64, 96.2, 10 + gb * 2 + spread * 2, 1.2));
+  L(K, ell(64, 95, 29 + spread, 2.5)); for (const [x, w] of [[36, 5], [93, 4], [50, 3]]) L(K, ell(x + Math.sign(x - 64) * spread, 95.6, w, 1.5));   // the wax puddle on top of it, lobed
+
+  // ---- the candle column: three melted tiers, each slumped over the next
+  OY = dy1; tier(52.4, 75, 63, 64.6, 79 - dy1, 67, 1.2, [[54.6, 2.2], [58, 4.4], [61.6, 1.6], [65, 3], [69.6, 9, 2], [73, 2.4]]);
+  OY = dy2; { const e = spread > 0 ? 1 : 0; tier(46.6 - e, 84 + e, 70.4, 75.2, 90 - dy2, 57, 2.2, [[48.6, 3], [52.4, 10.6, 2], [56.4, 2], [60.4, 4.4], [64.6, 2.4], [68.8, 5.6, 2.2], [73, 2], [77, 7.4, 2], [81.4, 1.8]]); }
+  OY = 0; tier(37.4 - spread, 91 + spread, 81.4, 86.6, 95.4, 73, 1.6, [[39.8, 3.4], [43.8, 6.4, 2.2], [48, 2.4], [52.6, 4.4], [57, 9.6, 2], [62, 2.6], [66.6, 5], [71, 3], [76, 5.6, 2.2], [81, 2.4], [86, 4], [89.4, 2]]);
+  // the right side has given way: a slab of the middle lip has slid off and sits slumped on the tier below
+  L(K, ell(88.6 + spread, 83.8, 4.6, 3, 0.45)); L(G1, ell(88.2 + spread, 83.2, 3.4, 1.8, 0.45)); px(85 + spread, 82, G3, 2, 1); strand(91.4 + spread, 85, 5, 1.8, 0);
+  L(K, path([[38, 92], [34, 93.4, 30, 95, 26, 95.8], [100, 95.8], [98, 95, 96, 93.6, 93, 92]]));                                               // the foot flaring into the puddle, further on the left
+  // a slow bead of wax running down each tier face
+  if (true) [[60, 68, 5, 0.1, dy1], [71, 80, 5, 0.55, dy2], [46, 87, 7, 0.8, 0], [79, 91, 4, 0.3, 0]].forEach(([x, y, l, ph, dy]) => { const t = (P * 2 + ph) % 1; if (t < 0.85){ const yy = y + dy + t * t * l / 0.72; px(x, yy, G4); px(x, yy - 1, G3); px(x, yy - 2, G1); } });
+
+  // ---- arms (behind the mantle): stick-thin, hanging to the ground, long melted fingers; the hands stay planted as the body sinks
+  for (const sd of [-1, 1]){ const X = x => 64 + sd * x, eo = sagE * 2.4, sy = 34 + dyS, ey = 61 + dyS * 0.6;
+    L(K, taper([X(31), sy, X(37 + eo * 0.5), sy + 9, X(40.6 + eo), ey - 10, X(39.6 + eo), ey], 6.4, 4.4)); L(K, ell(X(39.6 + eo), ey, 3.2, 3));
+    L(K, taper([X(39.6 + eo), ey, X(41.2 + eo * 0.6), ey + 10, X(42.4), 79, X(42.4), 86], 4.4, 3.2));
+    for (const [dx, l] of [[-3.2, 9], [-1.2, 11.4], [0.9, 10.4], [3, 7.6]]) L(K, taper([X(42.4) + dx * 0.5, 85, X(42.4) + dx * 0.9, 88, X(42.4) + dx * 1.2, 91, X(42.4) + dx * (1.3 + sagE * 0.25), 84.6 + l], 1.7, 0.9));
+    if (sd < 0){ L(G3, strokeP([[X(33.6), sy + 1], [X(39.4 + eo * 0.5), sy + 9, X(42.8 + eo), ey - 10, X(41.8 + eo), ey - 1]], 0.9)); L(G3, strokeP([[X(41.6 + eo), ey + 3], [X(43.2 + eo * 0.6), ey + 11, X(44.2), 79, X(44), 84]], 0.9)); px(X(42.2 + eo) - 0.5, ey - 0.5, G4); }
+    // long strands off the elbow and forearm, inside and out
+    const out = sd < 0 ? [[43.6, 2, 15, 1.8, 0], [42.4, 9, 7, 1.5, 1], [45, 14, 9, 1.4, 2]] : [[43.8, 3, 9, 1.8, 3], [42.6, 8, 17, 1.6, 4], [44.8, 16, 6, 1.4, 5]];
+    for (const [x, y, l, w, k] of out) strand(X(x + eo * (1 - y / 30)), ey + y, l, w, sway(k));
+    const inn = sd < 0 ? [[37, 2, 13, 1.5, 6], [38.8, 12, 8, 1.3, 7]] : [[37.2, 3, 8, 1.5, 8], [39, 10, 14, 1.3, 9]];
+    for (const [x, y, l, w, k] of inn) strand(X(x + eo * 0.7), ey + y, l, w, sway(k)); }
+
+  // ---- the ribcage and its coals
+  OY = dyR;
+  const lv = k => Math.min(k % 2 ? 0 : 1, Math.round(0.6 * Math.sin(TAU * P * 2 - 0.5 - k * 0.55) - 0.3 + blaze * 1.9));          // idle: dim to mid, rippling; the blaze tops out one step up, so each coal keeps its bands
+  ribs(false, lv, br * 0.5);
+  OY = 0;
+
+  // ---- the mantle: a yoke of shoulders under a slumped cape of wax, sheets sagging between arm and ribs, long strands off the hem
+  OY = dyS;
+  L(K, path([[31, 34.4], [35, 28.6, 50, 26.4, 64, 28.6], [78, 26.8, 92, 28.8, 97, 34.8], [99, 38.6, 95, 40.8, 90, 39.6], [38, 39.6], [33, 40.8, 29, 38, 31, 34.4]]));
+  // sagging sheets: webs of wax hung off the yoke between arm and ribs, scalloped hems; they hang clear of the ribcage
+  L(K, path([[33, 38], [33.4, 44, 34.6, 47.4, 36, 48.6], [38, 47, 38.8, 44.6, 39.4, 42.6], [40, 44.6, 40.8, 45.4, 41.8, 44.6], [42.4, 42, 42.6, 40, 42.6, 38]]));
+  L(K, path([[95, 38], [94.8, 42.6, 94, 45, 92.6, 46], [91, 44.6, 90.4, 43, 90, 41.6], [88.8, 45.6, 87.6, 48, 86.4, 48.6], [85.6, 45, 85.4, 41, 85.4, 38]]));
+  for (const [x, y, l, w, k] of [[36, 47.6, 13, 1.8, 0], [33.6, 42, 5, 1.5, 1], [39.6, 42, 4, 1.4, 2], [41.6, 43.6, 17, 1.5, 3], [92.6, 45, 8, 1.8, 4], [94.6, 41, 4.4, 1.5, 5], [90, 41, 3.6, 1.4, 6], [86.6, 47.6, 12, 1.6, 7], [30.6, 38.6, 5.4, 1.5, 8], [97.6, 39, 7.4, 1.5, 9]]) strand(x, y, l, w, sway(k) * Math.min(1, l / 8));
+  // the cape: melted wax slumped over the yoke, banded
+  L(G1, path([[34, 35], [39, 30.2, 51, 28.6, 60, 30.2], [55, 31.6, 47, 32, 42, 34.6], [39.6, 37.4, 36, 38.2, 34.4, 37.4]]));
+  L(G1, path([[94, 35.4], [90, 31.2, 80, 29.4, 70, 30.6], [75, 32, 83, 32.6, 87.4, 35.4], [89.4, 37.6, 92.4, 38.4, 93.6, 37.6]]));
+  L(G3, strokeP([[31.8, 34], [36, 29, 50, 27.2, 62, 29]], 1)); px(33, 31, G4); L(G3, strokeP([[70, 28.6], [79, 27.8, 88, 28.8, 92, 30.8]], 0.8));
+  L(G3, strokeP([[36.4, 40.4], [36.2, 46]], 0.7)); L(G3, strokeP([[41, 46], [41, 55]], 0.7)); L(G3, strokeP([[92.2, 40.4], [92.2, 44]], 0.7)); px(30, 39, G3, 1, 3);
+  // collar: the neck is a run of wax fused down onto the yoke
+  L(K, path([[55, 24 + (dyH - dyS)], [73, 24 + (dyH - dyS)], [75, 27, 78, 28.6, 82, 30], [46, 30], [50, 28.6, 53, 27, 55, 24 + (dyH - dyS)]]));
+  L(G1, strokeP([[52, 28.4], [57, 27.6, 62, 27.8, 66, 28.2]], 0.9)); px(50, 29, G3, 3, 1);
+  OY = 0;
+
+  // ---- the head
+  OY = dyH; head(false);
+  // ember eyes: pinpricks in the hollows, breathing with the coals; they gutter to almost nothing between breaths
+  const ev = 1 + (Math.sin(TAU * P * 2 - 0.9) > 0.2 ? 1 : 0) + (blaze > 0.5 ? 1 : 0), wink = (f === 21 || f === 22);
+  for (const [ex, ey] of [[61, 19], [68, 20]]){ if (wink){ px(ex, ey, A[0]); continue; }
+    if (ev >= 1){ px(ex - 1, ey, A[0], 3, 1); px(ex, ey - 1, A[0], 1, 3); } if (ev >= 2){ px(ex - 1, ey, A[1], 3, 1); px(ex, ey - 1, A[1], 1, 3); }
+    px(ex, ey, cl(1 + ev)); }
+  // the wick tip: ash, smoke, or for a moment a flame
+  const tx = 68, ty = 8;
+  if (flame > 0.05){ const fl = Math.sin(TAU * P * 16) > 0 ? 1 : 0, h = Math.round(1 + flame * 1.4 + sagE * 2) + fl, lean = Math.sin(TAU * P * 8) > 0.3 ? 1 : 0;
+    L('#615b54', path([[tx - 1.6, ty - 0.4], [tx - 2, ty - h * 0.6, tx - 0.4 + lean, ty - h, tx + 0.4 + lean, ty - h - 1.4], [tx + 1.4, ty - h * 0.7, tx + 2.6, ty - h * 0.4, tx + 2, ty - 0.4], [tx + 1, ty + 1], [tx - 0.8, ty + 1]]));
+    if (h >= 3) L('#8e867b', path([[tx - 0.8, ty - 0.2], [tx - 0.8, ty - h * 0.45, tx + 0.2, ty - h * 0.7, tx + 0.5, ty - h * 0.8], [tx + 1.2, ty - h * 0.4, tx + 1.4, ty - 1, tx + 1, ty + 0.2]]));
+    px(tx, ty - 1, '#c9c2b6'); }
+  else px(68, 8, G5);
+  OY = 0;
+  const TY = ty + dyH;
+  if (flame <= 0.05 && puff < 0){ const born = P < 0.5 ? ss(0, 0.08, P) * (1 - ss(0.44, 0.5, P)) : ss(0.97, 1, P) * 0;                  // idle: a thin thread curling off the dead wick
+    const n = Math.round(born * 6); for (let i = 1; i <= n; i++){ const x = tx + Math.round(Math.sin(TAU * P * 4 - i * 0.9) * Math.min(1.5, i * 0.35)) + (i > 4 ? 1 : 0); if (TY - i >= 1) px(x, TY - i, i < 3 ? G5 : i < 5 ? G4 : G3); } }
+  if (puff >= 0){ for (const [vx, vy, s, d] of [[-0.9, -1, 2, 0], [0.9, -0.8, 2, 0.08], [0.1, -1.3, 2, 0.16], [-0.3, -0.6, 1, 0.3], [1.3, -1.2, 1, 0.24]]){ const t = (puff - d) / (1 - d); if (t < 0 || t > 1) continue;      // the puff when it gutters out
+      const e = 1 - (1 - t) * (1 - t), x = tx + vx * e * 5 + Math.sin(TAU * t + vx) * 0.8, y = TY - 1 + vy * e * 6, sz = t > 0.6 ? 1 : s; if (y >= 1) px(x, y, t < 0.35 ? G5 : t < 0.7 ? G4 : G3, sz, sz); } }
+
+  // ---- wax drips: a bead swells at a strand tip, lets go, falls, and spatters on the floor
+  for (const [x, y0, ph, n] of [[20.4, 78.6, 0.0, 1], [106.6, 86.6, 0.5, 1]]){ const t = (P * n + ph) % 1;
+    if (t < 0.3){ if (t > 0.12) px(x, y0 + 1, K, 1, t > 0.22 ? 2 : 1); }
+    else if (t < 0.5){ const u = (t - 0.3) / 0.2, y = y0 + 2 + u * u * (93 - y0 - 2); px(x, y, K, 1, 2); }
+    else if (t < 0.56){ px(x - 2, 94, K); px(x + 2, 94, K); } }
+
+  // ---- sparks: single pixels drifting up out of the ribs; a burst of them when the coals blaze
+  const spk = [[58, 0.02, 1, 3], [70, 0.36, 1, -2], [63, 0.68, 1, 4], [67, 0.2, 2, -4], [60, 0.84, 1, -5]];
+  for (const [x0, ph, n, dr] of spk){ const t = (P * n + ph) % 1; if (t > 0.8) continue; const y = 52 + dyR - t * 50, x = x0 + dr * t + Math.sin(TAU * t * 2 + ph * 9) * 1.6; if (y < 2) continue;
+    px(x, y, t < 0.25 ? A[3] : t < 0.5 ? A[2] : A[1]); }
+  if (blaze > 0) for (let k = 0; k < 9; k++){ const t = (P - 0.54 - k * 0.022) / 0.3; if (t < 0 || t > 1) continue; const a = -1.57 + (k - 4) * 0.33, d = (1 - (1 - t) * (1 - t)) * (26 + (k % 3) * 8);
+    const x = 64 + Math.cos(a) * d * 1.3 + Math.sin(TAU * t + k) * 1.2, y = 50 + Math.sin(a) * d - t * 6; if (y < 2) continue; px(x, y, t < 0.3 ? A[4] : t < 0.6 ? A[2] : A[1]); }
+
+  const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
+  blitBuf(ctx, buf, W, H);
+}
+
+// ---- Rut Troll (style guide v1)
+// The Rut Troll, concept 20B "the bore": not a creature in a groove but the groove-maker itself. A black screw of stacked thread
+// tiers narrowing downward, turning itself into a pool it has cut into stepped rings; a spiral eye is laid across its crown.
+// Pop: the spiral eye, the grit it throws, the stepped pool. Beat: it bites (drops with a jolt), then winds slowly back up.
+function drawRut(cv, f, accent){
+  const LOOP = 64, P = (f % LOOP) / LOOP, TAU = Math.PI * 2; f = f % LOOP;                       // one seamless 6.4 s loop: every cycle is a whole number of turns of P
+  const W = 128, H = 104, A = POP_RAMPS[accent] || POP_RAMPS.blush, D = !!drawRut.dead;
+  const K = '#121110', G1 = '#211f1d', G2 = '#2e2a27', G3 = '#3f3a36', G4 = '#57514b', G5 = '#756e66';
+  if (!drawRut.sc){ drawRut.sc = document.createElement('canvas'); drawRut.sc.width = W; drawRut.sc.height = H; }
+  const sc = drawRut.sc, sx = sc.getContext('2d', {willReadFrequently: true}), buf = new Array(W * H).fill(null);
+  let XF = null;
+  const L = shapeLayer(sx, W, H, buf, () => XF);
+  const ell = (x, y, rx, ry, rot = 0) => c => { c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); c.fill(); };
+  const strokeP = (pts, w) => c => { c.lineWidth = w; c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.stroke(); };
+  const poly = pts => c => { c.moveTo(...pts[0]); for (const p of pts.slice(1)) c.lineTo(...p); c.closePath(); c.fill(); };
+  const rect = (x, y, w, h) => c => { c.rect(x, y, w, h); c.fill(); };
+  const sq = (x, y, c, s = 1) => L(c, cc => { cc.rect(Math.round(x), Math.round(y), s, s); cc.fill(); });
+  const eArc = (col, x, y, rx, ry, w, a0, a1) => L(col, c => { c.lineWidth = w; c.ellipse(x, y, rx, ry, 0, a0, a1); c.stroke(); });
+  const rot = (a, cx, cy, tx = 0, ty = 0) => { const cs = Math.cos(a), sn = Math.sin(a); return [cs, sn, -sn, cs, cx - cs * cx + sn * cy + tx, cy - sn * cx - cs * cy + ty]; };
+  const frac = v => v - Math.floor(v), sm = t => t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t);
+
+  // ------------------------------------------------------------------ timing
+  // the bite: a short lift (frames 3-7), the drop (8-9, overshooting), a held grind, then a slow wind back up to the start height by frame 64
+  const BITE = 8;
+  let drop = 0;
+  if (!D){
+    if (f < 3) drop = 0; else if (f < BITE) drop = -1.6 * sm((f - 3) / 4);
+    else if (f === BITE) drop = 2.4; else if (f === BITE + 1) drop = 5; else if (f < BITE + 6) drop = 4;
+    else drop = 4 * (1 - sm((f - (BITE + 5)) / (LOOP - (BITE + 5)))); }
+  const dy = D ? 0 : Math.round(drop), deep = D ? 0 : Math.max(0, drop) / 4;                      // deep: 1 right after the bite, easing to 0
+  const since = f - BITE, hit = !D && since >= 0 && since < 5;                                    // the flash window
+  const ph = D ? 0.42 : 3 * P;                                                                    // three thread pitches slide past per loop
+  const sway = D ? 0 : Math.sin(TAU * 2 * P) * 1.3, swayC = D ? 0 : Math.sin(TAU * 2 * P - 0.9) * 1.6;   // a top's wobble: the tip stays put, the crown lags behind the tiers
+
+  const cx = 64, PY = 91;                                                                         // pool centre
+  // ------------------------------------------------------------------ the pool: three rings stepping down into a bored hole
+  const hrx = 11 + deep * 5, hry = 1.9 + deep * 0.9, sink = deep * 1.2;
+  const rings = [[42, 7.4, 0], [32.5, 5.5, 0.5 + sink * 0.5], [22.5, 3.7, 1 + sink]];
+  if (D){
+    L(G3, ell(cx, PY, 42, 7.4)); L(G1, ell(cx, PY + 0.6, 39, 6.2)); L(G3, ell(cx, PY + 0.5, 32.5, 5.3)); L(G1, ell(cx, PY + 1.2, 30, 4.4)); L(G3, ell(cx, PY + 1, 22.5, 3.5)); L(G1, ell(cx, PY + 1.6, 20, 2.8)); L(K, ell(cx, PY + 1.4, 12, 2));
+    eArc(G4, cx, PY + 0.6, 39.6, 6.6, 1, Math.PI * 0.2, Math.PI * 0.42);
+  } else {
+    const fl = hit ? 1 : 0, rip = frac(2 * P);                                                   // a band of light walks inward, ring to ring, twice a loop
+    const lit = i => (rip > i / 3 && rip < (i + 1) / 3) ? 1 : 0;
+    const floorC = [A[0], A[1], A[2]], riser = [A[0], A[0], A[1]];
+    rings.forEach(([rx, ry, off], i) => { const c = Math.min(4, i + fl + lit(i));
+      L(i === 0 ? A[Math.min(1, fl)] : A[Math.max(0, c - 1)], ell(cx, PY + off, rx, ry));                                          // the riser: the wall of the step, seen at the back
+      L(A[c], ell(cx, PY + off + (i === 0 ? 0.5 : 0.9), rx - (i === 0 ? 2 : 1.6), ry - (i === 0 ? 1 : 0.9))); });                  // the floor of the step
+    L(A[0], ell(cx, PY + 1.2 + sink, hrx + 2, hry + 0.9)); L(K, ell(cx, PY + 1.5 + sink, hrx, hry));                                 // the hole
+    eArc(A[Math.min(4, 3 + fl)], cx, PY + 0.9, 37, 5.6, 1, Math.PI * 0.22, Math.PI * 0.46); sq(cx + 14, PY + 6, A[4], 1); L(A[4], rect(cx + 16, PY + 6, 3, 1));   // a hot crescent on the front lip
+    if (hit) eArc(A[4], cx, PY + 1.2 + sink, hrx + 2.6, hry + 1.4, 1, Math.PI * 0.05, Math.PI * 0.95);
+  }
+  const snap = buf.slice();                                                                       // the front of the pool goes back over the tip later
+
+  // ------------------------------------------------------------------ the screw
+  const yT = 23, yB = 90, HH = yB - yT, N = 7, q = 0.87, kk = 0.23;
+  const Yu = u => yT + HH * (1 - Math.pow(q, u)) / (1 - Math.pow(q, N));
+  const Ry = y => { const t = Math.min(1, Math.max(0, (y - yT) / HH)); return 2.4 + 30.6 * Math.pow(1 - t, 1.08); };
+  const SX = y => sway * (1 - Math.min(1, Math.max(0, (y - yT) / HH)));
+  if (D) XF = rot(0.2, cx, PY, 1, 4);
+  const TP = (x, y) => { if (!D) return [x, y]; const cs = Math.cos(0.2), sn = Math.sin(0.2); return [cx + (x - cx) * cs - (y - PY) * sn + 1, PY + (x - cx) * sn + (y - PY) * cs + 4]; };
+  // the core: a dark tapering shaft
+  { const l = [], r = []; for (let y = yT - 2; y <= yB; y += 2){ const rc = Ry(y) * 0.52; l.push([cx + SX(y) - rc, y + dy]); r.unshift([cx + SX(y) + rc, y + dy]); } L(K, poly([...l, [cx, yB + 2 + dy], ...r])); }
+  { const l = []; for (let y = yT; y <= yB - 8; y += 2) l.push([cx + SX(y) - Ry(y) * 0.52 + 1.5, y + dy]); L(G1, strokeP(l, 2)); }                           // one lighter strip down the shaft
+  // the thread: one helix, drawn turn by turn. Each turn's front half runs from the left edge down to the right edge, half a pitch lower.
+  const pt = (u, th, rs, dyy = 0) => { const uu = Math.min(N + 0.15, Math.max(-0.2, u)), y = Yu(uu), r = Ry(y) * rs; return [cx + SX(y) + Math.sin(th) * r, y + kk * r * Math.cos(th) + dy + dyy]; };
+  const turn = (u0, col, a0, a1, rs0, d0, rs1, d1, step = 0.12) => { const top = [], bot = [];
+    for (let th = a0; th <= a1 + 1e-6; th += step){ const u = u0 + (th + Math.PI / 2) / TAU, pit = Yu(Math.max(0, u) + 1) - Yu(Math.max(0, u)); top.push(pt(u, th, rs0, d0 * pit)); bot.unshift(pt(u, th, rs1, d1 * pit)); }
+    L(col, poly([...top, ...bot])); };
+  const HP = Math.PI / 2;
+  for (let j = N; j >= -1; j--){ const u0 = j + frac(ph);
+    if (u0 > N - 0.2) continue;
+    turn(u0, K, -HP, HP, 1, 0, 1, 0.46);                                                          // the edge face of the thread, black
+    turn(u0, G1, -HP, HP, 0.5, 0, 1, 0);                                                          // its top face, seen from above
+    turn(u0, G3, -1.48, 0.1, 0.66, 0, 1, 0);                                                      // lit where it turns through the light, on the left
+    turn(u0, G4, -1.4, -0.62, 0.84, 0, 1, 0);
+    { const lip = []; for (let th = -0.62; th <= 0.86; th += 0.12) lip.push(pt(u0 + (th + HP) / TAU, th, 1, 0)); L(G3, strokeP(lip, 1)); }   // the lip carries on round the front, dimmer
+    L(G5, strokeP([pt(u0 + 0.045, -1.26, 1), pt(u0 + 0.105, -0.9, 1)], 1));                       // the bright lip
+    turn(u0, G1, 0.8, 1.5, 1, 0.3, 1, 0.46);                                                     // bounce light under the right end
+  }
+  // nicks and studs fixed to the screw: they keep their height and go round, which is what sells the turning
+  for (const [um, c, s] of [[0.9, G5, 2], [1.8, G4, 2], [2.62, G5, 1], [3.5, G4, 2], [4.4, G5, 1], [5.2, G4, 1]]){
+    const th = TAU * frac(um - ph + 0.25) - HP; if (th > HP - 0.25 || th < -HP + 0.2) continue;
+    const u0 = um - (th + HP) / TAU, pit = Yu(um + 1) - Yu(um), [x, y] = pt(um, th, 1, 0.24 * pit); sq(x - s / 2, y - s / 2, D ? G3 : c, s); }
+  if (D){                                                                                          // beaten: chunks knocked out of the thread
+    for (const [u, th, w, h] of [[1.2, -1.5, 8, 7], [1.26, -1.2, 4, 4], [2.3, 1.45, 7, 7], [2.26, 1.15, 3, 4], [3.2, -1.5, 6, 5], [0.36, 1.35, 8, 6], [4.4, 1.4, 5, 5], [1.62, 0.2, 3, 3], [2.9, -0.4, 2, 3]]){
+      const uu = u + (th + HP) / TAU, pit = Yu(uu + 1) - Yu(uu), [x, y] = pt(uu, th, 1, 0.3 * pit); L(Math.abs(th) > 1 ? null : K, rect(x - w / 2, y - h / 2, w, h)); }
+    L(K, strokeP([pt(1.55, -0.6, 1, 2), pt(1.6, -0.5, 0.9, 5), pt(1.66, -0.2, 0.95, 7)], 1));     // a crack
+  }
+  // put the front of the pool back over the tip, so the screw reads as sunk into its hole
+  XF = null;
+  { const y0 = Math.round(PY + 1.5 + (D ? 0 : sink)); for (let y = y0; y < H; y++) for (let x = 0; x < W; x++){ const i = y * W + x; if (snap[i] && buf[i] !== snap[i]) buf[i] = snap[i]; } }
+  if (D) XF = rot(0.2, cx, PY, 1, 4);
+
+  // ------------------------------------------------------------------ the crown: a thick disc, the spiral eye laid across its top
+  const CX = cx + swayC, CY = 16 + dy, CRX = 35, CRY = 11, CT = 7;
+  L(K, c => { c.ellipse(CX, CY + CT, CRX, CRY * 0.92, 0, 0, Math.PI * 2); c.rect(CX - CRX, CY, CRX * 2, CT); c.ellipse(CX, CY, CRX, CRY, 0, 0, Math.PI * 2); c.fill(); });
+  eArc(G1, CX, CY + CT, CRX - 1, CRY * 0.92 - 1, 1.6, Math.PI * 0.08, Math.PI * 0.5); eArc(G3, CX, CY + CT, CRX - 0.6, CRY * 0.92 - 0.6, 1, Math.PI * 0.62, Math.PI * 0.94);              // bounce under the right of the rim
+  L(G3, rect(Math.round(CX - CRX) + 1, CY + 1, 1, CT)); L(G4, rect(Math.round(CX - CRX) + 1, CY + 2, 1, 3));   // the lit side
+  eArc(G3, CX, CY, CRX - 0.6, CRY - 0.6, 1, Math.PI * 1.04, Math.PI * 1.5); eArc(G5, CX, CY, CRX - 0.6, CRY - 0.6, 1, Math.PI * 1.14, Math.PI * 1.3);
+  eArc(G3, CX, CY, CRX - 0.6, CRY - 0.6, 1, Math.PI * 0.6, Math.PI * 0.93);                        // the front lip of the rim
+  for (const [a0, s] of [[0, 2], [0.37, 1], [0.6, 2]]){ const th = TAU * frac(a0 - ph + 0.25) - HP; if (Math.abs(th) > HP - 0.3) continue;   // studs on the rim, going round with the thread
+    sq(CX + Math.sin(th) * CRX - s / 2, CY + CRY * Math.cos(th) + 3.4, D ? G3 : G4, s); }
+  const ERX = 30.4, ERY = 8.8;
+  const spiral = (col, t0, t1, w0, off, R0 = 4, R1 = 31, T = TAU * 1.55) => { const a = [], b = [];
+    for (let t = t0; t <= t1 + 1e-6; t += 0.12){ const s = t / T, r = R0 + (R1 - R0) * s, w = w0 * Math.min(1, (T - t) / 1.6 + 0.25), cs = Math.cos(t + off), sn = Math.sin(t + off);
+      a.push([CX + cs * (r + w), CY + sn * (r + w) * ERY / ERX]); b.unshift([CX + cs * (r - w), CY + sn * (r - w) * ERY / ERX]); }
+    L(col, poly([...a, ...b])); };
+  if (D){
+    L(G1, ell(CX, CY, ERX, ERY)); eArc(G3, CX, CY, ERX - 0.5, ERY - 0.5, 1, Math.PI * 0.1, Math.PI * 0.9);
+    // the spiral has come unwound: one slack loop on the disc, then it slides over the rim and hangs
+    L(G4, strokeP([[CX + 3, CY + 1], [CX - 3, CY + 3.4, CX - 12, CY + 2.4, CX - 12, CY - 0.6], [CX - 12, CY - 4.6, CX + 6, CY - 5.6, CX + 15, CY - 2.6], [CX + 23, CY + 0.6, CX + 23, CY + 5, CX + 19, CY + 9.6]], 2));
+    L(G4, strokeP([[CX + 19, CY + 9.6], [CX + 17, CY + 13, CX + 20, CY + 16, CX + 18.4, CY + 19.6]], 2)); L(G4, ell(CX + 18.2, CY + 22.6, 1.3, 1.5));   // ...and a last drop of it
+    L(G5, strokeP([[CX - 10, CY - 3.4], [CX - 2, CY - 5.2, CX + 6, CY - 5]], 1));
+  } else {
+    const fl = hit ? 1 : (since >= 5 && since < 9) ? 0.5 : 0, off = -TAU * P;                      // the eye turns against the screw, once a loop; it flares on the bite
+    const c0 = fl >= 1 ? A[1] : A[0], c1 = fl > 0 ? A[3] : A[2], c2 = fl >= 1 ? A[4] : A[3];
+    L(c0, ell(CX, CY, ERX, ERY));
+    if (fl >= 1) eArc(A[2], CX, CY, ERX - 0.5, ERY - 0.5, 1, 0, TAU);
+    spiral(c1, 0, TAU * 1.55, 2.7, off); spiral(c2, 0, TAU * 0.7, 1.9, off);
+    const pr = fl >= 1 ? 3 : 4; L(K, ell(CX, CY, pr, pr * 0.42 + 0.4)); L(A[4], rect(Math.round(CX - 3), Math.round(CY - 1), 2, 1));   // the pupil at the centre, pinching on the bite
+  }
+  XF = null;
+  if (D){ const [tx, ty] = TP(CX, CY), x0 = Math.round(tx - 0.5) - 2, y0 = Math.round(ty - 0.5) - 2;   // an upright grey X, 5x5 with 2px strokes
+    L(K, rect(x0 - 1, y0 - 1, 7, 7));
+    for (let i = 0; i < 5; i++){ sq(x0 + i, y0 + i, G4); sq(x0 + 4 - i, y0 + i, G4); if (i < 4){ sq(x0 + i + 1, y0 + i, G4); sq(x0 + 3 - i, y0 + i, G4); } }
+    const [hx, hy] = TP(CX, CY - CRY); drawRut.deadHead = [Math.round(hx), Math.round(hy) - 5];
+    // chips lying where they fell
+    for (const [x, y, s, c] of [[27, 86, 2, K], [22, 91, 1, K], [101, 85, 2, K], [108, 90, 1, K], [96, 97, 1, G4], [34, 97, 2, K], [112, 95, 1, G3], [16, 96, 1, G3], [88, 99, 2, K]]) sq(x, y, c, s);
+    L(K, poly([[9, 90], [15, 87.6], [20, 89], [19, 92.4], [12, 93.4]])); L(G3, strokeP([[10, 90], [15, 88.2], [19, 89.4]], 1)); sq(11, 90, G5, 1);   // a length of thread, sheared off
+    L(K, poly([[109, 91], [115, 89], [118, 91.6], [112, 94]])); L(G3, strokeP([[110, 91], [115, 89.6]], 1));
+    const sw = Math.round(Math.sin(TAU * P)); sq(40 + sw, 78, K, 1);
+  } else {
+    drawRut.deadHead = [64, 0];
+    // ---------------------------------------------------------------- grit thrown out from where the tip meets the ground
+    for (let i = 0; i < 6; i++){ const t = frac(3 * P + i * 0.37), dir = i % 2 ? 1 : -1, vx = 9 + (i * 5) % 8, hg = 7 + (i * 3) % 6;
+      const x = cx + dir * (hrx * 0.5 + 2 + vx * t), y = PY - 1 - Math.sin(Math.PI * Math.min(1, t * 1.15)) * hg + t * 4;
+      if (t < 0.9) sq(x, y, t < 0.3 ? A[3] : t < 0.6 ? A[2] : A[1], 1); }
+    if (since >= 0 && since < 14){ const t = since / 14;                                           // the bite sprays a fan of it
+      for (let i = 0; i < 12; i++){ const dir = i % 2 ? 1 : -1, an = 0.25 + ((i * 7) % 12) / 12 * 1.0, sp = 16 + (i * 5) % 11, x = cx + dir * (6 + Math.cos(an) * sp * t * 1.5), y = PY - 2 - Math.sin(an) * sp * t * 1.5 + 22 * t * t;
+        if (y < PY + 6 && (t < 0.75 || i % 3)) sq(x, y, i % 4 === 0 ? K : t < 0.3 ? A[4] : t < 0.6 ? A[3] : A[2], (i % 3 === 0 && t < 0.6) ? 2 : 1); } }
+    // swarf circling the bore: black squares that pass in front and vanish behind, climbing slowly
+    for (let i = 0; i < 9; i++){ const a = TAU * (P + i * 0.23), y = 30 + ((i * 17) % 50) + Math.sin(TAU * P + i) * 2, rr = Ry(y) + 9 + (i * 7) % 9;
+      if (Math.sin(a) < -0.25) continue; const s = (i % 3 === 0) ? 2 : 1; sq(cx + Math.cos(a) * rr, y + Math.sin(a) * 2 + dy * 0.5, i === 4 ? A[1] : i === 7 ? A[0] : K, s); }
+  }
+
+  const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
+  blitBuf(ctx, buf, W, H);
+}
+
+// ---- Tab Goblin (style guide v1)
+// The Tab Goblin, concept 13A "the cascade". A deck of thin black tab-slabs stepping back like cascaded windows, a dim dot eye in every
+// tab-ear. Only the front slab is awake: lit rim, one ringed eye, two small hands gripping its edges from behind. Once per loop a NEW slab
+// pops out at the back, the old front one drops into the pool, the deck shuffles one step forward and the new front eye darts.
+// Pop: the front slab's rim and eye, the newborn's flash, the ground glow.
+function drawTab(cv, f, accent){
+  const LOOP = 64, P = (f % LOOP) / LOOP, TAU = Math.PI * 2; f = f % LOOP;                 // one seamless 6.4 s loop
+  const W = 128, H = 104, A = POP_RAMPS[accent] || POP_RAMPS.blush, D = !!drawTab.dead;
+  const K = '#121110', G1 = '#211f1d', G2 = '#2e2a27', G3 = '#3f3a36', G4 = '#57514b', G5 = '#756e66';
+  const F0 = '#35312d', F1 = '#4a4540', F2 = '#615b54', F3 = '#8e867b', F4 = '#c9c2b6';     // the hands: light-object ramp
+  if (!drawTab.sc){ drawTab.sc = document.createElement('canvas'); drawTab.sc.width = W; drawTab.sc.height = H; }
+  const sc = drawTab.sc, sx = sc.getContext('2d', {willReadFrequently: true}), buf = new Array(W * H).fill(null);
+  let XF = null;
+  const L = shapeLayer(sx, W, H, buf, () => XF);
+  const ell = (x, y, rx, ry, rot = 0) => c => { c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); c.fill(); };
+  const strokeP = (pts, w) => c => { c.lineWidth = w; c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.stroke(); };
+  const rect = (x, y, w, h) => c => { c.rect(x, y, w, h); c.fill(); };
+  const rrect = (x, y, w, h, r) => c => { c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); c.fill(); };
+  const px = (x, y, c, w = 1, h = 1) => L(c, cc => { cc.rect(Math.round(x), Math.round(y), w, h); cc.fill(); });
+  const rot = (a, cx, cy) => { const cs = Math.cos(a), sn = Math.sin(a); return [cs, sn, -sn, cs, cx - cs * cx + sn * cy, cy - sn * cx - cs * cy]; };
+  const ss = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  const arc = (c, x, y, rx, ry, w, a0 = 0, a1 = TAU) => L(c, k => { k.lineWidth = w; k.ellipse(x, y, rx, ry, 0, a0, a1); k.stroke(); });
+
+  const SW = 34, SH = 42, PX = 65, PY = 94;                                                // slab size; the pool
+  const sX = s => 22 + s * 8, sY = s => 13 + s * 6;                                        // slot 0 is the back of the deck, slot 5 the front
+
+  // ------------------------------------------------------------------ the eye: concentric rings round a square pupil (a favicon in a spinner)
+  const ringEye = (x, y, lookX, lookY, lid, flare) => { const r = 8;
+    L(K, ell(x, y, r + 1.4, r + 1.4)); L(A[0], ell(x, y, r, r)); L(A[flare ? 3 : 2], ell(x, y, r - 1.2, r - 1.2)); L(A[0], ell(x, y, r - 2.4, r - 2.4)); L(A[flare ? 4 : 3], ell(x, y, r - 3.2, r - 3.2));
+    const qx = Math.round(x - 2 + lookX), qy = Math.round(y - 2 + lookY); px(qx, qy, K, 4, 4); px(qx - 1, qy - 1, A[4], 2, 1); px(qx - 1, qy, A[4], 1, 1);     // square pupil, an L catchlight on its corner
+    if (lid > 0){ const h = Math.min(r + 1, Math.round(lid * (r + 1.5))); px(x - r - 2, y - r - 2, K, r * 2 + 5, h + 1); px(x - r - 2, y + r + 2 - h, K, r * 2 + 5, h + 1); if (h > r) px(x - 6, y, A[1], 13, 1); } };
+  const deadX = (tx, ty) => { const x0 = Math.round(tx - 0.5) - 2, y0 = Math.round(ty - 0.5) - 2;                                        // upright grey X, 5x5 with 2px strokes
+    for (let i = 0; i < 5; i++){ px(x0 + i, y0 + i, G4); px(x0 + 4 - i, y0 + i, G4); if (i < 4){ px(x0 + i + 1, y0 + i, G4); px(x0 + 3 - i, y0 + i, G4); } } };
+
+  // ------------------------------------------------------------------ one slab. lit 0..3: asleep, waking (dark rim), half awake, awake
+  const slab = (x, y, o) => { const {lit = 0, eye = 1, near = 0, sc = 1, look = [0, 0], lid = 0, flare = 0, born = 0, clipY = 999, dead = 0} = o;
+    x = Math.round(x); y = Math.round(y);
+    if (sc < 1){ const w = Math.max(4, Math.round(SW * sc)), h = Math.max(4, Math.round(SH * sc)); L(K, rrect(x - 1, y - 1, w + 2, h + 2, 2)); L(K, rrect(x + 1, y - Math.round(7 * sc), Math.round(15 * sc), 8, 2)); if (born) px(x + 2, y - 2, A[born > 1 ? 4 : 2], 2, 2); return; }
+    const cl = hh => Math.max(0, Math.min(hh, clipY - y));                                // the leaving slab is cut off where it sinks into the pool
+    if (clipY - y + 7 <= 0) return;
+    L(K, c => { c.rect(x - 1, y - 1, SW + 2, cl(SH + 2) + (clipY < 999 ? 0 : 0)); c.fill(); });
+    if (clipY >= 999){ L(K, rrect(x - 1, y - 1, SW + 2, SH + 2, 2)); }
+    if (y - 7 < clipY) L(K, c => { c.rect(x + 1, y - 7, 15, Math.min(8, clipY - y + 7)); c.fill(); });
+    px(x + 1, y - 7, null); px(x + 15, y - 7, null);                                       // rounded ear corners
+    const E = (ex, ey, c, w, h) => { if (ey < clipY) px(ex, ey, c, w, Math.min(h, clipY - ey)); };
+    if (lit < 1){ const top = near ? G5 : G4;
+      E(x + 16, y, top, SW - 17, 1); E(x, y, G3, 1, SH - 8); E(x + 2, y - 6, top, 13, 1); E(x + 1, y - 5, G3, 1, 5);                       // lit top edge, left edge, ear
+      E(x + 3, y + 3, G1, SW - 8, 1); E(x + 3, y + 9, G1, 1, SH - 20);                                                                       // faint title bar and gutter
+      if (dead){ E(x + 7, y - 4, G1, 2, 2); }
+      else if (born){ E(x + 6, y - 5, A[born > 1 ? 1 : 0], 4, 4); E(x + 7, y - 4, A[born > 1 ? 4 : 2], 2, 2); }                              // the newborn's eye is still hot
+      else if (eye){ E(x + 7, y - 4, G4, 2, 2); E(x + 7, y - 4, G5, 1, 1); } else E(x + 7, y - 3, G3, 2, 1);                                 // dim dot eye, or a blink
+      if (lit > 0){ E(x, y, A[0], SW, 1); E(x, y, A[0], 1, SH); E(x + 2, y - 6, A[0], 13, 1); E(x + 6, y - 5, A[0], 4, 4); E(x + 7, y - 4, A[1], 2, 2); E(x + 10, y + 18, A[0], 14, 1); }   // waking: a dark rim, the big eye a closed line
+      return; }
+    const r1 = lit >= 3 ? A[1] : A[0], r2 = lit >= 3 ? A[2] : A[1];
+    E(x, y, r1, SW, 1); E(x, y, r1, 1, SH); E(x + SW - 1, y, r1, 1, SH); E(x + 1, y + SH - 1, A[0], SW - 2, 1);                               // the lit rim
+    E(x + 2, y - 6, r2, 13, 1); E(x + 1, y - 5, r2, 1, 5); E(x + 15, y - 5, r2, 1, 5);                                                       // the lit ear
+    E(x, y, A[3], 9, 1); E(x, y, A[4], 3, 1); E(x, y + 1, A[3], 1, 4);                                                                       // a hot corner
+    E(x + 6, y - 5, A[0], 4, 4); E(x + 7, y - 4, A[2], 2, 2); E(x + 7, y - 4, A[4], 1, 1);                                                   // the ear eye, awake
+    E(x + 3, y + 5, A[0], SW - 15, 1);                                                                                                       // title bar
+    E(x + SW - 9, y + 5, A[1], 5, 1); E(x + SW - 7, y + 3, A[1], 1, 5);                                                                      // the "one more" mark
+    if (y + 28 < clipY) ringEye(x + 17, y + 19, look[0], look[1], lid, flare);
+    E(x + 5, y + 33, A[0], 24, 1); E(x + 5, y + 36, A[0], 15, 1); E(x + 22, y + 36, A[0], 4, 1);                                             // two lines of page
+  };
+  // four-fingered hand gripping an edge from behind: side -1 wraps the left edge, +1 the right. open 0..1 lifts the fingers clear
+  const hand = (ex, ey, side, open, col) => { const [c0, c1, c2] = col, o = Math.round(open * 5);
+    for (let k = 0; k < 4; k++){ const y = ey + k * 3 + (o > 2 ? (k < 2 ? -1 : 1) : 0), len = (k === 0 || k === 3 ? 5 : 6) - (o > 2 ? 1 : 0), x0 = side < 0 ? ex - 3 - o : ex + 3 + o - len + 1 - 1;
+      const xa = side < 0 ? ex - 3 - o : ex - len + 4 + o;
+      px(xa - 1, y - 1, K, len + 2, 4); px(xa, y, c0, len, 2);                                                                                // finger with a black outline
+      const kx = side < 0 ? ex - 1 - o : ex - o + (o ? 2 * o : 0);
+      if (len > 2){ px(side < 0 ? xa + len - 2 : xa, y, c1, 2, 2); px(side < 0 ? xa + len - 1 : xa, y, c2, 1, 1); }                           // lit knuckle at the fingertip
+    } };
+
+  // ================================================================== beaten: the deck collapsed in a fanned pile
+  if (D){
+    const sw = Math.round(Math.sin(TAU * P));                                                                                                // at most a 1px sway, on the top slab only
+    L(K, ell(64, 95, 34, 3.6)); arc(G3, 64, 95, 33, 3, 1, Math.PI * 0.15, Math.PI * 0.6);
+    const fan = [[-1.32, 63, 92, 0], [1.26, 69, 93, 1], [-0.84, 58, 93, 0], [0.8, 76, 94, 1], [-0.36, 54, 94, 0]];                             // angle, pivot (a bottom corner resting on the floor)
+    for (const [a, qx, qy, rt] of fan){ XF = rot(a, qx, qy); const x0 = rt ? qx - SW : qx, y0 = qy - SH;
+      L(K, rrect(x0 - 1, y0 - 1, SW + 2, SH + 2, 2)); L(K, rrect(x0 + 1, y0 - 7, 15, 8, 2));
+      L(G4, rect(x0 + 16, y0, SW - 17, 1)); L(G4, rect(x0 + 2, y0 - 6, 13, 1)); L(G3, rect(x0, y0, 1, SH - 8)); L(G3, rect(x0 + SW - 1, y0, 1, SH - 8)); L(G1, rect(x0 + 3, y0 + 3, SW - 8, 1)); L(G1, rect(x0 + 7, y0 - 4, 2, 2)); }
+    // the front slab on top, face-up, slumped askew
+    const fa = 0.2, fqx = 47, fqy = 93 + sw * 0; XF = rot(fa, fqx, fqy); const x0 = fqx, y0 = fqy - SH + sw * 0;
+    L(K, rrect(x0 - 2, y0 - 2, SW + 4, SH + 4, 2)); L(K, rrect(x0, y0 - 8, 17, 9, 2));
+    L(G5, rect(x0, y0, SW, 1)); L(G4, rect(x0, y0, 1, SH)); L(G4, rect(x0 + SW - 1, y0, 1, SH)); L(G3, rect(x0 + 2, y0 - 6, 13, 1)); L(G3, rect(x0 + 1, y0 - 5, 1, 5)); L(G3, rect(x0 + 15, y0 - 5, 1, 5));
+    L(F3, rect(x0, y0, 5, 1)); L(G3, rect(x0 + 7, y0 - 4, 2, 2)); L(G3, rect(x0 + 3, y0 + 4, SW - 12, 1)); L(G3, rect(x0 + 5, y0 + 33, 24, 1)); L(G3, rect(x0 + 5, y0 + 36, 15, 1));
+    const ecx = x0 + 17, ecy = y0 + 19; L(G1, ell(ecx, ecy, 8, 8)); arc(G4, ecx, ecy, 7.2, 7.2, 1.4);     // the ring gone grey
+    const cs = Math.cos(fa), sn = Math.sin(fa), TP = (x, y) => [fqx + (x - fqx) * cs - (y - fqy) * sn, fqy + (x - fqx) * sn + (y - fqy) * cs];
+    XF = null; { const [tx, ty] = TP(ecx, ecy); const bx = Math.round(tx - 0.5), by = Math.round(ty - 0.5); px(bx - 3, by - 3, K, 7, 7); deadX(tx, ty); }
+    // limp hands: slid off the edges, fingers hanging open
+    for (const [hx, hy, sd] of [[41, 78, -1], [87, 72, 1]]){ L(K, strokeP([[hx, hy - 2], [hx + sd * 4, hy + 6, hx + sd * 3, hy + 13]], 3.4));
+      const bx = Math.round(hx + sd * 3) - 5; px(bx - 1, hy + 10, K, 13, 4); px(bx, hy + 11, F1, 11, 2); px(bx, hy + 11, F2, 11, 1);
+      for (let k = 0; k < 4; k++){ const fx = bx + k * 3, fl = [3, 5, 4, 2][sd < 0 ? k : 3 - k]; px(fx - 1, hy + 13, K, 4, fl + 1); px(fx, hy + 13, F1, 2, fl); px(fx, hy + 12 + fl, F2, 2, 1); } }
+    for (const [x, y, s] of [[22, 92, 2], [106, 90, 2], [30, 84, 1], [100, 82, 1], [112, 96, 1], [16, 97, 1], [70, 44, 1], [38, 60, 1]]) px(x, y, K, s, s);
+    drawTab.deadHead = [66, 40];
+    const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H); blitBuf(ctx, buf, W, H); return;
+  }
+
+  // ================================================================== alive
+  // the beat (frames): 30 hands let go, 33-44 the front slab drops into the pool, 36-42 a new slab pops out at the back with a flash,
+  // 38-50 the deck shuffles one step forward, 49-53 hands grip the new front, 52-62 its eye darts.
+  const drop = ss(33, 44, f), dropE = drop * drop, sh = ss(38, 50, f), born = ss(35, 40, f);
+  const open = ss(29, 33, f) * (1 - ss(49, 53, f));
+  const wave = s => Math.sin(TAU * P * 2 - s * 0.75) * 1.3;                                                                                  // the deck breathes: each slab lags the one in front
+  const spread = Math.sin(TAU * P * 2 + 0.6) * 0.5;                                                                                          // and fans a little wider on the in-breath
+
+  // ---- the ground: a banded pool under the front of the deck; it flares as the old tab sinks in
+  { const fl = (drop > 0.35 && f < 50) ? 1 : 0, pu = Math.round(Math.sin(TAU * P * 2) * 1), rx = 30 + pu + fl * 2;
+    L(A[0], ell(PX, PY, rx, 4.4)); L(A[1], ell(PX, PY, rx - 2, 3.4)); L(A[2 + fl], ell(PX, PY + 0.4, rx - 5, 2.4)); L(A[0], ell(PX, PY, rx - 10, 1.6)); L(K, ell(PX, PY - 0.2, rx - 14, 0.9));
+    arc(A[3 + fl], PX, PY + 0.6, rx - 6, 2.2, 1, Math.PI * 0.25, Math.PI * 0.6); px(PX + 7, PY + 3, A[4], 2, 1);
+    for (const [dx, k] of [[-36, 0.1], [39, 0.45], [-24, 0.7], [27, 0.85]]){ const t = (P * 2 + k) % 1; px(PX + dx, PY + 1 - t * 7, t < 0.5 ? A[1] : A[0], t < 0.25 ? 2 : 1, t < 0.25 ? 2 : 1); } }   // motes rising off the rim
+
+  // ---- more tabs arriving from far off: three little slab-specks that hop one place nearer on every shuffle
+  for (let k = 0; k < 3; k++){ const u = k + sh, x = 3 + u * 5.2, y = 3.5 + u * 2.6 + Math.sin(TAU * P * 2 + k * 2) * 0.8, w = Math.round(3 + u * 1.5), h = Math.round(3 + u * 1.2);
+    if (u < 2.6) L(K, rect(Math.round(x), Math.round(y), w, h)); }
+
+  // ---- the deck, back to front
+  const slabs = [];
+  for (let j = -1; j <= 5; j++){ const s = j + sh; if (j === -1 && born <= 0) continue;
+    const x = sX(s) - (5 - s) * spread * 0.4, y = sY(s) + wave(s);
+    const blink = ((P * 2 - j * 0.11 + 1) % 1) < 0.07 && j < 5;                                                                              // the back eyes blink one after another, back to front
+    const o = {eye: !blink, near: s > 2.5};
+    if (j === -1){ o.sc = born < 1 ? 0.35 + born * 0.65 : 1; o.born = f < 44 ? 2 : f < 48 ? 1 : 0; if (born < 1){ const sc = o.sc; slabs.push([sX(0) + 2 + (1 - sc) * 6 - sh * 0, sY(0) + 2 + (1 - sc) * 10, o, s]); continue; } }
+    if (j === 5){ o.lit = drop > 0.5 ? 2 : 3; o.clipY = drop > 0 ? PY : 999; o.lid = ss(30, 36, f) * 0.62;
+      const lk = [Math.round(Math.sin(TAU * P) * 1.4 * (1 - ss(26, 30, f))), drop > 0 ? 1 : 0];                                               // idle: the eye drifts side to side, then looks down as it goes
+      o.look = lk; slabs.push([x, y + dropE * 62, o, s]); continue; }
+    if (j === 4 && sh > 0){ o.lit = sh < 0.45 ? 0 : sh < 0.7 ? 1 : sh < 0.92 ? 2 : 3; if (sh > 0.25 && sh < 0.45) o.lit = 0.5; o.lid = 1 - ss(48, 53, f);
+      const d = f >= 53 ? [-2, -2, 2, 2, -2, -1, 1, 0, 0, 0, 0][f - 53] : 0; o.look = [d, 0]; o.flare = f >= 53 && f <= 55; }                  // the new front eye darts: left, right, left, settle
+    slabs.push([x, y, o, s]); }
+  for (const [x, y, o, s] of slabs){ slab(x, y, o);
+    if (!(o.sc < 1) && !(o.clipY < 999)){ const xr = Math.round(x), yr = Math.round(y), i = Math.round(s);                                    // drips off the bottom edge
+      for (const [dx, l] of [[5 + (i * 3) % 7, 3 + (i % 3) * 2], [21 - i, 2 + (i * 2) % 5]]){ px(xr + dx, yr + SH + 1, K, 2, l); px(xr + dx, yr + SH + 2 + l, K, 1, 1); } } }
+
+  // ---- the newborn's flash: a four-point spark at the back of the deck
+  if (f >= 36 && f <= 42){ const t = f - 36, cxs = sX(-1 + sh) + 10, cys = sY(-1 + sh) + 3, r = [1, 3, 4, 4, 3, 2, 1][t], c = t < 3 ? A[4] : t < 5 ? A[3] : A[1];
+    px(cxs - r, cys, c, r * 2 + 1, 1); px(cxs, cys - r, c, 1, r * 2 + 1); if (t < 4) px(cxs - 1, cys - 1, A[4], 3, 3);
+    if (t >= 2) for (const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) px(cxs + dx * (r - 1), cys + dy * (r - 1), A[2]); }
+
+  // ---- the hands: they belong to whatever is behind the deck, and always hold the front slab
+  { const fx = Math.round(sX(5)), fy = Math.round(sY(5) + wave(5) * (1 - open)), col = [F1, F2, F3];
+    const ax = fx + SW + 6 + open * 2, ay = fy + 22;                                                                                          // the right arm bows out into the clear
+    L(K, strokeP([[fx + SW - 6, fy + 2], [fx + SW + 9 + open * 3, fy + 4, ax, ay - 6], [ax, ay]], 3.2)); L(G4, strokeP([[fx + SW + 5 + open * 2, fy + 6], [fx + SW + 7 + open * 2, fy + 10, fx + SW + 7 + open * 2, fy + 14]], 1));
+    hand(fx + SW, fy + 19, 1, open, col); hand(fx, fy + 24, -1, open, col); }
+
+  // ---- pixel debris and a lit drip from the front slab into the pool
+  for (const [x, y, s, k] of [[108, 30, 1, 0], [112, 52, 2, 1], [14, 46, 1, 2], [18, 70, 2, 3], [104, 78, 1, 4], [46, 88, 1, 5], [10, 26, 1, 6], [116, 70, 1, 7]]) px(x, y + Math.round(Math.sin(TAU * P + k * 0.9) * 1.5), K, s, s);
+  if (drop <= 0 || sh >= 1){ const fx = Math.round(sX(5)), fy = Math.round(sY(5) + wave(5)), t = (P * 2) % 1; px(fx + 12, fy + SH, A[1], 2, 3); px(fx + 12, fy + SH + 3 + Math.round(t * 5), A[t < 0.5 ? 2 : 1], t < 0.7 ? 2 : 1, 1); }
+
+  const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
+  blitBuf(ctx, buf, W, H);
+}
+
+// ---- Drudge Ghoul (style guide v1)
+// The Drudge Ghoul, concept 15A "the round". A tall hollow skull-mask (slatted brow, see-through ring sockets, a floating comb of
+// tooth-slats for a jaw) hangs dead centre while a ring of identical chain links grinds round it. The link arriving at the lower left
+// is always the lit one: the same chore, again. Once per loop that link is yanked taut toward you and flares, the sockets flare, and
+// the chain clanks on one notch. Pop: the sockets, the lit link, the ground glow.
+function drawDrudge(cv, f, accent){
+  const LOOP = 64, P = (f % LOOP) / LOOP, TAU = Math.PI * 2; f = f % LOOP;                 // one seamless 6.4 s loop
+  const W = 128, H = 104, A = POP_RAMPS[accent] || POP_RAMPS.blush, D = !!drawDrudge.dead;
+  const K = '#121110', G1 = '#211f1d', G2 = '#2e2a27', G3 = '#3f3a36', G4 = '#57514b', G5 = '#756e66';
+  if (!drawDrudge.sc){ drawDrudge.sc = document.createElement('canvas'); drawDrudge.sc.width = W; drawDrudge.sc.height = H; }
+  const sc = drawDrudge.sc, sx = sc.getContext('2d', {willReadFrequently: true}), buf = new Array(W * H).fill(null);
+  let XF = null;
+  const L = shapeLayer(sx, W, H, buf, () => XF);
+  const ell = (x, y, rx, ry, rot = 0) => c => { c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); c.fill(); };
+  const path = pts => c => { c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.closePath(); c.fill(); };
+  const strokeP = (pts, w) => c => { c.lineWidth = w; c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.stroke(); };
+  const rect = (x, y, w, h) => c => { c.rect(x, y, w, h); c.fill(); };
+  const px = (x, y, c, w = 1, h = 1) => L(c, cc => { cc.rect(Math.round(x), Math.round(y), w, h); cc.fill(); });
+  const rot = (a, cx, cy) => { const cs = Math.cos(a), sn = Math.sin(a); return [cs, sn, -sn, cs, cx - cs * cx + sn * cy, cy - sn * cx - cs * cy]; };
+  const ss = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  const arc = (c, x, y, rx, ry, w, a0 = 0, a1 = TAU, r = 0) => L(c, k => { k.lineWidth = w; k.ellipse(x, y, rx, ry, r, a0, a1); k.stroke(); });
+  const deadX = (tx, ty) => { const x0 = Math.round(tx - 0.5) - 2, y0 = Math.round(ty - 0.5) - 2;                                        // upright grey X, 5x5 with 2px strokes
+    for (let i = 0; i < 5; i++){ px(x0 + i, y0 + i, G4); px(x0 + 4 - i, y0 + i, G4); if (i < 4){ px(x0 + i + 1, y0 + i, G4); px(x0 + 3 - i, y0 + i, G4); } } };
+
+  // ------------------------------------------------------------------ chain links: a face-on oval, then an edge-on bar, for ever
+  // lit 0 iron, 1 arriving or leaving (dark glow), 2 the chore in hand, 3 yanked taut and flaring
+  const oval = (x, y, t, lit, s = 1, flat = 1) => { const rx = 6.6 * s, ry = 4.1 * s * flat, w = 3.6 * s;
+    if (!lit){ arc(K, x, y, rx, ry, w, 0, TAU, t); arc(G3, x, y, rx, ry, 1, Math.PI * 1.0, Math.PI * 1.65, t); arc(G4, x, y, rx, ry, 1, Math.PI * 1.25, Math.PI * 1.45, t); return; }
+    if (lit >= 3) arc(A[0], x, y, rx, ry, w + 2.4, 0, TAU, t);
+    arc(lit >= 2 ? A[0] : K, x, y, rx, ry, w, 0, TAU, t); arc(A[lit >= 3 ? 2 : lit >= 2 ? 1 : 0], x, y, rx, ry, w - (lit >= 2 ? 1.2 : 1.6), 0, TAU, t);
+    arc(A[lit >= 3 ? 4 : lit >= 2 ? 3 : 1], x, y, rx, ry, lit >= 3 ? 1.6 : 1, Math.PI * 1.0, Math.PI * 1.65, t);
+    if (lit >= 2) px(x + Math.cos(t + Math.PI * 1.3) * rx * 0.9, y + Math.sin(t + Math.PI * 1.3) * ry - 1, A[4], lit >= 3 ? 2 : 1, 1); };
+  const bar = (x, y, t, len = 5.4, col = K) => { const cx = Math.cos(t), sy = Math.sin(t); L(col, strokeP([[x - cx * len, y - sy * len], [x + cx * len, y + sy * len]], 3.4));
+    L(G3, strokeP([[x - cx * (len - 2) + sy * 0.9, y - sy * (len - 2) - cx * 0.9], [x + cx * (len - 2) + sy * 0.9, y + sy * (len - 2) - cx * 0.9]], 0.8)); };
+
+  // ------------------------------------------------------------------ the mask, drawn round (mx, my) = the midpoint between the sockets
+  // o.gy: lag of the floating parts, o.flare: sockets flaring, o.dead
+  const mask = (mx, my, o = {}) => { const gy = o.gy || 0, X = x => mx + x, Y = y => my + y;
+    // floating cheek slats and the comb of tooth-slats, all hanging loose under the cranium
+    for (const sd of [-1, 1]){ L(K, rect(X(sd * 14.5 - 1.5), Y(8 + gy * (sd < 0 ? 1 : 0.6)), 3, 9 + (sd < 0 ? 2 : 0))); L(G3, rect(X(sd * 14.5 - 1.5), Y(8 + gy * (sd < 0 ? 1 : 0.6)), 3, 1)); }
+    const slats = [[-9.5, 12, 0], [-5.5, 18, 1], [-1.5, 23, 2], [2.5, 16, 1], [6.5, 12, 0]];
+    for (const [x, l, k] of slats){ const y = 14 + gy * (0.4 + k * 0.3); L(K, rect(X(x), Y(y), 3, l)); L(K, rect(X(x + 1), Y(y + l), 1, 2));               // each slat ends in a point
+      L(G4, rect(X(x), Y(y), 3, 1)); L(G3, rect(X(x), Y(y + 1), 1, l - 4)); }
+    L(K, rect(X(2.5), Y(14 + 19 + gy * 1.3), 3, 4)); L(G3, rect(X(2.5), Y(14 + 19 + gy * 1.3), 3, 1));                                                   // one tooth snapped: its end hangs detached
+    // the cranium: a tall narrow dome, flaring at the cheekbones, cut off square
+    L(K, path([[-14.5, 4], [-15.5, -10, -10, -21, 0, -21], [10, -21, 15.5, -10, 14.5, 4], [14.5, 7], [10.5, 12], [-10.5, 12], [-14.5, 7]].map(p => p.map((v, i) => i % 2 ? Y(v) : X(v)))));
+    L(K, rect(X(-2), Y(-24), 4, 4));                                                                                   // a stub of a crest
+    arc(G3, X(0), Y(-3), 13.4, 16.6, 1, Math.PI * 1.08, Math.PI * 1.42); arc(G4, X(0), Y(-3), 13.4, 16.6, 1, Math.PI * 1.2, Math.PI * 1.32);         // one lit curve on the dome
+    L(G1, rect(X(-9.5), Y(10), 19, 1)); L(G3, rect(X(-9.5), Y(11), 19, 1));                                                                             // the cut edge
+    // slatted brow: three slots you can see the panel through
+    for (const [x, y, h] of [[-6, -15, 6], [-1, -18, 10], [4, -15, 6]]){ L(null, rect(X(x), Y(y), 2, h)); L(G3, rect(X(x) + 2, Y(y), 1, h)); }
+    L(null, rect(X(-1), Y(4), 2, 6)); L(null, rect(X(-2), Y(8), 4, 2));                                                                                 // the nasal slit
+    // ring sockets: holes straight through, rimmed
+    for (const sd of [-1, 1]){ const ex = X(sd * 7.5), ey = Y(0);
+      L(null, ell(ex, ey, 4.7, 5.1));
+      if (o.dead){ arc(G3, ex, ey, 5.3, 5.7, 1.4); continue; }
+      const fl = o.flare || 0;
+      if (fl >= 2) arc(A[0], ex, ey, 6.6, 7, 1.6);
+      arc(A[fl >= 2 ? 2 : 1], ex, ey, 5.3, 5.7, 1.6); arc(A[fl >= 2 ? 4 : fl ? 3 : 2], ex, ey, 5.3, 5.7, 1, Math.PI * (fl ? 0 : 0.2), Math.PI * (fl ? 2 : 1.1));
+      px(ex - 5, ey - 4, A[4]);                                                                                                                         // catchlight on the rim, one side
+      if (fl >= 2){ px(ex - 1, ey - 7, A[4], 2, 1); px(ex + 4, ey + 4, A[3]); } }                                                                                   // nothing in the hollow: you look straight through
+  };
+
+  const CX = 64, CY = 45, RX = 39, RY = 34.5, N = 14, PITCH = TAU / 7, SPOT = 2.46;        // SPOT: the lower-left place where the lit link always is
+
+  // ================================================================== beaten: the chain broken on the floor, the mask on its side
+  if (D){ const sw = Math.round(Math.sin(TAU * P) * 0.9);
+    L(K, ell(70, 86, 24, 2.6));
+    const fl = i => { const a = (200 - i * 20) * Math.PI / 180, x = 64 + Math.cos(a) * 46, y = 84 + Math.sin(a) * 9.5 + (i % 3 === 1 ? 1 : 0); return [x, y, Math.atan2(Math.cos(a) * 9.5, -Math.sin(a) * 46)]; };
+    const link = i => { const [x, y, t] = fl(i); if (i % 2 === 0){ arc(K, x, y, 6.2, 3.3, 3.2, 0, TAU, t); arc(G4, x, y, 6.2, 3.3, 1, Math.PI * 1.0, Math.PI * 1.7, t); } else bar(x, y, t, 5); };
+    link(0); link(11);                                                                                                                                // the two loose ends, behind
+    // the mask, tipped over and resting on its cheek and the points of its teeth
+    const ma = -1.13, mx = 60, my = 68 + sw * 0; XF = rot(ma, mx, my); mask(mx, my, {dead: 1, gy: 2}); XF = null;
+    { const cs = Math.cos(ma), sn = Math.sin(ma); for (const sd of [-1, 1]) deadX(mx + sd * 7.5 * cs + 0.5, my + sd * 7.5 * sn + 0.5); }
+    for (let i = 1; i <= 10; i++) if (i !== 4) link(i);                                                                                               // the run across the front, one link gone
+    { const [x, y] = fl(4); arc(K, x - 3, y + 4, 5.6, 2.6, 3, Math.PI * 0.3, Math.PI * 1.7, 0.4); arc(G4, x - 3, y + 4, 5.6, 2.6, 1, Math.PI * 1.1, Math.PI * 1.6, 0.4); }   // the lit link, snapped open and gone grey
+    for (const [x, y, s] of [[12, 84, 2], [30, 98, 1], [98, 99, 2], [118, 93, 1], [46, 99, 1], [84, 62, 1], [38, 66, 1], [8, 94, 1]]) px(x, y, K, s, s);
+    drawDrudge.deadHead = [58, 47];
+    const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H); blitBuf(ctx, buf, W, H); return;
+  }
+
+  // ================================================================== alive
+  // the grind: two links (one pitch... two pitches) a loop at a constant rate; at f 36 the lit link is caught and held taut, at f 44 it lets go
+  // and the chain clanks on a whole extra notch, overshooting a hair, so the loop closes exactly three pitches on.
+  const taut = ss(34, 38, f) * (1 - ss(43, 46, f));
+  const eb = t => { t = Math.max(0, Math.min(1, t)); const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); };
+  const g = 2 * f / 64 - 0.25 * Math.max(0, Math.min(1, (f - 36) / 8)) + 1.25 * (f >= 44 ? eb((f - 44) / 7) : 0);
+  const th0 = SPOT - PITCH * 1.125, th = th0 + PITCH * g;
+  const clank = f >= 45 && f <= 47 ? 1 : 0;
+  const bob = Math.sin(TAU * P * 2) * 1.6, lag = Math.sin(TAU * P * 2 - 0.9) * 1.6;
+  const flare = taut > 0.5 ? 2 : (f >= 33 && f <= 49) ? 1 : 0;
+
+  // ---- the ground: a banded pool, flaring on the yank
+  { const fl = flare >= 2 ? 1 : 0, pu = Math.round(Math.sin(TAU * P * 2 + 1) * 1), rx = 28 + pu + fl * 2, PY = 96;
+    L(A[0], ell(CX, PY, rx, 4.4)); L(A[1], ell(CX, PY, rx - 2, 3.4)); L(A[2 + fl], ell(CX, PY + 0.4, rx - 4, 2.6)); L(A[0], ell(CX, PY, rx - 8, 1.8)); L(K, ell(CX, PY - 0.2, rx - 12, 1));
+    arc(A[3 + fl], CX, PY + 0.6, rx - 5, 2.4, 1, Math.PI * 0.25, Math.PI * 0.6); px(CX + 6, PY + 3, A[4], 2, 1);
+    for (const [dx, k] of [[-33, 0.15], [35, 0.5], [-22, 0.75], [25, 0.9]]){ const t = (P * 2 + k) % 1; px(CX + dx, PY + 1 - t * 7, t < 0.5 ? A[1] : A[0], t < 0.25 ? 2 : 1, t < 0.25 ? 2 : 1); } }
+
+  // ---- the chain
+  const wrap = d => { d = ((d + Math.PI) % TAU + TAU) % TAU - Math.PI; return d; };
+  const links = [];
+  for (let i = 0; i < N; i++){ const a = th + i * TAU / N, d = wrap(a - SPOT), pull = taut * Math.pow(Math.max(0, 1 - Math.abs(d) / 1.3), 2);
+    const jx = clank ? ((i * 7) % 3 - 1) * 0.8 : 0;
+    const x = CX + Math.cos(a) * (RX + pull * 4) + jx, y = CY + Math.sin(a) * (RY + pull * 4) + (clank ? ((i * 5) % 3 - 1) * 0.8 : 0), t = Math.atan2(Math.cos(a) * RY, -Math.sin(a) * RX);
+    links.push({i, x, y, t, d, pull}); }
+  for (const l of links) if (l.i % 2) bar(l.x, l.y, l.t, 5.4 + l.pull * 1.6);
+  const hots = [];
+  for (const l of links) if (l.i % 2 === 0){ const ad = Math.abs(l.d); if (ad < PITCH * 0.56){ hots.push(l); continue; } oval(l.x, l.y, l.t, 0); }
+  // drips and flakes off the bottom of the round
+  for (const [dx, k] of [[-10, 0], [8, 0.35], [-1, 0.7]]){ const t = (P * 2 + k) % 1; px(CX + dx, CY + RY + 5 + t * 8, K, 1, t < 0.6 ? 2 : 1); }
+
+  // ---- the mask, bobbing; it ducks a pixel as the chain clanks
+  mask(64, Math.round(41 + bob) + clank, {gy: Math.round(lag - bob), flare, look: Math.round(Math.sin(TAU * P) * 1.6 * (1 - taut) - taut * 2), lookY: Math.round(taut * 2)});
+
+  // ---- the lit link, last: the one in hand
+  for (const hot of hots){ const ad = Math.abs(hot.d), lit = taut > 0.5 ? 3 : ad < PITCH * 0.42 ? 2 : 1, s = 1 + taut * 0.55;
+    const ox = Math.cos(SPOT) * taut * 3, oy = Math.sin(SPOT) * taut * 3 + taut * 2;
+    oval(hot.x + ox, hot.y + oy, hot.t, lit, s);
+    if (lit >= 2){ const t = (P * 4) % 1; px(hot.x - 10 - t * 3, hot.y + 7 + t * 4, A[1]); px(hot.x - 13, hot.y + 1 + Math.round(t * 2), A[0], 2, 2); }
+    if (taut > 0.5){ const r = 13 + (f % 2) * 2; for (const da of [-0.9, -0.3, 0.3, 0.9]){ const a = SPOT + da; px(hot.x + ox + Math.cos(a) * r, hot.y + oy + Math.sin(a) * r * 0.9, A[Math.abs(da) < 0.5 ? 3 : 1], Math.abs(da) < 0.5 ? 2 : 1, 1); } } }
+  if (clank || f === 48) for (const [dx, dy] of [[-44, 20], [44, -12], [-30, -36], [36, 30], [2, -42]]) px(CX + dx + (f - 45) * Math.sign(dx), CY + dy + (f - 45), G5);        // grit shaken loose by the clank
+
+  // ---- pixel debris drifting round the ring
+  for (const [x, y, s, k] of [[12, 30, 2, 0], [116, 58, 2, 1], [10, 62, 1, 2], [118, 28, 1, 3], [20, 86, 1, 4], [108, 88, 1, 5], [30, 6, 1, 6], [100, 4, 1, 7]]) px(x, y + Math.round(Math.sin(TAU * P + k * 0.9) * 1.5), K, s, s);
+
+  const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
+  blitBuf(ctx, buf, W, H);
+}
+
+// ---- Doomscroll Imp (style guide v1)
+// The Doomscroll Imp, 14A "the loop": a tall black ribbon that feeds into itself. A lit slot at the top swallows it and spits it out again;
+// eyes ride down the near strand in their cells, dimming as they go, round the bottom, up the far strand dark, and are re-lit at the slot.
+// One bent thumb grows out of the loop's hip and keeps the far strand moving. Pop: the eyes, the slot, the ground glow.
+function drawScrollLoop(cv, f, accent){
+  const LOOP = 64, P = (f % LOOP) / LOOP, TAU = Math.PI * 2; f = f % LOOP;                          // one seamless 6.4 s loop: every motion is a whole number of cycles of P
+  const W = 128, H = 104, A = POP_RAMPS[accent] || POP_RAMPS.blush, D = !!drawScrollLoop.dead;
+  const K = '#121110', G1 = '#211f1d', G2 = '#2e2a27', G3 = '#3f3a36', G4 = '#57514b', G5 = '#756e66';
+  const F0 = '#35312d', F1 = '#4a4540', F2 = '#615b54', F3 = '#8e867b', F4 = '#c9c2b6';              // light ramp: the thumbnail only
+  if (!drawScrollLoop.sc){ drawScrollLoop.sc = document.createElement('canvas'); drawScrollLoop.sc.width = W; drawScrollLoop.sc.height = H; }
+  const sc = drawScrollLoop.sc, sx = sc.getContext('2d', {willReadFrequently: true}), buf = new Array(W * H).fill(null);
+  let XF = null;
+  const L = shapeLayer(sx, W, H, buf, () => XF);
+  const ell = (x, y, rx, ry, rot = 0) => c => { c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); c.fill(); };
+  const path = pts => c => { c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.closePath(); c.fill(); };
+  const strokeP = (pts, w) => c => { c.lineWidth = w; c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.stroke(); };
+  const rect = (x, y, w, h) => c => { c.rect(x, y, w, h); c.fill(); };
+  const px = (x, y, c, w = 1, h = 1) => L(c, cc => { cc.rect(Math.round(x), Math.round(y), w, h); cc.fill(); });
+  const onMass = (col, fn) => { const s = buf.slice(); L(col, fn); for (let i = 0; i < W * H; i++) if (s[i] === null && buf[i] !== null) buf[i] = null; };   // draw only where something is already drawn
+  const ss = t => { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); };
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const XEYE = (cx0, cy0) => { const x0 = Math.round(cx0) - 2, y0 = Math.round(cy0) - 2; for (let i = 0; i < 5; i++){ px(x0 + i, y0 + i, G4); px(x0 + 4 - i, y0 + i, G4); if (i < 4){ px(x0 + i + 1, y0 + i, G4); px(x0 + 3 - i, y0 + i, G4); } } };   // upright grey X, 5x5, 2px strokes
+  // an eye in its cell: a chamfered tile of hard rings, turned to follow the ribbon
+  const tile = (x, y, r, a) => c => { const ch = r * 0.5, cs = Math.cos(a), sn = Math.sin(a), q = [[-r + ch, -r], [r - ch, -r], [r, -r + ch], [r, r - ch], [r - ch, r], [-r + ch, r], [-r, r - ch], [-r, -r + ch]];
+    q.forEach(([u, v], i) => { const X = x + u * cs - v * sn, Y = y + u * sn + v * cs; i ? c.lineTo(X, Y) : c.moveTo(X, Y); }); c.closePath(); c.fill(); };
+
+  const cx = 54, R = 14, HW = 8, GY = 96;                                                             // ribbon centre-line radius, half width; ground line
+
+  // ================================================================== BEATEN: the loop has snapped at the slot and hangs open like a limp belt
+  if (D){
+    const sw = Math.round(Math.sin(TAU * P));                                                         // the drooping end sways a pixel
+    drawScrollLoop.deadHead = [cx - 12, 17];
+    L(G3, ell(cx + 8, GY - 1, 40, 3.4)); L(G1, ell(cx + 6, GY - 1, 31, 2));                            // the pool gone grey
+    px(cx - 20, GY + 3, G3, 2, 1); px(cx + 40, GY + 3, G3); px(cx + 12, GY + 4, G3, 2, 1);
+    // the belt: one end still hooked over and drooping, the other fallen flat along the ground
+    const belt = [[cx + 3 + sw, 49], [cx + 4 + sw * 0.5, 29, cx - 9, 29], [cx - 22, 30, cx - 20, 52], [cx - 18.6, 70], [cx - 17, 87, cx - 2, 86.4], [cx + 18, 86.4], [cx + 28, 85.4, cx + 37, 87.4]];
+    L(K, strokeP(belt, 15));
+    L(K, rect(cx + 37, 81, 8, 12)); for (const [x, y, w, h] of [[cx + 44, 80, 2, 3], [cx + 43, 84, 3, 2], [cx + 44, 90, 2, 3], [cx + 43, 87, 1, 2]]) px(x, y, null, w, h);   // the torn far end, ragged
+    for (const [x, y, w, h] of [[cx - 4 + sw, 54, 3, 4], [cx + 3 + sw, 55, 2, 3], [cx + 8 + sw, 53, 3, 4]]) px(x, y, null, w, h);                                             // and the torn near end
+    px(cx - 1 + sw, 59, K, 2, 2); px(cx + 6 + sw, 61, K); px(cx + 48, 86, K, 2, 2); px(cx + 51, 90, K);                                                                         // scraps
+    L(G3, strokeP([[cx - 2 + sw, 46], [cx - 1, 35, cx - 9, 35.6], [cx - 15, 36, cx - 14, 52], [cx - 12.4, 68], [cx - 11, 79.6, cx - 2, 80]], 1));                               // the inner lip
+    L(G3, c => { c.lineWidth = 1; c.arc(cx - 9, 44, 21.6, Math.PI * 1.1, Math.PI * 1.42); c.stroke(); });                                                                      // one lit curve on the bend
+    // the cells, still ruled; every eye shut, one knocked out
+    for (const [x0, y0, x1, y1] of [[cx - 26, 50, cx - 14, 51], [cx - 25, 63, cx - 13, 64], [cx - 24, 76, cx - 12, 75], [cx + 4, 80, cx + 4, 92], [cx + 20, 80, cx + 20, 92], [cx + 34, 80, cx + 34, 92]]) L(G1, strokeP([[x0, y0], [x1, y1]], 1));
+    XEYE(cx - 19, 41);
+    for (const [x, y] of [[cx - 19.4, 57], [cx - 18.4, 70]]){ px(x - 3, y, G4, 7, 2); px(x - 3, y + 2, G3, 1, 1); px(x + 3, y + 2, G3, 1, 1); px(x, y + 2, G3, 1, 1); }      // shut lids on the standing strand
+    for (const [x, y] of [[cx - 5, 86], [cx + 12, 86]]){ px(x, y - 3, G4, 1, 6); px(x + 1, y - 2, G4, 1, 4); }                                                  // and along the fallen one
+    // the dead slot: two dark halves of the gate, one on each torn end
+    px(cx - 2 + sw, 43, G3, 6, 2); px(cx - 1 + sw, 45, G1, 4, 6); px(cx + 38, 82, G3, 2, 10); px(cx + 40, 84, G1, 2, 6);
+    // the thumb, gone limp off the fallen strand
+    const B = [cx + 22, 82], Kn = [cx + 31, 68], T = [cx + 45, 84];
+    L(K, path([[B[0] - 5, B[1]], [Kn[0] - 4, Kn[1] - 1], [Kn[0] + 4, Kn[1] + 2], [B[0] + 6, B[1] + 2]])); L(K, ell(Kn[0], Kn[1], 4.6, 4.6)); L(K, strokeP([Kn, [T[0] - 1, T[1] - 1]], 7.6)); L(K, ell(T[0], T[1], 4.4, 4.4));
+    L(G3, strokeP([[Kn[0] - 3, Kn[1] - 3], [Kn[0] + 1, Kn[1] - 4]], 1)); L(G3, strokeP([[Kn[0] - 1, Kn[1] - 0.6], [Kn[0] + 2.4, Kn[1] - 1.6]], 1));
+    L(F1, path([[T[0] - 3.4, T[1] - 5.6], [T[0] + 1.6, T[1] - 5.6], [T[0] + 4.4, T[1] - 0.4], [T[0] + 3, T[1] + 2.4], [T[0] - 0.4, T[1] + 1]])); L(G4, strokeP([[T[0] - 1.6, T[1] - 4.4], [T[0] + 1.4, T[1] + 0.4]], 1));   // the nail, dull
+    for (const [x, y, l] of [[cx - 30, 60, 3], [cx - 9, 58, 2]]) px(x, y, K, 1, l);
+    const ctx0 = cv.getContext('2d'); ctx0.clearRect(0, 0, W, H); blitBuf(ctx0, buf, W, H); return;
+  }
+
+  // ================================================================== ALIVE
+  // the signature beat: the thumb draws back (0.50-0.58), flicks (0.58-0.64), the ribbon lurches four cells and the slot flares
+  const N = 11, QA = Math.PI * R / 2, yT = 31, yB = 64, ST = yB - yT, LEN = 2 * ST + TAU * R, SP = LEN / N;
+  const base = p => 2 * p + 4 * ss((p - 0.585) / 0.085);                                               // cells fed since the loop began: a steady crawl plus the lurch (6 whole cells a loop)
+  const off = base(P) * SP, vel = (base(P + 0.004) - base(P - 0.004)) / 0.008 * SP / LOOP;             // px per frame
+  const lurch = Math.max(0, Math.min(1, (vel - 1.2) / 7));
+  const flare = P < 0.6 ? 0 : P < 0.66 ? ss((P - 0.6) / 0.05) : Math.max(0, 1 - (P - 0.66) / 0.2);
+  const jolt = Math.sin(Math.min(1, Math.max(0, (P - 0.59) / 0.16)) * Math.PI) * (1 - Math.min(1, Math.max(0, (P - 0.59) / 0.16))) * 4;   // a kick down on the flick
+  const bob = Math.round(Math.sin(TAU * P) * 1.5 + jolt), bob2 = Math.round(Math.sin(TAU * P - 0.9) * 1.5 + jolt * 0.7);              // the thumb lags the loop
+  const top = yT + bob, bot = yB + bob;
+  const pos = s => { s = ((s % LEN) + LEN) % LEN; let a;                                               // a point on the ribbon's centre-line, s px on from the slot
+    if (s < QA){ a = -Math.PI / 2 - s / R; return [cx + R * Math.cos(a), top + R * Math.sin(a)]; } s -= QA;
+    if (s < ST) return [cx - R, top + s]; s -= ST;
+    if (s < Math.PI * R){ a = Math.PI - s / R; return [cx + R * Math.cos(a), bot + R * Math.sin(a)]; } s -= Math.PI * R;
+    if (s < ST) return [cx + R, bot - s]; s -= ST;
+    a = -s / R; return [cx + R * Math.cos(a), top + R * Math.sin(a)]; };
+  const tang = s => { const a = pos(s - 0.5), b = pos(s + 0.5); return Math.atan2(b[1] - a[1], b[0] - a[0]); };
+
+  // ------------------------------------------------------------------ the ground glow: a ringed pool with a dark hollow, flaring on the lurch
+  { const fl = flare > 0.5 ? 1 : 0, rx = 25 + Math.round(flare * 3), pcx = cx + 3;
+    L(A[0], ell(pcx, GY, rx, 4.4)); L(A[1 + fl], ell(pcx, GY, rx - 2, 3.4)); L(A[2 + fl], ell(pcx, GY + 0.4, rx - 5, 2.5)); L(A[0], ell(pcx, GY, rx - 10, 1.7)); L(K, ell(pcx, GY - 0.2, rx - 14, 1));
+    L(A[3 + fl], c => { c.lineWidth = 1; c.ellipse(pcx, GY + 0.6, rx - 6, 2.3, 0, Math.PI * 0.25, Math.PI * 0.6); c.stroke(); }); px(pcx + 6, GY + 3, A[4], 2, 1);
+    for (const [dx, dy, k] of [[-30, 2, 0], [-17, 4, 1], [9, 5, 0], [27, 4, 1], [33, 1, 0]]){ const t = (P * 2 + k * 0.37 + dx * 0.01) % 1; if (t < 0.7) px(pcx + dx, GY + dy - Math.round(t * 3), k ? A[1] : A[0]); } }
+
+  // ------------------------------------------------------------------ drips off the bottom of the loop, each one letting go a blob
+  for (const [dx, len, k] of [[-12, 3, 0], [-3, 4, 1], [6, 2, 2]]){ const y0 = bot + Math.sqrt(Math.max(0, 22 * 22 - dx * dx)) - 1, t = (P * (k % 2 ? 2 : 1) + k * 0.31) % 1, l2 = len + Math.round(Math.min(1, t * 2) * 2);
+    px(cx + dx, y0, K, 2, l2); if (t > 0.5 && y0 + l2 + 1 + (t - 0.5) * 8 < GY - 3) px(cx + dx, y0 + l2 + 1 + (t - 0.5) * 8, K, len > 3 ? 2 : 1, 2); }
+
+  // ------------------------------------------------------------------ the ribbon: one black band, 16 wide, closed on itself
+  const stad = (r, c) => { c.moveTo(cx - r, top); c.arc(cx, top, r, Math.PI, 0); c.lineTo(cx + r, bot); c.arc(cx, bot, r, 0, Math.PI); c.closePath(); };
+  L(K, c => { stad(R + HW, c); c.fill(); }); L(null, c => { stad(R - HW, c); c.fill(); });
+  L(G3, c => { c.lineWidth = 1; c.arc(cx, top, R + HW - 1.5, Math.PI * 1.08, Math.PI * 1.36); c.stroke(); });      // one lit curve on the shoulder
+  L(G3, c => { c.lineWidth = 1; c.arc(cx, top, R - HW + 1.5, Math.PI * 1.02, Math.PI * 1.98); c.stroke(); }); px(cx - R + HW + 1, top, G3, 1, ST - 6);   // the inner lip: the band has a thickness
+  px(cx + R + HW - 2, top + 4, G1, 1, ST - 4);
+
+  // cell rules between the eyes, travelling with the ribbon; on the far strand they carry a small arrow
+  for (let k = 0; k < N; k++){ const s = (((k + 0.5) * SP + off) % LEN + LEN) % LEN; if (s < 9 || s > LEN - 9) continue; const [x, y] = pos(s), a = tang(s), nx = -Math.sin(a), ny = Math.cos(a), far = s > QA + ST + Math.PI * R * 0.75;
+    L(far ? G1 : G3, strokeP([[x + nx * 6.4, y + ny * 6.4], [x - nx * 6.4, y - ny * 6.4]], 1));
+    if (far && s < LEN - QA){ px(x - 2, y, G3, 5, 1); px(x - 1, y - 1, G3, 3, 1); px(x, y - 2, G3, 1, 1); } }
+
+  // the eyes: brightest fresh out of the slot, losing a ring every cell, dark by the bottom of the loop
+  for (let k = 0; k < N; k++){ const s = ((k * SP + off) % LEN + LEN) % LEN; if (s < 5 || s > LEN - 5) continue;
+    const [x, y] = pos(s), a = tang(s) - Math.PI / 2, lv = s < 40 ? 4 : s < 54 ? 3 : s < 68 ? 2 : s < 84 ? 1 : 0;
+    if (lurch > 0.25 && lv > 0){ const n = Math.round(lurch * 9);                                                    // the lurch smears every lit eye back along the ribbon
+      for (let j = n; j >= 1; j--){ const [tx, ty] = pos(s - j * 1.6); L(A[0], ell(tx, ty, Math.max(1.6, 4.4 - j * 0.34), Math.max(1.6, 4.4 - j * 0.34))); }
+      if (lv > 1) for (let j = Math.round(n * 0.6); j >= 1; j--){ const [tx, ty] = pos(s - j * 1.6); L(A[1], ell(tx, ty, Math.max(1, 2.8 - j * 0.3), Math.max(1, 2.8 - j * 0.3))); } }
+    const look = P > 0.46 && P < 0.585 ? 1 : 0;        // the pupils drift, and all slide to the thumb as it draws back
+    if (lv === 4){ L(A[0], tile(x, y, 5.6, a)); L(A[2], tile(x, y, 4.5, a)); L(A[0], tile(x, y, 3.3, a)); L(A[3], tile(x, y, 2.3, a)); px(x - 1 + look, y - 1, K, 2, 2); px(x - 3, y - 4, A[4]); }
+    else if (lv === 3){ L(A[0], tile(x, y, 5.2, a)); L(A[1], tile(x, y, 4.1, a)); L(A[0], tile(x, y, 3, a)); L(A[2], tile(x, y, 2, a)); px(x - 1 + look, y - 1, K, 2, 2); }
+    else if (lv === 2){ L(A[0], tile(x, y, 4.6, a)); L(A[1], tile(x, y, 3.5, a)); L(K, tile(x, y, 2, a)); }
+    else if (lv === 1){ L(A[0], tile(x, y, 4, a)); L(K, tile(x, y, 2.3, a)); }
+    else { L(G1, tile(x, y, 4, a)); px(x - 1, y - 1, s > LEN - 26 ? A[0] : G3, 2, 2); } }      // dark; an ember wakes in it as it nears the slot
+
+  // ------------------------------------------------------------------ the slot: a lit gate across the top of the loop where the ribbon swallows itself
+  { const y0 = top - R - HW, fl = flare > 0.35 ? 1 : 0, big = flare > 0.6 ? 1 : 0, c4 = i => A[Math.min(4, i + fl)];
+    L(K, rect(cx - 8, y0 - 2, 16, 2 * HW + 3));                                                                       // the gate frame, proud of the band
+    px(cx - 8, y0 - 2, G3, 1, 2 * HW + 2); px(cx - 9, y0 - 3, K, 3, 2); px(cx + 6, y0 - 3, K, 3, 2);
+    L(c4(0), rect(cx - 6, y0, 12, 15)); L(c4(1), rect(cx - 4, y0, 8, 13)); L(c4(2), rect(cx - 2, y0, 4, 10 + big * 2)); L(A[4], rect(cx - 1, y0, 2, 5 + fl * 3 + big * 3));
+    px(cx - 6, y0 + 15, K, 12, 1);
+    if (flare > 0.05){ const h = Math.round(flare * 4);                                                                // the flare: light spills up out of the gate, sparks thrown off
+      L(A[1], rect(cx - 4, y0 - h, 8, h)); L(A[2 + big], rect(cx - 2, y0 - h + 1, 4, h)); if (big) L(A[4], rect(cx - 1, y0 - 3, 2, 3));
+      const t = Math.min(1, Math.max(0, (P - 0.6) / 0.26));
+      for (const [vx, vy, sz, c] of [[-15, -3, 2, 1], [-9, -5, 1, 2], [-4, -6, 2, 3], [6, -6, 1, 2], [12, -4, 2, 1], [19, -2, 1, 0], [-21, -1, 1, 0]]) if (t < 0.95) px(cx + vx * t, Math.max(2, y0 - 2 + vy * t + 16 * t * t), A[c], sz, sz); }
+    else { const t = (P * 2) % 1; px(cx - 3 + (f % 32 < 16 ? 1 : 4), Math.max(2, y0 - 3 - t * 3), A[t < 0.5 ? 2 : 0]); } }                // idle: one mote rising off it
+
+  // ------------------------------------------------------------------ the thumb: one bent limb growing out of the loop's hip, pad on the far strand, flicking it upward
+  { const B = [cx + 15, yB + 17 + bob], wind = ss((P - 0.48) / 0.09), flick = ss((P - 0.58) / 0.05), back = ss((P - 0.72) / 0.24);
+    const ty = 52 + bob2 + wind * 5 - flick * 19 + back * 14 + Math.round(Math.sin(TAU * P * 2) * 0.6), tx = cx + 16 + (flick - back) * 2 * (P > 0.7 ? 1 : 0), T = [tx, ty];
+    const l1 = 25, l2 = 25, dx = T[0] - B[0], dy = T[1] - B[1], d = Math.min(l1 + l2 - 0.5, Math.hypot(dx, dy)), a0 = Math.atan2(dy, dx), a1 = Math.acos((l1 * l1 + d * d - l2 * l2) / (2 * l1 * d));
+    const Kn = [B[0] + Math.cos(a0 + a1) * l1, B[1] + Math.sin(a0 + a1) * l1];                                        // the knuckle, out to the right
+    const u = [(T[0] - Kn[0]) / l2, (T[1] - Kn[1]) / l2], n = [-u[1], u[0]], Q = (al, ac) => [T[0] + u[0] * al + n[0] * ac, T[1] + u[1] * al + n[1] * ac];
+    const w = [(Kn[0] - B[0]) / l1, (Kn[1] - B[1]) / l1], m = [-w[1], w[0]];
+    onMass(G3, strokeP([Q(-12, 0), Q(-1.4, 0)], 11));                                                                // a rim where the tip lies over the band
+    L(K, ell(B[0] + 2, B[1] - 1, 8, 6.4));                                                                             // the ball of the thumb, swelling out of the loop's hip
+    L(K, path([[B[0] + m[0] * 5.4, B[1] + m[1] * 5.4], [B[0] - m[0] * 5.4, B[1] - m[1] * 5.4], [Kn[0] - m[0] * 4.4, Kn[1] - m[1] * 4.4], [Kn[0] + m[0] * 4.4, Kn[1] + m[1] * 4.4]]));   // first joint, tapering
+    L(K, ell(Kn[0], Kn[1], 5.4, 5.4)); L(K, strokeP([Kn, Q(-2.4, 0)], 8.6)); L(K, ell(...Q(-3.4, 0), 4.8, 4.8));
+    const kn = [w[0] - u[0], w[1] - u[1]], kl = Math.hypot(kn[0], kn[1]) || 1, ko = [kn[0] / kl, kn[1] / kl];        // outward at the knuckle
+    for (const g of [-1.6, 1.6]) L(G3, strokeP([[Kn[0] + ko[0] * 4.4 - ko[1] * g, Kn[1] + ko[1] * 4.4 + ko[0] * g], [Kn[0] + ko[0] * 1 - ko[1] * g * 1.8, Kn[1] + ko[1] * 1 + ko[0] * g * 1.8]], 1));   // two creases over the joint
+    L(G3, strokeP([[B[0] + w[0] * 7 - m[0] * 3.6, B[1] + w[1] * 7 - m[1] * 3.6], [Kn[0] - w[0] * 6 - m[0] * 3, Kn[1] - w[1] * 6 - m[1] * 3]], 1));   // a lit edge along the first joint
+    // the nail: a pale plate with a cuticle, the only light thing on it
+    L(F0, path([Q(-9, -3.4), Q(-9, 3.4), Q(-2.4, 3.6), Q(0.2, 2), Q(0.2, -2), Q(-2.4, -3.6)]));
+    L(F3, path([Q(-8, -2.6), Q(-8, 2.6), Q(-2.6, 2.7), Q(-0.8, 1.4), Q(-0.8, -1.4), Q(-2.6, -2.7)]));
+    L(F4, path([Q(-7, -2.6), Q(-7, -0.4), Q(-2.2, -0.4), Q(-1, -1.4), Q(-2.6, -2.7)]));
+    
+    if (flick > 0.05 && back < 0.3) for (const [ox, oy, c] of [[-6, 7, 1], [-4, 11, 0], [3, 9, 1], [1, 14, 0]]) px(T[0] + ox, T[1] + oy + (1 - flick) * 6, A[c]);    // the strand sparks where the pad dragged
+    else { px(T[0] - 7, T[1] + 6, A[1], 1, 2); px(T[0] - 8, T[1] + 10, A[0]); } }
+
+  // ------------------------------------------------------------------ pixel debris hanging round it
+  for (const [x, y, s, k] of [[22, 34, 2, 0], [26, 58, 1, 1], [20, 74, 1, 2], [30, 18, 1, 3], [84, 22, 2, 4], [92, 34, 1, 5], [100, 80, 2, 6], [106, 62, 1, 7], [88, 88, 1, 8], [24, 46, 1, 9], [96, 14, 1, 10]])
+    px(x + Math.round(Math.sin(TAU * P + k * 1.3)), y + bob + Math.round(Math.cos(TAU * P + k * 2.1) * 1.5), K, s, s);
+  px(27, 28 + bob2, A[1]); px(90, 16 + bob2, A[0], 2, 2); px(23, 66 - bob, A[0]);
+
+  drawScrollLoop.deadHead = [cx - 12, 17];
+  const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
+  blitBuf(ctx, buf, W, H);
+}
+
+// ---- Humdrum Hobgoblin (style guide v1)
+// The Humdrum Hobgoblin, 17B "the fork". The whole body is one tall tuning fork with its stem sunk in a flat pool. A ladder of seven
+// identical flat eyes hangs between the tines and lights rung by rung on a strict count. Pop: the eye ladder, the level dashes of the hum, the pool.
+function drawHumFork(cv, f, accent){
+  const LOOP = 64, P = (f % LOOP) / LOOP, TAU = Math.PI * 2; f = f % LOOP;
+  const W = 128, H = 104, A = POP_RAMPS[accent] || POP_RAMPS.blush, D = !!drawHumFork.dead;
+  const K = '#121110', G1 = '#211f1d', G2 = '#2e2a27', G3 = '#3f3a36', G4 = '#57514b', G5 = '#756e66';
+  if (!drawHumFork.sc){ drawHumFork.sc = document.createElement('canvas'); drawHumFork.sc.width = W; drawHumFork.sc.height = H; }
+  const sc = drawHumFork.sc, sx = sc.getContext('2d', {willReadFrequently: true}), buf = new Array(W * H).fill(null);
+  let XF = null;
+  const L = shapeLayer(sx, W, H, buf, () => XF);
+  const ell = (x, y, rx, ry, rot = 0) => c => { c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); c.fill(); };
+  const path = pts => c => { c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.closePath(); c.fill(); };
+  const strokeP = (pts, w) => c => { c.lineWidth = w; c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.stroke(); };
+  const rect = (x, y, w, h) => c => { c.rect(x, y, w, h); c.fill(); };
+  const R = (c, x, y, w = 1, h = 1) => L(c, rect(Math.round(x), Math.round(y), w, h));
+  const rot = (a, cx, cy) => { const cs = Math.cos(a), sn = Math.sin(a); return [cs, sn, -sn, cs, cx - cs * cx + sn * cy, cy - sn * cx - cs * cy]; };
+  const ap = (m, x, y) => [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]];
+  const greyX = (x, y) => { for (let i = 0; i < 5; i++) for (let j = 0; j < 5; j++) if (Math.abs(i - j) <= 1 || Math.abs(i + j - 4) <= 1){ if ((i === 2 && (j === 0 || j === 4)) || (j === 2 && (i === 0 || i === 4))) continue; R(G4, x + i, y + j); } };
+
+  // the count: two passes down the ladder, three frames a rung (frames 0..41), then the chord (42..63)
+  const SEQ = 42, inSeq = !D && f < SEQ, lit = inSeq ? Math.floor(f / 3) % 7 : -1, tick = inSeq && f % 3 === 0;
+  const bu = D || f < SEQ ? 0 : (f - SEQ) / (LOOP - SEQ);                         // 0..1 through the chord
+  const env = bu <= 0 ? 0 : bu < 0.14 ? 0 : bu < 0.3 ? (bu - 0.14) / 0.16 : bu < 0.68 ? 1 : Math.max(0, 1 - (bu - 0.68) / 0.24);   // hush, rise, hold, fall
+  const all = env > 0.5;
+  const bob = D ? 0 : Math.round(Math.sin(TAU * P) * 1);                          // a slow level rise and fall on the stem
+  const hlag = D ? 0 : Math.round(Math.sin(TAU * P - 1.2) * 1);                   // the hands follow late
+  const buzz = D ? 0 : ((f & 1) ? 1 : -1), amp = D ? 0 : (buzz > 0 ? 1 : 0) + buzz * Math.round(env * 3);   // tine tops spread and close every frame
+  const cx = 64, TY = 3 + bob, YY = 66 + bob;                                     // tine tops, the inside of the yoke
+
+  // ------------------------------------------------------------------ the pool: flat stacked bands
+  if (D){ R(G1, 38, 91, 52, 5); R(G3, 46, 92, 36, 2); R(G1, 31, 93, 4, 2); R(G1, 93, 93, 4, 2); }
+  else { const w = (tick ? 2 : 0) + (all ? 6 : 0);
+    R(A[0], 36, 89, 56, 7); R(A[1], 40, 90, 48, 5); R(A[2], 48 - w, 91, 32 + w * 2, 3); R(A[3], 56 - w, 92, 16 + w * 2, 1); if (all) R(A[4], 58, 92, 12, 1);
+    for (const s of [-1, 1]){ R(A[0], cx + s * 33 - 2, 92, 4, 2); R(A[1], cx + s * 39 - 1, 93, 2, 1); } }
+
+  // ------------------------------------------------------------------ the hum: level dashes leaving both sides at one speed, never changing length
+  if (!D){
+    for (const s of [-1, 1]) for (let j = 0; j < 5; j++){ const y = 9 + j * 10 + bob;
+      for (let k = 0; k < 2; k++){ const u = (2 * P + k / 2 + (j % 2) * 0.25) % 1, d = 6 + u * 26, c = u < 0.3 ? A[1] : u < 0.55 ? A[0] : u < 0.8 ? G3 : G1, x = s > 0 ? 86 + d : 42 - d - 6; R(c, x, y, 6, u < 0.3 ? 2 : 1); }
+      if (env > 0){ const d = 4 + Math.min(1, bu * 1.5) * 22, len = 13, x = s > 0 ? 86 + d : 42 - d - len;                 // the chord: every dash shot out long and bright
+        R(A[1], x, y - 1, len, 3); R(all ? A[3] : A[2], x + (s > 0 ? 3 : 0), y, len - 3, 1); R(A[0], s > 0 ? x - 4 : x + len + 1, y, 3, 1); } }
+  }
+
+  // ------------------------------------------------------------------ the fork
+  const M = D ? rot(0.17, 64, 96) : null, sink = D ? 5 : 0;
+  XF = M;
+  // stem and collar, sunk in the pool
+  L(K, c => { c.rect(60, 74 + bob + sink, 8, 92 - (74 + bob)); c.fill(); }); L(G3, strokeP([[61.5, 77 + bob + sink], [61.5, 89 + sink]], 1));
+  L(K, c => { c.rect(56, 81 + bob + sink, 16, 4); c.fill(); }); L(G4, strokeP([[57.5, 81.5 + bob + sink], [62, 81.5 + bob + sink]], 1)); L(G3, strokeP([[62, 81.5 + bob + sink], [70.5, 81.5 + bob + sink]], 1));
+  if (!D){ R(D ? G3 : A[3], 58, 90, 12, 1); R(K, 60, 88, 8, 3); }
+  // yoke: the two tines meet in a deep U
+  const y0 = YY + sink;
+  L(K, path([[43, y0 - 8], [43, y0 - 3], [43, y0 + 7, 57, y0 + 7], [60, y0 + 10], [68, y0 + 10], [71, y0 + 7], [85, y0 + 7, 85, y0 - 3], [85, y0 - 8], [77, y0 - 8], [77, y0 - 5], [77, y0, 68, y0], [60, y0], [51, y0, 51, y0 - 5], [51, y0 - 8]]));
+  L(G3, strokeP([[44.5, y0 - 6], [44.5, y0 - 3], [45, y0 + 4, 53, y0 + 5.5]], 1));
+  // the tines: two clearly separate bars, panel between them
+  const tine = (x, d, bent) => { const t = TY + sink;
+    if (bent){ L(K, path([[x, y0 - 6], [x + 1, t + 34], [x + 13, t + 12], [x + 19, t + 16], [x + 8, t + 37], [x + 8, y0 - 6]])); L(G3, strokeP([[x + 1.5, y0 - 8], [x + 2.5, t + 34.5], [x + 13, t + 15]], 1)); R(K, x + 12, t + 38, 2, 2); R(K, x + 15, t + 43, 1, 1); return; }
+    L(K, path([[x, y0 - 6], [x + d, t + 1], [x + 1 + d, t], [x + 7 + d, t], [x + 8 + d, t + 1], [x + 8, y0 - 6]]));
+    L(G3, strokeP([[x + 1.5 + d, t + 2], [x + 1.5, y0 - 8]], 1)); L(G5, strokeP([[x + 1.5 + d, t + 2], [x + 1.5 + d * 0.8, t + 12]], 1)); L(G4, strokeP([[x + 2.5 + d, t + 1.5], [x + 6 + d, t + 1.5]], 1)); };
+  if (env > 0.3 && !D) for (const s of [-1, 1]) for (const o of [4, 7]) R(o === 4 ? G4 : G3, s < 0 ? 43 - o : 85 + o - 1, TY + 1 + (o - 4), 1, 26 - (o - 4) * 3);   // the blur of the chord
+  else if (!D) for (const s of [-1, 1]) R(G3, s < 0 ? 40 - (buzz > 0 ? 1 : 0) : 87 + (buzz > 0 ? 1 : 0), TY + 2, 1, 12);
+  tine(43, -amp, false); tine(77, amp, D);
+  // the eye ladder: seven identical flat eyes, each hung between the tines on two short pins
+  const rung = i => 23 + i * 6 + bob + sink;
+  for (let i = 0; i < 7; i++){ const y = rung(i);
+    L(K, c => { c.rect(51, y + 1.5, 6, 1); c.fill(); }); L(K, c => { c.rect(71, y + 1.5, D && i < 4 ? 3 : 6, 1); c.fill(); });
+    if (D){ L(K, c => { c.rect(57, y + 1, 14, 2); c.fill(); }); continue; }
+    const on = all || i === lit, after = !all && inSeq && i === (lit + 6) % 7 && f >= 3;
+    if (on){ R(A[0], 56, y - 1, 16, 6); R(A[2], 57, y, 14, 4); R(A[3], 58, y + 1, 12, 2); R(A[4], 58, y + 1, 5, 1); if (all) R(A[4], 65, y + 1, 5, 1); }
+    else { R(A[0], 57, y, 14, 4); R(after ? A[2] : A[1], 58, y + 1, 12, 2); }
+    R(K, 63, y + 1, 2, 2); }
+  XF = null;
+  if (D){ const [mx, my] = ap(M, 64, rung(3) + 2); R(K, Math.round(mx) - 4, Math.round(my) - 4, 8, 8); greyX(Math.round(mx) - 3, Math.round(my) - 3);
+    const [hx, hy] = ap(M, 62, TY + sink - 5); drawHumFork.deadHead = [Math.round(hx), Math.round(hy)];
+    for (const [x, y, s] of [[98, 84, 2], [104, 88, 1], [92, 89, 1], [30, 86, 1]]) R(K, x, y, s, s); }
+  else {
+    // the hands: two small ones resting on the shoulders, doing nothing
+    for (const s of [-1, 1]){ const ax = cx + s * 21, ay = YY + 2, hx = cx + s * 27, hy = YY - 8 + hlag;
+      L(K, strokeP([[ax, ay], [hx, ay + 1, hx, hy + 2]], 2)); R(K, hx - 2, hy - 2, 5, 3); for (const dx of [-2, 0, 2]) R(K, hx + dx, hy - 5, 1, 3); R(K, hx - s * 3, hy - 1, 1, 2); }
+    // level crumbs
+    for (let k = 0; k < 6; k++){ const s = k % 2 ? 1 : -1, u = (P + k * 0.37) % 1, y = [66, 72, 80, 6, 84, 76][k], x = cx + s * (34 + u * 10 + (k % 3) * 5); if (u < 0.8) R(K, x, y, k < 2 ? 2 : 1, k < 2 ? 2 : 1); }
+  }
+
+  const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
+  blitBuf(ctx, buf, W, H);
+}
+
+// ---- The Monotone (style guide v1)
+// The Humdrum Hobgoblin, 17A "the bar". A dead-level black bar on six identical piston legs, one flat line for an eye, two prongs on its
+// back humming one note: flat rings widen off them at a constant rate and never rise or fall. Pop: the eye line, the rings, the banded pool.
+function drawHumBar(cv, f, accent){
+  const LOOP = 64, P = (f % LOOP) / LOOP, TAU = Math.PI * 2; f = f % LOOP;
+  const W = 128, H = 104, A = POP_RAMPS[accent] || POP_RAMPS.blush, D = !!drawHumBar.dead;
+  const K = '#121110', G1 = '#211f1d', G2 = '#2e2a27', G3 = '#3f3a36', G4 = '#57514b', G5 = '#756e66';
+  if (!drawHumBar.sc){ drawHumBar.sc = document.createElement('canvas'); drawHumBar.sc.width = W; drawHumBar.sc.height = H; }
+  const sc = drawHumBar.sc, sx = sc.getContext('2d', {willReadFrequently: true}), buf = new Array(W * H).fill(null);
+  let XF = null;
+  const L = shapeLayer(sx, W, H, buf, () => XF);
+  const ell = (x, y, rx, ry, rot = 0) => c => { c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); c.fill(); };
+  const path = pts => c => { c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.closePath(); c.fill(); };
+  const strokeP = (pts, w) => c => { c.lineWidth = w; c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.stroke(); };
+  const rect = (x, y, w, h) => c => { c.rect(x, y, w, h); c.fill(); };
+  const R = (c, x, y, w = 1, h = 1) => L(c, rect(Math.round(x), Math.round(y), w, h));
+  const rot = (a, cx, cy) => { const cs = Math.cos(a), sn = Math.sin(a); return [cs, sn, -sn, cs, cx - cs * cx + sn * cy, cy - sn * cx - cs * cy]; };
+  const ap = (m, x, y) => [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]];
+  const ring = (c, x, y, rx, ry, w) => L(c, k => { k.lineWidth = w; k.ellipse(x, y, rx, ry, 0, 0, TAU); k.stroke(); });
+  const greyX = (x, y) => { for (let i = 0; i < 5; i++) for (let j = 0; j < 5; j++) if (Math.abs(i - j) <= 1 || Math.abs(i + j - 4) <= 1){ if ((i === 2 && (j === 0 || j === 4)) || (j === 2 && (i === 0 || i === 4))) continue; R(G4, x + i, y + j); } };
+
+  // the swell: one smooth rise and fall, P 0.58 .. 0.84, flat-topped
+  const sw = D ? 0 : (() => { const u = (P - 0.58) / 0.26; if (u <= 0 || u >= 1) return 0; const e = Math.sin(Math.PI * u); return Math.min(1, e * 1.7); })();
+  const S = sw > 0.5 ? 1 : 0;                                                     // the held part of the swell
+  const bob = D ? 0 : Math.round(Math.sin(TAU * 2 * P) * 0.8 * (1 - sw));          // a level, shallow breath; it stops dead while the hum swells
+  const lag = D ? 0 : Math.round(Math.sin(TAU * 2 * P - 1.1) * 0.8 * (1 - sw));    // the prongs follow a beat late
+  const buzz = D ? 0 : ((f & 1) ? 1 : 0);                                         // the finest steady buzz a 10 fps loop can hold
+  const BY = 44 + bob, cx = 64;
+
+  // ------------------------------------------------------------------ the pool: flat stacked bands, no curve anywhere
+  if (D){ R(G1, 20, 91, 88, 5); R(G3, 30, 92, 68, 2); R(G1, 12, 93, 5, 2); R(G1, 111, 93, 5, 2); }
+  else {
+    R(A[0], 20, 89, 88, 7); R(A[1], 26, 90, 76, 5); R(A[2], 36 - S * 4, 91, 56 + S * 8, 3); R(A[3], 48 - S * 10, 92, 32 + S * 20, 1);
+    if (S) R(A[4], 54, 92, 20, 1);
+    const hx = 26 + ((2 * P) % 1) * 76;                                           // the same level pulse that runs the eye runs the pool
+    for (let k = 0; k < 8; k++){ const x = 26 + ((hx - 26 - k + 76) % 76); R(k < 3 ? A[4] : A[3], x, 92, 1, 1); }
+    for (const s of [-1, 1]){ R(A[0], cx + s * 50 - 2, 92, 5, 2); R(A[1], cx + s * 57 - 1, 93, 3, 1); R(A[0], cx + s * 61, 93, 1, 1); }
+  }
+
+  // ------------------------------------------------------------------ the hum: flat rings widening off the prongs at one constant rate
+  if (!D){
+    const ry0 = 22 + lag;
+    for (let k = 0; k < 5; k++){ const u = (2 * P + k / 5) % 1, rx = 11 + u * 48, b = u < 0.22 ? 0 : u < 0.44 ? 1 : u < 0.66 ? 2 : u < 0.84 ? 3 : 4;
+      const col = S ? [A[3], A[2], A[1], A[0], G3][b] : [A[2], A[1], A[0], G3, G1][b];
+      ring(col, cx, ry0, rx, rx * 0.1 + 1.2, S ? 2.2 : 1.1); }
+  }
+
+  // ------------------------------------------------------------------ six identical piston legs, marching in an even ripple
+  if (!D){
+    for (let i = 0; i < 6; i++){ const x = 27 + i * 14, lift = Math.round(Math.max(0, Math.sin(TAU * 4 * P - i * TAU / 6)) * 3 * (1 - sw));
+      R(K, x - 1, BY + 14, 6, 9); R(G3, x - 1, BY + 22, 6, 1);                      // the sleeve under the bar, a lit collar
+      R(K, x, BY + 23, 4, 85 - lift - (BY + 23)); R(G3, x, BY + 24, 1, 85 - lift - (BY + 24) - 1);   // the piston rod, one lit edge
+      R(K, x - 2, 85 - lift, 8, 3); R(G4, x - 2, 85 - lift, 2, 1);                   // the foot plate
+      if (lift === 0 && !S) R(A[1], x - 2, 88, 8, 1); }                              // a planted foot lights the pool's rim under it
+  } else {
+    for (let i = 0; i < 6; i++){ const x = 29 + i * 14, t = (i - 2.5) / 2.5, top = 68 + (1 - Math.abs(t)) * 5, fx = x + t * 9;   // splayed, every one at its own angle
+      L(K, strokeP([[x, top], [fx, 86]], 4)); L(G3, strokeP([[x - 1, top + 3], [fx - 1, 84]], 1));
+      R(K, fx - 4, 86, 8, 3); R(G4, fx - 4, 86, 2, 1); }
+  }
+
+  // ------------------------------------------------------------------ the prongs on its back
+  const prong = (x, d, m) => { XF = m;
+    L(K, path([[x, 40 + lag], [x + d, 9 + lag], [x + d, 6 + lag, x + 3.5 + d, 5.4 + lag], [x + 7 + d, 6 + lag, x + 7 + d, 9 + lag], [x + 7, 40 + lag]]));
+    L(G3, strokeP([[x + 1.5 + d, 9 + lag], [x + 1.5, 38 + lag]], 1)); L(G4, strokeP([[x + 1.5 + d, 9 + lag], [x + 1.5 + d * 0.8, 15 + lag]], 1)); XF = null; };
+  if (!D){
+    const amp = buzz ? 1 + Math.round(sw * 2) : 0;   // tops spread, then true, every frame
+    if (sw > 0.3) for (const s of [-1, 1]) for (const o of [3, 5]){ const x = s < 0 ? 52 - o : 76 + o; R(o === 3 ? G4 : G3, x, 8 + lag + (o - 3), 1, 20 - (o - 3) * 3); }   // the blur of the swell
+    else for (const s of [-1, 1]){ R(G3, s < 0 ? 49 - buzz : 78 + buzz, 9 + lag, 1, 12); R(G1, s < 0 ? 46 : 81, 11 + lag, 1, 6 + buzz * 2); }
+    prong(52, -amp, null); prong(69, amp, null);
+    L(K, path([[52, 33 + lag], [76, 33 + lag], [76, 40 + lag], [72, 46 + lag], [56, 46 + lag], [52, 40 + lag]]));        // the yoke the prongs share
+    L(K, c => { c.rect(59, 28 + lag, 10, 6); c.fill(); }); L(G1, ell(64, 30.5 + lag, 5, 4));                           // the U between them
+    R(G3, 54, 41 + lag, 20, 1); R(G4, 54, 41 + lag, 4, 1);
+  }
+
+  // ------------------------------------------------------------------ the bar
+  const bar = (x0, x1, by, m, side) => { XF = m; const w = x1 - x0;
+    L(K, c => { c.rect(x0, by, w, 16); c.fill(); });
+    L(G3, strokeP([[x0 + 2.5, by + 1.5], [x1 - 2.5, by + 1.5]], 1)); if (side <= 0) L(G5, strokeP([[x0 + 2.5, by + 1.5], [x0 + 11.5, by + 1.5]], 1));
+    if (!m) L(G1, c => { c.rect(x0 + 2, by + 12, w - 4, 2); c.fill(); });
+    for (const rx of side === 0 ? [x0 + 2, x1 - 4] : side < 0 ? [x0 + 2] : [x1 - 4]) for (const ry of [by + 4, by + 9]) L(G4, c => { c.rect(rx, ry, 2, 1); c.fill(); });   // rivets on the end caps
+    XF = null; };
+  if (!D){
+    bar(16, 112, BY, null, 0); R(K, 14, BY + 2, 2, 12); R(K, 112, BY + 2, 2, 12);                     // squared caps
+    // the eye: one flat line end to end, a pulse running along it at a constant speed
+    const ex = 23, ew = 82, ey = BY + 4;
+    R(A[0], ex, ey, ew, 6); R(S ? A[2] : A[1], ex + 1, ey + 1, ew - 2, 4); R(S ? A[3] : A[2], ex + 1, ey + 2, ew - 2, 2);
+    if (S){ R(A[4], ex + 1, ey + 2, ew - 2, 1); }
+    else { const hx = ((2 * P) % 1) * (ew - 2);
+      for (let k = 0; k < 22; k++){ const x = ex + 1 + ((hx - k + (ew - 2) * 2) % (ew - 2)); R(k < 6 ? A[4] : A[3], x, ey + 2, 1, k < 6 ? 2 : 1); if (k < 6) R(A[3], x, ey + 1, 1, 4); } }
+    for (let i = 1; i < 6; i++) R(K, ex - 1 + i * 14 - 1, ey, 1, 6);                                 // identical divisions, one per leg
+    R(K, ex - 1, ey, 1, 6); R(K, ex + ew, ey, 1, 6);
+    // level debris: square crumbs drifting outward in dead-straight rows
+    for (let k = 0; k < 6; k++){ const s = k % 2 ? 1 : -1, u = (P + k * 0.37) % 1, y = [36, 62, 70, 31, 66, 76][k], x = cx + s * (52 + u * 8); if (u < 0.8) R(K, x, y, k < 2 ? 2 : 1, k < 2 ? 2 : 1); }
+    R(K, 9, BY + 7, 3, 2); R(K, 116, BY + 7, 3, 2); R(K, 5, BY + 7, 2, 2); R(K, 121, BY + 7, 2, 2);   // floating end blocks, dead level with the eye
+  } else {
+    // beaten: snapped in the middle into a shallow V
+    const a = 0.19, mL = rot(a, 18, 60), mR = rot(-a, 110, 60), by = 54;
+    // bent prongs, each still rooted on its own half
+    XF = mL; L(K, strokeP([[55, by + 2], [53, by - 12], [44, by - 30]], 6.4)); L(G3, strokeP([[53, by - 2], [51.5, by - 12], [43.5, by - 28]], 1)); L(K, c => { c.rect(50, by - 4, 13, 6); c.fill(); });
+    XF = mR; L(K, strokeP([[73, by + 2], [74, by - 16], [86, by - 24]], 6.4)); L(G3, strokeP([[71.6, by - 2], [72.4, by - 15]], 1)); L(K, c => { c.rect(66, by - 4, 13, 6); c.fill(); }); XF = null;
+    bar(16, 63, by, mL, -1); bar(65, 112, by, mR, 1);
+    for (const [m, x0, x1] of [[mL, 23, 62], [mR, 66, 105]]){ XF = m; L(G1, c => { c.rect(x0, by + 4, x1 - x0, 6); c.fill(); }); L(G3, strokeP([[x0 + 1.5, by + 7], [x1 - 1.5, by + 7]], 1));
+      for (let i = 1; i < 3; i++) L(K, c => { c.rect(x0 === 23 ? 22 + i * 14 - 0.5 : 105 - i * 14 - 0.5, by + 4, 1, 6); c.fill(); }); XF = null; }
+    // the break: torn edges, a dark socket, and the X
+    const bx = 64, byc = Math.round(ap(mL, 63, by + 7)[1]);
+    R(K, bx - 5, byc - 6, 10, 13); R(K, bx - 6, byc - 3, 12, 8);
+    for (const [dx, dy] of [[-2, -8], [1, -7], [3, -9], [-4, -7], [0, 8], [-3, 7], [4, 9]]) R(K, bx + dx, byc + dy, 1, 1);
+    greyX(bx - 2, byc - 2);
+    for (const [dx, dy, s] of [[-9, 14, 2], [8, 16, 1], [2, 18, 2], [-14, 20, 1], [13, 21, 1]]) R(K, bx + dx, byc + dy, s, s);     // crumbs fallen from the break
+    drawHumBar.deadHead = [64, byc - 38];
+  }
+
+  const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
+  blitBuf(ctx, buf, W, H);
+}
+
+// ---- Tedium Troll (style guide v1)
+// TEDIUM TROLL, 19A "the arch". The bridge itself as a body on four stub legs, going nowhere. Bored half-shut eyes in the keystone,
+// a portcullis down in its span with a lit keyhole, and whatever is interesting glowing on the far side. Pop: eyes, the glow/keyhole, the pool.
+function drawArch(cv, f, accent){
+  const LOOP = 64, P = (f % LOOP) / LOOP, TAU = Math.PI * 2; f = f % LOOP;
+  const W = 128, H = 104, A = POP_RAMPS[accent] || POP_RAMPS.blush, D = !!drawArch.dead;
+  const K = '#121110', G1 = '#211f1d', G2 = '#2e2a27', G3 = '#3f3a36', G4 = '#57514b', G5 = '#756e66';
+  const F0 = '#35312d', F1 = '#4a4540', F2 = '#615b54', F3 = '#8e867b';
+  if (!drawArch.sc){ drawArch.sc = document.createElement('canvas'); drawArch.sc.width = W; drawArch.sc.height = H; }
+  const sc = drawArch.sc, sx = sc.getContext('2d', {willReadFrequently: true}), buf = new Array(W * H).fill(null);
+  let XF = null;
+  const L = shapeLayer(sx, W, H, buf, () => XF);
+  const ell = (x, y, rx, ry, rot = 0) => c => { c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); c.fill(); };
+  const poly = pts => c => { c.moveTo(...pts[0]); for (const p of pts.slice(1)) c.lineTo(...p); c.closePath(); c.fill(); };
+  const line = (pts, w = 1) => c => { c.lineWidth = w; c.moveTo(...pts[0]); for (const p of pts.slice(1)) c.lineTo(...p); c.stroke(); };
+  const B = (x, y, w, h, col) => { x = Math.round(x); y = Math.round(y); for (let yy = Math.max(0, y); yy < Math.min(H, y + h); yy++) for (let xx = Math.max(0, x); xx < Math.min(W, x + w); xx++) buf[yy * W + xx] = col; };   // exact pixel rect, no transform
+  const ss = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  const bez = (p0, p1, p2, p3, n = 24) => { const o = []; for (let i = 0; i <= n; i++){ const t = i / n, u = 1 - t; o.push([u * u * u * p0[0] + 3 * u * u * t * p1[0] + 3 * u * t * t * p2[0] + t * t * t * p3[0], u * u * u * p0[1] + 3 * u * u * t * p1[1] + 3 * u * t * t * p2[1] + t * t * t * p3[1]]); } return o; };
+  const mul = (m, n) => [m[0] * n[0] + m[2] * n[1], m[1] * n[0] + m[3] * n[1], m[0] * n[2] + m[2] * n[3], m[1] * n[2] + m[3] * n[3], m[0] * n[4] + m[2] * n[5] + m[4], m[1] * n[4] + m[3] * n[5] + m[5]];
+  const rotM = (a, cx, cy) => { const cs = Math.cos(a), sn = Math.sin(a); return [cs, sn, -sn, cs, cx - cs * cx + sn * cy, cy - sn * cx - cs * cy]; };
+  const TP = (m, x, y) => [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]];
+  const BOT = 79, GY = 95;                                                                    // body underside, ground line
+
+  // ------------------------------------------------------------------ timeline (all whole cycles of P)
+  const s = D ? 0 : Math.sin(TAU * P);                                                        // the slow weight shift, left to right
+  const lift = D ? 0 : P < 0.75 ? Math.round(6 * ss(0.52, 0.70, P)) : 0;                      // the gate creeps up... and slams
+  const aft = !D && P >= 0.75 ? Math.round((P - 0.75) * LOOP) : -1;                           // frames since the slam
+  const jolt = aft === 0 ? 2 : aft === 1 ? 1 : 0;
+  const bx = D ? 0 : Math.round(s * 1.8), by = D ? 0 : Math.round(0.5 - 0.5 * Math.cos(TAU * P * 2)) + jolt;   // body settles onto the loaded legs at each end of the shift
+  const kx = D ? 0 : Math.round(Math.sin(TAU * (P - 0.07)) * 2.4), ky = by + (aft === 0 ? 1 : 0);             // the keystone lags and overshoots the body
+  const lure = D ? 0 : P < 0.75 ? ss(0.52, 0.66, P) : 0, sq = aft >= 0 ? 1 - ss(0.90, 1, P) : 0;
+  const blink = ss(0.10, 0.20, P) * (1 - ss(0.26, 0.38, P));
+  const lid = Math.round(3 + 3 * blink - 2 * lure + sq), low = Math.round(sq);
+  const fl = D ? 0 : Math.sin(TAU * P * 5) + Math.sin(TAU * P * 9 + 1.3);                     // flicker of the light beyond
+  const g = lure > 0.5 ? 2 : (lure > 0.15 || fl > 1.25) ? 1 : (aft >= 0 && aft < 3) ? -1 : 0;  // glow level: flares on the lure, dips on the slam
+  const ac = i => A[Math.max(0, Math.min(4, i))];
+
+  // ------------------------------------------------------------------ the ground: a pool of the far light, leaking out under the gate
+  if (D){ L(G1, ell(64, GY, 42, 5.6)); L(G3, ell(64, GY, 37, 4.2)); }
+  else {
+    L(A[0], ell(64, GY, 40, 4.6)); L(A[1], ell(64, GY, 37, 3.6)); L(ac(2 + (g > 0 ? 1 : 0)), ell(64, GY + 0.4, 30 + g * 2, 2.6));
+    L(A[0], ell(64, GY - 0.2, 20, 1.6)); L(K, ell(64, GY - 0.4, 15, 0.9));
+    L(ac(3 + (g > 1 ? 1 : 0)), c => { c.lineWidth = 1; c.ellipse(64, GY + 0.8, 33, 2.6, 0, Math.PI * 0.2, Math.PI * 0.62); c.stroke(); }); B(72, GY + 3, 3, 1, A[4]);
+    if (lure > 0.3){ L(ac(g), poly([[46, BOT + 6], [82, BOT + 6], [88, GY - 2], [40, GY - 2]])); L(ac(g + 1), poly([[53, BOT + 9], [75, BOT + 9], [79, GY - 2], [49, GY - 2]])); }   // light spills out under the lifted gate
+    for (const [x, y, c] of [[20, 99, 1], [31, 101, 0], [52, 101, 1], [88, 101, 0], [104, 100, 1], [112, 97, 0], [14, 96, 0]]) B(x, y, 1, 1, A[c]);
+  }
+
+  // ------------------------------------------------------------------ four stub legs, feet planted; the body shifts its weight over them
+  const leg = (x0, side, k) => {                                                              // x0 = left edge of an 8px stub
+    const load = D ? 0 : s * side, sqz = load > 0.45 ? 1 : 0, up = load < -0.6 ? 1 : 0, fy = GY - 1 - up;
+    if (D){ const sp = side * (k ? 6 : 3); L(K, poly([[x0, BOT + 3], [x0 + 6, BOT + 3], [x0 + 6 + sp, GY - 2], [x0 + sp, GY - 2]])); B(x0 - 1 + sp, GY - 3, 8, 3, K); return; }
+    L(K, poly([[x0 + 1 + bx - sqz, BOT + by - 1], [x0 + 5 + bx + sqz, BOT + by - 1], [x0 + 6 + sqz, fy - 2], [x0 - sqz, fy - 2]]));
+    B(x0 - 1 - sqz, fy - 3, 8 + sqz * 2, 3, K); B(x0 - 2 - sqz, fy - 1, 10 + sqz * 2, 1, K);                           // a flat foot, splaying when it takes the weight
+    for (const dx of [-2, 2, 6]) B(x0 + dx + (dx > 3 ? sqz : dx < 0 ? -sqz : 0), fy - 1, 2, 1, G4);                    // three blunt toenails
+    B(x0 + 1 + Math.round(bx * 0.6), BOT + by + 1, 1, fy - BOT - by - 5, G3);                                              // one lit edge
+    B(x0 + 1 + Math.round(bx * 0.3), fy - 6 + sqz, 4, 1, G1);                                                          // a crease above the foot
+  };
+  leg(24, -1, 1); leg(35, -1, 0); leg(87, 1, 0); leg(98, 1, 1);
+
+  // ------------------------------------------------------------------ the arch: two halves leaning on a keystone
+  const outer = bez([22, 48], [22, 27], [40, 14], [64, 14]), inner = bez([42, 52], [42, 41], [52, 34], [64, 34]), ring = bez([33, 53], [33, 37], [48, 25], [64, 25]);
+  const half = (M, lit, cutO, cutI) => { XF = M;
+    const o = outer.filter(p => p[0] <= cutO), i = inner.filter(p => p[0] <= cutI), r = ring.filter(p => p[0] <= (cutO + cutI) / 2);
+    L(K, poly([[22, BOT], ...o, ...i.slice().reverse(), [42, BOT]]));
+    L(G1, poly([[33, BOT - 2], ...r, ...i.slice().reverse(), [42, BOT - 2]]));                                         // the voussoir ring, one band lighter
+    L(K, line([[41.5, 52], ...i.map(p => [p[0] - 0.5, p[1] - 0.5])].slice(0, i.length), 1));                           // a dark lip on the intrados
+    for (const t of [3, 8, 13, 18]) if (inner[t][0] <= cutI - 1) L(K, line([inner[t], ring[t]], 1));                   // joints between the stones
+    for (const y of [60, 70]) L(K, line([[33, y], [42, y]], 1));
+    if (lit){ L(G3, line(r.slice(2, 20), 1)); L(G3, line(o.slice(1, 19).map(p => [p[0] + 1, p[1] + 1]), 1)); L(G4, line(o.slice(6, 12).map(p => [p[0] + 1, p[1] + 1]), 1)); L(G3, line([[23, 52], [23, 74]], 1));
+      for (const t of [3, 8, 13, 18]) if (inner[t][0] <= cutI - 1) L(G3, line([[ring[t][0] + 1, ring[t][1] + 1], [ring[t][0] + 2.4, ring[t][1] + 2.2]], 1)); }
+    else { L(G1, line(o.slice(2, 16).map(p => [p[0] + 1, p[1] + 1]), 1)); }
+    for (const [x, y, w, h] of [[25, 56, 6, 4], [27, 66, 5, 3], [29, 40, 5, 3], [37, 28, 5, 3]]){ L(G1, c => { c.rect(x, y, w, h); c.fill(); }); if (lit) L(G3, c => { c.rect(x, y, w, 1); c.fill(); }); }   // a few proud stones
+    for (const [x, l] of [[26, 3], [36, 2], [30, 1]]) L(K, c => { c.rect(x, BOT - 1, 2, l + 1); c.fill(); });         // drips off the underside
+    XF = null; };
+  const MIR = [-1, 0, 0, 1, 128, 0];
+
+  // the span: light beyond, then the gate, then the stone around it
+  const spanGlow = () => {
+    B(42 + bx, 33 + by, 44, BOT - 33, A[0]);
+    const w1 = Math.sin(TAU * P * 3) * 1.2, w2 = Math.sin(TAU * P * 4 + 2) * 1.2, half_ = (c, rx, ry) => L(c, cc => { cc.ellipse(64 + bx, BOT + by, Math.max(1, rx), Math.max(1, ry), 0, Math.PI, Math.PI * 2); cc.closePath(); cc.fill(); });
+    if (g >= 0) half_(A[1], 25 + w1 + g * 3, 31 + w1 + g * 6); if (g >= 0) half_(A[2], 18 + w2 + g * 3, 19 + w2 + g * 6); half_(ac(3 + Math.min(0, g)), 11 + w1 + g * 3, 9 - w2 + g * 4); if (g > 0) half_(A[4], 5 + g * 2, 3 + g * 2);
+    for (let k = 0; k < 4; k++){ const t = (P + k / 4) % 1, x = [49, 70, 77, 56][k] + bx + Math.round(Math.sin(TAU * (P * 2 + k * 0.3))), y = BOT - 6 - t * 34 + by; B(x, y, t < 0.5 ? 2 : 1, t < 0.5 ? 2 : 1, t < 0.75 ? A[4] : A[3]); }   // motes drifting up on the far side
+  };
+  const gate = (ox, oy, lit) => {
+    for (let i = 0; i < 6; i++){ const x = 45 + i * 7 + ox; B(x, 26 + oy, 3, BOT - 26, K); B(x, BOT + oy, 3, 2, K); B(x + 1, BOT + 2 + oy, 1, 3, K); }      // bars, each ending in a tooth
+    B(43 + ox, 42 + oy, 42, 3, K); B(43 + ox, 72 + oy, 42, 3, K);
+    for (let i = 0; i < 6; i++){ B(46 + i * 7 + ox, 43 + oy, 1, 1, G4); B(46 + i * 7 + ox, 73 + oy, 1, 1, G4); }                                              // rivets at the crossings
+    B(55 + ox, 49 + oy, 18, 20, K); B(56 + ox, 50 + oy, 16, 1, G3); B(56 + ox, 51 + oy, 1, 16, G3); B(56 + ox, 50 + oy, 3, 1, G4);                                // the lock plate
+    for (const [x, y] of [[57, 66], [70, 66], [70, 52]]) B(x + ox, y + oy, 1, 1, G4);
+    const kx0 = 64 + ox, ky0 = 56 + oy, c0 = lit ? A[0] : G1, c1 = lit ? ac(3 + (g > 0 ? 1 : 0) + Math.min(0, g)) : G3;                                           // the keyhole, lit from behind
+    B(kx0 - 3, ky0 - 3, 6, 6, c0); B(kx0 - 2, ky0 - 4, 4, 8, c0); B(kx0 - 4, ky0 - 2, 8, 4, c0); B(kx0 - 2, ky0 + 3, 4, 7, c0); B(kx0 - 3, ky0 + 7, 6, 3, c0);
+    B(kx0 - 2, ky0 - 2, 4, 4, c1); B(kx0 - 1, ky0 - 3, 2, 6, c1); B(kx0 - 3, ky0 - 1, 6, 2, c1); B(kx0 - 1, ky0 + 2, 2, 7, c1); B(kx0 - 2, ky0 + 7, 4, 2, c1); if (lit) B(kx0 - 1, ky0 - 2, 1, 1, A[4]);
+  };
+  const keystone = (M, eyes) => { XF = M;
+    L(K, poly([[49, 6], [79, 6], [74, 38], [54, 38]])); L(G1, poly([[51, 8], [77, 8], [72.4, 36], [55.6, 36]]));
+    L(G3, line([[51.5, 8.5], [76.5, 8.5]], 1)); L(G3, line([[51.5, 8.5], [55.8, 35]], 1)); L(G4, line([[51.5, 8.5], [58, 8.5]], 1));
+    XF = null; if (eyes) eyes(); };
+
+  if (!D){
+    spanGlow(); gate(bx, by - lift, true);
+    half([1, 0, 0, 1, bx, by], true, 64.5, 64.5); half(mul([1, 0, 0, 1, bx, by], MIR), false, 64.5, 64.5);
+    keystone([1, 0, 0, 1, kx, ky], () => { for (const ex0 of [54, 67]){ const ex = ex0 + kx, ey = 14 + ky;
+      B(ex, ey, 8, 8, A[0]); B(ex + 1, ey + 1, 6, 6, A[2]); B(ex + 1, ey + 5, 6, 2, A[3]); B(ex + 1, ey + 6, 2, 1, A[4]);                                          // a square stone-cut eye
+      const pxx = ex + 3 + Math.round(s * 1.4) * (lure > 0.5 ? 0 : 1); B(pxx, ey + 4 + (lure > 0.5 ? 1 : 0), 2, 2, K);                                             // a small square pupil, hanging off the lid
+      B(ex - 1, ey - 1, 10, 2 + lid, K); if (lid < 6) B(ex, ey + lid, 8, 1, G4);                                                                                 // the heavy lid, with a lit edge
+      if (low){ B(ex - 1, ey + 8 - low - 1, 10, low + 1, K); }
+      if (lid >= 6){ B(ex, ey + 6, 8, 2, K); B(ex + 1, ey + 6, 6, 1, G4); }                                                                                      // shut: a single grey seam
+      B(ex + 1, ey + 10, 6, 1, G3); B(ex + (ex0 < 60 ? 0 : 7), ey + 9, 1, 1, G3); } });                                                                          // bags under the eyes
+    // loose stones hanging in the air round the shoulders, bobbing out of step
+    for (const [x, y, sz, k] of [[12, 30, 3, 0], [17, 22, 2, 1], [112, 26, 3, 2], [108, 16, 2, 3], [9, 56, 2, 4], [117, 50, 2, 5], [30, 9, 2, 6], [95, 8, 3, 7], [119, 70, 1, 8], [6, 74, 1, 9]]){
+      const yy = y + Math.round(Math.sin(TAU * P + k * 1.9) * 1.6) + (aft >= 0 && aft < 2 ? 1 : 0), xx = x + Math.round(bx * 0.5); B(xx, yy, sz, sz, K); if (sz > 2) B(xx, yy, 1, 1, G3); }
+    // the slam: dust kicked out from under the gate, chips shaken off the crown
+    if (aft >= 0 && aft < 12){ const t = aft;
+      for (let k = 0; k < 12; k++){ const sd = k % 2 ? 1 : -1, q = (k * 7 + 3) % 5, vx = sd * (1.6 + q * 0.75), vy = 1.4 + ((k * 3) % 4) * 0.55, x = 64 + sd * (10 + q * 3) + vx * t, y = BOT + 8 - ((k * 5) % 7) - vy * t + 0.16 * t * t, sz = t < 4 ? 2 + (k % 3 === 0 ? 1 : 0) : t < 8 ? 2 : 1;
+        if (y < GY + 2 && x > 3 && x < 122) B(x, y, sz, sz, t < 2 ? F3 : t < 5 ? F2 : t < 9 ? F1 : G3); }
+      for (let k = 0; k < 5; k++){ const x = [34, 47, 81, 92, 60][k] + k % 2, y = [20, 15, 15, 21, 40][k] + 2 + 0.22 * t * t + t * 0.4; if (y < GY - 2) B(x, y, k % 2 ? 2 : 1, k % 2 ? 2 : 1, K); }
+       }
+    drawArch.deadHead = [64, 4];
+  } else {
+    // beaten: the keystone has dropped out, so the halves sag in on the gap; the gate has fallen open, flat on the floor; the light beyond has gone grey
+    const sag = 0.085, drop = 5;
+    L(F0, poly([[44, BOT + drop], [44, 54], [52, 44], [76, 44], [84, 54], [84, BOT + drop]])); B(44, 68 + drop, 40, BOT - 68, G3); L(G4, c => { c.ellipse(64, BOT + drop, 13, 6, 0, Math.PI, Math.PI * 2); c.closePath(); c.fill(); });   // a dead grey doorway, nothing in it
+    half(mul([1, 0, 0, 1, 0, drop], rotM(sag, 22, BOT)), true, 52.5, 55.5); half(mul(mul([1, 0, 0, 1, 0, drop], rotM(-sag, 106, BOT)), MIR), false, 52.5, 55.5);
+    // the gate, fallen out flat on the floor, teeth toward you
+    { const y0 = GY - 6, y1 = GY + 3, xa = i => 45 + i * 7.4, xb = i => 39 + i * 9.6;
+      for (let i = 0; i < 6; i++) L(K, poly([[xa(i), y0], [xa(i) + 2.6, y0], [xb(i) + 3.6, y1], [xb(i), y1]]));
+      B(44, y0, 41, 2, K); B(39, y1 - 2, 52, 2, K); B(44, y0, 41, 1, G4);
+      L(K, poly([[57, y0 + 2], [71, y0 + 2], [73, y1 - 2], [55, y1 - 2]])); B(62, y0 + 3, 4, 2, G3); B(63, y0 + 5, 2, 2, G3);
+      for (let i = 0; i < 6; i++){ const x = Math.round(xb(i)); B(x, y1, 4, 1, K); B(x + 1, y1 + 1, 2, 2, K); } }
+    // the keystone, on the floor in front, eyes X'd out
+    const KM = mul([1, 0, 0, 1, -13, 59], rotM(-0.34, 64, 22)); keystone(KM, null);
+    for (const [ex, ey] of [[58, 19], [71, 19]]){ const [tx, ty] = TP(KM, ex, ey), x0 = Math.round(tx - 0.5) - 2, y0 = Math.round(ty - 0.5) - 2;
+      B(x0 - 1, y0 - 1, 7, 7, K);
+      for (let i = 0; i < 5; i++){ B(x0 + i, y0 + i, 1, 1, G4); B(x0 + 4 - i, y0 + i, 1, 1, G4); if (i < 4){ B(x0 + i + 1, y0 + i, 1, 1, G4); B(x0 + 3 - i, y0 + i, 1, 1, G4); } } }
+    const hd = TP(KM, 60, 6); drawArch.deadHead = [Math.round(hd[0]), Math.round(hd[1]) - 11];
+    for (const [x, y, sz] of [[20, 97, 3], [27, 100, 2], [100, 99, 3], [108, 96, 2], [96, 101, 1], [64, 66, 2], [58, 71, 1], [70, 74, 2], [14, 92, 2], [114, 100, 1]]){ B(x, y, sz, sz, K); if (sz > 2) B(x, y, 1, 1, G3); }   // rubble
+    const sw = Math.round(Math.sin(TAU * P) * 0.5); B(63 + sw, 60, 1, 2, G3);                                                                                   // one last grain of grit falling
+  }
+
+  const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
+  blitBuf(ctx, buf, W, H);
+}
+
+// ---- The Lockout (style guide v1)
+// TEDIUM TROLL, 19B "the keyhole". A blank standing slab with one huge keyhole cut clean through it, light on the far side, and a single
+// eye on a stalk looking back at you from inside the hole. A chain and padlock hang off it, locking nothing. Pop: the eye, the light in the hole, the pool.
+function drawKeyhole(cv, f, accent){
+  const LOOP = 64, P = (f % LOOP) / LOOP, TAU = Math.PI * 2; f = f % LOOP;
+  const W = 128, H = 104, A = POP_RAMPS[accent] || POP_RAMPS.blush, D = !!drawKeyhole.dead;
+  const K = '#121110', G1 = '#211f1d', G2 = '#2e2a27', G3 = '#3f3a36', G4 = '#57514b', G5 = '#756e66';
+  const F0 = '#35312d', F1 = '#4a4540', F2 = '#615b54', F3 = '#8e867b';
+  if (!drawKeyhole.sc){ drawKeyhole.sc = document.createElement('canvas'); drawKeyhole.sc.width = W; drawKeyhole.sc.height = H; }
+  const sc = drawKeyhole.sc, sx = sc.getContext('2d', {willReadFrequently: true}), buf = new Array(W * H).fill(null);
+  let XF = null;
+  const L = shapeLayer(sx, W, H, buf, () => XF);
+  const ell = (x, y, rx, ry, rot = 0) => c => { c.ellipse(x, y, Math.max(0.5, rx), Math.max(0.5, ry), rot, 0, Math.PI * 2); c.fill(); };
+  const poly = pts => c => { c.moveTo(...pts[0]); for (const p of pts.slice(1)) c.lineTo(...p); c.closePath(); c.fill(); };
+  const line = (pts, w = 1) => c => { c.lineWidth = w; c.moveTo(...pts[0]); for (const p of pts.slice(1)) c.lineTo(...p); c.stroke(); };
+  const rect = (x, y, w, h) => c => { c.rect(x, y, w, h); c.fill(); };
+  const B = (x, y, w, h, col) => { x = Math.round(x); y = Math.round(y); for (let yy = Math.max(0, y); yy < Math.min(H, y + h); yy++) for (let xx = Math.max(0, x); xx < Math.min(W, x + w); xx++) buf[yy * W + xx] = col; };
+  const ss = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  const mul = (m, n) => [m[0] * n[0] + m[2] * n[1], m[1] * n[0] + m[3] * n[1], m[0] * n[2] + m[2] * n[3], m[1] * n[2] + m[3] * n[3], m[0] * n[4] + m[2] * n[5] + m[4], m[1] * n[4] + m[3] * n[5] + m[5]];
+  const rotM = (a, cx, cy) => { const cs = Math.cos(a), sn = Math.sin(a); return [cs, sn, -sn, cs, cx - cs * cx + sn * cy, cy - sn * cx - cs * cy]; };
+  const TP = (m, x, y) => [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]];
+  const lerp = (a, b, t) => a + (b - a) * t, ac = i => A[Math.max(0, Math.min(4, i))];
+  const cx = 59, GY = 95, X0 = cx - 26, X1 = cx + 26, TOP = 7, BOT = 88, HY = 34;                    // slab 52 wide; keyhole head centred (cx, HY)
+
+  // ------------------------------------------------------------------ timeline
+  const sway = D ? 0 : 0.017 * Math.sin(TAU * P);
+  const press = D ? 0 : ss(0.50, 0.61, P) * (1 - ss(0.80, 0.90, P));                                 // the eye comes right up to the hole, then withdraws
+  const hold = press > 0.85 ? 1 : 0, rat = hold ? Math.round(Math.sin(TAU * P * 16)) : 0;            // the padlock rattles while it stares
+  const blot = press > 0.75 ? 2 : press > 0.3 ? 1 : 0;
+  const M = D ? mul([1, 0, 0, 1, -35, 4], rotM(1.3, X1, BOT)) : rotM(sway, cx, BOT + 4);
+
+  // ------------------------------------------------------------------ the ground: light from the hole pooling at its foot
+  if (D){ L(G1, ell(64, GY, 40, 5)); L(G3, ell(64, GY, 34, 3.6)); }
+  else { const d = blot;
+    L(A[0], ell(cx, GY, 33, 4.6)); L(ac(1 - (d > 1 ? 1 : 0)), ell(cx, GY, 30, 3.6)); if (d < 2) L(ac(2 - d), ell(cx, GY + 0.4, 24 - d * 4, 2.6));
+    L(A[0], ell(cx, GY - 0.2, 15, 1.6)); L(K, ell(cx, GY - 0.4, 10, 0.9));
+    if (d < 2) L(ac(3 - d), c => { c.lineWidth = 1; c.ellipse(cx, GY + 0.8, 26, 2.6, 0, Math.PI * 0.2, Math.PI * 0.62); c.stroke(); }); if (!d) B(cx + 7, GY + 3, 3, 1, A[4]);
+    for (const [x, y, c] of [[22, 98, 1], [34, 101, 0], [50, 101, 1], [80, 101, 0], [94, 99, 1], [99, 96, 0], [19, 95, 0]]) B(x, y, 1, 1, A[c]);
+  }
+
+  // ------------------------------------------------------------------ the slab
+  XF = M;
+  for (const x of [cx - 17, cx + 7]){ L(K, rect(x, BOT - 2, 10, 6)); L(K, rect(x - 2, BOT + 3, 14, 3)); if (!D) for (const dx of [-1, 5, 10]) L(G4, rect(x + dx, BOT + 5, 1, 1)); }   // two stub feet
+  L(K, c => { c.moveTo(X0, BOT); c.lineTo(X0, TOP + 18); c.bezierCurveTo(X0, TOP + 5, X0 + 9, TOP, cx, TOP); c.bezierCurveTo(X1 - 9, TOP, X1, TOP + 5, X1, TOP + 18); c.lineTo(X1, BOT); c.closePath(); c.fill(); });
+  L(G3, c => { c.lineWidth = 1; c.moveTo(X0 + 1.5, BOT - 8); c.lineTo(X0 + 1.5, TOP + 18); c.bezierCurveTo(X0 + 1.5, TOP + 6, X0 + 10, TOP + 1.5, cx - 4, TOP + 1.5); c.stroke(); });       // the lit edge
+  L(G4, c => { c.lineWidth = 1; c.moveTo(X0 + 1.5, TOP + 30); c.lineTo(X0 + 1.5, TOP + 18); c.bezierCurveTo(X0 + 1.5, TOP + 10, X0 + 5, TOP + 5, X0 + 9, TOP + 3.4); c.stroke(); });
+  L(G1, rect(X0 + 4, BOT - 7, 44, 3)); L(G1, rect(X1 - 3, TOP + 20, 1, 52));                                                                       // a plinth band, a shaded edge
+  for (const [x, y] of [[X0 + 5, TOP + 8], [X1 - 7, TOP + 8], [X0 + 5, BOT - 13], [X1 - 7, BOT - 13], [X0 + 5, 50], [X1 - 7, 50]]){ L(G3, rect(x, y, 2, 2)); L(G4, rect(x, y, 1, 1)); }   // six rivets
+  for (const [x, l] of [[X0 + 4, 3], [X0 + 21, 2], [X1 - 8, 4]]) L(K, rect(x, BOT - 1, 2, l + 1));                                                   // drips
+
+  L(G3, line([[cx + 13, TOP + 2], [cx + 11, TOP + 7], [cx + 14, TOP + 10], [cx + 12, TOP + 15]], 1)); L(G1, line([[X0 + 9, BOT - 9], [X0 + 12, BOT - 15], [X0 + 10, BOT - 20]], 1));   // old cracks
+  for (const [x, y, dx, dy] of [[cx + 15, HY + 9, 3, 2], [cx + 13, HY + 14, 4, 1], [cx - 17, HY + 6, -2, 3], [cx + 16, HY - 2, 3, -1], [cx - 15, HY + 13, -3, 1]]) L(G3, line([[x, y], [x + dx, y + dy]], 1));   // scratches round the hole: many have tried
+  // the keyhole, cut through: banded light, brightest deep in the stem
+  const kh = (c, d) => { L(c, ell(cx, HY, 13 - d, 13 - d)); L(c, poly([[cx - 6 + d * 0.5, HY + 6], [cx + 6 - d * 0.5, HY + 6], [cx + 12 - d, 75 - d], [cx - 12 + d, 75 - d]])); };
+  let E = null;
+  if (D){ kh(G3, 0); kh(G1, 1.4); }
+  else {
+    const w1 = Math.sin(TAU * P * 3) * 0.5, w2 = Math.sin(TAU * P * 5 + 1) * 0.7, w3 = Math.sin(TAU * P * 4 + 2.2);
+    kh(A[0], 0);
+    if (blot < 2){ kh(ac(1 - blot), 2 + w1); if (!blot) kh(A[2], 4.6 + w2); L(ac(3 - blot * 2), poly([[cx - 3, 55 - w3], [cx + 3, 55 - w3], [cx + 6, 69], [cx - 6, 69]])); if (!blot) L(A[4], poly([[cx - 1.5, 61 + w3], [cx + 1.5, 61 + w3], [cx + 3, 68], [cx - 3, 68]])); }
+    if (!blot) for (let k = 0; k < 3; k++){ const t = (P * 2 + k / 3) % 1, x = cx + [-4, 3, 0][k] + Math.sin(TAU * (P + k * 0.3)) * 1.5, y = 70 - t * 22; L(t < 0.6 ? A[4] : A[3], rect(Math.round(x), Math.round(y), 1, t < 0.3 ? 2 : 1)); }   // motes rising in the stem
+    // the eye, on a stalk that goes down out of sight
+    const dx0 = Math.sin(TAU * P + 0.6) * 5, dy0 = Math.sin(TAU * P * 2) * 2.4;
+    const ex = Math.round(lerp(cx + dx0, cx, press)), ey = Math.round(lerp(HY + dy0, HY, press)), r = lerp(7.6, 13.4, press);
+    const gx = hold ? Math.sin(TAU * P * 4) * 3.4 : lerp(Math.cos(TAU * P + 0.6) * 1.6, 0, press), gy = hold ? 0.6 : lerp(Math.cos(TAU * P * 2) * 1.2, 0, press);   // the pupil leads the drift; pressed up, it flicks over you
+    const sw = lerp(1.6, 6.5, press), lag = Math.sin(TAU * P - 0.3) * 3 * (1 - press);
+    L(K, c => { c.moveTo(ex - sw, ey + 2); c.quadraticCurveTo(cx + lag - sw, 56, cx - sw - press * 4, 76); c.lineTo(cx + sw + press * 4, 76); c.quadraticCurveTo(cx + lag + sw, 56, ex + sw, ey + 2); c.closePath(); c.fill(); });
+    L(K, ell(ex, ey, r, r)); L(A[1], ell(ex, ey, r * 0.78, r * 0.78)); L(A[3], ell(ex + gx * 0.4, ey + gy * 0.4, r * 0.56, r * 0.56)); L(A[1], ell(ex + gx * 0.7, ey + gy * 0.7, r * 0.42, r * 0.42));
+    L(K, ell(ex + gx, ey + gy, r * 0.3, r * 0.3)); L(A[4], rect(Math.round(ex + gx - r * 0.3), Math.round(ey + gy - r * 0.34), press > 0.5 ? 2 : 1, press > 0.5 ? 2 : 1));
+    const lidh = lerp(r * 0.72, r * 0.2, press), la = Math.acos(Math.max(-1, Math.min(1, 1 - lidh / r))); L(K, c => { c.arc(ex, ey, r + 0.3, -Math.PI / 2 - la, -Math.PI / 2 + la); c.closePath(); c.fill(); }); if (press < 0.3) L(G4, rect(ex - Math.sin(la) * r + 2, ey - r + lidh - 1, Math.sin(la) * r * 2 - 4, 1));                              // a flat heavy lid; it lifts when it comes close
+    if (blot === 2){ L(K, c => { c.lineWidth = 2; c.arc(cx, HY, 13.6, 0, TAU); c.stroke(); }); }
+    E = [ex, ey];
+  }
+  // the bracket the chain hangs from
+  L(K, rect(X1 - 1, 22, 9, 3)); L(K, rect(X1 + 5, 22, 3, 6)); L(G3, rect(X1, 22, 7, 1));
+  XF = null;
+
+  // ------------------------------------------------------------------ the chain and padlock, swinging a beat behind the slab
+  const lock = (lx, ly, a, col2) => { XF = rotM(a, lx, ly);
+    L(K, c => { c.lineWidth = 2; c.arc(lx, ly + 4, 3.6, Math.PI, TAU); c.stroke(); }); L(K, rect(lx - 4.6, ly + 3, 2, 3)); L(K, rect(lx + 2.6, ly + 3, 2, 3));
+    L(K, rect(lx - 6, ly + 6, 12, 10)); L(G3, rect(lx - 5, ly + 7, 10, 1)); L(G3, rect(lx - 5, ly + 7, 1, 7)); L(G4, rect(lx - 5, ly + 7, 3, 1)); L(G1, rect(lx - 5, ly + 14, 10, 1));
+    L(col2, rect(lx - 1, ly + 9, 2, 2)); L(col2, rect(lx - 0.5, ly + 11, 1, 2)); XF = null; };
+  if (!D){
+    const [ax, ay] = TP(M, X1 + 6.5, 28); let x = ax, y = ay; const n = 8;
+    for (let i = 0; i < n; i++){ const th = 0.11 * Math.sin(TAU * P - 0.9 - i * 0.22) * (0.5 + i * 0.12) + 0.02 + rat * 0.03 * (i % 2 ? 1 : -1), nx = x + Math.sin(th) * 5.4, ny = y + Math.cos(th) * 5.4, mx = (x + nx) / 2, my = (y + ny) / 2;
+      if (i % 2 === 0){ L(K, c => { c.lineWidth = 1.5; c.ellipse(mx, my, 2.5, 3.5, -th, 0, TAU); c.stroke(); }); B(mx - 2, my - 3, 1, 1, G4); }
+      else { XF = rotM(-th, mx, my); L(K, rect(mx - 1, my - 3.4, 2, 6.8)); XF = null; }
+      x = nx; y = ny; }
+    lock(x + rat, y - 1, 0.16 * Math.sin(TAU * P - 0.9 - n * 0.22) + rat * 0.14, G5);
+    // chips of the slab hanging in the air
+    for (const [px, py, sz, k] of [[24, 20, 3, 0], [19, 44, 2, 1], [27, 8, 2, 2], [106, 14, 3, 3], [112, 40, 2, 4], [15, 70, 2, 5], [110, 84, 2, 6], [96, 6, 1, 7], [10, 30, 1, 8]]){
+      const yy = py + Math.round(Math.sin(TAU * P + k * 1.9) * 1.6); B(px, yy, sz, sz, K); if (sz > 2) B(px, yy, 1, 1, G3); }
+    for (const [px, py, k] of [[26, 56, 0], [104, 62, 1], [22, 32, 2]]){ const t = (P + k / 3) % 1; if (!blot) B(px + Math.round(Math.sin(TAU * (P + k * 0.4)) * 2), py - t * 10, 1, 1, t < 0.5 ? A[1] : A[0]); }   // stray motes of the far light
+    const hd = TP(M, cx, TOP); drawKeyhole.deadHead = [Math.round(hd[0]), Math.round(hd[1]) - 4];
+  } else {
+    // beaten: toppled over on its back at an angle, hole dark, the eye a grey X in it, chain slack along the floor
+    const [tx, ty] = TP(M, cx, HY), x0 = Math.round(tx - 0.5) - 2, y0 = Math.round(ty - 0.5) - 2;
+    for (let i = 0; i < 5; i++){ B(x0 + i, y0 + i, 1, 1, G4); B(x0 + 4 - i, y0 + i, 1, 1, G4); if (i < 4){ B(x0 + i + 1, y0 + i, 1, 1, G4); B(x0 + 3 - i, y0 + i, 1, 1, G4); } }
+    const [ax, ay] = TP(M, X1 + 6.5, 28); let x = ax, y = ay; const n = 9, sw1 = Math.sin(TAU * P) * 0.5;
+    for (let i = 0; i < n; i++){ const t = i / (n - 1), tx2 = lerp(ax - 3, 46, t), ty2 = Math.min(GY + 4, lerp(ay + 6, GY + 4, Math.min(1, t * 3))) + Math.sin(t * 9) * 1.2, th = Math.atan2(tx2 - x, ty2 - y), nx = x + Math.sin(th) * 5.4, ny = y + Math.cos(th) * 5.4, mx = (x + nx) / 2, my = (y + ny) / 2;
+      if (i % 2 === 0){ L(K, c => { c.lineWidth = 1.5; c.ellipse(mx, my, 2.5, 3.5, -th, 0, TAU); c.stroke(); }); B(mx - 1, my - 2, 1, 1, G4); }
+      else { XF = rotM(-th, mx, my); L(K, rect(mx - 1, my - 3.4, 2, 6.8)); XF = null; }
+      x = nx; y = ny; }
+    lock(x - 3, y - 6, 1.5, G4);
+    for (const [px, py, sz] of [[100, 96, 4], [106, 93, 3], [95, 99, 3], [111, 98, 2], [16, 99, 2], [116, 95, 1], [24, 101, 1], [102, 90, 2]]){ B(px, py, sz, sz, K); if (sz > 2) B(px, py, 1, 1, G3); }   // rubble it landed on
+    const hd = TP(M, X0, HY); drawKeyhole.deadHead = [Math.round(hd[0]) + Math.round(sw1 * 0), Math.round(hd[1]) - 6];
+  }
+
+  const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
+  blitBuf(ctx, buf, W, H);
+}
+
 const NEW_ART = {
   giant: Object.assign((cv, f, acc, dead) => { drawFogColossus.dead = dead; drawFogColossus(cv, f, acc); }, {ownDead: true, starY: 2, starX: 64, starRX: 14, starRY: 3}),
   hunch: Object.assign((cv, f, acc, dead) => { drawHunch.dead = dead; drawHunch(cv, f, acc); }, {ownDead: true, starY: 60, starX: 44, starRX: 15, starRY: 4}),
@@ -7263,6 +8742,16 @@ const NEW_ART = {
   heart: Object.assign((cv, f, acc, dead) => { drawHeartbreaker.dead = dead; drawHeartbreaker(cv, f, acc); }, {ownDead: true, starY: 13, starX: 64, starRX: 12, starRY: 3}),
   leviathan: Object.assign((cv, f, acc, dead) => { drawLeviathan.dead = dead; drawLeviathan(cv, f, acc); }, {ownDead: true, fullTile: true, starY: 10, starX: 64, starRX: 14, starRY: 3}),
   maw: Object.assign((cv, f, acc, dead) => { drawMaw.dead = dead; drawMaw(cv, f, acc); }, {ownDead: true, starY: 24, starX: 75, starRX: 12, starRY: 3}),
+  hydra: Object.assign((cv, f, acc, dead) => { drawHydra.dead = dead; drawHydra(cv, f, acc); }, {ownDead: true, starY: 28, starX: 64, starRX: 13, starRY: 3}),
+  candle: Object.assign((cv, f, acc, dead) => { drawBurnout.dead = dead; drawBurnout(cv, f, acc); }, {ownDead: true, starY: 35, starX: 55, starRX: 12, starRY: 3}),
+  ruttroll: Object.assign((cv, f, acc, dead) => { drawRut.dead = dead; drawRut(cv, f, acc); }, {ownDead: true, starY: 6, starX: 82, starRX: 12, starRY: 3}),
+  tabgob: Object.assign((cv, f, acc, dead) => { drawTab.dead = dead; drawTab(cv, f, acc); }, {ownDead: true, starY: 40, starX: 66, starRX: 12, starRY: 3}),
+  ghoul: Object.assign((cv, f, acc, dead) => { drawDrudge.dead = dead; drawDrudge(cv, f, acc); }, {ownDead: true, starY: 47, starX: 58, starRX: 12, starRY: 3}),
+  imp: Object.assign((cv, f, acc, dead) => { drawScrollLoop.dead = dead; drawScrollLoop(cv, f, acc); }, {ownDead: true, starY: 17, starX: 42, starRX: 12, starRY: 3}),
+  hobgob: Object.assign((cv, f, acc, dead) => { drawHumFork.dead = dead; drawHumFork(cv, f, acc); }, {ownDead: true, starY: 4, starX: 78, starRX: 12, starRY: 3}),
+  humbar: Object.assign((cv, f, acc, dead) => { drawHumBar.dead = dead; drawHumBar(cv, f, acc); }, {ownDead: true, starY: 31, starX: 64, starRX: 12, starRY: 3}),
+  troll: Object.assign((cv, f, acc, dead) => { drawArch.dead = dead; drawArch(cv, f, acc); }, {ownDead: true, starY: 56, starX: 42, starRX: 12, starRY: 3}),
+  keyhole: Object.assign((cv, f, acc, dead) => { drawKeyhole.dead = dead; drawKeyhole(cv, f, acc); }, {ownDead: true, starY: 21, starX: 88, starRX: 12, starRY: 3}),
   golem: Object.assign((cv, f, acc, dead) => { Object.assign(drawLaundryGolem, {pose: 'hips', hanger: 'light', basketLight: true, sticker: false, aura: false, dead}); drawLaundryGolem(cv, f, acc); }, {ownDead: true, starY: 13}),
   gremlin: Object.assign((cv, f, acc, dead) => { drawKneeGremlin.dead = dead; drawKneeGremlin(cv, f, acc); }, {ownDead: true, starY: 50, starX: 62, starRX: 9, starRY: 3, starSmall: true}),
   kraken: Object.assign((cv, f, acc, dead) => { drawCouchKraken.dead = dead; drawCouchKraken(cv, f, acc); }, {ownDead: true, starY: 34}),   // it slumps by itself, so the TV static isn't squashed
@@ -9936,7 +11425,7 @@ render();
 // Art preview: open the app with #preview=<boss id> (or ?preview=) to see a boss fighting and beaten, in any pop colour. Read-only: nothing is saved.
 (function artPreview(){
   const m = /[?#&]preview=([a-z0-9_]+)/i.exec(location.search + '&' + location.hash); if (!m) return;
-  const boss = ALL_BOSSES.find(b => b.id === m[1] || b.shape === m[1]); if (!boss) return;
+  const boss = [...ALL_BOSSES, ...MINIS].find(b => b.id === m[1] || b.shape === m[1]); if (!boss) return;
   const ov = document.createElement('div'); ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-label', boss.name + ' preview');
   ov.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#0d0c0b;color:#e8e2d6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;font:14px/1.3 system-ui,sans-serif';
   const cvs = ['Fighting', 'Hit', 'Beaten'].map(l => `<figure style="margin:0;text-align:center"><canvas width="128" height="128" style="width:min(44vw,240px);aspect-ratio:1;image-rendering:pixelated"></canvas><figcaption style="opacity:.6;margin-top:4px">${l}</figcaption></figure>`).join('');
