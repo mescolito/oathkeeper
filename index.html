@@ -930,7 +930,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'ae394e2199';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'e74d807219';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -5123,6 +5123,7 @@ function drawRiptideWraith(cv, f, accent){
   if (!drawRiptideWraith.sc){ drawRiptideWraith.sc = document.createElement('canvas'); drawRiptideWraith.sc.width = W; drawRiptideWraith.sc.height = H; }
   const sc = drawRiptideWraith.sc, sx = sc.getContext('2d', {willReadFrequently: true}), buf = new Array(W * H).fill(null);
   let XF = null;
+  const PLUS = true;                                                                               // polish pass: false = P1 (craft only), true = P2 (plus the snagged paddle, the whirlpool rings, water sheeting off the jaw)
   // the whole creature is drawn through one global scale so the rip channel fits the tile with margin and the serpent sits centred
   const GS = 0.8, G = [GS, 0, 0, GS, 64 - GS * 64 - 5, 98 - GS * 98];
   const mul = (A, B) => [A[0] * B[0] + A[2] * B[1], A[1] * B[0] + A[3] * B[1], A[0] * B[2] + A[2] * B[3], A[1] * B[2] + A[3] * B[3], A[0] * B[4] + A[2] * B[5] + A[4], A[1] * B[4] + A[3] * B[5] + A[5]];
@@ -5207,6 +5208,18 @@ function drawRiptideWraith(cv, f, accent){
       else if (x < 123) L(A[1], rect(Math.round(x), Math.round(WL + 2 + ((k % 3) - 1)), 2, 1)); }                                        // past the wedge: square dashes trailing off
   }
 
+  if (!D){                                                                                                       // polish: a more designed rip channel
+    const top = x => (4.4 - 2.8 * (x - CX0) / (CX1 - CX0));
+    L(A[2], chan(0, 1.1, 0.3, 16));                                                                               // a hot core band down the middle
+    for (let k = 0; k < 12; k++){ const x = 30 + ((k + P * 2) % 12) * 7.6, h = top(x); if (x > CX1 - 6) continue;
+      L(A[k % 3 ? 0 : 1], rect(Math.round(x), Math.round(WL + 2.5 - h - 1), k % 2 ? 3 : 2, 1));                     // foam scalloping the top edge, carried out on the current
+      if (k % 3 === 0) L(A[0], rect(Math.round(x + 3), Math.round(WL + 2.5 + h * 0.9 + 1), 3, 1)); }                 // torn tabs under it
+    for (const [x, w] of [[42, 6], [50, 9], [62, 5]]) L(A[0], rect(x, WL + 4, w, 1));                             // the neck's dark reflection, broken by the chop
+    for (let k = 0; k < 3; k++){ const t = (P * 2 + k / 3) % 1; L(A[3], rect(Math.round(74 + k * 14 + t * 14), WL + 3, 2, 1)); }   // glints running out to sea
+    if (PLUS) for (let r = 0; r < 2; r++){ const rx = 30 + r * 11, ry = 5.6 + r * 2;                              // P2: whirlpool rings turning round the neck, the back halves
+      for (let k = -1; k < 2; k++){ const a0 = Math.max(0, (k + (P + r * 0.5) % 1) / 2 * Math.PI), a1 = Math.min(Math.PI, (k + (P + r * 0.5) % 1 + 0.7) / 2 * Math.PI); if (a1 > a0) L(A[0], c => { c.lineWidth = 1; c.ellipse(55, WL + 2.5, rx, ry, 0, Math.PI + a0, Math.PI + a1); c.stroke(); }); } }
+  }
+
   // ------------------------------------------------------------------ the body: the neck dives under, and the same body breaks the surface again in a train
   // of arches that roll out along the rip, each one smaller than the last, down to a flicking tail. Every arch wears the neck's skin.
   const CUT = WL - 1, SCUT = Math.round(gy(CUT)), under = buf.slice(SCUT * W);                                                       // remember the water, so the neck and the arches can go down into it
@@ -5257,6 +5270,8 @@ function drawRiptideWraith(cv, f, accent){
     // the back: the same lit band as the neck, then the blades along the crest
     const go = p => p.hh - Math.max(1, p.hh * 0.14), gi = p => p.hh - Math.max(2.2, p.hh * 0.36);
     L(G2, c => { c.moveTo(...off(pt[0], -go(pt[0]))); for (const p of pt) c.lineTo(...off(p, -go(p))); for (let i = N; i >= 0; i--) c.lineTo(...off(pt[i], -gi(pt[i]))); c.closePath(); c.fill(); });
+    if (h >= 5) for (let i = 2; i < N - 2; i += 2) L(K, strokeP([off(pt[i], -go(pt[i])), off(pt[i + 1], -gi(pt[i + 1]))], 1));          // polish: scales nicked across the lit band
+    if (h >= 8) for (let i = 3; i < N - 2; i += 4) L(G1, strokeP([off(pt[i], -(pt[i].hh * 0.42)), off(pt[i + 1], -(pt[i + 1].hh * 0.2))], 1));   // and a second, dimmer row in the flank
     if (h >= 5) L(G4, c => { c.lineWidth = 1; c.moveTo(...off(pt[3], -(pt[3].hh - Math.max(1.3, pt[3].hh * 0.17)))); for (let i = 4; i <= N - 4; i++) c.lineTo(...off(pt[i], -(pt[i].hh - Math.max(1.3, pt[i].hh * 0.17)))); c.stroke(); });
     const sc = h / 13;
     [0.2, 0.39, 0.58, 0.77].forEach((u, j) => { const i = Math.round(u * N), p = pt[i], b = off(p, -(p.hh - Math.max(0.6, sc))), lag = D ? 0 : Math.sin(TAU * P - 1.2 - ar.s * 0.9 - j * 0.3);
@@ -5281,6 +5296,11 @@ function drawRiptideWraith(cv, f, accent){
   for (let i = 3; i < NS - 3; i += 2) L(K, strokeP([edge(i, NSG, throatI), edge(i, NSG, t => hw(t) + 0.5)], 1));
   // the back: one lit band for volume, then a dark core line
   L(G2, c => { c.moveTo(...edge(1, -NSG, t => hw(t) - 2)); for (let i = 2; i <= NS - 2; i++) c.lineTo(...edge(i, -NSG, t => hw(t) - 2)); for (let i = NS - 2; i >= 1; i--) c.lineTo(...edge(i, -NSG, t => hw(t) - 5)); c.closePath(); c.fill(); });
+  for (let i = 2; i < NS - 2; i += 2) L(K, strokeP([edge(i + 1, -NSG, t => hw(t) - 1.8), edge(i, -NSG, t => hw(t) - 5.2)], 1));      // polish: scales nicked across the lit band of the back
+  for (let i = 3; i < NS - 3; i += 2) L(G1, strokeP([edge(i + 1, -NSG, t => hw(t) * 0.5), edge(i, -NSG, t => hw(t) * 0.5 - 2.6)], 1));   // a dimmer row of scales in the flank
+  for (let i = 4; i < NS - 4; i += 4) L(G1, strokeP([edge(i + 1, -NSG, t => hw(t) * 0.16), edge(i, -NSG, t => hw(t) * 0.16 - 2.2)], 1));
+  for (let i = 5; i < NS - 4; i += 4){ const q = edge(i, NSG, t => hw(t) - 2.4); L(G4, rect(Math.round(q[0]), Math.round(q[1]), 1, 1)); }   // a glint on every other throat plate
+  if (!D) for (const [i, o, c] of [[4, 6.4, F1], [5, 8.6, F0], [7, 7, F0], [3, 10, F1], [6, 3, F0]]){ const q = edge(i, -NSG, t => hw(t) - o); L(c, rect(Math.round(q[0]), Math.round(q[1]), 2, 1)); L(F2, rect(Math.round(q[0]), Math.round(q[1]) - 1, 1, 1)); }   // barnacles crusted near the waterline
   L(G4, c => { c.lineWidth = 1; c.moveTo(...edge(6, -NSG, t => hw(t) - 2.5)); for (let i = 7; i <= NS - 6; i++) c.lineTo(...edge(i, -NSG, t => hw(t) - 2.5)); c.stroke(); });
   // the dorsal spines: heavy raked blades down the back, foam on the tips, swinging a beat behind the sway
   const lagS = D ? 0 : Math.sin(TAU * P - 1.2);
@@ -5288,6 +5308,15 @@ function drawRiptideWraith(cv, f, accent){
     const [tx, ty, nx, ny] = nrm(i), b = edge(i, -NSG, t => hw(t) - 1);
     blade(b, tx, ty, nx * NSG, ny * NSG, (D ? 10 : 16) - j * 1.4, 8 - j * 0.5, 0.55 + lagS * 0.1 * (1 + j * 0.2) + (D ? 0.35 : 0), 1, j % 2 ? F2 : F3, !D && j % 2 === 0 ? P * 2 + j * 0.3 : -1); }
 
+  if (PLUS && !D){ const b = edge(21, -NSG, t => hw(t) - 3), a = -2.5 + Math.sin(TAU * P - 1.6) * 0.05, dx = Math.cos(a), dy = Math.sin(a), qx = -dy, qy = dx, at2 = (u, v) => [b[0] + dx * u + qx * v, b[1] + dy * u + qy * v];
+    // P2: a paddle snagged in the spines, its shaft snapped off in the hide: the one prop that glows
+    L(K, strokeP([at2(-2, 0), at2(15, 0)], 3.6)); L(F1, strokeP([at2(-1, 0), at2(14, 0)], 1.5)); L(F3, strokeP([at2(5, -0.5), at2(13, -0.5)], 1));
+    L(K, path([at2(12.4, -2), at2(15, -6), at2(27, -6), at2(31, -3.4), at2(31, 3.4), at2(27, 6), at2(15, 6), at2(12.4, 2)]));
+    L(A[1], path([at2(13.8, -1.2), at2(15.6, -4.6), at2(26.6, -4.6), at2(29.6, -2.6), at2(29.6, 2.6), at2(26.6, 4.6), at2(15.6, 4.6), at2(13.8, 1.2)]));
+    L(A[2], path([at2(15, -1), at2(16.4, -3.4), at2(26.2, -3.4), at2(28.4, -2), at2(28.4, -0.4), at2(15, -0.2)]));
+    L(A[3], strokeP([at2(17.4, -2.6), at2(25, -2.6)], 1)); L(A[0], strokeP([at2(14, 0.6), at2(29.6, 0.6)], 1.2)); L(A[4], rect(Math.round(at2(18, -2.6)[0]), Math.round(at2(18, -2.6)[1]), 1, 1));
+    L(K, path([at2(21, 6.6), at2(23.4, 2), at2(25.6, 6.6)]));                                                                                          // a bite taken out of its edge
+    const r0 = at2(7, 0.6), sw = Math.sin(TAU * P - 2.4) * 1.5; L(F0, strokeP([r0, [r0[0] - 1 + sw * 0.4, r0[1] + 5, r0[0] - 2 + sw, r0[1] + 10]], 1)); L(F2, rect(Math.round(r0[0] - 2 + sw) - 1, Math.round(r0[1] + 10), 2, 2)); }   // its leash, still knotted on, a float swinging
   for (let i = 0; i < under.length; i++) buf[SCUT * W + i] = under[i];                                          // everything below the surface is hidden: the neck goes down into the water
   // a collar of churned water wherever the body breaks the surface: across the neck, and at both feet of every arch
   const collar = (xl, xr, big) => { xl = Math.round(xl) - 2; xr = Math.round(xr) + 2; if (xr - xl < 3) return;
@@ -5321,6 +5350,8 @@ function drawRiptideWraith(cv, f, accent){
   const jx = 4, jy = 5, jc = Math.cos(JAW), js = Math.sin(JAW), J = (u, v) => [jx + (u - jx) * jc - (v - jy) * js, jy + (u - jx) * js + (v - jy) * jc];
   L(K, path([J(0, 3), J(38, 4), J(43, 1.6), J(41, 7), J(24, 12), J(6, 12), J(-2, 9)]));                            // the lower jaw, a heavy blade with an upturned tip
   L(G2, strokeP([J(8, 10.6), J(34, 7.6)], 1));
+  L(G1, path([J(4, 6), J(30, 5.4), J(36, 6.4), J(22, 9.2), J(6, 9.6)]));                                              // polish: the jaw gets a plane, a gum line under the teeth, a lit tip
+  L(F0, strokeP([J(12.4, 4.8), J(37, 4.6)], 1)); L(G3, strokeP([J(38.4, 5.6), J(41.6, 3.4)], 1));
   for (let k = 0; k < 6; k++){ const u = 14 + k * 4.6, h = k === 5 ? 3.6 : 2.6; L(k % 2 ? F2 : F3, path([J(u - 1.2, 4.4), J(u + 1.2, 4.2), J(u + 0.2, 4.4 - h)])); }   // lower teeth, pointing up
   L(F3, path([J(39, 4), J(41.6, 3), J(42.6, -1.4)]));                                                              // the lower fang
   // the skull: hood, heavy brow, long wedge snout with a hooked tip
@@ -5332,11 +5363,20 @@ function drawRiptideWraith(cv, f, accent){
   for (let k = 0; k < 6; k++){ const u = 14 + k * 4.6 + 2.3, h = k === 0 ? 4.6 : 3; L(k % 2 ? F3 : F2, path([[u - 1.3, 1.8], [u + 1.3, 1.4], [u, 1.8 + h]])); }   // upper teeth, pointing down
   L(F3, path([[41, 0.8], [44, 1.6], [43, 6]]));                                                                    // the front fang, hooked
   L(G3, rect(30, -5.4, 1, 1)); L(G3, rect(34, -4.4, 1, 1));                                                     // nostril pits
+  // polish: planes on the skull: a cheek plate behind the mouth, scales along the snout, a gum line over the teeth, a lit beak tip, gill slits
+  L(G1, path([[-7, -1], [3, -0.4], [11, 1.6], [5, 5], [-5, 8]])); L(G2, strokeP([[-6.4, -1.2], [3, -0.8], [10, 1]], 1));
+  L(G1, path([[21, -6.4], [39, -2.6], [43, -0.4], [22, -1]])); for (const u of [27, 33.5]) L(K, strokeP([[u, -4.6 + (u - 22) * 0.2], [u + 1, -1.6]], 1));
+  L(F0, strokeP([[14, 1.7], [40, 0.5]], 1));
+  L(G3, strokeP([[41, -3.4], [45, -0.8]], 1)); L(G4, rect(44, -1.4, 1, 1));
+  for (const u of [-8.6, -6, -3.4]) L(G2, strokeP([[u, 1.6], [u - 1.2, 6]], 1));
+  L(G1, strokeP([[-14, -13.6], [-24, -13.4]], 1)); L(G1, strokeP([[-12, -5], [-22, -4.4]], 1));                    // webbing ribs in the cowl
   // the eye: a foam ring set deep under the brow
   const EX = 9, EY = -6;
   if (D){ XF = null; const [x, y] = app(M, EX, EY).map(Math.round); for (const [r, row] of ['XX.XX', '.XXX.', '..X..', '.XXX.', 'XX.XX'].entries()) for (let k = 0; k < 5; k++) if (row[k] === 'X') px(x - 2 + k, y - 2 + r, G4); XF = M; }   // a 5x5 grey X, 2px strokes, snapped upright
   else { L(G1, ell(EX, EY, 6.6, 6)); L(A[0], ell(EX, EY, 5.6, 5.6)); L(A[2], ell(EX, EY, 4.4, 4.4)); L(A[1], ell(EX, EY, 3, 3)); L(A[3], c => { c.lineWidth = 0.9; c.arc(EX, EY, 2.6, 0, TAU); c.stroke(); });
-    L(K, ell(EX + 0.6, EY + 0.4, 1.4, 1.4)); L(A[4], rect(EX - 3, EY - 2.4, 1, 1)); }
+    L(K, ell(EX + 0.6, EY + 0.4, 1.4, 1.4)); L(A[4], rect(EX - 3, EY - 2.4, 1, 1));
+    L(A[4], rect(EX - 1.9, EY - 3.5, 1, 1)); L(A[3], rect(EX + 2.6, EY + 2.4, 1, 1));                                 // polish: the same eye, more finished: a two-pixel catchlight, a far glint,
+    L(G3, c => { c.lineWidth = 1; c.arc(EX, EY, 6.5, Math.PI * 0.12, Math.PI * 0.7); c.stroke(); }); L(G4, rect(EX + 1.4, EY + 6, 2, 1)); }   // and a lower lid line catching the glow
   L(K, path([[-1, -10.6], [8, -12.6], [22, -12], [16, -8.4], [10, -9.6], [2, -8]]));                               // the heavy brow cutting across the top of the eye
   L(G4, strokeP([[1, -10.6], [9, -12.2], [19, -11.6]], 1));
   XF = null;
@@ -5350,6 +5390,15 @@ function drawRiptideWraith(cv, f, accent){
       L(A[1], ell(x0 + sd * 1, WL + 1, 6, 1.8)); L(A[2], rect(x0 + sd * 1 - 3, WL, 5, 1));
       for (const [dx, h0, ph] of [[-1, 6, 0], [2, 9, 2.1], [5, 4, 4.0]]){ const h = h0 + Math.sin(TAU * P * 2 + ph) * 1.6, x = x0 + sd * dx;
         L(h0 > 5 ? A[2] : A[1], strokeP([[x, WL], [x + sd * h * 0.15, WL - h * 0.6, x + sd * h * 0.4, WL - h]], 1)); L(A[3], rect(Math.round(x + sd * h * 0.4), Math.round(WL - h - 2.4), 1, 1)); } }
+    for (let k = 0; k < 3; k++){ const t = (P * 2 + k * 0.37) % 1, [qx, qy] = app(M, ...J([40, 29, 19][k], 10.4)); if (t < 0.75 && !snap) L(t < 0.3 ? F3 : F1, rect(Math.round(qx), Math.round(qy + t * t * 22), 1, t < 0.3 ? 2 : 1)); }   // polish: seawater dripping off the jaw
+    for (let k = 0; k < 4; k++){ const t = (P + k / 4) % 1, x = [16, 96, 108, 8][k] + Math.sin(TAU * (t * 2 + k)) * 2, y = [70, 62, 40, 44][k] - t * 16; if (t < 0.85) L(k % 2 ? F1 : F2, rect(Math.round(x), Math.round(y), t < 0.4 ? 2 : 1, t < 0.4 ? 2 : 1)); }   // spindrift hanging in the air
+    if (PLUS){
+      for (let r = 0; r < 2; r++){ const rx = 30 + r * 11, ry = 5.6 + r * 2;                                              // the front halves of the whirlpool rings
+        for (let k = -1; k < 2; k++){ const a0 = Math.max(0, (k + (P + r * 0.5) % 1) / 2 * Math.PI), a1 = Math.min(Math.PI, (k + (P + r * 0.5) % 1 + 0.7) / 2 * Math.PI); if (a1 <= a0) continue;
+          L(A[r === 0 ? 2 : 1], c => { c.lineWidth = 1; c.ellipse(55, WL + 2.5, rx, ry, 0, a0, a1); c.stroke(); }); const am = (a0 + a1) / 2; if (a1 - a0 > 0.4) L(A[3], rect(Math.round(55 + Math.cos(am) * rx) - 1, Math.round(WL + 2.5 + Math.sin(am) * ry), 3, 1)); } }
+      if (!snap) for (const [u, len, ph] of [[34, 13, 0], [25, 9, 0.5]]){ const [qx, qy] = app(M, ...J(u, 11)), t = (P * 2 + ph) % 1;        // water sheeting off the jaw in two thin falls
+        for (let y = 0; y < len; y++) if ((y + Math.floor(t * 6)) % 6 < 4) L(y < 3 ? F2 : F1, rect(Math.round(qx), Math.round(qy + y), 1, 1)); L(F3, rect(Math.round(qx), Math.round(qy + len), 1, 1)); }
+    }
     if (snap){ const [mx, my] = app(M, 46, 4), t = (cyc - 46) / 5;
       for (let k = 0; k < 7; k++){ const a = -1.2 + k * 0.5, r = 4 + t * 12 + (k % 2) * 3; if (t < 0.9 || k % 2) L(k % 3 ? '#8f877c' : '#c9c2b6', rect(Math.round(mx + Math.cos(a) * r), Math.round(my + Math.sin(a) * r), k % 2 ? 1 : 2, k % 2 ? 1 : 2)); } }
   }
@@ -5371,6 +5420,7 @@ function drawIronSloth(cv, f, accent){
   if (!drawIronSloth.sc){ drawIronSloth.sc = document.createElement('canvas'); drawIronSloth.sc.width = W; drawIronSloth.sc.height = H; }
   const sc = drawIronSloth.sc, sx = sc.getContext('2d', {willReadFrequently: true}), buf = new Array(W * H).fill(null);
   let XF = null;
+  const PLUS = true;                                                                               // polish pass: false = P1 (craft only), true = P2 (plus the chalk ring, fur curtain, chalk puffs)
   const L = shapeLayer(sx, W, H, buf, () => XF);
   const ell = (x, y, rx, ry, rot = 0) => c => { c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); c.fill(); };
   const path = pts => c => { c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.closePath(); c.fill(); };
@@ -5400,6 +5450,14 @@ function drawIronSloth(cv, f, accent){
     const far = Math.max(0, hvB - 1), fl = landed && land < 2 ? 1 : 0;                           // the pool shrinks while it's up, flares a band on the thump
     L(A[0], ell(cx, GY, 30 - far * 2 + fl * 3, 4 - far * 0.3)); L(A[1 + fl], ell(cx, GY + 0.6, 22 - far * 2 + fl * 2, 2.6)); L(A[2 + fl], ell(cx, GY + 1, 10 - far, 1.4)); L(A[3], rect(cx - 3 + far, GY + 1, 6 - far * 2, 1));
     for (let k = 0; k < 5; k++){ const t = (P * 2 + k * 0.2) % 1, x = cx - 24 + k * 12 + Math.sin(TAU * t) * 2; px(x, GY - 1 - Math.round(t * 3), t < 0.5 ? A[1] : A[0]); }   // dust motes simmering off the pool
+    // polish: the pool is a spill of chalk, not a plain oval: swept streaks, broken tabs off both ends, a hot scuff either side of the foot
+    const pw = 30 - far * 2 + fl * 3;
+    for (const sd of [-1, 1]){ L(A[0], rect(cx + sd * (pw + 2) - 1, GY, 3, 1)); px(cx + sd * (pw + 6), GY + 1, A[0]); L(A[0], rect(cx + sd * (pw - 6) - 2, GY + 4, 4, 1));
+      L(A[2 + fl], rect(cx + sd * (17 - far) - 2, GY - 1, 5, 1)); L(A[3], rect(cx + sd * (15 - far) - 1, GY + 2, 3, 1)); px(cx + sd * (24 - far), GY + 2, A[2]); }
+    L(A[1], rect(cx - pw + 4, GY - 2, 5, 1)); L(A[1], rect(cx + pw - 10, GY + 3, 6, 1));
+    if (PLUS){ const N = 22, rf = fl * 2 - far;                                                     // P2: a chalk ring drawn round the bell: the back half here, the front half last
+      for (let k = 0; k < 4; k++){ const a0 = Math.PI + (k + P) / 4 * Math.PI, a1 = Math.min(TAU, a0 + Math.PI / 4 * 0.72); if (a0 < TAU) L(A[0], c => { c.lineWidth = 1; c.ellipse(cx, GY + 1, 42 + rf, 7.4, 0, a0, a1); c.stroke(); }); }
+      { const a1 = Math.PI + (P - 0.28) / 4 * Math.PI; if (a1 > Math.PI) L(A[0], c => { c.lineWidth = 1; c.ellipse(cx, GY + 1, 42 + rf, 7.4, 0, Math.PI, a1); c.stroke(); }); } }
   }
 
   // ------------------------------------------------------------------ the arms: long shaggy arms off the shoulders, up and over into the handle
@@ -5413,15 +5471,27 @@ function drawIronSloth(cv, f, accent){
     L(K, strokeP([S[0], [...S[1], ...S[2], ...S[3]]], 8));
     L(K, strokeP([S[0], [...bez(...S, 0.12), ...bez(...S, 0.26), ...bez(...S, 0.4)]], 10.4));    // the upper arm thicker than the forearm
     // shaggy fur: tufts hanging off the outer edge of the rising arm, and a fringe dripping off the underside of the handle into the window
+    { const cb = []; for (let i = 0; i <= 14; i++){ const [x, y, nx, ny] = nrm(S, 0.07 + i * 0.05, sd), o1 = lit ? 1.5 : 2.1; cb.push([x + nx * o1, y + ny * o1]); }
+      L(G1, strokeP(cb, lit ? 3.4 : 2)); if (lit) L(G2, strokeP(cb.slice(1, 12).map(([x, y], i) => { const [, , nx, ny] = nrm(S, 0.12 + i * 0.05, sd); return [x + nx * 0.8, y + ny * 0.8]; }), 1.2)); }                                                             // polish: a core band inside the lit edge, so the arm reads round, not flat
     const wv = j => D ? sway * 0.4 : Math.sin(TAU * P * 2 - 1.8 - j * 0.6) * 1.2 + (heaving ? 1.4 : 0);
-    for (const [t, len, j] of [[0.14, 6, 0], [0.3, 5.4, 1], [0.46, 4.4, 2]]){ const [x, y, nx, ny, tx, ty] = nrm(S, t, sd), w = wv(j), r = t < 0.3 ? 4.4 : 3.6;
-      L(K, path([[x + nx * (r - 1.4) - tx * 2.4, y + ny * (r - 1.4) - ty * 2.4], [x + nx * (r + 2.6) + sd * w * 0.5, y + ny * r + len], [x + nx * (r - 1.4) + tx * 2.4, y + ny * (r - 1.4) + ty * 2.4]])); }   // tufts hanging off the outer edge
+    const tufts = D ? [[0.14, 6, 0, 2.4], [0.3, 5.4, 1, 2.4], [0.46, 4.4, 2, 2.4]] : [[0.14, PLUS ? 9.4 : 7.4, 0, 2.6], [0.3, PLUS ? 8.4 : 6.6, 1, 2.6], [0.46, PLUS ? 7 : 5.4, 2, 2.4]].concat(PLUS ? [[0.22, 4.4, 5, 1.8], [0.385, 4, 6, 1.7]] : []);
+    for (const [t, len, j, hb] of tufts){ const [x, y, nx, ny, tx, ty] = nrm(S, t, sd), w = wv(j), r = t < 0.3 ? 4.4 : 3.6;
+      L(K, path([[x + nx * (r - 1.4) - tx * hb, y + ny * (r - 1.4) - ty * hb], [x + nx * (r + 2.6) + sd * w * 0.5, y + ny * r + len], [x + nx * (r - 1.4) + tx * hb, y + ny * (r - 1.4) + ty * hb]])); }   // tufts hanging off the outer edge: big clumps with small ones between
     if (!D) for (const [t, len, j] of [[0.7, 5, 3], [0.84, 6, 4]]){ const [x, y, nx, ny, tx, ty] = nrm(S, t, sd), w = wv(j), bx = x - nx * 2.6, by = y - ny * 2.6;
       L(K, path([[bx - tx * 3, by - ty * 3], [bx + sd * w * 0.6 - sd * 1, by + 1 + len], [bx + tx * 3, by + ty * 3]])); }   // a fringe dripping off the underside of the handle
     // a lit band along the outer edge (bright on the lit side only)
     const edge = []; for (let i = 0; i <= 7; i++){ const [x, y, nx, ny] = nrm(S, 0.08 + i * 0.1, sd); edge.push([x + nx * 3, y + ny * 3]); }
     L(lit ? G3 : G2, strokeP(edge, 1));
     if (lit) L(G4, strokeP(edge.slice(2, 5), 1));
+    // polish: the lit band is broken by the clumps (each big tuft carries a short lit upper edge), and combed strands run down the arm
+    if (!D) for (const [t, len, j] of [[0.14, 6, 0], [0.3, 5.4, 1], [0.46, 4.4, 2]]){ const [x, y, nx, ny, tx, ty] = nrm(S, t, sd), w = wv(j), r = t < 0.3 ? 4.4 : 3.6;
+      const b0 = [x + nx * (r - 0.6) + tx * 2, y + ny * (r - 0.6) + ty * 2], tp = [x + nx * (r + 2.6) + sd * w * 0.5, y + ny * r + len];
+      L(lit ? G3 : G1, strokeP([b0, [b0[0] + (tp[0] - b0[0]) * 0.55, b0[1] + (tp[1] - b0[1]) * 0.55]], 1)); }
+    for (let i = 0; i < 8; i++){ const t = 0.115 + i * 0.085, [x, y, nx, ny, tx, ty] = nrm(S, t, sd);                      // clump breaks: black nicks combed diagonally across the core band
+      L(K, strokeP([[x + nx * 2.6 - tx * 1.2, y + ny * 2.6 - ty * 1.2], [x - nx * 0.6 + tx * 1.6, y - ny * 0.6 + ty * 1.6]], 1)); }
+    if (!D){ const [x, y] = nrm(S, 0.02, sd); L(lit ? G3 : G2, c => { c.lineWidth = 1; c.ellipse(cx + sd * 21, BY - 7, 6.4, 7.4, 0, lit ? Math.PI * 1.02 : Math.PI * 1.62, lit ? Math.PI * 1.34 : Math.PI * 1.9); c.stroke(); }); }   // a rim on the shoulder hump
+    if (PLUS && !D) for (const [t, len, j] of [[0.56, 4, 3], [0.63, 8, 4], [0.74, 6, 3], [0.79, 11, 4], [0.9, 7, 3], [0.95, 4, 4]]){ const [x, y, nx, ny, tx, ty] = nrm(S, t, sd), w = wv(j), bx = x - nx * 2.6, by = y - ny * 2.6;
+      L(K, path([[bx - tx * 2.2, by - ty * 2.2], [bx + sd * w * 0.7 - sd * 0.6, by + 1 + len], [bx + tx * 2.2, by + ty * 2.2]])); }   // P2: a long shaggy curtain hanging off the underside of the handle
   }
   // ------------------------------------------------------------------ the hands and the hooked claw grip at the top (alive) / claws splayed on the floor (beaten)
   if (!D){
@@ -5432,6 +5502,8 @@ function drawIronSloth(cv, f, accent){
     for (const k of [0, 1]) claw(F1, [cx + 3, hy + 3], [cx + 1 - k, hy + 7.4], [cx - 4 - k * 3, hy + 7.4], [cx - 5.6 - k * 3.4, hy + 4.4 - k * 0.4], 2.2);   // its claws hooking up behind, tips peeking under the near hand
     L(K, ell(cx - 6, hy, 5.2, 4.8));                                                                                    // the near (left) hand
     L(G3, strokeP([[cx - 10.8, hy - 0.6], [cx - 10, hy - 3.6, cx - 7, hy - 4.6]], 1));                                  // its lit knuckle
+    px(cx - 9, hy - 3, G4); L(G1, strokeP([[cx - 8.6, hy + 0.4], [cx - 5.6, hy + 1.2]], 1)); L(G1, strokeP([[cx - 8, hy + 2.6], [cx - 5.4, hy + 3.2]], 1));   // polish: a hot spot on it, and finger creases
+    L(G2, strokeP([[cx + 9.6, hy - 1.4], [cx + 10.8, hy + 0.6, cx + 9.6, hy + 3.2]], 1));                               // the far hand's rim, so it reads apart from the claws
     // its three long claws arc OVER the far hand and hook down in front of it: the clasp that closes the handle
     for (const k of [0, 1]) claw(k === 0 ? F2 : F1, [cx - 3, hy - 4 + k * 4], [cx + 1, hy - 11 + k * 4.4], [cx + 9 + k * 2, hy - 10 + k * 4.4], [cx + 9.6 + k * 2.2, hy - 3.4 + k * 4.2], 2.6);
     L(F3, strokeP([[cx - 1, hy - 7.6], [cx + 2, hy - 9], [cx + 5, hy - 9]], 1));                                        // the lit top of the top claw
@@ -5448,11 +5520,19 @@ function drawIronSloth(cv, f, accent){
   const sq = !D && landed && land < 1 ? 1 : 0;
   L(K, path([[cx - 17, BY + 16], [cx + 17, BY + 16], [cx + 19, GY - 1 - hvB], [cx - 19, GY - 1 - hvB]]));            // the foot
   L(G2, ell(cx, BY, 25 + sq, 22 - sq));                                                                                 // the ball, one dark band on the lit side...
-  L(K, ell(cx + 2.4, BY + 2, 24.4 + sq, 21.4 - sq));                                                                    // ...left as a crescent by the black body
+  L(G1, ell(cx + 2.4, BY + 2, 24.4 + sq, 21.4 - sq));                                                                   // ...then a core band...
+  L(K, ell(cx + 5.4, BY + 4.4, 22.6 + sq, 19.6 - sq));                                                                  // ...and the black body: lit edge, core, shadow
+  L(G1, c => { c.lineWidth = 1; c.ellipse(cx, BY, 24.2 + sq, 21.2 - sq, 0, -Math.PI * 0.1, Math.PI * 0.16); c.stroke(); });   // polish: bounce light on the far rim
+  for (const [dx, dy] of [[19, -9], [21, 2], [16, 13], [-12, 17], [8, -18], [-3, -19], [12, -15], [20, 8]]) px(cx + dx, BY + dy, G1);   // cast-iron pitting, 1px
+  for (const [dx, dy] of [[-21, -7], [-19, 6], [-15, -15]]) px(cx + dx, BY + dy, K);
+  px(cx - 17, BY - 14, G5);                                                                                             // one hard glint on the lit shoulder of the ball
   L(G3, c => { c.lineWidth = 1; c.ellipse(cx, BY, 24 + sq, 21 - sq, 0, Math.PI * 1.08, Math.PI * 1.36); c.stroke(); });          // a lit rim on the upper left
   L(G4, c => { c.lineWidth = 1; c.ellipse(cx, BY, 24 + sq, 21 - sq, 0, Math.PI * 1.17, Math.PI * 1.27); c.stroke(); });
   L(G1, rect(cx - 18, GY - hvB - 3, 36, 1));                                       // the foot's lit top edge, its groove
   for (const x of [cx - 15, cx + 14]) px(x, GY - hvB - 5, G4);                                                               // rivets
+  L(G2, rect(cx - 18, GY - hvB - 3, 13, 1)); px(cx - 18, GY - hvB - 3, G3); for (const x of [cx - 8, cx + 7]) px(x, GY - hvB - 5, G2);   // polish: the foot's groove lit on the near side, two more rivets
+  L(G1, rect(cx - 16, GY - hvB - 7, 9, 1));                                                                              // a second bevel on the foot
+  if (!D && !hvB){ for (const [x, w] of [[cx - 21, 3], [cx + 18, 4]]) L(CH, rect(x, GY - 2, w, 1)); px(cx - 20, GY - 3, CH2); px(cx + 20, GY - 3, CH); }   // chalk drifted against the foot
   L(G1, c => { c.lineWidth = 1; c.ellipse(cx, BY, 21, 18.4, 0, Math.PI * 0.18, Math.PI * 0.42); c.stroke(); });           // a cast seam on the shaded lower right
 
   // ------------------------------------------------------------------ the face: a shadowed sloth mask, tear-streak patches, a V of iron brows over two narrow glaring bars
@@ -5462,6 +5542,12 @@ function drawIronSloth(cv, f, accent){
               [cx + 19.4, 66 + o, cx + 17, 77 + o, cx + 9, 79 + o], [cx + 3, 80.6 + o, cx - 3, 80.6 + o, cx - 9, 79 + o], [cx - 17, 77 + o, cx - 19.4, 66 + o, cx - 16, 61 + o]]));   // the mask, in shadow, its chin low enough to hold the sneer
   L(G3, strokeP([[cx - 16.4, 63 + o], [cx - 13, 58.2 + o, cx - 7, 58 + o, cx - 3, 59.6 + o]], 1));                                   // a dim lit top edge, left lobe only
   L(G1, path([[cx - 6, 60 + o], [cx, 61.4 + o], [cx + 6, 60 + o], [cx + 3, 67 + o], [cx - 3, 67 + o]]));                               // shadow pooled between the brows
+  // polish: the mask gets planes: a lit cheekbone under the near patch, shadow under the far cheek and along the far jaw, a ragged furry chin
+  L(G3, strokeP([[cx - 16, 77 + o], [cx - 12, 75 + o], [cx - 8.6, 72.6 + o]], 1));
+  L(G1, strokeP([[cx + 4, 79.4 + o], [cx + 10, 78 + o], [cx + 15.4, 74.8 + o]], 1.6));
+  L(G1, strokeP([[cx + 8, 71.6 + o], [cx + 12.6, 74.4 + o]], 1));
+  for (const [x, y] of [[-7, 80], [6, 80], [-12, 78.6], [12, 78.4]]) L(K, rect(cx + x, y + o - 1, 1, 2));
+  for (const [x, y, c] of [[-4, 81.4, G2], [2, 81.6, G2], [-10, 80.4, G2], [9, 80.4, G1], [-15, 78.4, G2], [15, 78, G1]]) px(cx + x, y + o, c);
   for (const sd of [-1, 1]){
     // the tear-streak patch: from above the eye, sweeping down and out off the mask into the black of the bell
     L(K, path([[cx + sd * 3.4, 63 + o], [cx + sd * 5, 59 + o, cx + sd * 12, 58.6 + o, cx + sd * 14.6, 62 + o], [cx + sd * 17, 66 + o, cx + sd * 19, 72 + o, cx + sd * 19.6, 76.4 + o],
@@ -5489,6 +5575,9 @@ function drawIronSloth(cv, f, accent){
       }
       if (sq < 2) { L(A[4], rect(Math.min(X(6), X(7)), yb, 2, 1)); if (!sq && !twitch) px(X(6), yb - 1, A[4]); }   // a tiny white-hot pupil pressed into the inner corner
       if (sq >= 3) L(A[0], rect(Math.min(X(1), X(6)), yb, 6, 1));                                    // shut: just a dim seam of light
+      // polish: the same eye, more finished: a dim band under the lid where the bar is tallest, light spilling on the lower lid, a lid line, a catchlight
+      if (!sq){ for (let c = 1; c <= 2; c++) px(X(c), yb - 2, A[1]); }
+      if (sq < 2){ L(A[0], rect(Math.min(X(2), X(6)), yb + 1, 5, 1)); px(X(0), yb + 1, G3); px(X(-1), yb, G3); }
     }
   }
   L(K, rect(cx, 60 + o + (heaving ? 1 : 0), 1, 4));                                                                                 // the scowl furrow
@@ -5513,6 +5602,15 @@ function drawIronSloth(cv, f, accent){
       L(j === 0 ? A[3] : j === 1 ? A[2] : CH, rect(Math.round(x), Math.round(y) - s + 1, s, s)); }               // chalk thrown out from under the foot
   }
 
+  if (PLUS && !D){
+    const far = Math.max(0, hvB - 1), fl = landed && land < 2 ? 1 : 0, rf = fl * 2 - far;                       // the front half of the chalk ring
+    for (let k = -1; k < 4; k++){ const a0 = Math.max(0, (k + P) / 4 * Math.PI), a1 = Math.min(Math.PI, (k + P + 0.72) / 4 * Math.PI); if (a1 <= a0) continue;
+      L(A[1 + fl], c => { c.lineWidth = 1; c.ellipse(cx, GY + 1, 42 + rf, 7.4, 0, a0, a1); c.stroke(); });
+      const am = (a0 + a1) / 2; if (a1 - a0 > 0.3) L(A[3], rect(Math.round(cx + Math.cos(am) * (42 + rf)) - 1, Math.round(GY + 1 + Math.sin(am) * 7.4), 3, 1)); }                     // a hot dash riding each stroke of chalk
+    for (let k = 0; k < 4; k++){ const t = (P + k / 4) % 1, x = Math.round([22, 106, 58, 99][k] + Math.sin(TAU * (t + k * 0.3)) * 2), y = Math.round([82, 78, 44, 40][k] - t * [40, 36, 18, 24][k]);   // chalk chunks knocked loose, tumbling up
+      if (t > 0.88) continue; if (t < 0.5){ L(CH, rect(x, y, 3, 2)); px(x, y, CH2); px(x + 1, y, CH2); px(x + 2, y + 1, F1); px(x + 1, y + 2, F1); } else { L(CH, rect(x, y, 2, 1)); px(x, y, CH2); px(x + 1, y + 1, F1); } }
+  }
+
   const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
   blitBuf(ctx, buf, W, H);
 }
@@ -5530,6 +5628,7 @@ function drawDeadWeight(cv, f, accent){
   if (!drawDeadWeight.sc){ drawDeadWeight.sc = document.createElement('canvas'); drawDeadWeight.sc.width = W; drawDeadWeight.sc.height = H; }
   const sc = drawDeadWeight.sc, sx = sc.getContext('2d', {willReadFrequently: true}), buf = new Array(W * H).fill(null);
   let XF = null;
+  const PLUS = true;                                                                               // polish pass: false = P1 (craft only), true = P2 (plus the key out of reach, the heaved floor slabs, light standing in the cracks)
   const L = shapeLayer(sx, W, H, buf, () => XF);
   const ell = (x, y, rx, ry, rot = 0) => c => { c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); c.fill(); };
   const path = pts => c => { c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.closePath(); c.fill(); };
@@ -5567,14 +5666,41 @@ function drawDeadWeight(cv, f, accent){
   if (D){ L(G1, ell(BX, FY, 18, 2.4)); for (const [c] of cracks) L(G3, strokeP(c, 1)); }
   else {
     L(A[0], ell(BX, FY, 17 + flash * 3, 2.4 + flash * 0.4)); L(A[1 + (flash ? 1 : 0)], ell(BX, FY + 0.4, 10 + flash * 2, 1.4));
+    // polish: a designed crater: a third, hot band under the ball, torn tabs off the ends of the glow, forks on the fissures, rubble, embers
+    L(A[2 + (flash ? 1 : 0)], ell(BX, FY + 0.6, 5 + flash, 1)); for (const sd of [-1, 1]){ L(A[0], rect(BX + sd * (21 + flash * 3) - 1, FY - 0.5, 3, 1)); L(A[0], rect(BX + sd * (27 + flash * 3) - 1, FY + 0.5, 2, 1)); }
     for (const [c, hot] of cracks){ L(A[Math.min(4, 1 + flash)], strokeP(c, 1)); L(A[Math.min(4, 2 + flash)], strokeP(c.slice(0, hot + 1), 1)); }
+    for (const sd of [-1, 1]){ const X = x => BX + sd * (x - BX);
+      L(A[Math.min(4, 1 + flash)], strokeP([[X(42), 98.5], [X(40), 100.5], [X(38), 100.5]], 1)); L(A[Math.min(4, 1 + flash)], strokeP([[X(37), 97.5], [X(35), 95.5]], 1));   // forks
+      L(A[0], rect(X(31) - (sd > 0 ? 1 : 0), 98, 2, 1)); px(X(43), 102.5, A[0]); px(X(46), 98, A[Math.min(4, 3 + flash)]); }                                                // hot spots where they split
+    for (const [x, y, w, c] of [[39, 95, 2, G3], [88, 96, 2, G2], [29, 99, 2, G2], [96, 100, 3, G3], [45, 93, 1, G4], [85, 102, 2, G2]]){ L(K, rect(x, y + 1, w, 1)); L(c, rect(x, y, w, 1)); }   // rubble: chips of floor, lit on top
+    for (let k = 0; k < 5; k++){ const t = (P * 2 + k * 0.2) % 1, x = [36, 48, 80, 92, 43][k] + Math.round(Math.sin(TAU * t + k) * 1), y = 96 - t * 9; if (t < 0.8) px(x, y, t < 0.3 ? A[3] : t < 0.55 ? A[1] : A[0]); }   // embers lifting out of the cracks
+  }
+
+  if (PLUS && !D){                                                                                   // P2: the floor has heaved up in slabs either side of the ball, light standing in the gaps
+    for (const [x, h] of [[30, 4], [52, 6], [76, 5], [98, 3]]){ const hh = h + flash * 2 + (Math.sin(TAU * P * 2 + x) > 0.4 ? 1 : 0); L(A[0], rect(x, FY - 1 - hh, 1, hh)); L(A[1], rect(x, FY - 1 - Math.ceil(hh / 2), 1, Math.ceil(hh / 2))); px(x, FY - 2, A[2 + (flash ? 1 : 0)]); }
+    for (const sd of [-1, 1]){ const X = x => BX + sd * (x - BX), up2 = flash ? 1 : 0, f1 = flash ? 1 : 0;
+      L(A[0], path([[X(35), 101], [X(48.6), 94.6 - up2], [X(53), 99.4], [X(40), 101.6]])); L(A[1 + f1], path([[X(41), 100.2], [X(48.8), 96.2 - up2], [X(52), 99.4]])); L(A[2 + f1], strokeP([[X(45), 99.5], [X(51), 98.5]], 1));   // light pouring out from under the slab
+      L(K, path([[X(32), 99.6], [X(46.4), 91.8 - up2], [X(50), 93.4 - up2], [X(49.2), 96 - up2], [X(35.4), 101.4], [X(32), 101]]));                       // a slab of floor levered up toward the ball
+      L(sd < 0 ? G3 : G2, path([[X(34), 99.4], [X(46.4), 93 - up2], [X(48.6), 94 - up2], [X(35.6), 100.2]]));
+      L(sd < 0 ? G5 : G3, strokeP([[X(34.4), 99], [X(46), 93 - up2]], 1.5)); L(K, strokeP([[X(40.4), 95.6 - up2 * 0.5], [X(41.4), 98]], 1)); px(X(44), 96.4 - up2, G1);   // its lit edge, a split through it
+      L(K, path([[X(26), 100.4], [X(29.6), 96.6], [X(33), 100.4]])); L(sd < 0 ? G3 : G2, strokeP([[X(27), 99.6], [X(29.6), 97.2]], 1)); }   // a smaller shard further out
   }
 
   // ------------------------------------------------------------------ the pull-up bar: a steel bar with end caps, ~60% of the width
   const BRL = 29, BRR = 99, BAR = 4;
   L(B0, rect(BRL, BAR, BRR - BRL, 3)); L(B2, rect(BRL, BAR, BRR - BRL, 1)); L(K, rect(BRL, BAR + 2, BRR - BRL, 1));
   L(B3, rect(BRL + 3, BAR, 8, 1)); L(B3, rect(BRR - 11, BAR, 3, 1));
-  for (const x of [BRL - 4, BRR]){ L(K, rrect(x, BAR - 2, 4, 7, 1)); L(BD, rect(x + 1, BAR - 1, 2, 5)); L(B2, rect(x + 1, BAR - 1, 1, 2)); }
+  for (let x = 51; x < 78; x += 2) px(x, BAR + 1, BD); for (let x = 52; x < 78; x += 4) px(x, BAR, B0);        // polish: a knurled grip between the hooks
+  for (const x of [BRL + 13, BRR - 14]){ L(K, rect(x, BAR - 1, 1, 5)); L(B2, rect(x + 1, BAR - 1, 1, 1)); L(B0, rect(x + 1, BAR, 1, 3)); L(K, rect(x + 2, BAR - 1, 1, 5)); }   // collars
+  L(B3, rect(BRL + 20, BAR, 4, 1)); px(BRL + 1, BAR + 1, B2);
+  for (const x of [BRL - 4, BRR]){ L(K, rrect(x, BAR - 2, 4, 7, 1)); L(BD, rect(x + 1, BAR - 1, 2, 5)); L(B2, rect(x + 1, BAR - 1, 1, 2)); px(x + 1, BAR - 1, B3); px(x + 2, BAR + 3, K); }
+  if (PLUS){ const ka = D ? 0.05 : Math.sin(TAU * P - 1) * 0.16 + (T >= 51 && T < 57 ? Math.sin((T - 51) * 2.4) * 0.2 * (1 - (T - 51) / 6) : 0), KX = BRR + 2, KY = BAR + 3;   // P2: the key, hung on the end of the bar, just out of reach
+    XF = rot(ka, KX, KY);
+    L(B0, rect(KX, KY, 1, 7)); px(KX, KY + 2, K); px(KX, KY + 5, K);                                                    // a short chain
+    L(K, ell(KX + 0.5, KY + 10.5, 4, 4)); L(B2, ell(KX + 0.5, KY + 10.5, 3, 3)); L(B0, path([[KX - 2, KY + 11], [KX + 3, KY + 11], [KX + 2.4, KY + 13.4], [KX - 1.4, KY + 13.4]])); L(K, ell(KX + 0.5, KY + 10.5, 1.4, 1.4)); px(KX - 1, KY + 8, B3); px(KX, KY + 8, B3);   // the bow
+    L(K, rect(KX - 1, KY + 13, 3, 11)); L(B2, rect(KX, KY + 14, 1, 9)); px(KX, KY + 14, B3);                             // the shank
+    L(K, rect(KX + 1, KY + 18, 4, 6)); L(B0, rect(KX + 1, KY + 19, 2, 1)); L(B2, rect(KX + 1, KY + 21, 3, 2)); px(KX + 3, KY + 21, K);   // the bit
+    XF = null; }
 
   // ------------------------------------------------------------------ the lock's position: hangs and swings from the bar
   const LX0 = D ? 60 + Math.sin(TAU * P) * 0.6 : 64 + amp * swF(P) + trem;
@@ -5602,6 +5728,7 @@ function drawDeadWeight(cv, f, accent){
     L(G3, c => { c.lineWidth = 1; c.ellipse(x, y, 5.1, 5.9, 0, Math.PI * 0.85, Math.PI * 1.45); c.stroke(); });
     L(G2, c => { c.lineWidth = 1; c.ellipse(x, y, 4.1, 4.9, 0, Math.PI * 0.05, Math.PI * 0.55); c.stroke(); });
     px(x - 2, y - 6, G5);
+    L(G1, c => { c.lineWidth = 1; c.ellipse(x, y, 3.2, 4, 0, Math.PI * 1.1, Math.PI * 1.6); c.stroke(); }); px(x + 4, y + 3, G3);   // polish: the ring's inner wall, and a far glint
   }
 
   // ------------------------------------------------------------------ the cannonball: a heavy iron sphere, banded and riveted, rim-lit
@@ -5615,12 +5742,20 @@ function drawDeadWeight(cv, f, accent){
   L(K, c => { c.lineWidth = 2.4; c.ellipse(BX, BY + 1.5, BR - 0.4, 4.4, 0, 0.04, Math.PI - 0.04); c.stroke(); });   // the iron band
   L(G3, c => { c.lineWidth = 1; c.ellipse(BX, BY - 0.4, BR - 1, 4.2, 0, 0.3, Math.PI - 0.5); c.stroke(); });
   for (const [x, y] of [[BX - 9, BY + 5], [BX, BY + 6], [BX + 9, BY + 5]]) px(x, y, G5);
+  // polish: cast-iron pitting, bounce light under the band, a lit lip on the band, a chipped casting seam
+  for (const [x, y] of [[4, -8], [8, -3], [-3, -5], [10, -8], [1, -2], [6, 10], [-6, 10], [-1, 12], [11, 1]]) px(BX + x, BY + y, G2);
+  for (const [x, y] of [[-8, -8], [-10, -3], [-5, -11]]) px(BX + x, BY + y, G1);
+  L(G2, c => { c.lineWidth = 1; c.arc(BX, BY, BR - 1.6, Math.PI * 0.3, Math.PI * 0.64); c.stroke(); });
+  L(G4, c => { c.lineWidth = 1; c.ellipse(BX, BY - 0.4, BR - 1, 4.2, 0, Math.PI * 0.62, Math.PI * 0.86); c.stroke(); }); px(BX - 9, BY + 4, B2);
+  L(G1, c => { c.lineWidth = 1; c.ellipse(BX, BY + 3.6, BR - 2.4, 4, 0, 0.5, Math.PI - 0.5); c.stroke(); });
+  L(G2, strokeP([[BX + 2, BY - 13], [BX + 3.4, BY - 9], [BX + 2.6, BY - 6]], 1)); px(BX + 3, BY - 11, K);
 
   // ------------------------------------------------------------------ the arms: gaunt iron hooks from the lock's shoulders over the bar
   const HKX = 19, HY = BAR + 1;
   const hook = (sd, hx) => {                                                                         // up the front of the bar, curled over the top, the point down behind
     L(K, c => { c.lineWidth = 2.4; c.moveTo(hx, 11); c.lineTo(hx, HY); if (sd < 0) c.arc(hx + 2.3, HY, 2.3, Math.PI, TAU + 0.6); else c.arc(hx - 2.3, HY, 2.3, 0, -Math.PI - 0.6, true); c.stroke(); });
     px(hx - sd, HY - 3, G4);
+    px(hx - 1, 9, G3); px(hx - 1, 7, G2); L(G2, rect(hx - 2, 11, 4, 1));                                // polish: a lit shank and a collar where the hook is forged on
   };
   for (const sd of [-1, 1]){
     const sh = W2(lx + sd * 14, ly + 6);
@@ -5635,7 +5770,10 @@ function drawDeadWeight(cv, f, accent){
     const e = D ? [hx + sd * 2.5, 20] : [64 + sd * (27 + flare) + (LX0 - 64) * 0.45, 17 - up * 0.6 - rise * 0.5];
     L(K, strokeP([[sh[0], sh[1]], e], 4)); L(K, strokeP([e, [hx, 11]], 3));
     L(G3, strokeP([[sh[0] + sd * 1, sh[1] - 1.6], [e[0] - sd * 0.4, e[1] - 1.6]], 1));               // lit top edge of the upper arm
+    L(sd < 0 ? G3 : G2, strokeP([[e[0] + sd * 0.2, e[1] - 2.2], [hx - sd * 1.6, 11.4]], 1));           // polish: the forearm's lit edge, so both bones read
+    L(G1, strokeP([[sh[0] + sd * 2, sh[1] + 0.4], [e[0] - sd * 2.4, e[1] + 0.2]], 1));                 // a core line down the upper arm
     L(K, ell(e[0], e[1], 2.6, 2.6)); px(e[0] - 1, e[1] - 1, G5);                                      // a knuckled elbow
+    L(G2, c => { c.lineWidth = 1; c.arc(e[0], e[1], 2.2, Math.PI * 0.9, Math.PI * 1.5); c.stroke(); }); px(e[0], e[1], G3); px(e[0] - 1, e[1] - 1, G5);   // a riveted joint
     hook(sd, hx);
   }
 
@@ -5650,10 +5788,15 @@ function drawDeadWeight(cv, f, accent){
     L(K, c => { c.lineWidth = 4; c.moveTo(lx - 7, ly + 1); c.lineTo(lx - 7, SY); c.arc(lx, SY, 7, Math.PI, TAU); c.lineTo(lx + 7, ly + 1); c.stroke(); });
     L(G4, c => { c.lineWidth = 1; c.arc(lx, SY, 7.6, Math.PI * 1.08, Math.PI * 1.45); c.stroke(); }); L(B2, rect(lx - 9, SY, 1, 3));
   }
+  { const S3 = D ? SY - 4 : SY; L(G2, c => { c.lineWidth = 1; c.arc(lx, S3, 7.6, Math.PI * 1.45, Math.PI * 1.72); c.stroke(); }); L(G1, c => { c.lineWidth = 1; c.arc(lx, S3, 5.6, Math.PI * 1.1, Math.PI * 1.9); c.stroke(); }); px(lx - 6, S3 - 5, G5); }   // polish: the shackle's band runs on, dimmer, with an inner edge and a glint
   L(K, rrect(lx - 14, ly, 28, 21, 4));
   L(G1, rrect(lx - 13, ly + 1, 26, 17, 3));
   L(G2, rect(lx - 12, ly + 5, 4, 12)); L(G3, rect(lx - 13, ly + 5, 1, 11));
+  L(K, rect(lx + 8, ly + 8, 4, 10)); L(K, rect(lx + 7, ly + 14, 1, 4));                                // polish: a hard shadow plane down the far side: lit edge, band, core, shadow, rim
   L(G3, rect(lx + 12, ly + 10, 1, 7));                                                               // rim light, far edge
+  L(G2, rect(lx - 12, ly + 18, 21, 1)); L(G3, rect(lx - 12, ly + 18, 6, 1)); L(K, rect(lx - 12, ly + 17, 22, 1));   // a base plate: its seam, its lit lip
+  for (const x of [lx - 10, lx + 5]){ px(x, ly + 15, G4); px(x + 1, ly + 16, K); }                                  // rivets
+  L(G2, strokeP([[lx + 4.5, ly + 9.5], [lx + 6.5, ly + 12.5]], 1)); px(lx - 7, ly + 10, K); px(lx - 6, ly + 14, K); px(lx - 10, ly + 8, G4);   // a scratch, pits, a glint
   // the keyhole eye: the round top is the iris, in pop bands; a glint pulses in it
   const EX = lx, EY = ly + 10;
   if (D){
@@ -5667,12 +5810,18 @@ function drawDeadWeight(cv, f, accent){
     L(A[1], rect(EX - 0.5, EY + 4, 1, 4));
     L(K, rect(EX - 1, EY, 2, 2));                                                                    // a small dark pupil: the hole in the lock
     L(A[4], rect(EX - 2, EY - 1, hot ? 2 : 1, hot ? 2 : 1)); if (pulse || hot) L(A[4], rect(EX + 1, EY + 2, 1, 1));   // a glint touching it, a second spark pulsing
+    // polish: the same eye, more finished: the lid's shadow across the top of the iris, a lit lower lid, a banded slot, a second catchlight pixel
+    L(A[0], rect(EX - 4, EY - 3 + (strain ? 1 : 0), 8, 1)); L(A[4], rect(EX - 3, EY - 2 + (strain ? 1 : 0), 1, 1));
+    L(G3, c => { c.lineWidth = 1; c.arc(EX, EY, 6.6, Math.PI * 0.62, Math.PI * 0.9); c.stroke(); });
+    px(EX - 0.5, EY + 4, A[2 + hot]); px(EX - 0.5, EY + 8, A[0]);
   }
   // the heavy brow plate pressing down on it
   const bd = strain ? 1 : 0;
   L(K, rect(lx - 14, ly, 28, 7 + bd)); L(G2, rect(lx - 9, ly + 6 + bd, 18, 1));                       // a flat iron lid sitting on the eye, its lower lip catching a little light
   L(G3, rect(lx - 11, ly, 20, 1)); L(G4, rect(lx - 11, ly, 7, 1));
-  px(lx - 11, ly + 2, G5); px(lx + 11, ly + 2, G4);
+  L(G1, rect(lx - 12, ly + 1, 23, 3)); L(G2, rect(lx - 12, ly + 1, 9, 1)); L(K, rect(lx + 6, ly + 1, 5, 3));     // polish: the brow plate gets a face: lit, core, shadow, and a seam
+  L(K, rect(lx - 3, ly + 1, 1, 3)); px(lx - 2, ly + 1, G3); L(G4, rect(lx - 9, ly + 6 + bd, 5, 1));
+  px(lx - 11, ly + 2, G5); px(lx + 11, ly + 2, G4); px(lx - 10, ly + 3, K); px(lx + 12, ly + 3, K);
   XF = null;
   if (D){                                                                                            // the grey X over the dark keyhole, pixel-exact
     const [cx, cy] = W2(EX, EY).map(Math.round);
@@ -9023,6 +9172,163 @@ function drawFog(cv, f, accent){
   blitBuf(ctx, buf, W, H);
 }
 
+// ---- Knee Gremlin (style guide v1)
+// KNEE GREMLIN, concept 23B "the hinge". No leg, no goblin: just the joint. Two carved stone bone-ends float one above the other and the
+// gremlin is the thing wedged between them: a black toothed wedge chewing both seams, spikes raked down its flanks, four tiny hands
+// gripping both bones, one hex-bolt eye in the middle like a hinge pin. Pop: the eye, the lit bite seams (and the cracks they flash), the ground glow.
+function drawKneeGremlin2(cv, f, accent){
+  const LOOP = 64, P = (f % LOOP) / LOOP, TAU = Math.PI * 2; f = f % LOOP;
+  const W = 128, H = 104, A = POP_RAMPS[accent] || POP_RAMPS.blush, D = !!drawKneeGremlin2.dead;
+  const K = '#121110', G1 = '#211f1d', G2 = '#2e2a27', G3 = '#3f3a36', G4 = '#57514b', G5 = '#756e66';
+  const F0 = '#35312d', F1 = '#4a4540', F2 = '#615b54', F3 = '#8e867b', F4 = '#c9c2b6';               // the bones: light-object ramp in hard bands
+  if (!drawKneeGremlin2.sc){ drawKneeGremlin2.sc = document.createElement('canvas'); drawKneeGremlin2.sc.width = W; drawKneeGremlin2.sc.height = H; }
+  const sc = drawKneeGremlin2.sc, sx = sc.getContext('2d', {willReadFrequently: true}), buf = new Array(W * H).fill(null);
+  let XF = null;
+  const L = shapeLayer(sx, W, H, buf, () => XF);
+  const ell = (x, y, rx, ry, rot = 0) => c => { c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); c.fill(); };
+  const path = pts => c => { c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.closePath(); c.fill(); };
+  const strokeP = (pts, w) => c => { c.lineWidth = w; c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.stroke(); };
+  const rect = (x, y, w, h) => c => { c.rect(x, y, w, h); c.fill(); };
+  const rot = (a, cx, cy) => { const cs = Math.cos(a), sn = Math.sin(a); return [cs, sn, -sn, cs, cx - cs * cx + sn * cy, cy - sn * cx - cs * cy]; };
+  // pixel-exact helpers (straight into the buffer): single pixels, boxes, hairlines
+  const px = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < W && y < H) buf[y * W + x] = c; };
+  const box = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) px(x + i, y + j, c); };
+  const hair = (x0, y0, x1, y1, c, only) => { x0 = Math.round(x0); y0 = Math.round(y0); x1 = Math.round(x1); y1 = Math.round(y1);
+    const dx = Math.abs(x1 - x0), dy = Math.abs(y1 - y0), sx2 = x0 < x1 ? 1 : -1, sy2 = y0 < y1 ? 1 : -1; let e = dx - dy;
+    for (;;){ if (!only || only[y0 * W + x0]) px(x0, y0, c); if (x0 === x1 && y0 === y1) break; const e2 = 2 * e; if (e2 > -dy){ e -= dy; x0 += sx2; } if (e2 < dx){ e += dx; y0 += sy2; } } };
+
+  const cx = 64, CY = 45;
+  // ------------------------------------------------------------------ timing: a slow alternating chew, and one hard bite per loop (frames 40-55)
+  const ch = Math.sin(TAU * P * 4);                                               // the chew: four grinds a loop
+  let gt = 1 + (ch > 0.35 ? 1 : 0), gb = 1 + (ch < -0.35 ? 1 : 0);                // seam gaps, top and bottom, opening by a pixel in turn
+  const wind = !D && f >= 40 && f < 44, bite = !D && f >= 44 && f < 56, bt = f - 44;
+  if (wind){ gt = gb = f < 42 ? 2 : 3; }                                          // the jaws lift off both bones...
+  if (bite){ gt = gb = bt < 8 ? 0 : 1; }                                          // ...and clamp
+  const heat = bite ? [4, 4, 3, 3, 2, 2, 1, 1, 1, 0, 0, 0][bt] : -1;              // crack glow, dimming back to nothing
+  const spread = bite ? [1, 2, 2, 2, 2, 2, 2, 1, 1, 1, 0, 0][bt] : 0;             // how far the cracks have run past their old ends
+  const shake = bite && bt < 3 ? [1, -1, 1][bt] : 0;
+  const strain = D ? 0 : Math.round(Math.sin(TAU * P * 2) * 0.62);                // the bones grind sideways a hair, opposite ways
+  const grip = wind || (bite && bt < 10) ? 1 : 0;
+  const flare = bite && bt < 6;
+
+  // ------------------------------------------------------------------ the ground glow
+  if (D){ L(G1, ell(cx, 96, 30, 2.6)); L(K, ell(cx, 96, 22, 1.4)); }
+  else { const fl = flare ? 1 : 0; L(A[0], ell(cx, 96, 25 + fl * 3, 3)); L(A[1], ell(cx, 96, 18 + fl * 3, 2)); L(A[2 + fl], ell(cx, 96, 10 + fl * 2, 1)); L(A[Math.min(4, 3 + fl)], rect(cx - 5 - fl, 95.5, 5 + fl, 1)); px(cx + 6, 96, A[3]);
+    for (const [dx, k] of [[-13, 0], [9, 3], [17, 5]]){ const t = (P * 2 + k * 0.17) % 1; if (t < 0.5) px(cx + dx, 93 - Math.round(t * 8), t < 0.25 ? A[2] : A[1]); } }   // motes lifting off the pool
+
+  // the zigzag where teeth meet bone: wedge teeth point into the bone at odd k, bone teeth point back at even k
+  const zig = (y, s, n = 13) => Array.from({length: n}, (_, k) => [cx - 18 + k * 3, y + (k % 2 ? -2 : 2) * s]);
+
+  // ------------------------------------------------------------------ a bone end: carved stone, banded light from the upper left, pitted, cracked
+  // yE = the seam baseline, dir = +1 for the upper bone (grows up from the seam), -1 for the lower one
+  const JAG = { 1: [[-15, 25], [-12, 27], [-9, 24], [-6, 27], [-2, 25], [1, 27], [5, 23], [8, 26], [11, 24], [15, 27]], [-1]: [[-15, 26], [-11, 24], [-8, 27], [-4, 25], [0, 27], [3, 24], [7, 27], [10, 25], [13, 27], [15, 24]] };
+  const CRK = { 1: [{b: [[-8, 2], [-10, 6], [-7, 9], [-9, 13]], e: [[-7, 16], [-9, 19], [-8, 22]], br: [[-7, 9], [-4, 11], [-3, 14]]}, {b: [[9, 1], [8, 5], [11, 8]], e: [[10, 12], [12, 15]], br: [[8, 5], [5, 7]]}],
+               [-1]: [{b: [[5, 2], [7, 6], [4, 10], [6, 13]], e: [[4, 16], [6, 19], [5, 22]], br: [[4, 10], [1, 12], [0, 15]]}, {b: [[-11, 1], [-9, 5], [-12, 9]], e: [[-10, 12], [-12, 16]], br: [[-9, 5], [-6, 7]]}] };
+  const bone = (yE, dir, ox) => { const X = x => cx + ox + x, Y = v => yE - dir * v, z = zig(yE, 1).map(([x, y]) => [x + ox, y]);
+    const outline = c => { c.moveTo(X(-15), Y(25)); c.bezierCurveTo(X(-15), Y(19), X(-15.5), Y(15), X(-20), Y(11)); c.bezierCurveTo(X(-24.5), Y(8), X(-24), Y(3), X(-21), Y(1)); c.lineTo(...z[0]);
+      for (const p of z.slice(1)) c.lineTo(...p); c.lineTo(X(21), Y(1)); c.bezierCurveTo(X(24), Y(3), X(24.5), Y(8), X(20), Y(11)); c.bezierCurveTo(X(15.5), Y(15), X(15), Y(19), X(15), Y(25));
+      for (const [jx, jv] of JAG[dir].slice().reverse()) c.lineTo(X(jx), Y(jv)); c.closePath(); };
+    L('#M', c => { outline(c); c.fill(); });
+    const M = new Uint8Array(W * H); for (let i = 0; i < W * H; i++) if (buf[i] === '#M') M[i] = 1;
+    const at = (x, y) => x >= 0 && y >= 0 && x < W && y < H && M[y * W + x];
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++){ if (!M[y * W + x]) continue;
+      const edge = !at(x - 1, y) || !at(x + 1, y) || !at(x, y - 1) || !at(x, y + 1);
+      const lit = !at(x - 6, y - 3), rim = !at(x - 1, y) || !at(x - 2, y - 1) || (!at(x, y - 1) && !at(x - 4, y)), dark = !at(x + 7, y + 3), deep = !at(x + 2, y + 1);
+      buf[y * W + x] = deep ? K : dark ? F0 : rim && lit ? F3 : lit ? F2 : F1; if (edge && !lit && !deep && !at(x, y + 1)) buf[y * W + x] = K; }
+    const inM = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (at(x, y) && buf[y * W + x] !== K) px(x, y, c); };
+    // the two knuckles: a groove up the middle from the seam, a lit crown on the far knuckle
+    for (let v = 1; v < 10; v++){ const gx = v < 4 ? 0 : v < 7 ? 1 : 2; inM(X(gx), Y(v), K); inM(X(gx + 1), Y(v), F0); if (v < 8) inM(X(gx + 2), Y(v), v < 6 ? F2 : F1); }
+    inM(X(3), Y(10), F0); inM(X(4), Y(11), F0);
+    // carved growth bands across the shaft, bowed, with a lit lip under each
+    for (const [v0, bow] of [[15, 1], [20.5, 1]]) for (let x = -17; x <= 17; x++){ const v = Math.round(v0 + bow * (1 - (x * x) / 150)); if (at(X(x), Y(v)) && buf[Y(v) * W + X(x)] !== K){ const cur = buf[Y(v) * W + X(x)];
+      if ((x + 40 + Math.round(v0) * 3) % 13 < 10){ px(X(x), Y(v), cur === F2 || cur === F3 ? F1 : cur === F1 ? F0 : cur); const y2 = Y(v) + 1, c2 = at(X(x), y2) && buf[y2 * W + X(x)]; if (c2 === F1 && x < 6) px(X(x), y2, F2); } } }
+    // pitting: dark pocks with a lit lower lip
+    for (const [dx, v, w] of [[-13, 5, 2], [-17, 7, 1], [-5, 4, 1], [14, 6, 2], [18, 8, 1], [8, 12, 1], [-11, 16, 1], [-4, 17, 2], [6, 16, 1], [10, 21, 1], [-8, 21, 1], [1, 21, 1], [-19, 3, 1], [12, 3, 1]]){
+      for (let i = 0; i < w; i++) inM(X(dx + i), Y(v), G1); const below = buf[(Y(v) + 1) * W + X(dx)]; if (below === F1 || below === F2) inM(X(dx), Y(v) + 1, below === F1 ? F2 : F3); }
+    // hairline cracks running in from the bite: black at rest, lit by the bite, grey when beaten
+    const cc = D ? G1 : heat >= 0 ? A[Math.max(1, heat)] : K, ec = heat >= 0 ? A[Math.max(0, heat - 1)] : null;
+    for (const {b, e, br} of CRK[dir]){ const seg = (pts, c) => { for (let i = 0; i < pts.length - 1; i++) hair(X(pts[i][0]), Y(pts[i][1]), X(pts[i + 1][0]), Y(pts[i + 1][1]), c, M); };
+      seg(b, cc); if (D) seg(br, G1);
+      if (ec && spread){ seg([b[b.length - 1], ...e.slice(0, spread + 1)], ec); if (spread > 1) seg(br, ec); seg(b, cc); if (heat >= 3) px(X(b[0][0]), Y(b[0][1]), A[4]); } }
+    return M; };
+
+  // ------------------------------------------------------------------ the wedge: black, toothed top and bottom, spikes raked down the flanks, a hex bolt for an eye
+  // up = -1 normally; beaten it lies on its back, so everything that pointed down points up
+  const wedge = (wx, wy, up, ang, alive) => { const X = x => wx + x, Y = y => wy + y * up, zt = zig(wy - 13 * up, up).map(([x, y]) => [x - cx + wx, y]), zb = zig(wy + 13 * up, -up).map(([x, y]) => [x - cx + wx, y]);
+    const sp = i => alive ? Math.sin(TAU * P * 2 - i * 0.9) * 0.8 - (wind ? 2.5 : bite ? Math.max(0, 3 - bt * 0.5) : 0) : 0;      // the spikes flex in a lagging ripple, and bristle on the bite
+    for (const s of [-1, 1]){
+      for (const [i, b0, b1, tx, ty] of [[0, [-24, -11], [-29, -2], -46, 0], [1, [-29, -5], [-28, 5], -49, 13], [2, [-29, 1], [-22, 11], -41, 24]]){
+        const T = [tx, ty + sp(i)], ax = X(s * b0[0]), ay = Y(b0[1]), tX = X(s * T[0]), tY = Y(T[1]), q = [[ax, ay], [tX, tY], [X(s * b1[0]), Y(b1[1])], [X(s * (b1[0] + 7)), Y(b1[1] - 3)]];
+        L(K, path(q)); hair(ax + (tX - ax) * 0.1, ay + (tY - ay) * 0.1 + up * 1, ax + (tX - ax) * 0.7, ay + (tY - ay) * 0.7 + up * 1, s < 0 ? G4 : G3); } }   // a lit upper edge on each
+    L(K, path([zt[0], ...zt.slice(1), [X(25), Y(-10)], [X(29), Y(-5)], [X(29), Y(5)], [X(25), Y(10)], ...zb.slice().reverse(), [X(-25), Y(10)], [X(-29), Y(5)], [X(-29), Y(-5)], [X(-25), Y(-10)]]));
+    // one grey strip down the lit flank, and plate seams, for volume
+    L(G1, path([[X(-24), Y(-9)], [X(-28), Y(-4.5)], [X(-28), Y(4.5)], [X(-24), Y(9)], [X(-21), Y(9)], [X(-24.5), Y(4)], [X(-24.5), Y(-4)], [X(-21), Y(-9)]]));
+    L(G4, strokeP([[X(-25.4), Y(-9.6)], [X(-28.6), Y(-5)]], 1)); L(G3, strokeP([[X(-28.6), Y(-4.5)], [X(-28.6), Y(4)]], 1)); L(G1, strokeP([[X(21), Y(-9)], [X(24.5), Y(-4)], [X(24.5), Y(4)], [X(21), Y(9)]], 1));
+    for (const [x, y] of [[-17, -7], [17, -7], [-17, 7], [17, 7]]) L(G3, rect(Math.round(X(x)) - 0.5, Math.round(Y(y)) - 0.5, 1, 1));                         // rivets
+    // teeth: a lit facet on the left slope of every tooth, both rows
+    for (const [zz, dy] of [[zt, 1], [zb, -1]]) for (let k = 1; k < 13; k += 2){ const [tx, ty] = zz[k]; L(k === 5 || k === 7 ? G5 : G4, strokeP([[tx - 0.6, ty + dy * up * -1 * -1.2], [tx - 2, ty + dy * up * -1 * -3.2]], 1)); }
+    // the bolt: a washer, then the hex head
+    L(G3, ell(X(0), Y(0), 11, 11)); L(G1, ell(X(0.8), Y(0) + 0.8, 10.4, 10.4)); L(K, ell(X(0), Y(0), 9.6, 9.6));
+    const hex = r => { const p = Array.from({length: 6}, (_, i) => [X(0) + Math.cos(ang + i * Math.PI / 3) * r, Y(0) + Math.sin(ang + i * Math.PI / 3) * r]); return path(p); };
+    return hex; };
+
+  // ------------------------------------------------------------------ grit sifting down past the joint (behind everything)
+  if (!D) for (const [dx, y0, y1, n, ph, c, s] of [[-31, 30, 92, 1, 0.1, G5, 1], [-27, 58, 93, 2, 0.4, F2, 1], [33, 31, 92, 1, 0.55, F2, 1], [28, 58, 93, 2, 0.05, G5, 1], [-36, 20, 80, 1, 0.7, G4, 2], [38, 16, 76, 1, 0.3, G4, 1], [-21, 60, 92, 2, 0.8, F3, 1], [22, 34, 60, 2, 0.6, F3, 1], [44, 40, 90, 1, 0.85, G5, 1], [-45, 36, 88, 1, 0.45, G4, 1]]){
+    const t = (P * n + ph) % 1, y = y0 + (y1 - y0) * t * t * 0.6 + (y1 - y0) * t * 0.4, x = cx + dx + Math.round(Math.sin(TAU * (P + ph)) * 1.2); if (t < 0.92) box(Math.round(x), Math.round(y), s, s, c); }
+
+  if (!D){
+    const tE = 32 - gt, bE = 58 + gb;                                                // the bones ride the chew; the wedge holds still
+    // the lit seams: the glow lives in the gap between the two rows of teeth
+    const seam = (yA, yB, s) => { const lo = Math.min(yA, yB) - 2, hi = Math.max(yA, yB) + 2; const hot = flare ? 4 : wind ? 3 : 2;
+      L(A[0], rect(cx - 21, lo, 42, hi - lo + 1)); L(A[Math.max(1, hot - 1)], rect(cx - 17, lo, 34, hi - lo + 1)); L(A[hot], rect(cx - 10, lo, 20, hi - lo + 1)); if (hot > 2 || s > 0) L(A[Math.min(4, hot + 1)], rect(cx - 3, lo, 6, hi - lo + 1)); };
+    seam(tE, 32, 1); seam(58, bE, -1);
+  }
+
+  // (the figure is assembled below so the layering is explicit)
+  const drawEye = (hexOf, ex, ey, ang) => {
+    if (D){ L(G4, hexOf(8.6)); L(G3, hexOf(7.6)); L(K, hexOf(5.6)); return; }
+    L(A[flare ? 1 : 0], hexOf(9.3)); L(A[flare ? 3 : 2], hexOf(7.8)); L(A[flare ? 4 : 3], hexOf(5.3)); L(A[flare ? 2 : 1], hexOf(4.1));
+    L(K, ell(ex, ey, flare ? 1.6 : 2.2, flare ? 1.6 : 2.2));                                                                    // the pupil pins small on the bite
+    const tx = ex + Math.cos(ang + Math.PI / 6) * 5.7, ty = ey + Math.sin(ang + Math.PI / 6) * 5.7; L(A[0], rect(Math.round(tx) - 0.5, Math.round(ty) - 0.5, 1, 1));   // the grade mark stamped on one flat, so the turning reads
+    px(ex - 2, ey - 2, A[4]); if (flare){ px(ex - 3, ey - 2, A[4]); px(ex - 2, ey - 3, A[4]); } };
+
+  if (!D){
+    // redraw in order: bones over the glow, wedge over the bones' teeth, hands last
+    const tE = 32 - gt, bE = 58 + gb;
+    bone(tE, 1, strain + (bite && bt < 2 ? -shake : 0)); bone(bE, -1, -strain);
+    const nt = P * 12, n = Math.floor(nt), fr = nt - n, e = Math.min(1, fr * 2.7), ang = (n + e * e * (3 - 2 * e)) * Math.PI / 6;   // the bolt turns a notch (30 degrees) at a time
+    const hexOf = wedge(cx + shake, CY, 1, ang, true);
+    drawEye(hexOf, cx + shake, CY, ang);
+    // four tiny hands: a thin arm out of each shoulder, three fingers hooked over the knuckle of the bone
+    for (const s of [-1, 1]) for (const v of [-1, 1]){ const yE = v < 0 ? tE : bE, ox = v < 0 ? strain : -strain, hx = cx + ox + s * 25, hy = yE + v * 8, sh = [cx + shake + s * 26, CY + v * 9];
+      L(K, strokeP([sh, [hx + s * 1.5, hy]], 2));                                                     // a crooked arm, elbow out
+      box(Math.min(hx, hx + s), hy - 3, 2, 7, K);                                                                                                         // the palm on the knuckle's side
+      for (const dy of [-3, 0, 3]){ const len = 5 + grip - (dy === 3 * v ? 1 : 0); for (let i = 1; i <= len; i++) px(hx - s * i, hy + dy, K); if (grip) px(hx - s * len, hy + dy - v, K); }   // three hooked fingers, digging in on the bite
+      px(hx + s, hy - 3 * v, G4); }
+    // bone chips and sparks thrown off the seams by the bite
+    if (bite){ const t = bt / 12; for (const [x0, y0, vx, vy, c, s] of [[-20, 31, -26, -20, F3, 2], [20, 31, 24, -24, F2, 2], [-21, 59, -30, -6, F2, 2], [21, 59, 28, -10, F3, 2], [-12, 30, -16, -30, F2, 1], [13, 60, 20, 4, F3, 1], [-6, 60, -22, 2, G5, 1], [8, 30, 14, -32, G5, 1], [-22, 44, -34, -14, A[2], 1], [22, 46, 32, -18, A[2], 1], [-19, 33, -22, -34, A[3], 1], [19, 57, 26, 6, A[1], 1]]){
+      const x = cx + x0 + vx * t, y = y0 + vy * t + 44 * t * t; if (bt < 11) box(Math.round(x), Math.round(y), bt > 7 ? 1 : s, bt > 7 ? 1 : s, c); } }
+  } else {
+    // beaten: the wedge has popped out and the joint has closed clean, tooth into tooth, the cracks gone grey
+    bone(30, 1, 0); bone(31, -1, 0);
+    const sw = Math.round(Math.sin(TAU * P) * 0.5), wx = cx + sw, wy = 80;
+    // limp arms flopped out on the floor, fingers slack
+    for (const s of [-1, 1]) for (const [k, ex, ey] of [[0, 34, 11], [1, 30, 3]]){ const sh = [wx + s * 24, wy + (k ? -6 : 6)], en = [wx + s * ex, wy + ey + (k ? 6 : 0)];
+      L(K, strokeP([sh, [sh[0] + s * 5, sh[1] - (k ? 6 : 0), en[0], en[1]]], 1.7)); for (let i = 0; i < 3; i++) box(Math.round(en[0]) + s * (i * 2) - (s < 0 ? 0 : 0), Math.round(en[1]) - 1 + (i === 1 ? 1 : 0), 1, 3, K); }
+    XF = rot(-0.07, wx, wy);
+    const hexOf = wedge(wx, wy, -1, Math.PI / 6, false);
+    drawEye(hexOf, wx, wy, 0);
+    XF = null;
+    const x0 = wx - 2, y0 = wy - 2; for (let i = 0; i < 5; i++){ px(x0 + i, y0 + i, G4); px(x0 + 4 - i, y0 + i, G4); if (i < 4){ px(x0 + i + 1, y0 + i, G4); px(x0 + 3 - i, y0 + i, G4); } }   // an upright grey X, 5x5 with 2px strokes
+    for (const [dx, dy, c, s] of [[-40, 93, F1, 2], [-33, 95, G4, 1], [37, 94, F1, 2], [44, 92, G4, 1], [-12, 95, G4, 1], [15, 95, F0, 1], [-26, 60, G4, 1], [27, 62, G4, 1]]) box(cx + dx, dy, s, s, c);   // spat-out chips
+    drawKneeGremlin2.deadHead = [wx - sw, 63];
+  }
+  if (!drawKneeGremlin2.deadHead) drawKneeGremlin2.deadHead = [64, 65];
+
+  const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
+  blitBuf(ctx, buf, W, H);
+}
+
 const NEW_ART = {
   giant: Object.assign((cv, f, acc, dead) => { drawFogColossus.dead = dead; drawFogColossus(cv, f, acc); }, {ownDead: true, starY: 2, starX: 64, starRX: 14, starRY: 3}),
   hunch: Object.assign((cv, f, acc, dead) => { drawHunch.dead = dead; drawHunch(cv, f, acc); }, {ownDead: true, starY: 60, starX: 44, starRX: 15, starRY: 4}),
@@ -9050,8 +9356,9 @@ const NEW_ART = {
   keyhole: Object.assign((cv, f, acc, dead) => { drawKeyhole.dead = dead; drawKeyhole(cv, f, acc); }, {ownDead: true, starY: 21, starX: 88, starRX: 12, starRY: 3}),
   kobold: Object.assign((cv, f, acc, dead) => { drawSnooze.dead = dead; drawSnooze(cv, f, acc); }, {ownDead: true, starY: 51, starX: 49, starRX: 12, starRY: 3}),
   ogre: Object.assign((cv, f, acc, dead) => { drawFog.dead = dead; drawFog(cv, f, acc); }, {ownDead: true, starY: 63, starX: 64, starRX: 12, starRY: 3}),
+  gremlin: Object.assign((cv, f, acc, dead) => { drawKneeGremlin2.dead = dead; drawKneeGremlin2(cv, f, acc); }, {ownDead: true, starY: 63, starX: 64, starRX: 12, starRY: 3}),
   golem: Object.assign((cv, f, acc, dead) => { Object.assign(drawLaundryGolem, {pose: 'hips', hanger: 'light', basketLight: true, sticker: false, aura: false, dead}); drawLaundryGolem(cv, f, acc); }, {ownDead: true, starY: 13}),
-  gremlin: Object.assign((cv, f, acc, dead) => { drawKneeGremlin.dead = dead; drawKneeGremlin(cv, f, acc); }, {ownDead: true, starY: 50, starX: 62, starRX: 9, starRY: 3, starSmall: true}),
+  gremlin_v1: Object.assign((cv, f, acc, dead) => { drawKneeGremlin.dead = dead; drawKneeGremlin(cv, f, acc); }, {ownDead: true, starY: 50, starX: 62, starRX: 9, starRY: 3, starSmall: true}),
   kraken: Object.assign((cv, f, acc, dead) => { drawCouchKraken.dead = dead; drawCouchKraken(cv, f, acc); }, {ownDead: true, starY: 34}),   // it slumps by itself, so the TV static isn't squashed
 };
 let artLayer = null, oldArtCv = null, panelCv = null, artKey = '', bossTick = -1, artFull;   // bossTick: the steady boss frame counter (−1 = derive from the clock)
