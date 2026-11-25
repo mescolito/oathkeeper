@@ -962,7 +962,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '829b29c3b7';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '696c097978';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1277,9 +1277,11 @@ const SKILL_SLOTS = 4, SKILL_EQ_FEE = 50;
 const SLUMP_DAYS = 3, SLUMP_BACK = 2, SLUMP_PCT = 0.1, SLUMP_MIN = 25, SLUMP_HP = 0.15;
 // Toxic air: between a beaten boss and the next one, each missed daily adds a point; every finished daily or to-do clears one.
 // Each night it drains HP and MP by the points (capped, never knocks you out) with a 1-in-10 chance of poison or paralysis.
-// The next boss halves it; a Weather Machine (30 G a level) clears it.
-const SMOG_HP_CAP = 0.15, SMOG_MP_CAP = 0.25, SMOG_MP = 2, SMOG_FX = 0.1, WEATHER_PER_LV = 30;
-const weatherPrice = lv => WEATHER_PER_LV * Math.max(1, lv);
+// The next boss halves it; a Weather Machine clears it. Clearing the air now costs by how bad it is (5 G a point, at least 15 G, at most 10 G a level);
+// a spare for your bag is a flat 5 G a level. Purchases keep the price that was paid.
+const SMOG_HP_CAP = 0.15, SMOG_MP_CAP = 0.25, SMOG_MP = 2, SMOG_FX = 0.1, WEATHER_PER_PT = 5, WEATHER_MIN = 15, WEATHER_CAP_LV = 10, WEATHER_SPARE_LV = 5;
+const weatherClearPrice = (lv, pts) => Math.min(WEATHER_CAP_LV * Math.max(1, lv), Math.max(WEATHER_MIN, WEATHER_PER_PT * pts));
+const weatherPrice = lv => WEATHER_SPARE_LV * Math.max(1, lv);
 // Timers: count up from a start date with no check-off. A milestone every X days pays XP and gold; an optional goal pays more
 // and finishes the timer. Rewards are a share of the XP your current level needs, so they stay in proportion as you level.
 // Resetting starts the count over and costs 10% max HP and 25 G. Rewards only: no boss hits, no stats.
@@ -2392,7 +2394,7 @@ function derive(){
     status: M.wonOn || (M.frozen && M.frozen.status === 'won') ? 'won' : M.ranOn || (M.frozen && M.frozen.status === 'ran') ? 'ran' : M.fledOn || (M.frozen && M.frozen.status === 'fled') ? 'fled' : 'now',
     on: M.wonOn || M.ranOn || M.fledOn || (M.frozen ? M.frozen.on : null)});
   const miniList = minis.map(miniOut), miniNow = miniList.length && miniList[miniList.length - 1].status === 'now' ? miniList[miniList.length - 1] : null;
-  return {mini: miniNow, minis: miniList, newMinis, ranToday: (S.runs || []).some(r => r.d === today), sirenLog, smog: {pts: smog, log: smogLog, last: smogLog[yest] || null, on: smogOn(today), price: weatherPrice(levelInfo(xp).level), owned: weatherOwned}, slump: {on: !!slump, from: slump ? slump.from : null, back: slump ? slump.back : 0, emptyRun, bites: slumpBites, taken: slumpTaken, todayActive: actDay.has(today)}, newSlump, habits: HAB, nextRite, ritesWon, pomo: pomoInfo, inn: innNowD(), newInnEnds, innPaid: (() => { const o = innNowD(); return o && (o.paid || o.from) < today ? o : null; })(), innSpent, innFee: innFee(levelInfo(xp).level), statBonus: fxNow.st, bag, newDrops, newResults, newFaints, newLegends: pomoInfo.rolls.filter(r => !r.kept), todoPaid, partial, altar: {keys: keysAll.filter(k => !(S.altarUsed || {})[k.key]).map(k => k.key), all: new Set(keysAll.map(k => k.key)), got: altarInfo.got, wins: altarInfo.wins, won: altarInfo.won}, freezeBefore, points, skills, readyCount, weakLv, today, yest, xp, lv, gold, spent, lost, balance: gold - spent - lost, stat, statLv, fx: fxNow, C, hp, mp, status: statusNow, attacks, lastAttack: attacks[yest] || null, faints, lastFaint: faints.length ? faints[faints.length-1] : null, mood: face, moodKey: moodToday, statusText, streak: lastCheck && lastCheck >= prevActiveD(today) ? streak : 0, checkedToday: lastCheck === today, mystery, tokens, perfectWeeks, castDeficit, fights, cur, drops, weeks, T, activeRunes: runesAt(nowMs, today), activeBuffs: buffsAt(nowMs, today)};
+  return {mini: miniNow, minis: miniList, newMinis, ranToday: (S.runs || []).some(r => r.d === today), sirenLog, smog: {pts: smog, log: smogLog, last: smogLog[yest] || null, on: smogOn(today), price: weatherPrice(levelInfo(xp).level), clear: weatherClearPrice(levelInfo(xp).level, smog), owned: weatherOwned}, slump: {on: !!slump, from: slump ? slump.from : null, back: slump ? slump.back : 0, emptyRun, bites: slumpBites, taken: slumpTaken, todayActive: actDay.has(today)}, newSlump, habits: HAB, nextRite, ritesWon, pomo: pomoInfo, inn: innNowD(), newInnEnds, innPaid: (() => { const o = innNowD(); return o && (o.paid || o.from) < today ? o : null; })(), innSpent, innFee: innFee(levelInfo(xp).level), statBonus: fxNow.st, bag, newDrops, newResults, newFaints, newLegends: pomoInfo.rolls.filter(r => !r.kept), todoPaid, partial, altar: {keys: keysAll.filter(k => !(S.altarUsed || {})[k.key]).map(k => k.key), all: new Set(keysAll.map(k => k.key)), got: altarInfo.got, wins: altarInfo.wins, won: altarInfo.won}, freezeBefore, points, skills, readyCount, weakLv, today, yest, xp, lv, gold, spent, lost, balance: gold - spent - lost, stat, statLv, fx: fxNow, C, hp, mp, status: statusNow, attacks, lastAttack: attacks[yest] || null, faints, lastFaint: faints.length ? faints[faints.length-1] : null, mood: face, moodKey: moodToday, statusText, streak: lastCheck && lastCheck >= prevActiveD(today) ? streak : 0, checkedToday: lastCheck === today, mystery, tokens, perfectWeeks, castDeficit, fights, cur, drops, weeks, T, activeRunes: runesAt(nowMs, today), activeBuffs: buffsAt(nowMs, today)};
 }
 
 /* ---------- persistence ---------- */
@@ -10410,9 +10412,9 @@ function smogNote(){
   const C = D.C, hpN = Math.min(sm.pts, Math.ceil(C.maxHP * SMOG_HP_CAP), Math.max(0, D.hp - 1)), mpN = Math.min(sm.pts * SMOG_MP, Math.ceil(C.maxMP * SMOG_MP_CAP), D.mp);
   const last = sm.last, tier = sm.pts >= 9 ? 'thick' : sm.pts >= 4 ? 'hazy' : 'a little sour';
   const lastTxt = last && !last.shield && (last.hp || last.mp) ? ` Last night −${last.hp} HP, −${last.mp} MP${last.status ? `, ${STATUS[last.status].name.toLowerCase()}` : ''}.` : '';
-  const can = D.balance >= sm.price;
+  const can = D.balance >= sm.clear;
   return `<div class="mystery smognote">${svg('wave',18,2)} <span class="ntext"><b>Toxic air: ${sm.pts}</b>.${lastTxt} Tonight −${hpN} HP, −${mpN} MP. Each finished daily or to-do clears 1.</span>
-    ${sm.owned ? `<button class="btn sm primary" data-weatheruse>Use Weather Machine</button>` : `<button class="btn sm ${weatherArm ? 'danger' : ''}" data-weather ${can ? '' : 'disabled'}>${weatherArm ? `Buy for ${sm.price} G?` : `Weather Machine · ${sm.price} G`}</button>`}</div>`;
+    ${sm.owned ? `<button class="btn sm primary" data-weatheruse>Use Weather Machine</button>` : `<button class="btn sm ${weatherArm ? 'danger' : ''}" data-weather ${can ? '' : 'disabled'}>${weatherArm ? `Clear for ${sm.clear} G?` : `Weather Machine · ${sm.clear} G`}</button>`}</div>`;
 }
 // the Weather Machine in the shop: buy one ahead and keep it in your bag (you can hold one)
 function weatherShopCard(){
@@ -11816,7 +11818,7 @@ function renderQuick(){
   if (qmCtx.kind === 'i'){ const x = tileInfo[qmCtx.key]; if (!x || !x.detail){ qmCtx = null; qm.hidden = true; return; }
     // the item's own buttons (buy, sell, equip…) become menu lines; they keep their data so the usual handlers run
     const tmp = document.createElement('div'); tmp.innerHTML = x.detail.btn || '';
-    const ic = b => b.dataset.sell ? 'send' : b.dataset.buy || b.dataset.buygear || b.dataset.bagbuy ? 'bag' : /take off/i.test(b.textContent) ? 'x' : b.dataset.usepot || b.dataset.userune ? 'bolt' : 'check';
+    const ic = b => b.dataset.sell ? 'send' : b.dataset.buy || b.dataset.buygear || b.dataset.bagbuy || 'weatherbuy' in b.dataset ? 'bag' : /take off/i.test(b.textContent) ? 'x' : b.dataset.usepot || b.dataset.userune ? 'bolt' : 'check';
     const acts = [...tmp.querySelectorAll('button')].map(b => { b.className = 'qmitem' + (b.dataset.sell ? ' danger' : ''); b.setAttribute('role', 'menuitem'); b.innerHTML = svg(ic(b), 19, 2) + `<span>${esc(b.textContent.trim())}</span>`; return b.outerHTML; }).join('');
     const secs = x.detail.secs.filter(Boolean);
     html = `<div class="qmhead">${esc(x.detail.title)}</div>` + (secs.length ? `<div class="qmsecs">${secs.map(v => `<div class="qmsec">${v}</div>`).join('')}</div>` : '') + acts; }
@@ -12190,9 +12192,9 @@ function onClick(e){
   if (el.dataset.tdedel && tdraft){ readTodoFields(); tdraft.steps.splice(parseInt(el.dataset.tdedel), 1); renderTodoEditor(); return; }
   if ('tdcopy' in el.dataset){ readTodoFields(); const t = tdraft, n = Date.now().toString(36); tdraft = {...t, iid: null, isNew: true, done: false, text: (t.text.trim() + ' copy').slice(0, 80), steps: t.steps.map((x, i) => ({id: 's' + n + i, text: x.text}))}; renderTodoEditor(); toast('Copied. Edit it and save to add it.'); return; }
   if ('tddel' in el.dataset){ const {L, it} = todoFind(tdraft.lid, tdraft.iid); if (!todoDeletable(L, it)) return; if (!tdDelArm){ tdDelArm = true; readTodoFields(); renderTodoEditor(); return; } L.items = L.items.filter(x => x.id !== it.id); save(); closeEditor(); render(); toast('Deleted'); return; }
-  if ('weather' in el.dataset){ const sm = D.smog; if (!sm || !sm.pts || D.balance < sm.price) return;
+  if ('weather' in el.dataset){ const sm = D.smog; if (!sm || !sm.pts || D.balance < sm.clear) return;
     if (!weatherArm){ weatherArm = true; render(); return; }
-    weatherArm = false; S.buys.push({kind: 'weather', id: 'weather', ts: Date.now(), g: sm.price, date: D.today}); save(); render(); toast(`The Weather Machine cleared the air. −${sm.price} G`); return; }
+    weatherArm = false; S.buys.push({kind: 'weather', id: 'weather', ts: Date.now(), g: sm.clear, date: D.today}); save(); render(); toast(`The Weather Machine cleared the air. −${sm.clear} G`); return; }
   if ('weatherbuy' in el.dataset){ const sm = D.smog; if (!sm || sm.owned || D.balance < sm.price) return;
     weatherArm = false; S.buys.push({kind: 'weatherbuy', id: 'weather', ts: Date.now(), g: sm.price, date: D.today}); save(); render(); toast(`Weather Machine is in your bag. −${sm.price} G`); return; }
   if ('weatheruse' in el.dataset){ const sm = D.smog; if (!sm || !sm.owned || !sm.pts) return;
