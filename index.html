@@ -930,7 +930,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'ef27803131';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'ae394e2199';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -8868,6 +8868,161 @@ function drawSnooze(cv, f, accent){
   blitBuf(ctx, buf, W, H);
 }
 
+// ---- Brain-Fog Ogre (style guide v1)
+// The Brain-Fog Ogre, 18A "the absent". "Breathes a grey haze that makes simple things feel heavy." Only the lower half is still here: a heavy
+// black robe of banded folds, rooted in its pool. Above the waist it breaks into chunks, then specks, then flat bands of haze in hard grey steps.
+// One ring eye hangs unattached where the head should be, a broken second ring drifting round it; two long-fingered hands hang at the sides,
+// attached to nothing. Once a loop it exhales: a thick slab of haze rolls out and veils the eye, the hands sink, the body sags. Pop: eye, pool.
+function drawFog(cv, f, accent){
+  const LOOP = 64, P = (f % LOOP) / LOOP, TAU = Math.PI * 2; f = f % LOOP;
+  const W = 128, H = 104, A = POP_RAMPS[accent] || POP_RAMPS.blush, D = !!drawFog.dead;
+  const K = '#121110', G1 = '#211f1d', G2 = '#2e2a27', G3 = '#3f3a36', G4 = '#57514b', G5 = '#756e66';
+  if (!drawFog.sc){ drawFog.sc = document.createElement('canvas'); drawFog.sc.width = W; drawFog.sc.height = H; }
+  const sc = drawFog.sc, sx = sc.getContext('2d', {willReadFrequently: true}), buf = new Array(W * H).fill(null);
+  let XF = null;
+  const L = shapeLayer(sx, W, H, buf, () => XF);
+  const ell = (x, y, rx, ry, rot = 0) => c => { c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); c.fill(); };
+  const path = pts => c => { c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.closePath(); c.fill(); };
+  const strokeP = (pts, w) => c => { c.lineWidth = w; c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.stroke(); };
+  const rect = (x, y, w, h) => c => { c.rect(x, y, w, h); c.fill(); };
+  const R = (c, x, y, w = 1, h = 1) => { if (w > 0 && h > 0) L(c, rect(Math.round(x), Math.round(y), Math.round(w), Math.round(h))); };
+  const rot = (a, cx, cy) => { const cs = Math.cos(a), sn = Math.sin(a); return [cs, sn, -sn, cs, cx - cs * cx + sn * cy, cy - sn * cx - cs * cy]; };
+  const arc = (c, x, y, rx, ry, w, a0, a1) => L(c, k => { k.lineWidth = w; k.ellipse(x, y, rx, ry, 0, a0, a1); k.stroke(); });
+  const greyX = (x, y) => { for (let i = 0; i < 5; i++) for (let j = 0; j < 5; j++) if (Math.abs(i - j) <= 1 || Math.abs(i + j - 4) <= 1){ if ((i === 2 && (j === 0 || j === 4)) || (j === 2 && (i === 0 || i === 4))) continue; L(G4, rect(x + i, y + j, 1, 1)); } };
+  const ss = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  let seed = 918; const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+  const cx = 64;
+
+  // ------------------------------------------------------------------ the exhale, in loop phase
+  const env = D ? 0 : ss(0.44, 0.56, P) * (1 - ss(0.74, 0.92, P));              // sag and weight: in over 0.44..0.56, held, out by 0.92
+  const inh = D ? 0 : ss(0.30, 0.42, P) * (1 - ss(0.42, 0.48, P));              // a small draw-in first
+  const sag = Math.round(env * 3 - inh * 1.4);
+  const sway = D ? 0 : Math.sin(TAU * P);
+  const TOP = 56 + sag, BASE = 93;
+
+  // ------------------------------------------------------------------ the pool
+  if (D){ L(G1, ell(cx, 96, 30, 3)); }
+  else { L(A[0], ell(cx, 95, 39, 4.4)); L(A[1], ell(cx, 95, 34 + env * 2, 3)); L(A[2], ell(cx, 95.5, 27 + env * 3, 1.6));
+    R(A[0], cx - 45, 95, 3, 1); R(A[0], cx + 43, 96, 2, 1); R(A[1], cx + 48, 95, 1, 1); R(A[1], cx - 49, 96, 1, 1); }
+
+  // ------------------------------------------------------------------ fog: soft wisps in ordered dither, anchored to the screen grid so it never shimmers.
+  // Each wisp is a long lens with uneven tapered ends and wavy edges; dense in its core, thinning to sparse dither at its rim. Everything shows through.
+  const LV = [0.125, 0.25, 0.5, 0.75, 0.9];
+  const wisp = (xc, yc, a, b, ci, tE, tC, n, ph, amp, skew = 0) => {
+    const xo = xc + Math.sin(TAU * P * n + ph) * amp, wv = D ? 0 : TAU * P;
+    for (let x = Math.max(3, Math.floor(xo - a)); x <= Math.min(124, Math.ceil(xo + a)); x++){
+      let u = (x - xo) / a; u = u + skew * (1 - u * u) * 0.5; const e = Math.pow(Math.max(0, 1 - Math.pow(Math.abs(u), 1.7)), 0.75); if (e <= 0) continue;
+      const ym = yc + Math.sin(x * 0.07 + ph * 2 + wv) * 1.6, up = b * e * (0.62 + 0.38 * Math.sin(x * 0.17 + ph * 3 + wv * n) + 0.14 * Math.sin(x * 0.43 + ph)), dn = b * e * (0.5 + 0.3 * Math.sin(x * 0.13 + ph * 5 - wv));
+      for (let y = Math.max(2, Math.floor(ym - up)); y <= Math.min(101, Math.ceil(ym + dn)); y++){
+        const v = y < ym ? (ym - y) / Math.max(0.5, up) : (y - ym) / Math.max(0.5, dn); if (v > 1) continue;
+        const d = (1 - v) * Math.min(1, e * 1.5), k = d > 0.5 ? ci : d > 0.22 ? ci - 1 : ci - 2; if (k < 0) continue;
+        if ((BAY8[y & 7][x & 7] + 0.5) / 64 < LV[k]) buf[y * W + x] = (k === ci && d > 0.5) ? tC : tE; } } };
+  const WISPS = [   // x, y, half-length, half-thickness, core density, rim tone, core tone, cycles, phase, drift, skew, layer (0 behind the figure, 1 in front)
+    [44, 46, 36, 9, 2, G3, G4, 1, 0.0, 9, 0.4, 0], [86, 36, 32, 8, 2, G3, G4, 1, 1.7, 8, -0.5, 0], [38, 26, 32, 9, 2, G3, G4, 1, 3.1, 10, 0.3, 0],
+    [90, 14, 28, 8, 2, G3, G4, 2, 4.4, 5, -0.3, 0], [36, 10, 26, 7, 2, G3, G4, 1, 2.2, 8, 0.5, 0], [64, 64, 42, 9, 2, G3, G3, 1, 5.3, 6, 0, 0],
+    [72, 18, 32, 7, 2, G4, G5, 1, 0.9, 7, 0.4, 1], [48, 41, 34, 8, 2, G4, G5, 1, 4.0, 8, -0.4, 1], [30, 61, 24, 6, 2, G4, G4, 2, 5.8, 4, 0.5, 1],
+    [98, 55, 24, 6, 2, G4, G4, 1, 2.6, 6, -0.5, 1], [66, 76, 32, 7, 2, G4, G4, 1, 1.2, 9, 0.2, 1]];
+  const hazeLayer = l => { for (const [x, y, a, b, ci, tE, tC, n, ph, amp, sk, ly] of WISPS) if (ly === l) wisp(x, y, a, b, ci, tE, tC, n, ph, amp, sk); };
+
+  if (!D){
+    hazeLayer(0);
+    // ---------------------------------------------------------------- the ring eye: drifting, lagging, unattached
+    const ex = cx + Math.round(Math.sin(TAU * P - 1.1) * 3), ey = 22 + Math.round(Math.sin(TAU * 2 * P - 0.7) * 1.2 + env * 1.5);
+    const veil = ss(0.50, 0.57, P) * (1 - ss(0.68, 0.80, P));                      // how far the slab hides the eye
+    {
+      const dim = veil > 0.4 ? 1 : 0, gx = ex - Math.round(Math.sin(TAU * P - 0.2) * 3), gy = ey + Math.round(Math.cos(TAU * P - 0.2) * 2);
+      const ra = TAU * P / 3;                                                     // the second ring: three broken arcs, drifting off-centre, a third of a turn a loop
+      for (let i = 0; i < 3; i++){ const a0 = ra + i * TAU / 3; arc(dim ? A[0] : A[1], gx + 0.5, gy + 0.5, 12.5, 12.5, 1.3, a0, a0 + 1.25); if (!dim) arc(A[2], gx + 0.5, gy + 0.5, 12.5, 12.5, 1.3, a0 + 0.25, a0 + 0.7); }
+      for (let i = 0; i < 3; i++){ const a = ra + i * TAU / 3 + 1.7; R(A[1], gx + Math.cos(a) * 12.5, gy + Math.sin(a) * 12.5, 2, 2); }
+      L(A[0], ell(ex + 0.5, ey + 0.5, 9.5, 9.5)); L(A[1 - 0], ell(ex + 0.5, ey + 0.5, 8.5, 8.5)); if (!dim){ L(A[2], ell(ex + 0.5, ey + 0.5, 7.4, 7.4)); arc(A[3], ex + 0.5, ey + 0.5, 6, 6, 1.2, 0, TAU); arc(A[4], ex + 0.5, ey + 0.5, 6, 6, 1.2, Math.PI * 1.1, Math.PI * 1.45); }
+      L(K, ell(ex + 0.5, ey + 0.5, 4.6, 4.6)); if (!dim) R(A[0], ex, ey, 1, 1);
+      const dt = (P * 2) % 1; R(A[1], ex, ey + 11, 1, 3); R(dt < 0.6 ? A[1] : A[0], ex, ey + 15 + dt * 7, 1, dt < 0.5 ? 2 : 1);     // it weeps a slow drip into nothing
+    }
+  } else {
+    // beaten: only a few thin, sparse wisps are left, low over the floor
+    wisp(36, 78, 28, 5, 2, G4, G4, 1, 0.5, 1, 0.4); wisp(94, 70, 24, 5, 2, G4, G4, 1, 2.0, 1, -0.4); wisp(68, 58, 20, 4, 1, G4, G4, 1, 4.0, 1, 0.2);
+  }
+
+  // ------------------------------------------------------------------ specks: chunks tear off the top edge, rise, thin and fade
+  if (!D){
+    for (let i = 0; i < 54; i++){ const n = 1 + (i % 2), ph = rnd(), sp = rnd() * 2 - 1, wob = rnd() * 6.28, t = (P * n + ph) % 1, rise = Math.pow(t, 1.25);
+      const y = TOP - 4 - rise * 46, x = cx + sp * (11 + rise * 20) + Math.sin(TAU * P + wob) * (1 + rise * 2);
+      const s = t < 0.2 ? 3 : t < 0.5 ? 2 : 1;
+      if (t < 0.6) R(K, x - s / 2, y, s, s);
+      else { const gx = (Math.round(x) >> 1) << 1, gy = (Math.round(y) >> 1) << 1; R(t < 0.8 ? G4 : G3, gx, gy, 1, 1); if (t < 0.72) R(G4, gx + 2, gy + 2, 1, 1); } }   // late specks land on the sparse dither lattice
+  }
+
+  // ------------------------------------------------------------------ the lower half: a heavy robe of banded folds, rooted in the pool
+  const body = () => { const t = TOP, bw = 14 + Math.round(env * 1);
+    L(K, path([[cx - bw, t], [cx + bw, t], [cx + bw + 2, t + 14, cx + 22, 84], [cx + 25, 88, cx + 28, BASE], [cx - 28, BASE], [cx - 25, 88, cx - 22, 84], [cx - bw - 2, t + 14, cx - bw, t]]));
+    // folds: lit faces narrowing upward, in hard bands
+    for (const [x0, x1, w, top] of [[-17, -9, 5, 8], [-5, -3, 4, 14], [8, 5, 5, 6], [19, 11, 3, 16]]){
+      L(G1, path([[cx + x0, 90], [cx + x0 + w, 90], [cx + x1 + 1.4, t + top], [cx + x1, t + top]]));
+      L(G3, strokeP([[cx + x0 + 0.5, 89], [cx + (x0 + x1) / 2 + 0.3, (89 + t + top) / 2 + 6]], 1)); }
+    // the lit rim down the left edge, the hem bands
+    L(G4, strokeP([[cx - bw + 0.5, t + 3], [cx - bw - 1.2, t + 14, cx - 18.5, 76]], 1)); L(G3, strokeP([[cx - 18.5, 76], [cx - 21, 83], [cx - 23.5, 88]], 1));
+    R(K, cx - 24, 80, 48, 2); R(G1, cx - 22, 82, 44, 1); R(K, cx - 27, 87, 54, 2); R(G3, cx - 26, 86, 14, 1); R(G1, cx - 12, 86, 36, 1);
+    // roots: the hem splits into toes that go down into the pool
+    for (const [dx, w, l] of [[-30, 5, 3], [-19, 6, 5], [-6, 7, 4], [6, 6, 5], [17, 6, 4], [27, 4, 3]]){ R(K, cx + dx, 89, w, l + 1); R(K, cx + dx + 1, 90 + l, w - 2, 2); R(G3, cx + dx, 89, 1, l); }
+    if (!D){ for (const [dx, w] of [[-31, 7], [-20, 8], [-7, 9], [5, 8], [16, 8], [26, 6]]) R(A[2], cx + dx, 95, w, 1); R(A[4], cx - 5, 95, 4, 1); R(A[3], cx + 7, 96, 5, 1); R(A[3], cx - 18, 96, 4, 1); }
+    // the top edge breaking up: ragged columns, then loose chunks
+    const hs = [2, 5, 3, 9, 6, 12, 7, 10, 4, 8, 3, 6, 2, 1];
+    for (let i = 0; i < 14; i++){ const x = cx - bw + i * 2, h = hs[i] + (D ? 0 : Math.round(Math.sin(TAU * P * 2 + i * 1.9) * 1)); if (x + 2 > cx + bw) break; R(K, x, t - h, 2, h + 1); if (i % 3 === 1) R(G3, x, t - h, 1, 1); if (i % 2 === 1) R(K, x, t - h - 3 - (i % 3), 2, 2); }
+  };
+
+  // ------------------------------------------------------------------ a hand: wrist stub, palm, four long jointed fingers and a thumb. s = side.
+  // Drawn only in whole-pixel rects so it stays crisp. flat = lying on the floor, fingers pointing outward (side s).
+  const hand = (wx, wy, s, lag, flat) => {
+    const h = (c, u, v, w, hh) => flat ? R(c, s > 0 ? wx + v : wx - v - hh + 1, wy + u, hh, w) : R(c, wx + u, wy + v, w, hh);
+    h(K, -2, 0, 5, 5); h(K, -1, -3, 2, 2); h(K, 1, -7, 1, 2); h(G1, -1, -11, 1, 1);                         // the wrist stub, coming apart upward
+    h(K, -4, 4, 8, 1); h(K, -6, 5, 12, 9);                                             // the palm, widening in steps
+    h(G4, -4, 4, 4, 1); h(G4, -6, 5, 1, 8); h(G3, -5, 5, 4, 1); h(G3, -2, 0, 1, 4); h(G1, -4, 11, 9, 1); if (flat){ h(G4, -6, 5, 1, 9); h(G3, -6, 0, 1, 5); h(G3, 5, 5, 1, 9); }
+    const fl = (s < 0 ? [10, 15, 16, 12] : [12, 16, 15, 10]).map(v => flat ? Math.round(v * 0.75) : v);
+    for (let i = 0; i < 4; i++){ const x = -6 + i * 3 + (i > 1 ? 1 : 0), l = fl[i], h1 = Math.round(l * 0.45), h2 = Math.round(l * 0.8), y = 14, l1 = lag, l2 = lag * 2;
+      const BC = flat ? G4 : K; h(K, x, y, 2, h1); if (flat) h(G3, x, y, 1, h1); h(BC, x + l1 + (i > 1 ? 1 : 0), y + h1, 1, l - h1); h(BC, x + l2 + (i > 1 ? 1 : 0), y + h2 + 1, 1, l - h2 - 1);     // a thick first joint, then thin bone
+      h(G1, x, y + h1 - 1, 2, 1); if (!flat) h(i === 0 ? G4 : G3, x, y, 1, h1 - 1); }
+    const tu = s < 0 ? 6 : -8; h(K, tu, 9, 2, 5); h(K, tu + (s < 0 ? 0 : 0), 13, 2, 4); h(K, tu + (s < 0 ? 0 : 1), 17, 1, 3); h(G1, tu, 13, 2, 1);          // the thumb, on the inner side
+  };
+
+  if (!D){
+    body();
+    const sink = Math.round(env * 4);
+    for (const s of [-1, 1]){ const ph = s > 0 ? 0.6 : 0, wx = cx + s * 35 + (s > 0 ? 1 : 0) + Math.round(Math.sin(TAU * P - 0.9 - ph) * 1.2), wy = 47 + sink + Math.round(Math.sin(TAU * P * 2 + ph * 2) * 0.8 * (1 - env));
+      hand(wx, wy, s, Math.round(Math.sin(TAU * P - 2.0 - ph) * 1), false); }
+
+    // ---------------------------------------------------------------- the exhale: a thick slab of haze rolls out across the tile and over the eye, then thins to strata
+    hazeLayer(1);
+    if (P > 0.44 && P < 0.94){
+      const grow = ss(0.44, 0.58, P), thin = ss(0.68, 0.94, P), st = grow * (1 - thin), ci = st > 0.85 ? 4 : st > 0.6 ? 3 : st > 0.33 ? 2 : st > 0.1 ? 1 : 0;
+      wisp(cx, 40 - grow * 17 + thin * 2, 12 + grow * 50, 4 + grow * 11 - thin * 4, ci, G4, G4, 1, 0.3, 3, 0.15);
+      if (ci >= 3) wisp(cx - 6, 20 + thin * 2, 44, 5, 1, G5, G5, 1, 2.9, 5, -0.3);                 // a paler crest riding the bank
+    }
+    // debris
+    for (const [x, y, s, n, ph] of [[12, 62, 2, 1, 0.4], [116, 58, 1, 2, 2.1], [18, 82, 1, 1, 3.3], [110, 80, 2, 1, 5.0], [8, 30, 1, 1, 1.5], [120, 34, 1, 2, 4.2]]) R(K, x + Math.round(Math.sin(TAU * P * n + ph) * 2), y + Math.round(Math.cos(TAU * P * n + ph) * 1.5), s, s);
+  } else {
+    // ---------------------------------------------------------------- beaten: the robe has slumped to a heap, the hands lie on the floor, the eye has dropped in front
+    const sw = Math.round(Math.sin(TAU * P) * 0.5);
+    L(K, path([[42, 93], [44, 84, 48, 78], [52, 70, 58, 71], [66, 72, 71, 69], [77, 67, 81, 78], [85, 86, 87, 93]]));
+    for (const [x0, x1, w, y1] of [[47, 53, 4, 76], [56, 60, 4, 76], [70, 71, 4, 74], [80, 78, 3, 79]]){ L(G1, path([[x0, 91], [x0 + w, 91], [x1 + 1.4, y1], [x1, y1]])); L(G3, strokeP([[x0 + 0.5, 90], [(x0 + x1) / 2, (90 + y1) / 2 + 4]], 1)); }
+    L(G4, strokeP([[49.5, 77], [52.5, 71.5], [58, 71.5]], 1)); L(G3, strokeP([[44, 88], [45.5, 83], [48.5, 78]], 1));
+    R(K, 42, 87, 46, 2); R(G1, 45, 86, 40, 1); R(G3, 44, 86, 8, 1);
+    for (const [x, h] of [[52, 3], [56, 2], [62, 4], [74, 3], [78, 2]]) R(K, x, 71 - h + (x > 70 ? -2 : 1), 2, h + 2);
+    R(K, 66, 62 + sw, 2, 2); R(K, 58, 56, 1, 1); R(G1, 72, 50, 1, 1);
+    // hands flat on the floor, fingers outward
+    hand(47, 94, -1, 0, true); hand(82, 95, 1, 0, true);
+    // the eye, dropped: a grey ring with the X in it, bits of the second ring beside it
+    const ex = 64, ey = 91;
+    L(K, ell(ex + 0.5, ey + 0.5, 9.5, 9.5)); L(G3, ell(ex + 0.5, ey + 0.5, 8.5, 8.5)); arc(G4, ex + 0.5, ey + 0.5, 6.4, 6.4, 1.2, 0, TAU); arc(G5, ex + 0.5, ey + 0.5, 6.4, 6.4, 1.2, Math.PI * 1.1, Math.PI * 1.45);
+    L(K, ell(ex + 0.5, ey + 0.5, 4.8, 4.8)); greyX(ex - 2, ey - 2);
+    arc(G3, 44, 99, 8, 2, 1, Math.PI * 1.1, Math.PI * 1.8); arc(G3, 86, 100, 7, 2, 1, Math.PI * 1.2, Math.PI * 1.9); R(G3, 76, 101, 2, 1);
+    drawFog.deadHead = [64, 63];
+  }
+  if (!drawFog.deadHead) drawFog.deadHead = [64, 63];
+
+  const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
+  blitBuf(ctx, buf, W, H);
+}
+
 const NEW_ART = {
   giant: Object.assign((cv, f, acc, dead) => { drawFogColossus.dead = dead; drawFogColossus(cv, f, acc); }, {ownDead: true, starY: 2, starX: 64, starRX: 14, starRY: 3}),
   hunch: Object.assign((cv, f, acc, dead) => { drawHunch.dead = dead; drawHunch(cv, f, acc); }, {ownDead: true, starY: 60, starX: 44, starRX: 15, starRY: 4}),
@@ -8894,6 +9049,7 @@ const NEW_ART = {
   troll: Object.assign((cv, f, acc, dead) => { drawArch.dead = dead; drawArch(cv, f, acc); }, {ownDead: true, starY: 56, starX: 42, starRX: 12, starRY: 3}),
   keyhole: Object.assign((cv, f, acc, dead) => { drawKeyhole.dead = dead; drawKeyhole(cv, f, acc); }, {ownDead: true, starY: 21, starX: 88, starRX: 12, starRY: 3}),
   kobold: Object.assign((cv, f, acc, dead) => { drawSnooze.dead = dead; drawSnooze(cv, f, acc); }, {ownDead: true, starY: 51, starX: 49, starRX: 12, starRY: 3}),
+  ogre: Object.assign((cv, f, acc, dead) => { drawFog.dead = dead; drawFog(cv, f, acc); }, {ownDead: true, starY: 63, starX: 64, starRX: 12, starRY: 3}),
   golem: Object.assign((cv, f, acc, dead) => { Object.assign(drawLaundryGolem, {pose: 'hips', hanger: 'light', basketLight: true, sticker: false, aura: false, dead}); drawLaundryGolem(cv, f, acc); }, {ownDead: true, starY: 13}),
   gremlin: Object.assign((cv, f, acc, dead) => { drawKneeGremlin.dead = dead; drawKneeGremlin(cv, f, acc); }, {ownDead: true, starY: 50, starX: 62, starRX: 9, starRY: 3, starSmall: true}),
   kraken: Object.assign((cv, f, acc, dead) => { drawCouchKraken.dead = dead; drawCouchKraken(cv, f, acc); }, {ownDead: true, starY: 34}),   // it slumps by itself, so the TV static isn't squashed
