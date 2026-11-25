@@ -930,7 +930,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'cd4392bec9';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'f2386f8065';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -6360,11 +6360,39 @@ function drawGobbler(cv, f, accent){
   const LOOP = 64, P = (f % LOOP) / LOOP, TAU = Math.PI * 2, T = P * LOOP;                          // one seamless 6.4 s loop: every cycle a whole number of turns of P
   const W = 128, H = 104, A = POP_RAMPS[accent] || POP_RAMPS.blush, D = !!drawGobbler.dead;
   const K = '#121110', G1 = '#211f1d', G2 = '#2e2a27', G3 = '#3f3a36', G4 = '#57514b', G5 = '#756e66';
-  const BD = '#35312d', B0 = '#4a4540', B2 = '#615b54', B3 = '#8e867b', BW = '#c9c2b6';             // light ramp: steel, beak, claws
+  const BD = '#35312d', B0 = '#4a4540', B2 = '#615b54', B3 = '#8e867b', BW = '#c9c2b6', PALE = '#b8b0a2';             // light ramp: steel, beak, claws
   if (!drawGobbler.sc){ drawGobbler.sc = document.createElement('canvas'); drawGobbler.sc.width = W; drawGobbler.sc.height = H; }
   const sc = drawGobbler.sc, sx = sc.getContext('2d', {willReadFrequently: true}), buf = new Array(W * H).fill(null);
   let XF = null;
-  const L = shapeLayer(sx, W, H, buf, () => XF);
+  // a local shape layer: the same rasteriser as the shared shapeLayer (same canvas calls, same alpha threshold), but it reads back only the
+  // shape's bounding box even under a transform (the shared one reads the whole canvas for every transformed shape, which was most of the frame cost)
+  const L = (() => { const E = {x0: 0, y0: 0, x1: 0, y1: 0, lw: 1};
+    const ext = (x, y, r = 0) => { if (x - r < E.x0) E.x0 = x - r; if (x + r > E.x1) E.x1 = x + r; if (y - r < E.y0) E.y0 = y - r; if (y + r > E.y1) E.y1 = y + r; };
+    const c = { set lineWidth(v){ if (v > E.lw) E.lw = v; sx.lineWidth = v; }, get lineWidth(){ return sx.lineWidth; },
+      moveTo(x, y){ ext(x, y); sx.moveTo(x, y); }, lineTo(x, y){ ext(x, y); sx.lineTo(x, y); },
+      quadraticCurveTo(a, b, x, y){ ext(a, b); ext(x, y); sx.quadraticCurveTo(a, b, x, y); },
+      bezierCurveTo(a, b, e, g, x, y){ ext(a, b); ext(e, g); ext(x, y); sx.bezierCurveTo(a, b, e, g, x, y); },
+      ellipse(x, y, rx, ry, ...r){ ext(x, y, Math.max(rx, ry)); sx.ellipse(x, y, rx, ry, ...r); },
+      arc(x, y, r, ...a){ ext(x, y, r); sx.arc(x, y, r, ...a); },
+      rect(x, y, w, h){ ext(x, y); ext(x + w, y + h); sx.rect(x, y, w, h); },
+      closePath(){ sx.closePath(); }, fill(){ sx.fill(); }, stroke(){ sx.stroke(); } };
+    let prev = null;
+    return (color, fn, th = 120) => {
+      sx.setTransform(1, 0, 0, 1, 0, 0); if (prev) sx.clearRect(prev[0], prev[1], prev[2], prev[3]); else sx.clearRect(0, 0, W, H);
+      const xf = XF; if (xf) sx.setTransform(xf[0], xf[1], xf[2], xf[3], xf[4], xf[5]);
+      sx.fillStyle = '#fff'; sx.strokeStyle = '#fff'; sx.lineCap = 'round'; sx.lineJoin = 'round'; sx.lineWidth = 1;
+      E.x0 = Infinity; E.y0 = Infinity; E.x1 = -Infinity; E.y1 = -Infinity; E.lw = 1;
+      sx.beginPath(); fn(c);
+      if (!isFinite(E.x0)){ prev = null; return; }
+      let ax = E.x0, ay = E.y0, bx = E.x1, by = E.y1, pd = E.lw / 2 + 2;
+      if (xf){ const xs = [xf[0] * ax + xf[2] * ay, xf[0] * bx + xf[2] * ay, xf[0] * ax + xf[2] * by, xf[0] * bx + xf[2] * by], ys = [xf[1] * ax + xf[3] * ay, xf[1] * bx + xf[3] * ay, xf[1] * ax + xf[3] * by, xf[1] * bx + xf[3] * by];
+        ax = Math.min(...xs) + xf[4]; bx = Math.max(...xs) + xf[4]; ay = Math.min(...ys) + xf[5]; by = Math.max(...ys) + xf[5]; pd = E.lw / 2 * Math.max(1, Math.hypot(xf[0], xf[1]), Math.hypot(xf[2], xf[3])) + 2; }
+      const x0 = Math.max(0, Math.floor(ax - pd)), y0 = Math.max(0, Math.floor(ay - pd)), x1 = Math.min(W, Math.ceil(bx + pd)), y1 = Math.min(H, Math.ceil(by + pd));
+      const w = x1 - x0, h = y1 - y0; if (w <= 0 || h <= 0){ prev = null; return; }
+      prev = [x0, y0, w, h];
+      const d = sx.getImageData(x0, y0, w, h).data;
+      for (let yy = 0; yy < h; yy++){ const row = (y0 + yy) * W + x0, ri = yy * w * 4 + 3; for (let xx = 0; xx < w; xx++) if (d[ri + xx * 4] >= th) buf[row + xx] = color; }
+    }; })();
   const ell = (x, y, rx, ry, rot = 0) => c => { c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); c.fill(); };
   const path = pts => c => { c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.closePath(); c.fill(); };
   const strokeP = (pts, w) => c => { c.lineWidth = w; c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.stroke(); };
@@ -6378,7 +6406,7 @@ function drawGobbler(cv, f, accent){
   const scl = (s, cx, cy) => [s, 0, 0, s, cx - s * cx, cy - s * cy];
   const mul = (m, n) => [m[0] * n[0] + m[2] * n[1], m[1] * n[0] + m[3] * n[1], m[0] * n[2] + m[2] * n[3], m[1] * n[2] + m[3] * n[3], m[0] * n[4] + m[2] * n[5] + m[4], m[1] * n[4] + m[3] * n[5] + m[5]];
   const app = (m, x, y) => m ? [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]] : [x, y];
-  const px = (x, y, c) => { const [qx, qy] = app(XF, x, y), m = XF; XF = null; L(c, cc => { cc.rect(Math.round(qx), Math.round(qy), 1, 1); cc.fill(); }); XF = m; };   // single pixels land pixel-exact even under a transform
+  const px = (x, y, c) => { const [qx, qy] = app(XF, x, y), ix = Math.round(qx), iy = Math.round(qy); if (ix >= 0 && ix < W && iy >= 0 && iy < H) buf[iy * W + ix] = c; };   // single pixels land pixel-exact even under a transform (written straight into the buffer)
   const sm = u => u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u);
   const isRot = m => m && Math.abs(m[1]) > 1e-3;
 
@@ -6399,7 +6427,12 @@ function drawGobbler(cv, f, accent){
   if (D){ L(G1, ell(66, 97, 34, 3)); }
   else { const pl = br * 1.4 + thrust * 4; L(A[0], ell(64, 96, 31 + pl * 0.6, 3.4)); L(A[1], ell(64, 96, 20 + pl, 2.2)); L(A[2], ell(64, 96, 9 + pl * 0.8, 1.1));
     if (thrust > 0.5) L(A[3], ell(64, 96, 4, 0.6));
-    for (const [x, y, w] of [[25, 95, 3], [100, 96, 2], [33, 97, 1]]) L(A[0], rect(x, y, w, 1)); }
+    for (const [x, y, w] of [[25, 95, 3], [100, 96, 2], [33, 97, 1]]) L(A[0], rect(x, y, w, 1));
+    // polish: the pool finished: a hot crescent at the front with a glint sliding along it, a lit back rim, a broken outer ring; it swells with the breath and the gobble
+    L(A[3], c => { c.lineWidth = 1; c.ellipse(64, 96.4, 14.9 + pl * 0.7, 2.2, 0, Math.PI * 0.2, Math.PI * 0.62); c.stroke(); });
+    L(A[2], c => { c.lineWidth = 1; c.ellipse(64, 96, 19.2 + pl * 0.7, 2.8, 0, Math.PI * 1.15, Math.PI * 1.5); c.stroke(); });
+    const tw = Math.floor(P * 8) % 4; for (let i = 0; i < 3; i++) px(67 + tw + i, 98, A[4]);
+    for (const [dx, dy, w] of [[-29, 0, 3], [27, 1, 3], [-33, 1, 1], [32, 0, 1], [-14, 4, 2], [12, 5, 2], [0, 5, 1]]) for (let i = 0; i < w; i++) px(64 + dx + i + Math.round(Math.sign(dx) * pl * 0.5), 96 + dy, dy > 3 ? A[1] : A[0]); }
 
   // ------------------------------------------------------------------ the fan: a halo of steel-tipped blade feathers
   // a feather point: radius r along angle a (+ bend that grows toward the tip), lateral offset w, then squashed in y about the centre
@@ -6475,7 +6508,8 @@ function drawGobbler(cv, f, accent){
       L(K, strokeP([[lx, 92.4], [ex, ey + (dx ? 0 : 0.6)]], 2.2));
       const cxw = ex + (dx > 0 ? 1.4 : dx < 0 ? -1.4 : 0), cy = ey + (dx ? 0.6 : 1.4);
       L(B2, strokeP([[ex, ey], [cxw, cy]], 1.1)); px(cxw + (dx > 0 ? 0.6 : dx < 0 ? -0.6 : 0), cy + 0.6, B3); }
-    px(lx + (sd > 0 ? 2 : -3), 94, G3); }
+    px(lx + (sd > 0 ? 2 : -3), 94, G3);
+    px(lx - 5, 96, G5); px(lx + 1, 96, G5); }                                                           // polish: a glint on two talons of each foot
   // the scaled breast: overlapping plates, lit upper-left in a hard band, dark lower-right
   const by = 64, bry = 18 + (D ? 0 : br * 0.5);
   L(K, ell(64, by, 17.4, bry));
@@ -6495,7 +6529,9 @@ function drawGobbler(cv, f, accent){
     L(glow, strokeP([[58.6 + ox, 57.2], [60.4 + ox, 62, 62.8 + ox, 64.8, 64 + ox, 65.8]], 4.2)); L(glow, strokeP([[69.4 + ox, 57.2], [67.6 + ox, 62, 65.2 + ox, 64.8, 64 + ox, 65.8]], 4.2)); L(glow, ell(64 + ox, 66.2, 3.4, 3));
     L(A[2], strokeP([[58.8 + ox, 57.6], [60.4 + ox, 62, 62.8 + ox, 64.6, 64 + ox, 65.6]], 2.2)); L(A[2], strokeP([[69.2 + ox, 57.6], [67.6 + ox, 62, 65.2 + ox, 64.6, 64 + ox, 65.6]], 2.2));
     L(A[3], strokeP([[58.4 + ox, 57.4], [59.8 + ox, 61.6, 62 + ox, 64.4]], 1)); L(A[3], ell(64 + ox, 66, 1.9, 1.6));
-    px(63 + ox, 65.4, A[4]); px(58.6 + ox, 57.4, A[4]); }
+    px(63 + ox, 65.4, A[4]); px(58.6 + ox, 57.4, A[4]);
+    px(64 + ox, 65.4, A[4]); px(65 + ox, 65.4, A[4]);                                                  // polish: the knuckle white-hot, and a halo thrown on the breast: a tick beside each tip, a bar underneath
+    for (let k = 0; k < 3; k++){ px(56 + ox, 55 + k, glow); px(72 + ox, 55 + k, glow); } for (let k = 0; k < 4; k++) px(62 + k + ox, 70, glow); }
   }
   const NB = app(BM, 64, 50), NB2 = app(BM, 64, 44);                                                   // where the neck leaves the body
   XF = null;
@@ -6518,6 +6554,13 @@ function drawGobbler(cv, f, accent){
     for (const [x, y, rx, ry] of pos) L(W0, ell(x, y, rx, ry));                                         // A0: the shadowed underside of every lump
     for (const [x, y, rx, ry] of pos) L(W1, ell(x - rx * 0.08, y - ry * 0.22, rx * 0.86, ry * 0.76));   // A1: the body
     pos.forEach(([x, y, rx, ry], k) => { if (k < 3){ L(W2, ell(x - rx * 0.22, y - ry * 0.34, rx * 0.56, ry * 0.46)); L(W3, ell(x - rx * 0.4, y - ry * 0.42, rx * 0.26, ry * 0.24)); } });   // A2 crown, A3 knob
+    // polish: a wet streak down the big lump with a bead at its foot, another on the third; a drip forms under the last lump and falls, twice a loop
+    { const [x0, y0] = pos[0], [x2, y2] = pos[2], [x3, y3, , r3] = pos[3], rx = Math.round;
+      if (!D){ for (let k = -1; k <= 2; k++) px(rx(x0) - 3, rx(y0) + k, W3); px(rx(x0) - 3, rx(y0) + 3, A[4]); }
+      for (let k = -1; k <= 1; k++) px(rx(x2) - 1, rx(y2) + k, W3);
+      if (!D){ const u = (P * 2 + 0.2) % 1, by0 = rx(y3 + r3);
+        if (u < 0.55){ px(rx(x3), by0, A[1]); if (u > 0.18) px(rx(x3), by0 + 1, A[1]); if (u > 0.4) px(rx(x3), by0 + 2, A[1]); }      // it swells
+        else { const fy = by0 + 2 + Math.round((u - 0.55) / 0.45 * 44); if (fy < 95) px(rx(x3), fy, u < 0.75 ? A[1] : A[0]); } } }   // it lets go and falls to the pool
     if (D) drawGobbler.deadHead = (() => { const h = app(HM, 64, 22); return [Math.round(h[0]), Math.round(h[1]) - 14]; })(); }
 
   XF = HM;
@@ -6539,9 +6582,11 @@ function drawGobbler(cv, f, accent){
         if (a === 2){ P1(-2, dy, A[0]); P1(2, dy, A[0]); for (let dx = -1; dx <= 1; dx++) P1(dx, dy, A[2]); }
         if (a <= 1){ P1(-3, dy, A[0]); P1(3, dy, A[0]); P1(-2, dy, A[2]); P1(2, dy, A[2]); for (let dx = -1; dx <= 1; dx++) P1(dx, dy, K); } }
       P1(0, 0, A[3]); P1(-1, -2, A[4]);
+      for (let dx = -1; dx <= 1; dx++) P1(dx, 2, A[0]);                                                  // polish: the iris ring banded, its underside in shadow
       if (blink) for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) P1(dx, dy, dy === 1 && Math.abs(dx) < 3 ? G3 : K);
       for (let dx = -4; dx <= 4; dx++){ const t = (-sd * dx + 4) / 8, top = -7 + Math.round(t * 2.4), bot = -4 + Math.round(t * 2.4);   // the brow slants down toward the beak
-        P1(dx, top, e ? G3 : G4); for (let dy = top + 1; dy <= bot; dy++) P1(dx, dy, K); } });
+        P1(dx, top, e ? G3 : G4); for (let dy = top + 1; dy <= bot; dy++) P1(dx, dy, K); }
+      if (!blink) P1(e ? 0 : -2, -3, A[4]); });                                                         // polish: a catchlight under the brow of each eye
     const [bx, by2] = app(m, 64, 23).map(Math.round);
     for (let dx = -1; dx <= 1; dx++) for (let dy = -5; dy <= -2; dy++) px(bx + dx, by2 + dy, K);            // the bridge joining the brows into one chevron
     XF = m;
@@ -6577,9 +6622,42 @@ function drawGobbler(cv, f, accent){
       L(G1, poly(fp(0, 1))); L(B0, poly(fp(0.72, 1))); L(B2, polyline(fp(0.72, 0.98, 1), 1)); }
     for (const [x, y] of [[40, 96], [92, 94], [15, 92]]) px(x, y, G4); }
 
+  // ------------------------------------------------------------------ polish: craft worked straight into the finished pixel buffer (no canvas readback), so it follows every frame
+  {
+    const SRC = buf.slice(), at = (x, y) => x < 0 || y < 0 || x >= W || y >= H ? null : SRC[y * W + x];
+    // rim light: edge pixels of the given colours that face the light (up-left, or up) are relit; skip leaves a dotted, broken edge, anchored to the part (oy) so it does not crawl
+    const rim = (x0, y0, x1, y1, col, mode, from, skip = 0, oy = 0, inside = null) => { for (let y = Math.max(0, y0); y <= Math.min(H - 1, y1); y++) for (let x = Math.max(0, x0); x <= Math.min(W - 1, x1); x++){
+      const c = SRC[y * W + x]; if (!c || !from.includes(c) || (inside && !inside(x, y))) continue; const up = !at(x, y - 1), lf = !at(x - 1, y);
+      if ((mode === 'tl' ? !at(x - 1, y - 1) && (up || lf) : up) && !(skip && ((x + (y - oy) * 3) % skip + skip) % skip === 0)) buf[y * W + x] = typeof col === 'function' ? col(c) : col; } };
+    // texture: only on plain black that is well inside the shape
+    const tex = (x0, y0, x1, y1, f) => { for (let y = Math.max(2, y0); y <= Math.min(H - 2, y1); y++) for (let x = Math.max(2, x0); x <= Math.min(W - 3, x1); x++){ const i = y * W + x;
+      if (SRC[i] !== K || !SRC[i - 1] || !SRC[i + 1] || !SRC[i - W] || !SRC[i + W] || !SRC[i - 2] || !SRC[i + 2] || !SRC[i - 2 * W]) continue; const c = f(x, y); if (c) buf[i] = c; } };
+    const oyF = Math.round(-br * 0.5), oyB = Math.round(-br * 0.8), fy1 = D ? 97 : 72;
+    // the steel: every honed edge that faces the light goes pale (a glinting one goes white), the tips' upper faces and the vanes' lit edges pick up a broken second light
+    rim(3, 6, 125, fy1, c => D ? B3 : c === B3 ? BW : PALE, 'tl', [G5, B3, B2]); rim(3, 6, 125, fy1, D ? G4 : G5, 't', [G4, B0], 2, oyF); rim(3, 6, 125, fy1, G4, 'tl', [G3, BD], 2, oyF);
+    // the bare skull and the body: a rim on the lit side, broken on the body
+    const [hcx, hcy] = app(HM, 64, 22), hs = D ? 1 : s;
+    rim(Math.round(hcx - 14), Math.round(hcy - 13), Math.round(hcx + 14), Math.round(hcy + 12), G3, 'tl', [K], 0, 0, (x, y) => ((x - hcx) / (11.6 * hs)) ** 2 + ((y - hcy) / (9.8 * hs)) ** 2 <= 1);
+    if (D) rim(36, 50, 94, 96, G3, 'tl', [K], 2, 0, (x, y) => ((x - 64) / 21) ** 2 + ((y - 82) / 13.4) ** 2 <= 1 || (y < 74 && Math.abs(x - 64) < 18));
+    else rim(38, 44 + oyB, 90, 90, G3, 'tl', [K], 2, oyB);
+    // plumage: rows of scale arcs worked into the black of the breast and wings
+    const scale = (x, y) => { const r = Math.floor(y / 4), u = (x + (r % 2) * 3) % 6, v = y % 4; return (v === 0 && u > 0 && u < 4) || (v === 1 && (u === 0 || u === 4)) ? G1 : null; };
+    if (D) tex(44, 72, 84, 93, scale); else tex(42, 50 + oyB, 86, 82 + oyB, (x, y) => scale(x, y - oyB));
+    if (!D){
+      // shed blades hanging in the air, picked bones: each bobs on its own beat (gone once it is beaten: its torn blades lie there instead)
+      const PAL = {K, 1: G1, 3: G3, 4: G4, 5: G5, B: B3}, spr = (rows, x, y) => rows.forEach((r, j) => { for (let i = 0; i < r.length; i++) if (r[i] !== '.') px(x + i, y + j, PAL[r[i]]); });
+      const bobK = k => Math.round(Math.sin(TAU * P + k * 1.7) * 1.3);
+      spr(drawGobbler.SPR_L, 9, 79 + bobK(0)); spr(drawGobbler.SPR_R, 112, 77 + bobK(2));
+      for (const [x, y, k] of [[11, 13, 1], [111, 21, 3]]){ const dy = bobK(k); for (let i = 0; i < 3; i++) px(x + 2 + i, y + 4 - i + dy, G4); for (const [dx, dy2] of [[0, 5], [1, 5], [1, 6], [5, 0], [5, 1], [6, 1]]) px(x + dx, y + dy2 + dy, G4); }   // a drumstick bone, knuckled at both ends
+      for (const [x, y, c] of [[22, 94, G5], [102, 95, G4]]){ for (let i = 0; i < 6; i++) px(x + i, y, c); for (const [dx, dy] of [[-1, -1], [-1, 1], [6, -1], [6, 1]]) px(x + dx, y + dy, c); }   // two picked clean on the floor
+      for (const [x, y, w, k] of [[6, 26, 1, 0], [111, 34, 2, 1], [117, 44, 2, 2], [9, 51, 1, 3], [110, 59, 1, 4], [20, 62, 1, 5]]){ const dy = bobK(k + 0.5); for (let i = 0; i < w; i++) for (let j = 0; j < w; j++) px(x + i, y + j + dy, K); }   // dust
+    }
+  }
+
   const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
   blitBuf(ctx, buf, W, H);
 }
+drawGobbler.SPR_L = ['...KKK.', '...K13K', '..K313.', '.K3115.', '.K3115.', 'K3315K.', 'K3115K.', 'K3153K.', 'K333KK.', '.33KK..', '.B3K...', '.KK....', '.K.....']; drawGobbler.SPR_R = ['.KK....', 'K31K...', 'K3135..', '.3115K.', '.3115K.', '.33153K', '.K3153K', '.K3333K', '..K333K', '...KBK.', '....KK.', '.....K.'];   // the Gobbler's shed blades, pixel-exact
 
 // ---- Krampus (style guide v1)
 // Krampus, "the collector", drawn to the gold standards: one iconic profile, no scenery. A stooped goat-legged shadow
@@ -6590,11 +6668,39 @@ function drawKrampus(cv, f, accent){
   const LOOP = 64, P = (f % LOOP) / LOOP, TAU = Math.PI * 2, T = P * LOOP;                          // one seamless 6.4 s loop: every cycle a whole number of turns of P
   const W = 128, H = 104, A = POP_RAMPS[accent] || POP_RAMPS.blush, D = !!drawKrampus.dead;
   const K = '#121110', G1 = '#211f1d', G2 = '#2e2a27', G3 = '#3f3a36', G4 = '#57514b', G5 = '#756e66';
-  const BD = '#35312d', B0 = '#4a4540', B2 = '#615b54', B3 = '#8e867b', B4 = '#c9c2b6';                // light ramp: wicker, bone teeth, the sneaker
+  const BD = '#35312d', B0 = '#4a4540', B2 = '#615b54', B3 = '#8e867b', B4 = '#c9c2b6', PALE = '#b8b0a2';                // light ramp: wicker, bone teeth, the sneaker
   if (!drawKrampus.sc){ drawKrampus.sc = document.createElement('canvas'); drawKrampus.sc.width = W; drawKrampus.sc.height = H; }
   const sc = drawKrampus.sc, sx = sc.getContext('2d', {willReadFrequently: true}), buf = new Array(W * H).fill(null);
-  let XF = null;
-  const L = shapeLayer(sx, W, H, buf, () => XF);
+  let XF = null, ringC = null;
+  // a local shape layer: the same rasteriser as the shared shapeLayer (same canvas calls, same alpha threshold), but it reads back only the
+  // shape's bounding box even under a transform (the shared one reads the whole canvas for every transformed shape, which was most of the frame cost)
+  const L = (() => { const E = {x0: 0, y0: 0, x1: 0, y1: 0, lw: 1};
+    const ext = (x, y, r = 0) => { if (x - r < E.x0) E.x0 = x - r; if (x + r > E.x1) E.x1 = x + r; if (y - r < E.y0) E.y0 = y - r; if (y + r > E.y1) E.y1 = y + r; };
+    const c = { set lineWidth(v){ if (v > E.lw) E.lw = v; sx.lineWidth = v; }, get lineWidth(){ return sx.lineWidth; },
+      moveTo(x, y){ ext(x, y); sx.moveTo(x, y); }, lineTo(x, y){ ext(x, y); sx.lineTo(x, y); },
+      quadraticCurveTo(a, b, x, y){ ext(a, b); ext(x, y); sx.quadraticCurveTo(a, b, x, y); },
+      bezierCurveTo(a, b, e, g, x, y){ ext(a, b); ext(e, g); ext(x, y); sx.bezierCurveTo(a, b, e, g, x, y); },
+      ellipse(x, y, rx, ry, ...r){ ext(x, y, Math.max(rx, ry)); sx.ellipse(x, y, rx, ry, ...r); },
+      arc(x, y, r, ...a){ ext(x, y, r); sx.arc(x, y, r, ...a); },
+      rect(x, y, w, h){ ext(x, y); ext(x + w, y + h); sx.rect(x, y, w, h); },
+      closePath(){ sx.closePath(); }, fill(){ sx.fill(); }, stroke(){ sx.stroke(); } };
+    let prev = null;
+    return (color, fn, th = 120) => {
+      sx.setTransform(1, 0, 0, 1, 0, 0); if (prev) sx.clearRect(prev[0], prev[1], prev[2], prev[3]); else sx.clearRect(0, 0, W, H);
+      const xf = XF; if (xf) sx.setTransform(xf[0], xf[1], xf[2], xf[3], xf[4], xf[5]);
+      sx.fillStyle = '#fff'; sx.strokeStyle = '#fff'; sx.lineCap = 'round'; sx.lineJoin = 'round'; sx.lineWidth = 1;
+      E.x0 = Infinity; E.y0 = Infinity; E.x1 = -Infinity; E.y1 = -Infinity; E.lw = 1;
+      sx.beginPath(); fn(c);
+      if (!isFinite(E.x0)){ prev = null; return; }
+      let ax = E.x0, ay = E.y0, bx = E.x1, by = E.y1, pd = E.lw / 2 + 2;
+      if (xf){ const xs = [xf[0] * ax + xf[2] * ay, xf[0] * bx + xf[2] * ay, xf[0] * ax + xf[2] * by, xf[0] * bx + xf[2] * by], ys = [xf[1] * ax + xf[3] * ay, xf[1] * bx + xf[3] * ay, xf[1] * ax + xf[3] * by, xf[1] * bx + xf[3] * by];
+        ax = Math.min(...xs) + xf[4]; bx = Math.max(...xs) + xf[4]; ay = Math.min(...ys) + xf[5]; by = Math.max(...ys) + xf[5]; pd = E.lw / 2 * Math.max(1, Math.hypot(xf[0], xf[1]), Math.hypot(xf[2], xf[3])) + 2; }
+      const x0 = Math.max(0, Math.floor(ax - pd)), y0 = Math.max(0, Math.floor(ay - pd)), x1 = Math.min(W, Math.ceil(bx + pd)), y1 = Math.min(H, Math.ceil(by + pd));
+      const w = x1 - x0, h = y1 - y0; if (w <= 0 || h <= 0){ prev = null; return; }
+      prev = [x0, y0, w, h];
+      const d = sx.getImageData(x0, y0, w, h).data;
+      for (let yy = 0; yy < h; yy++){ const row = (y0 + yy) * W + x0, ri = yy * w * 4 + 3; for (let xx = 0; xx < w; xx++) if (d[ri + xx * 4] >= th) buf[row + xx] = color; }
+    }; })();
   const ell = (x, y, rx, ry, rot = 0) => c => { c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); c.fill(); };
   const path = pts => c => { c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.closePath(); c.fill(); };
   const strokeP = (pts, w) => c => { c.lineWidth = w; c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.stroke(); };
@@ -6616,6 +6722,7 @@ function drawKrampus(cv, f, accent){
   const about = (a, cx, cy) => mul(Tm(cx, cy), mul(Rm(a), Tm(-cx, -cy)));
   const app = (m, x, y) => m ? [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]] : [x, y];
   const sm = u => u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u);
+  const pb = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && x < W && y >= 0 && y < H) buf[y * W + x] = c; };   // one pixel straight into the buffer (polish details)
   const GY = 97, OX = -2;                                                                          // the floor line (hoof soles); OX: the figure is blitted 2px left so its mass sits centred
 
   // ------------------------------------------------------------------ timing: stalk ... wind-up, swing up, CLANG (hold), drop back ... stalk
@@ -6642,7 +6749,12 @@ function drawKrampus(cv, f, accent){
   if (D){ L(G1, ell(58, GY + 0.5, 40, 2.4)); }
   else { const fl = clang >= 0 && clang < 4 ? 1 : 0;
     L(A[0], ell(60, GY + 0.5, 38 + fl * 3, 3 + fl * 0.3)); L(A[1], ell(BLX + 4, GY + 0.5, 15 + fl * 3, 2));
-    L(A[2 + fl], ell(BLX + 1, GY + 0.5, 6 + fl * 2, 1)); L(A[3 + fl], rect(Math.round(BLX - 1), GY, 3, 1)); }
+    L(A[2 + fl], ell(BLX + 1, GY + 0.5, 6 + fl * 2, 1)); L(A[3 + fl], rect(Math.round(BLX - 1), GY, 3, 1));
+    // polish: the pool finished: a hot crescent at the front with a glint sliding along it, a lit back rim, a broken outer ring (it jumps outward on the clang)
+    L(A[3], c => { c.lineWidth = 1; c.ellipse(58, GY + 0.4, 18.6 + fl * 3, 2.2, 0, Math.PI * 0.2, Math.PI * 0.62); c.stroke(); });
+    L(A[2], c => { c.lineWidth = 1; c.ellipse(58, GY, 24 + fl * 3, 2.8, 0, Math.PI * 1.15, Math.PI * 1.5); c.stroke(); });
+    const tw = Math.floor(P * 8) % 4; for (let i = 0; i < 3; i++) pb(62 + tw + i, GY + 2, A[4]);
+    for (const [dx, dy, w] of [[-35, 0, 3], [33, 1, 3], [-39, 1, 1], [38, 0, 1], [-18, 4, 2], [15, 5, 2], [0, 5, 1]]) for (let i = 0; i < w; i++) pb(58 + dx + i + Math.sign(dx) * fl * 2, GY + dy, dy > 3 ? A[1] : A[0]); }
 
   // a few flakes of snow drifting down past it (debris, behind the figure)
   if (!D) for (let k = 0; k < 4; k++){ const ph = (P + k / 4 + 0.13 * k) % 1, x = [18, 110, 44, 96][k] + Math.sin(TAU * (P * 2 + k / 4)) * 1.6, y = 6 + ph * 86;
@@ -6700,6 +6812,7 @@ function drawKrampus(cv, f, accent){
     // the braided rim: a fat lit roll with diagonal twists
     L(K, rect(KX - 2, KY - 2, KW + 4, 6)); L(B2, rect(KX - 1, KY - 1, KW + 2, 4)); L(B3, rect(KX - 1, KY - 1, KW + 2, 1)); L(BD, rect(KX - 1, KY + 2, KW + 2, 1));
     for (let x = KX + 1; x < KX + KW; x += 3) L(BD, poly([[x, KY - 1], [x + 1, KY - 1], [x - 1, KY + 2], [x - 2, KY + 2]]));
+    L(PALE, rect(KX, KY - 1, 14, 1));                                                                // polish: the lit end of the rim roll goes pale under its glint
     L(B4, rect(KX + 2, KY - 1, 3, 1));
     // the sneaker tumbled out on the floor when beaten (drawn in basket space so it leaves the mouth)
     XF = null;
@@ -6746,6 +6859,7 @@ function drawKrampus(cv, f, accent){
   L(G1, jag(84, 67, 52, 65, 8, 4, -0.25, 1, 4));
   for (const [x, y, l] of [[60, 34, 7], [66, 33, 9], [72, 38, 8], [56, 38, 6], [78, 44, 7]]) L(G2, strokeP([[x, y], [x - 1, y + l * 0.6], [x - 0.4, y + l]], 1));   // fur strands
   for (const [x, y, l] of [[56, 58, 6], [63, 57, 7], [70, 58, 6], [77, 59, 6]]) L(K, strokeP([[x, y], [x - 0.6, y + l]], 1));
+  if (!D) for (const [x, y, l] of [[47, 65, 3], [55, 69, 2], [65, 71, 3], [75, 69, 2]]) L(K, rect(x, y, 1, l));   // polish: loose tufts hanging off the belly hem
   // the chain the basket hangs from, over the hump
   if (!D) for (let k = 0; k < 7; k++){ const t = k / 6, x = 68 + t * 30, y = 30 + t * 30 - Math.sin(t * Math.PI) * 4;
     if (k % 2) L(G4, ell(x, y, 1.9, 1.1, 0.8)); else L(G4, c => { c.lineWidth = 1; c.ellipse(x, y, 1.3, 2.1, 0.8, 0, TAU); c.stroke(); }); }
@@ -6806,6 +6920,8 @@ function drawKrampus(cv, f, accent){
     if (flare){ L(A[0], ell(SX, SY, 4.6, 4.2, -0.3)); L(A[1], ell(SX - 0.2, SY + 0.2, 2.6, 2.4)); L(A[3], ell(SX - 0.4, SY + 0.4, 1.6, 1.5)); px(SX - 1, SY, A[4]); px(SX, SY, A[4]); }
     else { L(A[0], c => { c.lineWidth = 1; c.ellipse(SX, SY, 3.6, 3.2, -0.3, Math.PI * 0.1, Math.PI * 0.9); c.stroke(); });   // the socket's lower rim, lit from inside
       L(A[1], ell(SX, SY + 0.3, 2.5, 2.2)); L(A[2], poly([[SX - 2, SY + 0.6], [SX - 0.4, SY - 1.6], [SX + 1.6, SY - 0.2], [SX + 0.6, SY + 1.8]])); px(SX - 1, SY, A[3]); px(SX, SY - 1, A[3]); px(SX - 1, SY - 1, A[4]); }   // a cracked coal in the hollow, white-hot on one side
+    if (!flare){ const E = (dx, dy, c) => pb(...app(MH, SX + dx, SY + dy), c);                          // polish: the same ember, finished: a catchlight, a hot fleck beside it, a dim band along the socket's floor
+      E(-1, -2, A[4]); E(1, -1, A[3]); for (let dx = -3; dx <= 2; dx++) E(dx, 2, A[0]); }
     if (nar) L(K, rect(SX - 4, SY - 4, 8, 3));
     // embers spitting up out of the socket
     for (let k = 0; k < (flare ? 3 : 1); k++){ const ph = ((P * (flare ? 8 : 2)) + k / 3) % 1;
@@ -6833,6 +6949,9 @@ function drawKrampus(cv, f, accent){
       if (k % 2) L(G4, rect(Math.round(x), Math.round(y) - 1, 1, 2)); else L(G5, c => { c.lineWidth = 1; c.ellipse(x, y, 1.2, 1.6, th, 0, TAU); c.stroke(); }); }
     const b = CH + 2, hot = flare ? 1 : 0; drawBell(MBL, b, [A[0], A[1 + hot], A[2 + hot], A[3 + hot]]);
     XF = null;
+    for (let k = 0; k < 3; k++){ const [x, y] = at(-1.6, b + 1.6 + k); pb(Math.floor(x), Math.floor(y), A[4]); }      // polish: a white catchlight at the head of the glint stripe, and one on the clapper
+    { const [x, y] = at(-0.4, b + 14.4); pb(Math.floor(x), Math.floor(y), A[4]); }
+    ringC = at(0, b + 7);
     if (clang >= 0){                                                                                             // CLANG: ring pixels flying out of the bell, fading
       const [cx, cy] = at(0, b + 6), r = 6 + clang * 1.7, col = clang < 2 ? A[4] : clang < 4 ? A[3] : A[2];
       for (let k = 0; k < 8; k++){ const a = k * TAU / 8 + 0.2; if (k === 2) continue; const x = cx + Math.cos(a) * r * 1.1, y = cy + Math.sin(a) * r * 0.85;
@@ -6854,8 +6973,40 @@ function drawKrampus(cv, f, accent){
     L(c[2], path([[-2.2, b + 1.2], [-3.4, b + 2.4, -3.8, b + 5.6, -3.8, b + 9], [-1.4, b + 9], [-1.2, b + 5.4, -0.8, b + 2.6, 0, b + 1]]));   // the lit band
     L(c[3], rect(-3, b + 3, 1, 5));                                                                             // the glint stripe
     L(c[0], rect(-7, b + 10.4, 14, 1.6)); L(c[2], rect(-6, b + 10.4, 5, 1));                                     // the lip, lit at the front
+    L(c[3], rect(-6, b + 10.4, 10, 1));                                                                        // polish: a bright edge running round the lip
     L(K, ell(0.4, b + 13.6, 1.5, 1.4));                                                                         // the clapper
     XF = null;
+  }
+
+  // ------------------------------------------------------------------ polish: craft worked straight into the finished pixel buffer (no canvas readback), so it follows every frame
+  {
+    const SRC = buf.slice(), src = (x, y) => x < 0 || y < 0 || x >= W || y >= H ? null : SRC[y * W + x];
+    // rim light: edge pixels of the given colours that face up-left are relit; skip leaves a dotted, broken edge, anchored to the part it lies on (body, head or basket) so it does not crawl
+    const anchor = (x, y) => D ? 0 : x >= 68 + bX && y < 70 ? kY + 1 : x < 55 + bX && y < 52 ? hY : bY - 1;
+    const rim = (x0, y0, x1, y1, col, from, skip = 0) => { for (let y = Math.max(0, y0); y <= Math.min(H - 1, y1); y++) for (let x = Math.max(0, x0); x <= Math.min(W - 1, x1); x++){
+      const c = SRC[y * W + x]; if (!c || !from.includes(c)) continue;
+      if (!src(x - 1, y - 1) && (!src(x, y - 1) || !src(x - 1, y)) && !(skip && ((x - 1 - bX + (y - anchor(x, y)) * 3) % skip + skip) % skip === 0)) buf[y * W + x] = col; } };
+    // texture: only on plain black that is well inside the shape
+    const tex = (x0, y0, x1, y1, f) => { for (let y = Math.max(2, y0); y <= Math.min(H - 2, y1); y++) for (let x = Math.max(2, x0); x <= Math.min(W - 3, x1); x++){ const i = y * W + x;
+      if (SRC[i] !== K || !SRC[i - 1] || !SRC[i + 1] || !SRC[i - W] || !SRC[i + W] || !SRC[i - 2] || !SRC[i + 2] || !SRC[i - 2 * W]) continue; const c = f(x, y); if (c) buf[i] = c; } };
+    const dx = D ? 0 : bX, dy = D ? 0 : bY;
+    if (D){ rim(2, 30, 126, 98, PALE, [G5, B3, B2]); rim(2, 30, 126, 98, G5, [G4, B0], 2); rim(2, 30, 126, 98, G3, [K], 2); }
+    else { rim(16 + dx, 0, 72 + dx, 68, PALE, [G5, B3, B2]); rim(16 + dx, 0, 72 + dx, 68, G5, [G4, B0], 2); rim(32 + dx, 18, 98 + dx, 96, G3, [K], 2); }   // bone, horn and chain catch a pale edge; the black fur and legs a broken rim
+    // fur: hanging tufts worked into the black of the pelt, a dark lock and now and then a lit tip
+    const tuft = (x, y) => { const u = (((x * 3 + Math.floor(y / 5) * 4) % 7) + 7) % 7, v = ((y % 5) + 5) % 5; return u === 0 && v < 3 ? G1 : u === 3 && v === 0 ? G3 : null; };
+    if (D) tex(30, 44, 96, 96, (x, y) => tuft(x - 2, y)); else tex(42 + dx, 36 + dy, 88 + dx, 76 + dy, (x, y) => tuft(x - 1 - dx, y + 1 - dy));
+    if (!D){
+      // the ring the bell throws: faint arcs either side of it, stepping outward and dying away, four times a loop; only ever on empty air, and silent while the big swing and the clang play
+      if (ringC && e < 0.05){ const k = Math.floor(T) % 16, [rcx, rcy] = ringC;
+        const arc = (rx, ry, a0, a1) => { const n = Math.ceil((a1 - a0) * Math.max(rx, ry) * 1.6); for (let i = 0; i <= n; i++){ const a = Math.PI * (a0 + (a1 - a0) * i / n), x = Math.floor(rcx + Math.cos(a) * rx), y = Math.floor(rcy + Math.sin(a) * ry);
+          if (x > 5 && x < W && y >= 0 && y < GY - 2 && !buf[y * W + x]) buf[y * W + x] = A[0]; } };
+        if (k < 3){ arc(12, 10, 0.8, 1.15); arc(16, 13, 0.88, 1.08); arc(12, 10, 1.9, 2.15); }
+        else if (k < 6){ arc(15, 12.5, 0.84, 1.12); arc(19, 15.5, 0.92, 1.05); arc(15, 12.5, 1.93, 2.12); } }
+      // lumps of coal hanging in the air (a lit corner on each), bobbing on their own beats; flecks of ash sinking and fading
+      [[114, 86], [12, 30], [120, 48], [22, 80]].forEach(([x, y], k) => { const by = y + Math.round(Math.sin(TAU * P + k * 1.7) * 1.3); for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) pb(x + i, by + j, i + j ? K : G3); });
+      [[55, 4, 2], [113, 41, 2], [120, 58, 2], [28, 74, 1], [98, 90, 1], [101, 3, 1]].forEach(([x, y, w], k) => { const by = y + Math.round(Math.sin(TAU * P + 0.8 + k * 2.3) * 1.2); for (let i = 0; i < w; i++) for (let j = 0; j < w; j++) pb(x + i, by + j, K); });   // soot
+      [[10, 16], [24, 8], [122, 28], [118, 66], [8, 52], [110, 78]].forEach(([x, y], k) => { const ph = (P + 0.5 + k * 0.07) % 1; if (ph > 0.08 && ph < 0.92) pb(x + Math.round(Math.sin(TAU * (P + k * 0.3)) * 0.8), y - 4 + Math.round(ph * 8), ph > 0.2 && ph < 0.8 ? G5 : G3); });
+    }
   }
 
   const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
@@ -6872,7 +7023,7 @@ function drawFatherTime(cv, f, accent){
   const LOOP = 64, P = (f % LOOP) / LOOP, TAU = Math.PI * 2, T = P * LOOP;                           // one seamless 6.4 s loop: every cycle a whole number of turns of P
   const W = 128, H = 104, A = POP_RAMPS[accent] || POP_RAMPS.blush, D = !!drawFatherTime.dead;
   const K = '#121110', G1 = '#211f1d', G2 = '#2e2a27', G3 = '#3f3a36', G4 = '#57514b', G5 = '#756e66';
-  const BD = '#35312d', B0 = '#4a4540', B2 = '#615b54', B3 = '#8e867b', B4 = '#c9c2b6';                 // light ramp: frame, blade, beard, scroll
+  const BD = '#35312d', B0 = '#4a4540', B2 = '#615b54', B3 = '#8e867b', B4 = '#c9c2b6', PALE = '#b8b0a2';                 // light ramp: frame, blade, beard, scroll
   if (!drawFatherTime.sc){ drawFatherTime.sc = document.createElement('canvas'); drawFatherTime.sc.width = W; drawFatherTime.sc.height = H; }
   const sc = drawFatherTime.sc, sx = sc.getContext('2d', {willReadFrequently: true}), buf = new Array(W * H).fill(null);
   let XF = null;
@@ -6918,6 +7069,15 @@ function drawFatherTime(cv, f, accent){
       px(x, y, A[2 + hot]); if (Math.abs(Math.cos(an)) > 0.5) px(x + Math.sign(Math.cos(an)), y, A[1 + hot]); }
     px(GX - 30, GY, A[2]); px(GX + 29, GY, A[2]);
   }
+  // polish: the pool finished like a dial sunk in the floor: a dark hollow at the hub, a hot crescent at the front, a lit back rim, a broken outer ring
+  { const c0 = D ? G2 : A[0], c1 = D ? G2 : A[1], c2 = D ? G3 : A[2], c3 = D ? G4 : A[3], FY = GY - 1;
+    L(c0, ell(GX, FY, 9.4, 1.6)); L(K, ell(GX, FY - 0.2, 6.2, 0.9));
+    L(c3, c => { c.lineWidth = 1; c.ellipse(GX, FY + 0.4, 16.1, 2.2, 0, Math.PI * 0.2, Math.PI * 0.62); c.stroke(); });
+    L(c2, c => { c.lineWidth = 1; c.ellipse(GX, FY, 20.8, 2.8, 0, Math.PI * 1.15, Math.PI * 1.5); c.stroke(); });
+    if (!D){ const tw = Math.floor(P * 8) % 4;                                                                    // the glint on the crescent slides along it, four steps, twice a loop
+      for (let i = 0; i < 3; i++) px(GX + 3 + tw + i, FY + 2, A[4]);
+      for (const [dx, dy, w] of [[-31, 0, 3], [29, 1, 3], [-35, 1, 1], [34, 0, 1], [-16, 4, 2], [13, 5, 2], [0, 5, 1]]) for (let i = 0; i < w; i++) px(GX + dx + i, FY + dy, dy > 3 ? A[1] : A[0]); }
+    else for (const [dx, dy, w] of [[-31, 0, 3], [29, 1, 3]]) for (let i = 0; i < w; i++) px(GX + dx + i, FY + dy, G1); }
 
   // ------------------------------------------------------------------ the scythe (alive): snath behind the body, the long blade over the hood
   const SX0 = 12, SY0 = 85, SX1 = 98, SY1 = 13;
@@ -7004,8 +7164,12 @@ function drawFatherTime(cv, f, accent){
     const upTs = lu => -11 * Math.pow(a, 0.75) + dip * Math.max(0, 1 - (lu / 7) ** 2) * Math.min(1, a * 3);  // the top surface with a funnel dip
     const upT = lu => lerp(-14, upTs(lu), settle), loT = lu => lerp(-(15 - HB) - k * Math.abs(lu), 0, settle);
     const streamOn = !D && !flipping && tau > 2 && a > 0.015, streamLen = (tau - 2) * 5;
-    const bump = c => flash ? (c === A[1] ? A[2] : c === A[2] ? A[3] : A[4]) : c;
-    const grey = c => c === A[3] || c === A[4] ? B3 : c === A[2] ? G5 : G4;
+    const bump = c => flash ? (c === A[0] ? A[1] : c === A[1] ? A[2] : c === A[2] ? A[3] : A[4]) : c;
+    const grey = c => c === A[3] || c === A[4] ? B3 : c === A[2] ? G5 : c === A[0] ? G3 : G4;
+    // polish: the sand is banded (a dark seam five grains down), the top surface carries a white glint on its lit side, and the heap has a hot peak
+    const flatT = upT(7);                                                                                        // the top sand's level at the glass wall (the dip in the middle sits lower)
+    const band = (dep, lu, top, dv) => dep < 1 ? (top && lu < -8 && lu > -11 ? A[4] : A[3]) : dep < (top ? 3 : 3.2) ? A[2] : (top ? dv - flatT >= 5.2 && dv - flatT < 6.2 : dep >= 5 && dep < 6) && Math.abs(lu) < 7 ? A[0] : A[1];
+    const hitY = upB(-0.5);                                                                                      // where the stream lands on the heap
     const col = c => D ? grey(c) : bump(c);
     for (let y = HCY - 20; y < HCY + 20; y++) for (let x = HCX - 20; x < HCX + 20; x++){
       const wx = x + 0.5 - HCX, wy = y + 0.5 - HCY, lu = cs * wx + sn * wy, dv = -sn * wx + cs * wy, d = Math.abs(dv);
@@ -7016,13 +7180,18 @@ function drawFatherTime(cv, f, accent){
       if (d > 14 || au > w) c = (flash ? A[1] : G4);                                                             // the glass wall (it catches the flash)
       else {
         c = K;
-        if (dv < 0 && dv >= upT(lu) && dv <= loT(lu)){ const dep = dv - upT(lu); c = col(dep < 1 ? A[3] : dep < 3 ? A[2] : A[1]); }
-        else if (dv > 0 && dv >= upB(lu)){ const dep = dv - upB(lu); c = col(dep < 1 ? A[3] : dep < 3.2 ? A[2] : A[1]); }
+        if (dv < 0 && dv >= upT(lu) && dv <= loT(lu)){ c = col(band(dv - upT(lu), lu, 1, dv)); }
+        else if (dv > 0 && dv >= upB(lu)){ const dep = dv - upB(lu); c = col(dep < 1 && Math.abs(lu) < 1 && s > 0.06 ? A[4] : band(dep, lu, 0, dv)); }
+        else if (streamOn && streamLen > hitY && dv > hitY - 2 && dv < hitY && ((lu > 0 && lu < 1) || (lu > -2 && lu < -1)) && ((Math.floor(dv) + (lu > 0 ? 1 : 0) + Math.floor(T)) & 1)) c = A[3];   // grains splashing off the heap, flickering
+        else if (streamOn && streamLen > 6 && dv > 2 && dv < 6 && ((lu > 1 && lu < 2 && Math.floor(dv) === 2 + Math.floor(T) % 4) || (lu > -3 && lu < -2 && Math.floor(dv) === 2 + Math.floor(T + 2) % 4))) c = A[1];   // loose grains tumbling under the neck
         else if (streamOn && dv >= 0 && lu < 0 && lu > -1 && dv < Math.min(streamLen, upB(-0.5))) c = ((dv + T * 2) % 4) < 1 ? A[4] : A[3];
         else if ((dv < -5 && dv > -11 && lu < -w + 2.3 && lu > -w + 1.1) || (dv > 5 && dv < 11 && lu > w - 2.3 && lu < w - 1.1)) c = G3;   // glints, point-symmetric
       }
       buf[y * W + x] = c;
     }
+    { const m = rot(th, HCX, HCY), Q = (x, y, c) => { const [qx, qy] = app(m, HCX + x, HCY + y); px(Math.floor(qx), Math.floor(qy), c); };      // polish: shine on the posts and the glass shoulders; in glass space (offsets of pixel centres), mirrored through the centre
+      for (const sd of [-1, 1]){ Q(-sd * 12.5, -sd * 13.5, D ? B3 : PALE); Q(-sd * 12.5, -sd * 12.5, G5); Q(-sd * 12.5, -sd * 11.5, G5);
+        for (const dy of [4.5, 5.5, 6.5]) Q(-sd * 9.5, sd * dy, G5); } }
     if (flash){ const fu = (flipU - 0.3) / 0.4;                                                                   // grains thrown off the turning glass
       for (let i = 0; i < 8; i++){ const an = i * TAU / 8 + 0.4, r = 15 + fu * 7; px(HCX - 0.5 + Math.cos(an) * r, HCY - 0.5 + Math.sin(an) * r * 1.1, fu < 0.5 ? A[4] : A[2]); } }
     if (D){                                                                                                       // beaten: the glass cracks, grey sand spills out
@@ -7066,8 +7235,10 @@ function drawFatherTime(cv, f, accent){
     L(A[0 + fl], ell(EX, EY, 6.4, 6.4)); L(A[2 + fl], c => { c.lineWidth = 1; c.arc(EX, EY, 5.2, 0, TAU); c.stroke(); });            // halo, bright bezel
     L(fl ? A[0] : K, ell(EX, EY, 4.3, 4.3));                                                                       // the dark face
     for (const [dx, dy] of [[-1, -4], [3, -1], [-1, 3], [-4, -1]]) px(EX + dx + 0.5, EY + dy + 0.5, A[1 + fl]);      // 12, 3, 6, 9: quiet marks
+    for (const [dx, dy] of [[2, -3], [3, -2], [3, 2], [2, 3], [-2, 3], [-3, 2], [-3, -2], [-2, -3]]) px(EX + dx, EY + dy, A[0 + fl * 2]);   // polish: the eight hours between, dim
     L(A[4], line(EX, EY, EX + Math.cos(hand) * 3.7, EY + Math.sin(hand) * 3.7, 1));                                 // the ticking hand
     px(EX - 1, EY - 1, A[3]); px(EX - 4, EY - 4, A[4]);                                                             // pivot, catchlight on the bezel
+    px(EX - 4, EY - 5, A[4]); px(EX - 5, EY - 4, A[3]); px(EX - 5, EY - 3, A[3]);                                   // polish: a fuller catchlight wrapping the bezel's lit shoulder
   } else {
     L(G3, c => { c.lineWidth = 1; c.arc(EX, EY, 5.2, 0, TAU); c.stroke(); }); L(K, ell(EX, EY, 4.3, 4.3));
   }
@@ -7084,6 +7255,37 @@ function drawFatherTime(cv, f, accent){
     L(BD, rrect(20, 92, 7, 5.4, 1.2)); L(B2, rect(21, 93, 1, 3));
     L(B0, path([[21, 92.4], [12, 86, 10, 74, 18, 66], [15, 76, 17, 86, 25, 94]])); L(BD, path([[20, 92], [13, 85, 12, 76, 17, 68.4], [15, 77, 16.4, 85, 22, 92]]));
     L(B2, strokeP([[24, 93], [16.6, 86, 15, 76, 18, 67]], 1)); L(G3, strokeP([[20.4, 91.6], [12.6, 85, 11, 76, 16, 68.6]], 1));
+  }
+
+  // ------------------------------------------------------------------ polish: craft worked straight into the finished pixel buffer (no canvas readback), so it follows every frame
+  {
+    const SRC = buf.slice(), at = (x, y) => x < 0 || y < 0 || x >= W || y >= H ? null : SRC[y * W + x];
+    // rim light: edge pixels of the given colours that face the light (up-left, or up) are relit; skip leaves a dotted, broken edge, anchored to the part (ox, oy) so it never crawls
+    const rim = (x0, y0, x1, y1, col, mode, from, skip = 0, ox = 0, oy = 0) => { for (let y = Math.max(0, y0); y <= Math.min(H - 1, y1); y++) for (let x = Math.max(0, x0); x <= Math.min(W - 1, x1); x++){
+      const c = SRC[y * W + x]; if (!c || !from.includes(c)) continue; const up = !at(x, y - 1), lf = !at(x - 1, y);
+      if ((mode === 'tl' ? !at(x - 1, y - 1) && (up || lf) : up) && !(skip && ((x - ox + (y - oy) * 3) % skip + skip) % skip === 0)) buf[y * W + x] = col; } };
+    // texture: only on plain black that is well inside the shape
+    const tex = (x0, y0, x1, y1, f) => { for (let y = Math.max(2, y0); y <= Math.min(H - 2, y1); y++) for (let x = Math.max(2, x0); x <= Math.min(W - 3, x1); x++){ const i = y * W + x;
+      if (SRC[i] !== K || !SRC[i - 1] || !SRC[i + 1] || !SRC[i - W] || !SRC[i + W] || !SRC[i - 2] || !SRC[i + 2] || !SRC[i - 2 * W]) continue; const c = f(x, y); if (c) buf[i] = c; } };
+    const hbb = D ? sag : bob, bl = Math.round(D ? 0 : -lift);
+    rim(28, 4, 102, 60 + sag, G3, 'tl', [K]); rim(44, 6 + hbb, 66, 20 + hbb, G4, 'tl', [K], 2, 0, hbb);              // the cowl and mantle pick up a broken rim on the lit side
+    if (!D) rim(14, 0, 114, 22, PALE, 't', [G5, G4, B3, B2], 3, Math.round(-0.4 * lift), bl);                        // the blade's honed edge, nicked
+    // the robe: long broken fold lines hanging down the flanks and the skirt, swaying with the cloth
+    const shx = y => Math.round(sway + (swayH - sway) * clamp((y - 50) / 34, 0, 1)), ry = y => y - bob - sag;
+    tex(28, 34, 47, 88, (x, y) => { const u = x - shx(y), v = ry(y); return u < 47 && ((u % 5) + 5) % 5 === 2 && (v + u) % 7 > 2 ? G1 : null; });
+    tex(82, 34, 102, 88, (x, y) => { const u = x - shx(y), v = ry(y); return u > 83 && ((u % 5) + 5) % 5 === 1 && (v + u) % 7 > 2 ? G1 : null; });
+    tex(44, 74 + bob + sag, 86, 92, (x, y) => { const u = x - shx(y), v = y - sag; return u >= 46 && u <= 84 && u % 6 === 3 && v % 5 > 1 ? G1 : null; });
+    for (const [x, l] of [[36, 3], [48, 2], [58, 4], [72, 3], [82, 2]]) for (let k = 0; k < l; k++) px(hx(x + (D ? (x < 64 ? -3 : 3) : 0)), 90 + hd + k, K);   // threads hanging off the hem
+    if (!D){
+      // tallies of broken resolutions hanging in the air (four strokes and a slash), each bobbing on its own beat
+      [[108, 30, G4], [112, 56, G3], [8, 40, G3]].forEach(([x, y, c], k) => { const dy = Math.round(Math.sin(TAU * P + 0.9 + k * 2.1) * 1.4);
+        for (let i = 0; i < 4; i++) for (let j = 0; j < 5; j++) px(x + i * 2, y + dy + j, c); for (let i = 0; i < 9; i++) px(x - 1 + i, y + dy + 4 - Math.round(i * 0.4), c); });
+      // loose grains of sand sinking through the air, each on its own phase; they fade in and out so the loop never shows a jump
+      [[106, 44, 1], [22, 30, 1], [16, 52, 0], [110, 74, 0], [26, 20, 0]].forEach(([x, y, c], k) => { const ph = (P + 0.5 + k * 0.09) % 1;
+        if (ph > 0.08 && ph < 0.92) px(x + Math.round(Math.sin(TAU * (P + k * 0.3)) * 0.8), y - 4 + Math.round(ph * 8), A[ph > 0.2 && ph < 0.8 ? c : 0]); });
+    }
+    // dust: black specks hanging round him (they lie still once he is beaten)
+    for (const [x, y, k] of [[37, 5, 0], [86, 14, 1], [116, 25, 2], [117, 41, 3], [14, 48, 4], [11, 71, 5], [118, 66, 6], [29, 74, 7]]){ const dy = D ? 0 : Math.round(Math.sin(TAU * P + k * 1.9) * 1.2); px(x, y + dy, K); }
   }
 
   // ------------------------------------------------------------------ pixel debris drifting off the robe
