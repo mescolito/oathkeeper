@@ -930,7 +930,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'f2386f8065';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '0430ca1840';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -6089,18 +6089,19 @@ function drawDeadWeight(cv, f, accent){
 }
 
 // ---- The Pumpkin Wraith (style guide v1)
-// The Pumpkin Wraith (Halloween), concept 5A "lantern shroud", drawn to the gold standards. A ribbed, cracked jack-o'-lantern head
-// floats on a tattered ghost shroud with no legs; a collar of twisted vines binds them. One vine arm ends in a root claw, the other
-// drags a dead broom (the chores it ate). The carved eyes and saw-tooth grin are the only light. It hovers, the hem fluttering in a
-// lagging wave; once a loop the face flares from inside, the grin widens and spits embers and seeds while the root claw snaps shut.
-// Pop: the carved face (eyes + grin, with its embers) and the candle-glow pool only.
-function drawPumpkinWraith(cv, f, accent){
+// The Pumpkin Wraith (Halloween), concept 32B "the scarecrow". The witch's besom is the spine, bristles down, sweeping the pool; a forked
+// twig crossbar carries the tattered shroud; the approved jack-o'-lantern (ribbed, cracked, grin carved into the rind) is jammed on top;
+// six small chore-lanterns hang off the bar, some lit. Idle: the whole scarecrow rocks on its broom, the rags trail and flutter, the
+// lanterns swing and flicker, the bristles sweep. Signature: the face flares, the grin widens and spits embers, and one more
+// chore-lantern pops alight while the rest flare (it gutters out again early in the next loop, so the count resets seamlessly).
+// Pop: the carved face (with its embers), the lit chore-lanterns (the one prop) and the pool only.
+function drawPumpkinScarecrow(cv, f, accent){
   const LOOP = 64, P = (f % LOOP) / LOOP, TAU = Math.PI * 2, T = P * LOOP;                          // one seamless 6.4 s loop: every cycle a whole number of turns of P
-  const W = 128, H = 104, A = POP_RAMPS[accent] || POP_RAMPS.blush, D = !!drawPumpkinWraith.dead;
+  const W = 128, H = 104, A = POP_RAMPS[accent] || POP_RAMPS.blush, D = !!drawPumpkinScarecrow.dead;
   const K = '#121110', G1 = '#211f1d', G2 = '#2e2a27', G3 = '#3f3a36', G4 = '#57514b', G5 = '#756e66';
   const BD = '#35312d', B0 = '#4a4540', B2 = '#615b54', B3 = '#8e867b';                                // light ramp: the broom and the seeds
-  if (!drawPumpkinWraith.sc){ drawPumpkinWraith.sc = document.createElement('canvas'); drawPumpkinWraith.sc.width = W; drawPumpkinWraith.sc.height = H; }
-  const sc = drawPumpkinWraith.sc, sx = sc.getContext('2d', {willReadFrequently: true}), buf = new Array(W * H).fill(null);
+  if (!drawPumpkinScarecrow.sc){ drawPumpkinScarecrow.sc = document.createElement('canvas'); drawPumpkinScarecrow.sc.width = W; drawPumpkinScarecrow.sc.height = H; }
+  const sc = drawPumpkinScarecrow.sc, sx = sc.getContext('2d', {willReadFrequently: true}), buf = new Array(W * H).fill(null);
   let XF = null;
   const L = shapeLayer(sx, W, H, buf, () => XF);
   const ell = (x, y, rx, ry, rot = 0) => c => { c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); c.fill(); };
@@ -6121,31 +6122,32 @@ function drawPumpkinWraith(cv, f, accent){
     c.moveTo(x - tx * 0.8, y - ty * 0.8); c.lineTo(x + nx * len + tx * len * 0.6, y + ny * len + ty * len * 0.6); c.lineTo(x + tx * 0.8, y + ty * 0.8); c.closePath(); } c.fill(); };
   const lerp = (a, b, t) => a + (b - a) * t;
 
-  // ------------------------------------------------------------------ timing: hover ... wind-up (claw opens, face swells), FLARE + SPIT + SNAP, settle
-  let flare = 0, wide = 0, claw = 0.18 + 0.08 * Math.sin(TAU * P * 2 - 1.2), rear = 0;      // claw: 0 open, 1 shut fist; idle flexes a little, a beat behind the hover
+  // ------------------------------------------------------------------ timing: sway ... the glow swells, FLARE + SPIT (a chore-lantern pops alight), settle
+  let flare = 0, wide = 0, rear = 0;
   if (!D){
-    if (T >= 34 && T < 42){ const u = sm((T - 34) / 8); claw = lerp(claw, -0.28, u); rear = -u; flare = u * 0.5; }         // wind-up: the claw spreads wide, the head rears, the glow swells
-    else if (T >= 42 && T < 44){ claw = lerp(-0.28, 1, sm((T - 42) / 2)); rear = -1 + (T - 42); flare = 1; wide = sm((T - 42) / 2); }   // SNAP: the fist closes, the face blazes, the grin splits wide
-    else if (T >= 44 && T < 52){ claw = 1; rear = 1 - sm((T - 44) / 8); flare = 1; wide = 1; }                             // held: spitting embers
-    else if (T >= 52 && T < 60){ const u = sm((T - 52) / 8); claw = lerp(1, claw, u); flare = 1 - u; wide = 1 - u; }        // the grin closes, the glow settles, the claw creaks open
+    if (T >= 34 && T < 42){ const u = sm((T - 34) / 8); rear = -u; flare = u * 0.5; }                 // wind-up: the head rears a pixel, the glow swells
+    else if (T >= 42 && T < 44){ rear = -1 + (T - 42); flare = 1; wide = sm((T - 42) / 2); }          // the face blazes, the grin splits wide
+    else if (T >= 44 && T < 52){ rear = 1 - sm((T - 44) / 8); flare = 1; wide = 1; }                  // held: spitting embers
+    else if (T >= 52 && T < 60){ const u = sm((T - 52) / 8); flare = 1 - u; wide = 1 - u; }           // the grin closes, the glow settles
   }
-  const fl = flare > 0.3 ? 1 : 0, blaze = flare > 0.75;                                       // hard steps of the face light: 0 normal, 1 swelling, 2 blazing
+  const fl = flare > 0.3 ? 1 : 0, blaze = flare > 0.75;                                       // hard steps of the face light
   const AS = i => A[Math.max(0, Math.min(i === 3 ? 4 : 3, i + fl))];
-  const bb = D ? 0 : Math.round(Math.sin(TAU * P) * 2);                                     // the hover: body
-  const hb = D ? 0 : Math.round(Math.sin(TAU * P - 0.5) * 2 + rear);                        // the head floats a beat behind, rears up on the wind-up
-  const lagB = D ? 0 : Math.sin(TAU * P - 1.1) * 2.2;                                       // the hem trails further behind
-  const hgt = D ? 0 : Math.sin(TAU * P);                                                    // height above the pool, -1..1
+  // the rig: everything hangs off the broom, which rocks about its binding like a scarecrow in wind (the head a beat behind)
+  const SX = D ? 43 : 64, PV = [SX, 78];
+  const th = D ? 0 : 0.046 * Math.sin(TAU * P) + 0.012 * Math.sin(TAU * P * 2 + 1);
+  const thH = D ? 0 : 0.046 * Math.sin(TAU * P - 0.5) + 0.012 * Math.sin(TAU * P * 2 + 0.5);
+  const R = (x, y, a = th) => { const cs = Math.cos(a), sn = Math.sin(a), dx = x - PV[0], dy = y - PV[1]; return [PV[0] + dx * cs - dy * sn, PV[1] + dx * sn + dy * cs]; };
+  const RIG = D ? null : rot(th, PV[0], PV[1]);
 
-  // ------------------------------------------------------------------ the ground: a candle-glow pool in hard bands, shrinking as it rises, flaring with the face
-  if (D){ L(G1, ell(64, 97, 34, 3)); L(G3, ell(66, 97, 14, 1.2)); }
-  else { const s = 1 - hgt * 0.08, gb = fl + (blaze ? 1 : 0);
-    L(A[0], ell(64, 96.5, 31 * s + gb, 3.4)); L(A[1], ell(64, 96.5, 20 * s + gb * 1.5, 2.3)); L(A[Math.min(4, 2 + (gb > 1 ? 1 : 0))], ell(64, 96.5, 9 * s + gb * 1.5, 1.2));
+  // ------------------------------------------------------------------ the ground: a candle-glow pool in hard bands, flaring with the face
+  if (D){ L(G1, ell(64, 97, 40, 3)); L(G3, ell(70, 97, 16, 1.2)); }
+  else { const gb = fl + (blaze ? 1 : 0);
+    L(A[0], ell(64, 96.5, 31 + gb, 3.4)); L(A[1], ell(64, 96.5, 20 + gb * 1.5, 2.3)); L(A[Math.min(4, 2 + (gb > 1 ? 1 : 0))], ell(64, 96.5, 9 + gb * 1.5, 1.2));
     if (gb > 1) L(A[4], rect(60, 96, 8, 1));
     for (const [x, k] of [[30, 0], [99, 1], [36, 2], [93, 3]]){ const t = (P * 2 + k * 0.27) % 1; if (t < 0.5) L(A[1], rect(x + (x < 64 ? -1 : 1) * Math.round(t * 6), 96 + (k & 1), 2 - Math.round(t * 2), 1)); }  // wax flecks creeping out
   }
 
-  // ------------------------------------------------------------------ the dead broom: a witch's besom, a gnarled knotted staff and a bound bundle of twigs, dragged on the left
-  const handL = D ? [37, 92] : [26, 62 + bb];
+  // ------------------------------------------------------------------ the witch's besom: a gnarled knotted staff and a cord-bound bundle of twigs (the spine)
   let bU = [1, 0], bN = [0, 1];
   const besom = (bx, by, hx, hy, ext, bLen, w0, w1, sway) => {
     const sLen = Math.hypot(hx - bx, hy - by) + ext, ux = (hx - bx) / (sLen - ext), uy = (hy - by) / (sLen - ext), nx = -uy, ny = ux; bU = [ux, uy]; bN = [nx, ny];
@@ -6168,96 +6170,99 @@ function drawPumpkinWraith(cv, f, accent){
     for (const a of [0.6, 2.8]){ L(K, strokeP([F(a - 1.1, -w0 - 0.2), F(a - 1.1, w0 + 0.2)], 0.9)); L(B3, strokeP([F(a, -w0 - 0.4), F(a, w0 + 0.4)], 1.3)); }   // two tight cord wraps
     L(G5, rect(Math.round(F(2.8, -w0)[0]), Math.round(F(2.8, -w0)[1]), 1, 1));
   };
-  const drawBroom = () => {
-    if (D){ besom(19, 92.6, 47, 91.2, 0, 10.5, 3.2, 7.4, 0); L(B0, rect(23, 99, 3, 1)); L(BD, rect(49, 98, 2, 1)); }        // beaten: dropped flat on the floor
-    else { const dr = Math.sin(TAU * P - 1.5); besom(20 + Math.round(dr), 83, handL[0], handL[1], 4, 13.5, 3.6, 9, Math.sin(TAU * P * 2 - 2.2) * 0.8);   // the bundle drags a beat behind, its tips shivering
-      L(B0, rect(6, 99, 3, 1)); L(BD, rect(28, 99, 2, 1)); }                                                     // loose straws left behind
+  // ------------------------------------------------------------------ the tattered shroud: rag strips that trail the sway and flutter in a wave along the bar
+  const wind = i => D ? 0 : Math.sin(TAU * P * 2 - i * 0.8 - 1.0) * 1.6 - Math.cos(TAU * P) * 2.0;
+  const strip = (col, x, w, len, lean, i, hi, fold) => {
+    const F = wind(i), o = t => F * t * Math.sqrt(t), dy = D ? 0 : Math.cos(TAU * P * 2 - i * 0.8 - 1.0) * 0.9, yT = 50;
+    const p = (dx, t, e = 0) => [x + dx + lean * t + o(t), yT + len * t + e * dy];
+    L(col, poly([p(-w / 2, 0), p(w / 2, 0), p(w / 2 + 0.6, 0.4), p(w / 2 + 1, 0.72), p(w * 0.2, 1, 1), p(-w * 0.1, 0.8, 1), p(-w * 0.42, 0.95, 1), p(-w / 2 - 1, 0.7), p(-w / 2 - 0.6, 0.4)]));
+    if (hi) L(hi, strokeP([p(-w / 2 + 0.9, 0.22), p(-w / 2 + 0.5, 0.46), p(-w / 2 + 0.1, 0.7)], 1));
+    if (fold) L(fold, strokeP([p(1, 0.3), p(1.2, 0.6), p(w * 0.2, 0.9)], 1));
+    if (col === K){ const q = p(w * 0.2, 1, 1); L(K, rect(Math.round(q[0]), Math.round(q[1]) + 2, 1, 2)); }            // a loose thread
+  };
+  const BACK = [[36, 5, 11, -2, 0], [43, 7, 23, -2, 1], [50, 7, 31, -1, 2], [78.5, 7, 32, 1, 5], [85.5, 7, 22, 2, 6], [92, 5, 11, 2, 7]];
+  const FRONT = [[39.5, 5, 15, -2, 0.4, 1, 0], [45.5, 7, 26, -2, 1.4, 1, 1], [51.6, 5.4, 19, -1, 2.4, 1, 0], [57.2, 6, 29, 0, 3.4, 1, 1],
+                 [70.8, 6, 27, 0, 4.4, 1, 1], [76.6, 5.4, 21, 1, 5.4, 1, 0], [82.8, 7, 28, 2, 6.4, 1, 1], [88.8, 5, 16, 2, 7.4, 1, 0]];
+  const lanterns = [[17, 13], [28, 6], [39, 23], [89, 21], [100, 7], [111, 14]];                         // the chore-lanterns: [x along the bar, string length]
+  // one lantern pops alight on the beat, burns through the loop's wrap and gutters out again: lit count 4 -> 3 -> 4
+  const l2 = T >= 43 || T < 12 ? 1 : T < 18 ? [1, 0.5, 1, 0.5, 0, 0.5][Math.floor(T - 12)] : 0;
+  const litNow = [0, 1, l2, 1, 0, 1];
+  const lant = (x, y, lit, k) => {                                                                       // a tiny dark jack-o'-lantern, 11x9
+    L(K, c => { c.rect(x - 3, y, 7, 9); c.rect(x - 4, y + 1, 9, 7); c.rect(x - 5, y + 2, 11, 5); c.fill(); });
+    L(G1, rect(x - 4, y + 2, 9, 5)); L(K, rect(x - 2, y + 1, 1, 7)); L(K, rect(x + 2, y + 1, 1, 7)); L(G3, c => { c.rect(x - 5, y + 2, 1, 3); c.rect(x - 4, y + 1, 1, 1); c.rect(x - 3, y, 2, 1); c.fill(); }); L(G4, rect(x - 4, y + 1, 1, 1)); L(G4, rect(x, y - 1, 1, 1)); L(K, rect(x + 4, y + 2, 1, 5));
+    const hot = lit >= 1 && fl, e = lit >= 1 ? (hot ? A[3] : A[2]) : lit > 0 ? A[1] : G4, m = lit >= 1 ? (hot ? A[2] : A[1]) : lit > 0 ? A[0] : G3;
+    L(K, rect(x - 4, y + 2, 9, 6)); L(e, c => { c.rect(x - 3, y + 3, 2, 1); c.rect(x - 2, y + 4, 1, 1); c.rect(x + 2, y + 3, 2, 1); c.rect(x + 2, y + 4, 1, 1); c.fill(); });   // two angry carved notches, echoing the big face
+    L(m, rect(x - 2, y + 6, 5, 1));   // and a slot of a mouth
+    if (lit >= 1){ const fk = Math.sin(TAU * P * 8 + k * 2.1) > 0.2; L(A[4], rect(fk ? x - 2 : x + 2, y + 3, 1, 1)); L(A[hot ? 3 : fk ? 2 : 1], rect(x - 1, y + 6, 3, 1)); L(A[0], rect(x, y + 9, 1, fk ? 2 : 1)); }   // the flame flickers inside
   };
 
-  // ------------------------------------------------------------------ the shroud
-  const CY = 45 + bb;                                                                        // the collar line
   if (D){
-    // collapsed: an empty heap of cloth on the floor, its ragged points splayed flat
-    const hm = [[100, 95], [108, 97.5], [98, 98], [104, 99.5], [88, 99], [80, 100], [70, 99], [60, 100.5], [50, 99], [40, 100], [32, 98.5], [24, 99.5], [30, 96]];
-    L(K, path([[34, 92], [38, 84, 52, 78, 66, 78], [82, 78, 94, 84, 98, 92], ...hm]));
-    L(G1, path([[40, 90], [46, 84, 56, 82, 66, 82], [74, 82, 82, 84, 86, 88], [74, 86, 56, 86, 40, 90]]));                // a sagging fold
-    for (const p of [[46, 86, 44, 90, 42, 94, 40, 98], [58, 84, 58, 90, 60, 95, 60, 99], [78, 84, 80, 90, 84, 94, 88, 98]]) L(G2, bzS(p, 1));
-    L(G3, bzS([35, 91, 40, 83, 52, 78.6, 64, 78.4], 1)); L(G4, rect(43, 81, 2, 1));
-    L(null, ell(70, 92, 1.4, 1.2)); L(null, ell(91, 95, 1, 1));
+    // beaten. The broken-off half of the crossbar lies on the floor; the lanterns have gone dark and rolled into a heap.
+    L(K, strokeP([[6, 97], [18, 95.6], [31, 96.6]], 3.4)); L(B0, strokeP([[6, 97], [18, 95.6], [31, 96.6]], 1.6)); L(B2, strokeP([[8, 96], [18, 95]], 0.8)); L(B3, rect(31, 95, 2, 1)); L(B2, rect(32, 97, 2, 1)); L(K, strokeP([[8, 96.6], [5, 93]], 2.2)); L(B0, strokeP([[8, 96.4], [5.4, 93.4]], 0.9));
+    lant(64, 88, 0, 0); lant(119, 88, 0, 1);
+    XF = rot(Math.PI / 2, 10.5, 90.5); lant(10, 86, 0, 2); XF = rot(-Math.PI / 2, 24.5, 91.5); lant(24, 87, 0, 3); XF = null; lant(17, 77, 0, 4);
+    for (const [x, y, w] of [[36, 98, 3], [70, 98, 2], [3, 99, 2]]) L(G3, rect(x, y, w, 1));                 // snapped strings
+    // the shroud hangs limp down the staff
+    const sw = Math.round(Math.sin(TAU * P) * 0.5);                                                         // the only motion: one rag tip stirs a pixel
+    L(G1, poly([[35, 58], [40, 54], [41, 80], [38.6, 88], [37.4, 81], [35.6, 85], [35, 70]]));
+    L(K, poly([[37, 53], [43, 48], [50, 52], [52, 60], [50, 67], [52, 75], [50.4, 83], [48.6, 77], [47 + sw, 87], [45, 78], [43, 84], [41, 74], [39.4, 80], [38.6, 66], [37, 60]]));
   } else {
-    // the back layer of tatters, peeking between the front points, a half-step out of phase
-    const back = [];
-    for (let i = 0; i <= 10; i++){ const t = i / 10, x = 95 - 62 * t, tip = i % 2 === 0, ph = TAU * P * 2 - i * 0.75 - 1.2;
-      back.push([x + (tip ? Math.sin(ph) * 2 : 0), (tip ? [84, 88, 85, 89, 84, 87][i / 2] : 76) + lagB + (tip ? Math.cos(ph) * 1.4 : 0)]); }
-    L(G1, path([[54, CY + 4], [86, CY + 8], ...back, [42, CY + 8]]));
-    // the front cloth: shoulders flaring into long ragged points; each point swings on a wave that runs along the hem
-    const tipY = [87, 91, 85, 92, 88, 90], hemPts = [], tipsOnly = [];
-    for (let i = 0; i <= 11; i++){ const t = i / 11, x = 99 - 70 * t, tip = i % 2 === 1, ph = TAU * P * 2 - i * 0.7;
-      const amp = tip ? 1 : 0.35; if (tip) tipsOnly.push([x + Math.sin(ph) * 2.2 * amp, tipY[(i - 1) / 2] + lagB + Math.cos(ph) * 1.6 * amp]); hemPts.push([x + Math.sin(ph) * 2.2 * amp, (tip ? tipY[(i - 1) / 2] : 77 + (i % 4 === 0 ? 1.5 : 0)) + lagB + Math.cos(ph) * 1.6 * amp]); }
-    const jag = []; hemPts.forEach((q, i) => { if (i > 0){ const pr = hemPts[i - 1], tip = i % 2 === 1, t = tip ? 0.62 : 0.38, nx = q[1] - pr[1], ny = -(q[0] - pr[0]), m = Math.hypot(nx, ny) || 1, o = [1.3, -0.9, 1.6, -1.2, 1.0, 0.8][i % 6];
-      jag.push([pr[0] + (q[0] - pr[0]) * t + nx / m * o, pr[1] + (q[1] - pr[1]) * t + ny / m * o]); } jag.push(q); });   // torn, uneven edges on every point
-    hemPts.length = 0; hemPts.push(...jag);
-    const rS = [99 + Math.sin(TAU * P * 2) * 0.6, 79 + lagB], lS = [29 + Math.sin(TAU * P * 2 - 7.7) * 0.6, 79 + lagB];
-    L(K, path([[50, CY], [78, CY], [90, CY + 5, 96, CY + 18, rS[0], rS[1]], ...hemPts.slice(1, -1), [lS[0], lS[1]], [32, CY + 18, 38, CY + 5, 50, CY]]));
-    // folds: deep (G1) and lit (G2) creases running from the collar down to each point, bending with it
-    tipsOnly.forEach(([x, y]) => { const x0 = 64 + (x - 64) * 0.42, y0 = CY + 6;
-      L(G1, taper([x0 + 1.4, y0, x0 + (x - x0) * 0.35 + 1.4, y0 + 12, x + (x0 - x) * 0.2 + 1.2, y - 12, x + 0.6, y - 2], 2.2, 0.6));
-      if (x < 92) L(G2, taper([x0 - 0.6, y0 + 2, x0 + (x - x0) * 0.35 - 0.6, y0 + 13, x + (x0 - x) * 0.2 - 0.8, y - 11, x - 0.6, y - 4], 1.2, 0.5)); });
-    L(G3, bzS([49, CY + 1.6, 40, CY + 7, 33.6, CY + 18, lS[0] + 1, lS[1] - 1], 1)); L(G4, bzS([47, CY + 2.4, 43, CY + 4.4, 40, CY + 8, 38.6, CY + 11], 1));   // lit left edge of the cloth
-    L(G2, bzS([80, CY + 2, 89, CY + 7, 94, CY + 18, rS[0] - 1, rS[1] - 2], 1));                                                                        // shaded right edge
-    for (const [x, y, rx, ry] of [[45, 70, 1.4, 2.4], [80, 64, 1.1, 2], [62, 79, 1.5, 1.8]]) L(null, ell(x, y + (y > 75 ? lagB : bb * 0.5 + lagB * 0.5), rx, ry));   // moth-eaten tears
-    // a ragged mantle over the shoulders, its short points fluttering a beat ahead of the hem
-    const mh = []; for (let i = 0; i <= 10; i++){ const t = i / 10, ph = TAU * P * 2 - i * 0.7 + 0.8, tip = i % 2 === 1; mh.push([86 - 44 * t + (tip ? Math.sin(ph) * 0.8 : 0), CY + (tip ? [17, 19, 16, 19, 17][(i - 1) / 2] : 13) + (tip ? Math.cos(ph) * 0.8 : 0) + (lagB - bb) * 0.4]); }
-    L(G1, path([[48, CY - 1], [80, CY - 1], [86, CY + 4, 89, CY + 10, 87, CY + 14], ...mh.slice(1, -1), [41, CY + 14], [39, CY + 10, 42, CY + 4, 48, CY - 1]]));
-    L(G3, bzS([48, CY, 44, CY + 2, 41.6, CY + 7, 41.6, CY + 13], 1)); for (const x of [52, 64, 76]) L(K, strokeP([[x, CY + 4], [x + (x - 64) * 0.12, CY + 13]], 1));
+    XF = RIG;
+    for (const [x, w, len, lean, i] of BACK) strip(G1, x, w, len, lean, i + 0.9, null, null);
+    XF = null;
   }
 
-  drawBroom();
+  // the besom itself, bristles down, sweeping the pool
+  if (D) besom(SX, 78, SX, 47, 3, 15.5, 3.6, 10.5, 0);
+  else { const h = R(64, 47); besom(64, 78, h[0], h[1], 0, 16, 3.6, 11.5, Math.sin(TAU * P - 1.9) * 2.2 + Math.sin(TAU * P * 2 - 0.6) * 0.5);
+    L(B0, rect(40, 99, 3, 1)); L(BD, rect(88, 99, 2, 1)); }                                                 // loose straws swept out
 
-  // ------------------------------------------------------------------ the vine arms
+  // the twig crossbar, forked at the ends
+  const twig = (pts, ends) => { L(K, strokeP(pts, 3.8)); for (const [e, s] of ends) for (const [dx, dy] of [[4.4, -4.6], [4.8, 2.4]]) L(K, strokeP([e, [e[0] + s * dx, e[1] + dy]], 2.4));
+    L(B0, strokeP(pts, 2)); L(B2, strokeP(pts.map(q => q.map((v, i) => i % 2 ? v - 0.7 : v)), 0.8));
+    for (const [e, s] of ends) for (const [dx, dy] of [[4.2, -4.4], [4.6, 2.2]]) L(dy < 0 ? B2 : B0, strokeP([e, [e[0] + s * dx, e[1] + dy]], 0.9)); };
   if (D){
-    // limp: the left vine slumps to the broom, the right one drapes over the heap, its claw lying loose on the floor
-    L(K, taper([46, 86, 42, 90, 40, 92, 37, 93], 4.4, 3)); L(K, thorns([46, 86, 42, 90, 40, 92, 37, 93], 2, 2, -1));
-    for (const [a, b] of [[33, 91], [34, 95]]) L(K, strokeP([[37, 93], [a, b]], 1.4));
-    const sw = Math.round(Math.sin(TAU * P) * 0.5);                                         // the only motion: one root tip twitches a pixel
-    L(K, taper([86, 84, 96, 84, 102, 88, 105, 93], 4.8, 3.2)); L(G2, bzS([87, 83.4, 96, 83, 101, 86.6, 104, 91], 1)); L(K, thorns([86, 84, 96, 84, 102, 88, 105, 93], 3, 2.2, -1));
-    for (const fp of [[105, 93, 109, 92, 112, 94, 113, 97], [105, 93, 108, 95, 110, 97, 109, 99], [105, 94, 104, 97, 102, 98, 100, 98.6], [105, 93, 109, 89, 113, 89, 115 + sw, 91]]) L(K, taper(fp, 2.2, 0.9));
-    L(G2, ell(95, 82.6, 2.6, 1.6, 0.3));
+    twig([[SX, 51], [34, 53, 25, 64]], [[[25, 64], -0.7]]);                                                 // the left half droops from the lashing
+    twig([[SX, 51], [52, 52, 59, 58]], []); L(B3, c => { c.rect(60, 58, 1, 3); c.rect(61, 57, 2, 1); c.rect(59, 61, 1, 1); c.fill(); }); L(K, rect(62, 59, 1, 2));   // the right half: a splintered stub
+    L(K, poly([[38, 48], [47, 47], [49, 55], [46, 53], [43, 58], [40, 54], [37, 56]])); L(G3, strokeP([[38.6, 49], [46, 48]], 1)); L(G4, rect(40, 48, 3, 1));   // rags still knotted at the lashing
+    L(G2, strokeP([[44, 58], [45, 66], [44, 76]], 1)); L(G2, strokeP([[40, 60], [40.6, 72]], 1)); L(G3, strokeP([[37.6, 57], [38.4, 64]], 1));
+    L(K, poly([[30, 57], [27, 66], [29, 63], [30, 68], [32.4, 58]]));                                        // a rag still caught on the drooping half
+    L(G4, strokeP([[24.5, 66], [24.5, 68]], 1)); lant(24, 69, 0, 5);                                         // one dead lantern still dangling
   } else {
-    // left vine: shoulder down to the broom handle, roots coiled round it
-    const s = [47, 54 + bb], h = handL;
-    const vL = [s[0], s[1], s[0] - 6, s[1] + 2, h[0] + 3, h[1] - 5, h[0] + 0.5, h[1] + 0.5];
-    L(K, taper(vL, 5.4, 3.6)); L(G2, bzS([s[0] - 0.5, s[1] - 1.2, s[0] - 6, s[1] + 0.6, h[0] + 2, h[1] - 6, h[0] - 0.6, h[1] - 1], 1)); L(K, thorns(vL, 3, 2.4, -1));
-    for (const o of [-2.2, 0, 2.2]){ const cx = h[0] + bU[0] * o, cy = h[1] + bU[1] * o;                               // roots wrapped round the staff: the grip
-      L(K, strokeP([[cx - bN[0] * 2.8, cy - bN[1] * 2.8], [cx + bU[0] * 0.9, cy + bU[1] * 0.9], [cx + bN[0] * 2.8, cy + bN[1] * 2.8]], 1.5)); }
-    L(K, strokeP([[h[0] - bU[0] * 2 + bN[0] * 2.6, h[1] - bU[1] * 2 + bN[1] * 2.6], [h[0] - bU[0] * 5.6 + bN[0] * 2.2, h[1] - bU[1] * 5.6 + bN[1] * 2.2]], 1.1));   // one root tip creeping down the staff
-    L(G3, rect(Math.round(h[0] - bN[0] * 2.4), Math.round(h[1] - bN[1] * 2.4) - 1, 1, 1));
-    // right vine: reaching up and out, ending in the root claw
-    const wr = [103, 31 + bb + Math.round(rear)];
-    const vR = [80, 51 + bb, 92, 47 + bb, 99, 41 + bb, wr[0], wr[1]];
-    L(K, taper(vR, 6.2, 4.4)); L(G2, bzS([81, 50 + bb, 92, 45.8 + bb, 98.4, 39.6 + bb, wr[0] - 1.4, wr[1]], 1)); L(K, thorns(vR, 4, 2.4, 1));
-    L(G2, ell(89, 45 + bb, 4.2, 2.6, -0.5)); L(G2, ell(93.4, 41.6 + bb, 3, 2.1, -1.1)); L(G3, strokeP([[86.6, 46.4 + bb], [93.6, 41 + bb]], 0.8));   // a withered pumpkin leaf on the arm
-    L(K, strokeP([[97, 43.6 + bb], [101, 47 + bb, 98, 51 + bb, 96, 48.4 + bb]], 1));                                                              // a small dry tendril
-    // the root claw: five knobbly roots, fanned open or clenched into a knot
-    const open = [-2.55, -2.0, -1.45, -0.9, -0.35], lens = [13, 15.5, 16, 15, 12], ac = -1.45, cl = claw;
-    open.forEach((a0, i) => { const spread = cl < 0 ? 1 - cl * 0.5 : lerp(1, 0.3, cl), a = ac + (a0 - ac) * spread, l = lens[i] * (cl < 0 ? 1.04 : lerp(1, 0.6, cl));
-      const side = i < 2 ? -1 : i > 2 ? 1 : (i % 2 ? 1 : -1), curl = lerp(0.25, 2.3, Math.max(0, cl)) * (i === 2 ? 1 : 1) * Math.sign(ac - a0 || 1) * -1;
-      const d = (aa, r) => [wr[0] + Math.cos(aa) * r, wr[1] + Math.sin(aa) * r];
-      const p1 = d(a, l * 0.38), p2 = d(a + curl * 0.35, l * 0.72), p3 = d(a + curl * 0.75, l * lerp(1, 0.75, Math.max(0, cl)));
-      L(K, taper([wr[0], wr[1], p1[0], p1[1], p2[0], p2[1], p3[0], p3[1]], 3.4, 1.1));
-      const [kx, ky] = d(a, l * 0.45); L(K, ell(kx, ky, 1.8, 1.8));                           // a knuckle knot on each root
-      if (i === 1 || i === 3){ const [hx, hy] = d(a + curl * 0.2, l * 0.55); L(K, strokeP([[hx, hy], [hx + Math.cos(a + side * 1.2) * 2.4, hy + Math.sin(a + side * 1.2) * 2.4]], 1)); }   // root hairs
-      if (i < 3) L(G2, rect(Math.round(kx - 1), Math.round(ky - 1), 1, 1)); });
-    L(K, ell(wr[0], wr[1], 3.8, 3.4)); L(G2, rect(wr[0] - 2, wr[1] - 2, 2, 1));
+    XF = RIG;
+    twig([[13, 52.4], [38, 50.6, 64, 51.6], [90, 52.6, 115, 50.8]], [[[13, 52.4], -1], [[115, 50.8], 1]]);
+    for (const [x, o] of [[29, 0.8], [99, -0.6]]){ L(B0, ell(x, 51.4 + o, 1.7, 1.6)); L(BD, rect(Math.round(x), Math.round(51 + o), 1, 1)); }
+    FRONT.forEach(([x, w, len, lean, i, hi, fold]) => strip(K, x, w, len, lean, i, hi ? G3 : null, fold ? G1 : null));
+    for (const [x, y, rx, ry, i] of [[46, 66, 1.2, 2.2, 1.4], [83, 70, 1.2, 2, 6.4]]) L(null, ell(x + wind(i) * 0.4, y, rx, ry));                         // moth-eaten tears
+    // the mantle: a yoke of cloth draped over the bar, cinched to the staff with cord
+    L(K, path([[32, 53.4], [42, 45, 64, 44], [86, 45, 96, 53.4], [89, 58.6, 77, 60.4], [71, 57, 64, 52], [57, 57, 51, 60.4], [39, 58.6, 32, 53.4]]));
+    L(G3, bzS([33.6, 52.6, 40, 47.4, 46, 46.4, 50, 46], 1)); L(G4, bzS([35.6, 51, 38, 49, 40, 48, 42, 47.4], 1));
+    for (const x of [44, 52, 76, 84]) L(G1, strokeP([[x, 49.6], [x + (x - 64) * 0.1, 57.4]], 1));
+    const cd = [45, 51.4, 55, 56.4, 73, 56.4, 83, 51.4]; L(K, bzS(cd, 3)); L(G4, bzS(cd.map((v, i) => i % 2 ? v - 0.5 : v), 1)); for (const t of [0.2, 0.5, 0.8]){ const [x, y] = bz(cd, t); L(G5, rect(Math.round(x), Math.round(y - 0.6), 1, 1)); }
+    XF = null;
+    // the chore-lanterns hang off the bar on strings, swinging a beat behind the sway
+    lanterns.forEach(([x, len], i) => { const a = R(x, 53), ph = 0.2 * Math.sin(TAU * P - 1.3 - i * 0.45) + 0.07 * Math.sin(TAU * P * 2 + i * 1.9);
+      const lx = Math.round(a[0] + Math.sin(ph) * (len + 4)), ly = Math.round(a[1] + Math.cos(ph) * len);
+      L(K, strokeP([a, [lx + 0.5, ly]], 2.2)); L(G4, strokeP([a, [lx + 0.5, ly]], 0.9)); lant(lx, ly, litNow[i], i);
+      if (i === 2){ const t = T - 43;                                                                     // the pop as it lights; the wisp as it gutters
+        if (t >= 0 && t < 4){ const r = 7 + t * 1.4, c = A[4 - t]; for (const [dx, dy] of [[1, 0], [-1, 0], [0, -1], [0.7, -0.7], [-0.7, -0.7], [0.7, 0.7], [-0.7, 0.7]]) L(c, rect(Math.round(lx + dx * r), Math.round(ly + 4 + dy * r), t < 2 ? 2 : 1, t < 2 ? 2 : 1)); }
+        if (T >= 16 && T < 28){ const u = (T - 16) / 12; L(u < 0.5 ? G5 : G4, rect(lx + Math.round(Math.sin(u * 5) * 1.4), Math.round(ly - 2 - u * 10), 1, 1)); if (u < 0.6) L(G4, rect(lx + 1 + Math.round(Math.sin(u * 5 + 1) * 1.4), Math.round(ly - u * 8), 1, 1)); } } });
+    // the collar of twisted vines where the head is jammed onto the staff
+    XF = RIG; const CY = 46.4;
+    L(K, ell(64, CY + 1, 17.6, 4.6)); for (let k = 0; k < 7; k++) L(k < 3 ? G4 : G3, strokeP([[49.6 + k * 5, CY - 1.6], [51.6 + k * 5, CY + 2.6, 55 + k * 5, CY + 2.4]], 1.2));
+    XF = null;
   }
 
-  // ------------------------------------------------------------------ the collar of twisted vines
-  if (!D){ L(K, ell(64, CY + 1, 17.6, 4.6)); for (let k = 0; k < 7; k++) L(k < 3 ? G4 : G3, strokeP([[49.6 + k * 5, CY - 1.6], [51.6 + k * 5, CY + 2.6, 55 + k * 5, CY + 2.4]], 1.2));
-    L(K, strokeP([[50, CY + 3], [46, CY + 7, 48, CY + 11, 51, CY + 9]], 1)); L(K, strokeP([[78, CY + 3], [82, CY + 7, 80, CY + 11, 77, CY + 9]], 1)); }
-
-  // ------------------------------------------------------------------ the jack-o'-lantern head
-  const HX = D ? 68 : 64, HY = D ? 71 : 31 + hb, RX = 21, RY = 16;
-  if (D) XF = rot(0.55, HX, HY);                                                             // beaten: slumped over onto its side on the heap
+  // ------------------------------------------------------------------ the jack-o'-lantern head (the approved one), jammed on top; beaten: fallen and split on the floor
+  const DROT = 0.5, hp = R(64, 31, thH), tilt = D ? 0 : Math.round(Math.sin(TAU * P - 0.5) * 1.4) * 0.045;
+  const HX = D ? 93 : Math.round(hp[0]), HY = D ? 79 : Math.round(hp[1] + rear), RX = 21, RY = 16;
+  const HM = D ? rot(DROT, HX, HY) : tilt ? rot(tilt, HX, HY + 16) : null;
+  XF = HM;
+  const DEADX = () => {                                                                       // the split: a wedge cloven out of the crown down between the eyes, the shard lying beside it
+    XF = HM; L(null, poly([[HX + 1.4, HY - 17.5], [HX + 10, HY - 16], [HX + 5.6, HY - 8], [HX + 3.6, HY - 1.6], [HX + 3, HY - 8]]));
+    L(G3, strokeP([[HX + 0.8, HY - 15.4], [HX + 2.4, HY - 8], [HX + 3, HY - 2.4]], 1)); L(G4, rect(HX, HY - 14, 1, 3)); L(K, strokeP([[HX + 10, HY - 14.6], [HX + 6.4, HY - 8], [HX + 4.4, HY - 2]], 1.2)); XF = null;
+    L(K, poly([[70, 90], [77, 88.6], [80, 95], [73, 97]])); L(G1, poly([[71.4, 91], [76.6, 90], [78.6, 94.4], [73.6, 95.8]])); L(G3, rect(72, 90, 3, 1)); L(G4, rect(72, 90, 1, 1));
+    const top = app(HM, HX + 1, HY - RY - 9); drawPumpkinScarecrow.deadHead = [Math.round(top[0]), Math.round(top[1])]; };
   const Hp = (x, y) => [HX + x, HY + y];
   L(K, ell(HX, HY, RX, RY)); L(G1, ell(HX, HY + 0.4, RX - 1.2, RY - 1.2));
   // ribbed shading: the lit (left) lobes a band lighter, the far right lobe sunk into black
@@ -6295,8 +6300,8 @@ function drawPumpkinWraith(cv, f, accent){
   // the saw-tooth grin: a hole carved through the rind. The teeth are rind left standing (cut from the same pixels as the face, ribs
   // and grooves running straight through them); the glow shows only in the gaps, behind a thin dark cut wall all round the hole.
   const rind = buf.slice();
-  if (!drawPumpkinWraith.mc){ drawPumpkinWraith.mc = document.createElement('canvas'); drawPumpkinWraith.mc.width = W; drawPumpkinWraith.mc.height = H; }
-  const mx = drawPumpkinWraith.mc.getContext('2d', {willReadFrequently: true}), mbuf = new Array(W * H).fill(null), tbuf = new Array(W * H).fill(null);
+  if (!drawPumpkinScarecrow.mc){ drawPumpkinScarecrow.mc = document.createElement('canvas'); drawPumpkinScarecrow.mc.width = W; drawPumpkinScarecrow.mc.height = H; }
+  const mx = drawPumpkinScarecrow.mc.getContext('2d', {willReadFrequently: true}), mbuf = new Array(W * H).fill(null), tbuf = new Array(W * H).fill(null);
   const Lm = shapeLayer(mx, W, H, mbuf, () => XF);
   const mw = wide * 2.4, md = wide * 2.6, sx2 = 1 + mw / 17.6;
   const maw = [[-18 - mw, 4.4 - wide], [-8, 7.6, 8, 7.6, 18 + mw, 4.4 - wide], [16.6 + mw, 11.6 + md * 0.6, 8.6, 15.2 + md, 0, 15.2 + md], [-8.6, 15.2 + md, -16.6 - mw, 11.6 + md * 0.6, -18 - mw, 4.4 - wide]];
@@ -6325,11 +6330,10 @@ function drawPumpkinWraith(cv, f, accent){
   for (const [j, c] of cut) buf[j] = c;
   XF = null;
   if (D){                                                                                    // grey X's in the carved eye holes, pixel-exact and upright
-    const m = rot(0.55, HX, HY);
+    const m = HM;
     for (const c of eyeC){ const [ex, ey] = app(m, HX + c[0], HY + c[1] + 0.4).map(Math.round);
       for (const [dx, dy] of [[-2, -2], [-1, -2], [1, -2], [2, -2], [-1, -1], [0, -1], [1, -1], [0, 0], [-1, 1], [0, 1], [1, 1], [-2, 2], [-1, 2], [1, 2], [2, 2]]) px(ex + dx, ey + dy, G4); }
-    const top = app(m, HX + 1, HY - RY - 4); drawPumpkinWraith.deadHead = [Math.round(top[0]), Math.round(top[1])];
-    L(G1, poly([[96, 74], [100, 72.6], [99, 76]])); L(G3, rect(97, 73, 1, 1));               // a chip of rind knocked off
+    DEADX();               // a chip of rind knocked off
   }
 
   // ------------------------------------------------------------------ particles: embers and seeds spat on the flare; ash drifting up off the hem
@@ -6349,7 +6353,6 @@ function drawPumpkinWraith(cv, f, accent){
   const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
   blitBuf(ctx, buf, W, H);
 }
-
 // ---- The Gobbler (style guide v1)
 // The Gobbler, drawn to the gold standards: one iconic shape, no scenery. A monstrous turkey head-on, its tail a full halo of
 // steel-tipped blade feathers fanned behind it; a bare black head with a hooked beak, a heavy lumpy wattle and a snood; a scaled
@@ -7296,19 +7299,20 @@ function drawFatherTime(cv, f, accent){
 }
 
 // ---- The Heartbreaker (style guide v1)
-// The Heartbreaker (Valentine's), concept 9A "the split": an anatomical heart torn in two, a cut aorta hooked over the top.
-// The tear down the middle is a mouth: teeth on both lips, thorn stitches across it, a glow deep inside. Target eyes under
-// angry brows, three grey arrows lodged in it, thorny vine limbs ending in clenched rosebuds, dripping roots below the point.
-// Idle: a lub-dub heartbeat twice a loop (the heart swells, the mouth breathes, the vines twitch a beat late).
-// Signature: the jaw splits wide, the teeth gnash, the stitches strain, the eyes flare, then it SNAPS shut.
-// Pop: the target eyes, the glow inside the crack (the prop) and the ground pool only. Arrows stay grey steel.
-function drawHeartbreaker(cv, f, accent){
+// The Heartbreaker (Valentine's), concept 35B "clean through". The heart has come apart: two halves hanging side by side, the right one
+// dropped lower and swinging on the three thorn sutures that still hold (two have snapped and dangle). Between the torn, toothed faces
+// hangs a narrow column of glow. A crosshair target eye on each half; a steel arrow lodged in each. Thorny vine limbs, dripping roots.
+// Idle: a lub-dub heartbeat twice a loop, the two halves pulsing out of step; the lower half sways; drips fall into the pool.
+// Signature: the arrow in the lower half works loose and drops; a new one flies in and THUNKS into the same wound. The half jolts,
+// swings out so the gap gapes, the teeth gnash, the middle suture strains, the crosshairs flare; then it settles (arrow count as before).
+// Pop: the two crosshair eyes, the gap's glow (the prop) and the ground pool only. Arrows stay grey steel.
+function drawHeartbreaker2(cv, f, accent){
   const LOOP = 64, P = (f % LOOP) / LOOP, TAU = Math.PI * 2, T = P * LOOP;                          // one seamless 6.4 s loop
-  const W = 128, H = 104, A = POP_RAMPS[accent] || POP_RAMPS.blush, D = !!drawHeartbreaker.dead;
+  const W = 128, H = 104, A = POP_RAMPS[accent] || POP_RAMPS.blush, D = !!drawHeartbreaker2.dead;
   const K = '#121110', G1 = '#211f1d', G2 = '#2e2a27', G3 = '#3f3a36', G4 = '#57514b', G5 = '#756e66';
   const BD = '#35312d', B0 = '#4a4540', B2 = '#615b54', B3 = '#8e867b', B4 = '#c9c2b6';                 // light ramp: teeth and arrow steel
-  if (!drawHeartbreaker.sc){ drawHeartbreaker.sc = document.createElement('canvas'); drawHeartbreaker.sc.width = W; drawHeartbreaker.sc.height = H; }
-  const sc = drawHeartbreaker.sc, sx = sc.getContext('2d', {willReadFrequently: true}), buf = new Array(W * H).fill(null);
+  if (!drawHeartbreaker2.sc){ drawHeartbreaker2.sc = document.createElement('canvas'); drawHeartbreaker2.sc.width = W; drawHeartbreaker2.sc.height = H; }
+  const sc = drawHeartbreaker2.sc, sx = sc.getContext('2d', {willReadFrequently: true}), buf = new Array(W * H).fill(null);
   let XF = null;
   const L = shapeLayer(sx, W, H, buf, () => XF);
   const ell = (x, y, rx, ry, rot = 0) => c => { c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); c.fill(); };
@@ -7332,73 +7336,85 @@ function drawHeartbreaker(cv, f, accent){
   const sm = u => u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u);
   const wrap = t => ((t % LOOP) + LOOP) % LOOP;
 
+  const xAtPoly = (pts, y) => { for (let i = 0; i < pts.length - 1; i++){ const [x0, y0] = pts[i], [x1, y1] = pts[i + 1]; if ((y >= y0 && y <= y1) || (y >= y1 && y <= y0)) return y1 === y0 ? x0 : x0 + (x1 - x0) * (y - y0) / (y1 - y0); } return null; };
+
   // ------------------------------------------------------------------ timing
   const beatF = tt => { const t = (u0, a) => { const u = wrap(tt - u0); return u < 1.4 ? a * u / 1.4 : u < 6 ? a * (1 - sm((u - 1.4) / 4.6)) : 0; }; return t(0, 1) + t(4, 0.75) + t(22, 1) + t(26, 0.75); };   // lub-dub at 0 and 22
-  const beat = D ? 0 : beatF(T), lag = D ? 0 : beatF(T - 2) - 0.45 * beatF(T - 5);                 // the vines twitch two frames late, then recoil
-  let open = 0, gnash = 0, snap = 0, flare = 0;
-  if (!D){
-    if (T >= 36 && T < 43) open = sm((T - 36) / 7);                                                // the jaw splits wider
-    else if (T >= 43 && T < 50){ open = 1 + 0.12 * Math.sin(TAU * P * 16); gnash = Math.sin(TAU * P * 16); }   // gnashing at full gape
-    else if (T >= 50 && T < 52) open = 1 - 1.15 * sm((T - 50) / 2);                                 // SNAP
-    else if (T >= 52 && T < 56) open = -0.15 * (1 - sm((T - 52) / 4));                               // slammed shut, settles
-    flare = T >= 38 && T < 51 ? 1 : 0; snap = T >= 51 && T < 58 ? (T - 51) / 7 : -1;
+  const beatL = D ? 0 : beatF(T), beatR = D ? 0 : beatF(T - 2), lag = D ? 0 : beatF(T - 3) - 0.45 * beatF(T - 6);   // the lower half pulses two frames behind the upper
+  // the signature: the old arrow works loose (24-30) and drops (30-37); a new one flies in (40-42) and THUNKS into the same wound (43);
+  // the lower half jolts, swings out so the gap gapes, the teeth gnash, a suture strains, the crosshairs flare; settled by 58.
+  const HIT = 43, u = T - HIT;
+  let jolt = 0, gape = 0, gnash = 0, flare = 0;
+  if (!D && u >= 0){
+    if (u < 1){ jolt = 1; gape = -0.5; }
+    else if (u < 3) gape = -0.5 + 1.5 * sm((u - 1) / 2);
+    else if (u < 9){ gape = 1 + 0.1 * Math.sin(TAU * P * 16); gnash = Math.sin(TAU * P * 16); }
+    else if (u < 15) gape = 1 - sm((u - 9) / 6);
+    flare = u < 9 ? 1 : 0;
   }
-  const bob = D ? 3 : Math.round(Math.sin(TAU * P * 2 + 0.6) * 0.8);
-  const ang = D ? 0.1 : 0.058 + 0.075 * Math.max(-0.25, open) + 0.012 * beat;                   // each half swings out about the point
-    const S = scl(1 + 0.04 * beat, 1 + 0.03 * beat, 64, 58), PV = [64, 84];
-  const halfM = sd => mul(S, mul(tr(0, bob), mul(rot(sd * ang, PV[0], PV[1]), tr(0, sd > 0 ? Math.round(gnash) : 0))));
-  const ML = halfM(-1), MR = halfM(1);
+  const G = scl(0.9, 0.9, 64, 48);                                                               // the whole heart, a touch smaller than the live one so the dropped half clears the pool
+  const bobL = D ? 0 : Math.round(Math.sin(TAU * P * 2 + 0.6) * 0.8), bobR = D ? 0 : Math.round(Math.sin(TAU * P * 2 - 0.3) * 0.8);
+  const swing = D ? 0 : 0.03 * Math.sin(TAU * P - 0.8) + 0.01 * Math.sin(TAU * P * 2 + 0.4) - 0.05 * gape;   // the lower half hangs off its sutures and sways
+  const ML0 = mul(tr(-6, -4), G), MR0 = mul(tr(6, 5), G);
+  const ML = D ? mul(tr(-9, 3), mul(rot(0.1, 46, 40), G)) : mul(tr(-6, -4 + bobL), mul(scl(1 + 0.045 * beatL, 1 + 0.035 * beatL, 46, 46), G));
+  const MR = D ? mul(tr(15.5, 40), mul(rot(1.1, 79, 47), G)) : mul(tr(6 + 2.2 * gape - 1.5 * jolt, 5 + bobR + Math.round(gnash) + jolt), mul(rot(swing, 70, 30), mul(scl(1 + 0.045 * beatR, 1 + 0.035 * beatR, 82, 50), G)));
 
   // ------------------------------------------------------------------ the ground: a banded pool of glow, petals floating on it
-  if (D){ L(G2, ell(64, 96, 24, 2.6)); }
-  else {
-    L(A[0], ell(64, 96, 28, 3.2)); L(A[1], ell(64, 96, 15 + Math.round(beat * 2), 2)); L(A[2], ell(64, 96, 5 + Math.round(beat), 1));
+  if (D){ L(G1, ell(64, 97, 36, 2.6)); L(G3, ell(58, 97, 12, 1)); }
+  else { const b = Math.max(beatL, flare);
+    L(A[0], ell(64, 96, 28, 3.2)); L(A[1], ell(64, 96, 15 + Math.round(b * 2), 2)); L(A[flare ? 3 : 2], ell(64, 96, 5 + Math.round(b), 1));
     for (const [x0, k] of [[44, 0], [80, 1], [56, 2]]){ const x = x0 + Math.round(Math.sin(TAU * P + k * 2) * 1.5); L(A[2], rect(x, 95 + (k === 2 ? 2 : 0), 2, 1)); px(x + 2, 95 + (k === 2 ? 2 : 0), A[1]); }   // drifting petals
   }
 
-  // ------------------------------------------------------------------ dripping roots below the point (drawn behind the heart)
-  const roots = [[60, 76, 57, 83, 61, 87, 57, 92], [68, 76, 71, 83, 67, 87, 70, 91], [64, 78, 64, 84, 63, 87, 64, 89]];
-  XF = mul(S, tr(0, bob));
-  roots.forEach((p, i) => { L(K, taper(p, 3, 0.9)); L(K, thorns(p, 3, 1.8, 0.7, 0.25, 0.8)); });
-  XF = null;
-  if (!D) roots.forEach((p, i) => { const per = 32, t = wrap(T - i * 11) % per, tip = app(mul(S, tr(0, bob)), p[6], p[7]);   // a drop swells at each tip, falls, splashes
+  // ------------------------------------------------------------------ the crack: the same torn zigzag on both halves, now hanging apart and out of register
+  const C = [[64, 23], [61.5, 30], [66, 37], [60.5, 45], [65.5, 53], [61, 61], [64.5, 70], [64, 84]];
+  const exAt = y => { for (let i = 0; i < C.length - 1; i++){ const [x0, y0] = C[i], [x1, y1] = C[i + 1]; if (y >= y0 && y <= y1) return x0 + (x1 - x0) * (y - y0) / (y1 - y0); } return 64; };
+  const Lw = C.map(([x, y]) => app(ML, x, y)), Rw = C.map(([x, y]) => app(MR, x, y));
+  // the glow inside the gap (the prop): a narrow banded column hanging between the two torn faces, a bright pulse running down it
+  if (!D){ const y0 = Math.ceil(Math.max(Lw[0][1], Rw[0][1])) - 2, y1 = Math.floor(Math.min(Lw[7][1], Rw[7][1])) - 3, n = y1 - y0, run = y0 + ((P * 2 + 0.2) % 1) * n;
+    for (let y = y0; y <= y1; y++){ const xl = xAtPoly(Lw, Math.max(y, Lw[0][1] + 0.1)), xr = xAtPoly(Rw, Math.max(y, Rw[0][1] + 0.1)); if (xl == null || xr == null) continue;
+      const c = Math.round((xl + xr) / 2 - 0.5), e = Math.min(y - y0, y1 - y), w = e < 2 ? 0 : e < 6 ? 1 : 2, hot = Math.abs(y - run) < 3 || flare;
+      if (w > 0){ L(K, rect(c - 2, y, 5, 1)); L(A[flare ? 1 : 0], rect(c - 1, y, 3, 1)); } if (flare && w > 1){ L(A[0], rect(c - 2, y, 5, 1)); L(A[2], rect(c - 1, y, 3, 1)); }
+      L(hot ? A[flare ? 4 : 3] : A[w ? 2 : 1], rect(c, y, 1, 1)); }
+    for (const [k, len] of [[0, 3], [1, 2]]){ const t = (P * 2 + k * 0.5) % 1, xl = Lw[7][0], y = y1 + 2 + t * (94 - y1); if (t < 0.8) L(A[k ? 1 : 2], rect(Math.round((xl + Rw[6][0]) / 2) + k * 2 - 1, Math.round(y), 1, len)); }   // glow dripping off the bottom of the column
+  }
+
+  // ------------------------------------------------------------------ dripping roots below each half's point (behind the heart); drops swell, fall, splash in the pool
+  const ROOTS = [[-1, [60, 76, 57, 83, 61, 87, 57, 92]], [-1, [63, 78, 63, 84, 62, 87, 63, 90]], [1, [68, 76, 71, 83, 67, 87, 70, 91]], [1, [65, 78, 65, 84, 66, 87, 65, 89]]];
+  ROOTS.forEach(([sd, p]) => { if (D && sd > 0) return; XF = sd < 0 ? ML : MR; L(K, taper(p, 3, 0.9)); L(K, thorns(p, 3, 1.8, 0.7, 0.25, 0.8)); XF = null; });
+  if (!D) ROOTS.forEach(([sd, p], i) => { const per = 32, t = wrap(T - i * 9) % per, tip = app(sd < 0 ? ML : MR, p[6], p[7]);
     if (t < 12){ if (t > 4) px(tip[0], tip[1] + 1, G4); }
     else if (t < 17){ const y = tip[1] + 1 + (t - 12) * (95 - tip[1]) / 5; L(G4, rect(Math.round(tip[0]), Math.round(y), 1, 2)); }
     else if (t < 20){ px(tip[0] - 1 - (t - 17), 94 - (t === 18 ? 1 : 0), A[2]); px(tip[0] + 1 + (t - 17), 94 - (t === 18 ? 1 : 0), A[2]); } });
 
-  // ------------------------------------------------------------------ the crack: two torn edges (a zigzag), the mouth between them
-  const C = [[64, 23], [61.5, 30], [66, 37], [60.5, 45], [65.5, 53], [61, 61], [64.5, 70], [64, 84]];
-  const exAt = y => { for (let i = 0; i < C.length - 1; i++){ const [x0, y0] = C[i], [x1, y1] = C[i + 1]; if (y >= y0 && y <= y1) return x0 + (x1 - x0) * (y - y0) / (y1 - y0); } return 64; };
-  const Lw = C.map(([x, y]) => app(ML, x, y)), Rw = C.map(([x, y]) => app(MR, x, y));
-  // the mouth's interior: near-black, then the glow (the prop) in bands down its middle
-  L(K, poly(Lw.concat(Rw.slice().reverse())));
-  const mid = Lw.map((l, i) => [(l[0] + Rw[i][0]) / 2, (l[1] + Rw[i][1]) / 2, Math.abs(Rw[i][0] - l[0]) / 2]);
-  const mm = mid.slice(0, -1); const bandP = k => poly(mm.map(([x, y, h]) => [x - h * k, y]).concat(mm.slice().reverse().map(([x, y, h]) => [x + h * k, y])));
-  if (D){ L(G2, bandP(0.45)); }
-  else { L(A[0], bandP(0.82)); L(A[1], bandP(0.5)); L(open > 0.5 ? A[3] : A[2], strokeP(mid.slice(0, -2).map(([x, y]) => [x, y]), 1 + (open > 0.5 ? 0.6 : 0))); }
-
-  // ------------------------------------------------------------------ one half of the heart (sd -1 left, +1 right), drawn in its own frame
-  const arrow = (tx, ty, ex, ey, M, seed) => {                                                   // a grey arrow: tail (fletching) out, head buried at the entry
-    let m = M; if (D){ const a = (tx < ex ? -1 : 1) * (ty < ey ? 1.05 : 0.35); m = mul(M, rot(a, ex, ey)); }            // beaten: the shafts hang limp, drooping from the wound
-    XF = m; const dx = ex - tx, dy = ey - ty, mg = Math.hypot(dx, dy), ux = dx / mg, uy = dy / mg, nx = -uy, ny = ux;
-    L(G1, ell(ex, ey, 2.2, 2.2)); L(K, ell(ex, ey, 1.2, 1.2));                                       // the wound
+  // ------------------------------------------------------------------ a steel arrow: tail (fletching) out; the head is buried unless it is loose
+  const arrow = (tx, ty, ex, ey, M, head) => {
+    XF = M; const dx = ex - tx, dy = ey - ty, mg = Math.hypot(dx, dy), ux = dx / mg, uy = dy / mg, nx = -uy, ny = ux;
     L(B2, line(tx, ty, ex - ux, ey - uy, 1.4)); L(B3, line(tx + ux * 7 + nx * 0.4, ty + uy * 7 + ny * 0.4, tx + ux * (mg * 0.55), ty + uy * (mg * 0.55) + ny * 0.4, 0.8));   // shaft and its lit edge
     for (const k of [1.5, 4.5]){ const bx = tx + ux * k, by = ty + uy * k, col = k < 2 ? B3 : B0;
       L(col, poly([[bx, by], [bx + ux * 3.4 + nx * 3.2, by + uy * 3.4 + ny * 3.2], [bx + ux * 5.6, by + uy * 5.6]])); L(k < 2 ? B2 : BD, poly([[bx, by], [bx + ux * 3.4 - nx * 3.2, by + uy * 3.4 - ny * 3.2], [bx + ux * 5.6, by + uy * 5.6]])); }
-    L(K, rect(Math.round(tx - ux), Math.round(ty - uy), 2, 2)); XF = null; };
+    L(K, rect(Math.round(tx - ux), Math.round(ty - uy), 2, 2));
+    if (head){ const hx = ex + ux * 1.5, hy = ey + uy * 1.5; L(K, poly([[hx + ux * 4.6, hy + uy * 4.6], [hx - ux * 2.6 + nx * 3.6, hy - uy * 2.6 + ny * 3.6], [hx - ux * 2.6 - nx * 3.6, hy - uy * 2.6 - ny * 3.6]]));
+      L(B3, poly([[hx + ux * 3.2, hy + uy * 3.2], [hx - ux * 1.6 + nx * 2.4, hy - uy * 1.6 + ny * 2.4], [hx - ux * 1.6, hy - uy * 1.6]])); L(B0, poly([[hx + ux * 3.2, hy + uy * 3.2], [hx - ux * 1.6 - nx * 2.4, hy - uy * 1.6 - ny * 2.4], [hx - ux * 1.6, hy - uy * 1.6]])); }
+    XF = null; };
+  const wound = (ex, ey, M) => { XF = M; L(G1, ell(ex, ey, 2.4, 2.4)); L(K, ell(ex, ey, 1.3, 1.3)); XF = null; };
+  const limp = (tx, ty, ex, ey, M, a) => arrow(tx, ty, ex, ey, mul(M, rot(a, ex, ey)), 0);
 
+  // ------------------------------------------------------------------ one half of the heart (sd -1 the upper left, +1 the dropped right), drawn in its own frame
   const drawHalf = sd => {
     const M = sd < 0 ? ML : MR; XF = M;
-    const ox = x => sd < 0 ? x : 128 - x;                                                          // mirror helper: write the left half, flip for the right
+    const ox = x => sd < 0 ? x : 128 - x;
     // thorny vine limb, reaching out and curling down to a clenched rosebud
-    const tw = lag * 2.2 + (D ? 0 : Math.sin(TAU * P * 4 + sd) * 0.8), arm = sd < 0 ? [35, 45, 22, 34, 9 - tw, 40, 11 - tw, 58] : [93, 47, 106, 38, 119 + tw, 44, 117 + tw, 60];
-    if (D){ arm[4] += sd * -2; arm[5] += 8; arm[6] += sd * -3; arm[7] += 6; }
+    if (!(D && sd > 0)){
+    const tw = lag * 2.2 + (D ? 0 : Math.sin(TAU * P * 4 + sd) * 0.8), arm = sd < 0 ? [35, 45, 25, 35, 14 - tw, 41, 16 - tw, 57] : [93, 47, 103, 39, 112 + tw, 45, 110 + tw, 58];
+    if (D){ if (sd < 0){ arm[4] += 3; arm[5] += 9; arm[6] += 4; arm[7] += 8; } else { arm[0] = 90; arm[1] = 30; arm[2] = 100; arm[3] = 22; arm[4] = 108; arm[5] = 26; arm[6] = 110; arm[7] = 36; } }
     L(K, taper(arm, 5.6, 2.6)); L(K, thorns(arm, 7, 3.2, 1, 0.15, 0.85));
     L(G3, c => { c.lineWidth = 1; c.moveTo(arm[0], arm[1] - 2); c.bezierCurveTo(arm[2], arm[3] - 2.6, arm[4] - sd * 1.6, arm[5] - 1, arm[6] - sd * 2.2, arm[7] - 6); c.stroke(); });   // lit top edge
     const [bx, by] = [arm[6], arm[7] + 3];
     L(K, path([[bx, by - 5], [bx + 3.6, by - 1, bx + 3, by + 3.6, bx, by + 4.4], [bx - 3, by + 3.6, bx - 3.6, by - 1, bx, by - 5]]));   // the bud
     L(G3, strokeP([[bx - sd * 2.4, by + 2.6], [bx - sd * 0.4, by - 1.6, bx + sd * 1.4, by - 3.4]], 1)); px(bx - sd * 1.6, by + 1, G4);   // the furled petal edge
     L(K, poly([[bx - 2.6, by - 1.8], [bx - 4.8 - sd * 0.6, by - 5.4], [bx - 0.8, by - 3.2]])); L(K, poly([[bx + 2.6, by - 1.8], [bx + 4.8 - sd * 0.6, by - 5.4], [bx + 0.8, by - 3.2]]));   // sepals
+    }
     // the half's body
     const edge = C.map(([x, y]) => [x, y]).reverse();
     const shape = sd < 0 ? [[64, 23], [57, 9, 31, 8, 31, 31], [31, 50, 50, 66, 64, 84], ...edge.slice(1, -1)]
@@ -7409,60 +7425,78 @@ function drawHeartbreaker(cv, f, accent){
     // lit rims on the lobe crowns (top-left light), one fat highlight on the left lobe
     L(G3, strokeP([[ox(59), 15.6], [ox(52), 10.4, ox(35), 11, ox(33), 26]], 1));
     if (sd < 0){ L(G4, strokeP([[44, 13.4], [39, 14.6, 36.4, 17.6, 35.4, 21]], 1.4)); px(37, 16, G5); }
-    // coronary vessels: a groove and branches
+    else { L(G4, strokeP([[70, 14.6], [73, 12.4, 77, 11.6, 80, 11.8]], 1)); }
+    // coronary grooves
     if (sd < 0){ L(G2, strokeP([[52, 19], [46, 27, 41, 36, 42, 47], [43, 55, 49, 62, 53, 66]], 1)); L(G2, strokeP([[42, 47], [39, 50, 37, 52, 37, 55]], 1)); L(G2, strokeP([[46, 27], [42, 25, 38, 26, 36, 29]], 1)); }
-    else { L(G2, strokeP([[80, 17], [84, 25, 88, 33, 85, 44], [82, 52, 78, 57, 73, 62]], 1)); L(G2, strokeP([[85, 44], [89, 46, 91, 49, 91, 53]], 1)); L(G3, strokeP([[79, 49], [76, 53, 74, 55, 70, 58]], 1)); }
-    // the lip of the tear: a dark gum band along the edge, a ragged lit lip line
+    else { L(G2, strokeP([[80, 17], [84, 25, 88, 33, 85, 44], [82, 52, 78, 57, 73, 62]], 1)); L(G2, strokeP([[85, 44], [89, 46, 91, 49, 91, 53]], 1)); L(G3, strokeP([[79, 51], [76, 55, 74, 57, 70, 60]], 1)); }
+    // the torn face: a dark gum band along the edge, a ragged lit lip line
     L(G1, c => { c.lineWidth = 2.6; c.moveTo(C[0][0] + sd * 1.3, C[0][1] + 2); for (const [x, y] of C.slice(1, -1)) c.lineTo(x + sd * 1.6, y); c.lineTo(64 + sd * 0.6, 80); c.stroke(); });
-    L(G3, c => { c.lineWidth = 1; c.moveTo(C[0][0] + sd * 3.4, C[0][1] + 4); for (const [x, y] of C.slice(1, -2)) c.lineTo(x + sd * 3.2, y + 0.5); c.stroke(); });
-    // teeth: interlocking, uneven fangs on the light ramp, pointing into the mouth
-    const ys = sd < 0 ? [28, 39, 49, 59, 68] : [32.5, 43.5, 54, 63.5];
-    const lens = sd < 0 ? [4.6, 5.6, 4.2, 3.6, 2.6] : [5.4, 4.4, 4.8, 3];
-    ys.forEach((y, i) => { const x = exAt(y) + sd * 0.4, l = lens[i] + (open > 0.3 ? 0.6 : 0), hw = l > 4.5 ? 2.4 : 2;
-      L(D ? B0 : B3, poly([[x, y - hw], [x - sd * l, y + 0.4], [x, y + hw]])); L(D ? BD : B2, poly([[x, y + 0.2], [x - sd * l, y + 0.4], [x, y + hw]]));
-      if (l > 4.5 && !D) px(x - sd * (l - 1), y, B4); });
+    if (sd < 0) L(G3, c => { c.lineWidth = 1; c.moveTo(C[0][0] - 3.6, C[0][1] + 4); for (const [x, y] of C.slice(1, 4)) c.lineTo(x - 3.4, y + 0.5); c.stroke(); });
+    // teeth: uneven fangs on the light ramp, pointing into the gap; the two rows interlock in world space even though the halves have slipped
+    const ys = sd < 0 ? [28, 39, 49, 59, 68] : [25.7, 36.2, 46.2, 55.7, 65.4];
+    const lens = sd < 0 ? [5.4, 6.6, 5, 4.6, 3.4] : [4.8, 6.4, 5.2, 5.6, 3.8];
+    ys.forEach((y, i) => { const x = exAt(y) + sd * 0.4, l = lens[i] + (gape > 0.3 ? 0.8 : 0), hw = l > 5 ? 3 : 2.5;
+      L(D ? B0 : B3, poly([[x + sd, y - hw], [x - sd * l, y + 0.4], [x + sd, y + hw]])); L(D ? BD : B2, poly([[x + sd, y + 0.4], [x - sd * l, y + 0.4], [x + sd, y + hw]]));
+      if (!D) L(B4, rect(Math.round(x - sd * (l - 2) - 0.5), Math.round(y - 0.6), l > 5 ? 2 : 1, 1)); });
     // a wrapping thorn vine across each half
-    const vn = sd < 0 ? [31, 41, 38, 46, 48, 41, 57, 49] : [72, 19, 80, 27, 89, 20, 97, 28];
+    const vn = sd < 0 ? [40, 53, 45, 59, 52, 54, 58, 64] : [68, 65, 74, 58, 80, 62, 87, 53];
     L(G3, bzS(vn, 1.4)); L(G3, thorns(vn, 6, 2.6, 0.8, 0.06, 0.94));
     XF = null;
-    // the arrows lodged in this half
-    if (sd < 0) arrow(15, 17, 36, 28, ML, 1); else { arrow(111, 8, 91, 24, MR, 2); arrow(106, 79, 85, 63, MR, 3); }
   };
   drawHalf(-1); drawHalf(1);
 
-  // ------------------------------------------------------------------ thorn stitches across the mouth, sagging at rest, taut and straining when it gapes
-  for (const [y, k] of [[34, 0], [47, 1], [60, 2]]){
-    const a = app(ML, exAt(y) - 2.6, y), b = app(MR, exAt(y + 1) + 2.6, y + 1), d = Math.hypot(b[0] - a[0], b[1] - a[1]), rest = [12, 10.5, 9][k];
-    const taut = !D && d >= rest, sag = D ? 2.4 : taut ? 0 : Math.min(2, Math.sqrt(Math.max(0, rest * rest - d * d)) * 0.35);
-    const shiver = taut ? Math.round(Math.sin(TAU * P * 16 + k * 2)) * 0.6 : 0;
-    const m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2 + sag + shiver];
-    L(K, strokeP([a, m, b], 2.4));                                                                  // a dark cord bed so it reads over the glow
-    L(D ? G3 : taut ? B2 : G4, strokeP([a, m, b], 1));
-    for (const t of [0.33, 0.67]){ const x = t < 0.5 ? a[0] + (m[0] - a[0]) * t * 2 : m[0] + (b[0] - m[0]) * (t - 0.5) * 2, y0 = t < 0.5 ? a[1] + (m[1] - a[1]) * t * 2 : m[1] + (b[1] - m[1]) * (t - 0.5) * 2;
-      L(D ? G3 : taut ? B2 : G4, poly([[x - 1, y0], [x + (t < 0.5 ? -0.6 : 0.6), y0 - (taut ? 2.8 : 2.2)], [x + 1, y0]])); }   // two thorns on each stitch, raked outward
-    for (const e of [a, b]) px(e[0], e[1], D ? G3 : taut ? B3 : G4);                                        // the puncture, glinting when it pulls
+  // ------------------------------------------------------------------ the arrows
+  const AL = [16, 10, 38, 21], AR = [111, 8, 91, 24];                                             // [tail, entry] in each half's frame
+  wound(AL[2], AL[3], ML); wound(AR[2], AR[3], MR);
+  if (D){ limp(...AL, ML, -1.0); arrow(58, 97, 84, 96.4, null, 1); }                              // one droops in its wound, the other has dropped out onto the floor
+  else {
+    arrow(...AL, mul(ML, rot(0.05 * lag, AL[2], AL[3])), 0);                                     // the old one in the upper half quivers with the beat
+    const ux = (AR[2] - AR[0]) / 25.6, uy = (AR[3] - AR[1]) / 25.6;
+    if (T < 24) arrow(...AR, mul(MR, rot(-0.05 * lag, AR[2], AR[3])), 0);
+    else if (T < 30){ const v = (T - 24) / 6, pull = sm(v) * 5, q = 0.12 * Math.sin((T - 24) * TAU / 3) * (0.4 + v); arrow(...AR, mul(MR, mul(tr(-ux * pull, -uy * pull), rot(q, AR[2], AR[3]))), pull > 2.5); }   // working loose
+    else if (T < 37){ const t = T - 30; arrow(...AR, mul(MR0, mul(tr(-ux * 5 - 2.6 * t, -uy * 5 + 1.3 * t * t), rot(-0.9 * sm(t / 6), 101, 16))), 1); }                       // dropping, nose swinging down
+    else if (T < 41){ const t = T - 37; for (const [vx, vy, k] of [[-1.6, -1.2, 0], [1.4, -1.6, 1], [0.4, -2.2, 2], [-0.6, -0.6, 3]]){ const x = 86 + vx * (1 + t * 1.6), y = 93 + vy * (1 + t) + t * t * 0.5; if (y < 96) L(k % 2 ? B2 : G5, rect(Math.round(x), Math.round(y), t < 2 ? 2 : 1, 1)); }
+      if (t < 3){ px(84 - t * 2, 94 - (t === 1 ? 1 : 0), A[2]); px(88 + t * 2, 94 - (t === 1 ? 1 : 0), A[2]); } }                                                  // it breaks on the floor: splinters, a splash at the pool's edge
+    if (T >= 40 && T < HIT){ const d = (HIT - T) * 9; arrow(...AR, mul(MR, tr(-ux * d, -uy * d)), 1);                                                         // the new one flies in down the same line
+      XF = MR; for (const k of [3, 9, 14]) L(k < 5 ? G5 : G4, line(AR[0] - ux * (d + k + 3), AR[1] - uy * (d + k + 3), AR[0] - ux * (d + k), AR[1] - uy * (d + k), 1)); XF = null; }
+    else if (T >= HIT){ const q = u < 12 ? 0.2 * Math.exp(-u / 3) * Math.cos(u * TAU / 3) : -0.05 * lag; arrow(...AR, mul(MR, rot(q, AR[2], AR[3])), 0); }      // THUNK: buried to the same depth, the shaft quivering
+    if (u >= 0 && u < 6){ const w = app(MR, AR[2], AR[3]);                                                                                                     // chips knocked out of the wound
+      for (const [vx, vy, k] of [[1.2, -1.4, 0], [1.8, 0.2, 1], [0.2, -2, 2], [-0.8, -1.2, 3], [1, 1.2, 4]]){ const x = w[0] + vx * (2 + u * 1.8), y = w[1] + vy * (2 + u * 1.6) + u * u * 0.22; L(k % 2 ? G5 : G4, rect(Math.round(x), Math.round(y), u < 3 ? 2 : 1, u < 3 ? 2 : 1)); } }
   }
 
-  // ------------------------------------------------------------------ target eyes, drawn pixel-exact at rounded centres, then the angry brows over them (in each half's frame)
-  const narrow = !D && T >= 10 && T < 14 ? 1 : 0;                                                  // a suspicious narrowing once a loop
-  for (const sd of [-1, 1]){ const M = sd < 0 ? ML : MR, ex = sd < 0 ? 46 : 82, ey = 33, w = app(M, ex, ey), cx = Math.round(w[0]) + 0.5, cy = Math.round(w[1]) + 0.5, fl = flare ? 0.9 : 0;
-    if (!D){ L(A[0], ell(cx, cy, 5.7 + fl, 5.7 + fl)); L(flare ? A[3] : A[2], ell(cx, cy, 4.7 + fl, 4.7 + fl)); L(K, ell(cx, cy, 3.6 + fl, 3.6 + fl)); L(flare ? A[4] : A[3], ell(cx, cy, 2.5, 2.5));
-      L(K, rect(cx - 0.5, cy - 0.5, 1, 1)); px(cx - 3.5, cy - 2.5, A[4]); }
-    else { L(G1, ell(cx, cy, 4.6, 4.6)); }
-    XF = M; const lo = (flare ? 1.2 : 0) + narrow;                                                 // brows clamp down harder on the flare
-    L(K, poly([[ex + sd * 8.6, ey - 9.4 + lo], [ex - sd * 7.6, ey - 3.2 + lo], [ex - sd * 7.6, ey + 0.2 + lo], [ex + sd * 8.6, ey - 5.4 + lo]]));   // outer end high, inner end clamped low
-    L(G3, strokeP([[ex + sd * 8.6, ey - 10 + lo], [ex - sd * 7.6, ey - 3.8 + lo]], 1)); L(G4, strokeP([[ex + sd * 6.6, ey - 9.4 + lo], [ex + sd * 1.6, ey - 7.4 + lo]], 1));
-    XF = null; }
+  // ------------------------------------------------------------------ thorn sutures across the gap: three hold (slack at rest, taut when it gapes), two have snapped and dangle
+  [[30, 0, 0], [41, 1, 1], [52, 2, 0], [63, 3, 1], [72, 4, 0]].forEach(([y, k, snapped]) => {
+    const yr = y - 6.4, pa = [exAt(y) - 2.6, y], pb = [exAt(yr) + 2.6, yr], a = app(ML, ...pa), b = app(MR, ...pb);
+    const a0 = app(ML0, ...pa), b0 = app(MR0, ...pb), rest = Math.hypot(b0[0] - a0[0], b0[1] - a0[1]) + 0.9, d = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    if (D || snapped){                                                                              // dangling ends, each with a thorn, swaying
+      for (const [e, s] of [[a, 1], [b, -1]]){ const sw = D ? 0 : Math.sin(TAU * P * 2 + k + s) * 1.2, len = s > 0 ? 5.4 : 4.4, m = [e[0] + s * 2.4, e[1] + len * 0.5], t2 = [e[0] + s * 1.6 + sw, e[1] + len];
+        L(K, strokeP([e, m, t2], 2.4)); L(D ? G3 : G4, strokeP([e, m, t2], 1)); L(D ? G3 : G4, poly([[m[0] - 1, m[1]], [m[0] + s * 2.6, m[1] - 1.4], [m[0] + 1, m[1] + 0.6]])); px(e[0], e[1], D ? G3 : G5); px(t2[0], t2[1], D ? G4 : B3); }
+      return; }
+    const taut = d >= rest, sag = taut ? 0 : Math.min(2.4, Math.sqrt(Math.max(0, rest * rest - d * d)) * 0.4), strain = taut && k === 2;
+    const shiver = taut ? Math.round(Math.sin(TAU * P * 16 + k * 2)) * (strain ? 1 : 0.6) : 0;
+    const m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2 + sag + shiver];
+    L(K, strokeP([a, m, b], 2.6));                                                                  // a dark cord bed so it reads over the glow
+    L(strain ? B3 : taut ? B2 : G5, strokeP([a, m, b], 1));
+    for (const t of [0.3, 0.7]){ const x = t < 0.5 ? a[0] + (m[0] - a[0]) * t * 2 : m[0] + (b[0] - m[0]) * (t - 0.5) * 2, y0 = t < 0.5 ? a[1] + (m[1] - a[1]) * t * 2 : m[1] + (b[1] - m[1]) * (t - 0.5) * 2;
+      L(K, poly([[x - 2, y0 + 0.4], [x + (t < 0.5 ? -0.8 : 0.8), y0 - 4.4], [x + 2, y0 + 0.4]])); L(strain ? B3 : taut ? B2 : G5, poly([[x - 1, y0], [x + (t < 0.5 ? -0.6 : 0.6), y0 - (taut ? 3 : 2.6)], [x + 1, y0]])); }   // two thorns on each stitch, raked outward
+    for (const e of [a, b]){ L(K, rect(Math.round(e[0]) - 1, Math.round(e[1]) - 1, 3, 3)); px(e[0], e[1], strain ? B4 : taut ? B3 : G5); }                // the punctures, glinting when they pull
+  });
 
-  // ------------------------------------------------------------------ pixel debris spat out on the snap
-  if (snap >= 0){ const top = app(S, 64, 34 + bob);
-    for (const [vx, vy, k] of [[-1, -0.5, 0], [1, -0.7, 1], [-0.7, 0.3, 2], [0.9, 0.1, 3], [0.2, -1, 4]]){ const t = snap * 7, x = top[0] + vx * (5 + t * 2.4), y = top[1] + k * 7 + vy * t * 2 + t * t * 0.14;
-      L(k % 2 ? G4 : G3, rect(Math.round(x), Math.round(y), snap < 0.5 ? 2 : 1, snap < 0.5 ? 2 : 1)); } }
-
-  // ------------------------------------------------------------------ beaten: grey X eyes, upright and pixel-exact
-  if (D){ for (const sd of [-1, 1]){ const [cx, cy] = app(sd < 0 ? ML : MR, sd < 0 ? 46 : 82, 33), x0 = Math.round(cx) - 2, y0 = Math.round(cy) - 2;
-      for (let i = 0; i < 5; i++){ L(G4, rect(x0 + i, y0 + i, 1, 1)); L(G4, rect(x0 + 4 - i, y0 + i, 1, 1)); if (i < 4){ L(G4, rect(x0 + i + 1, y0 + i, 1, 1)); L(G4, rect(x0 + 3 - i, y0 + i, 1, 1)); } } }
-    const hd = app(S, 64, 10 + bob); drawHeartbreaker.deadHead = [Math.round(hd[0]), Math.round(hd[1])]; }
+  // ------------------------------------------------------------------ the crosshair target eyes: concentric rings, a centre dot, four ticks; pixel-exact at rounded centres
+  const EYE = [[-1, 45, 36], [1, 83, 36]];
+  const look = D ? [0, 0] : T >= 24 && T < HIT ? [1, -1] : [0, 0];   // they track the arrow that is working loose, then the one coming in
+  for (const [sd, ex, ey] of EYE){ const w = app(sd < 0 ? ML : MR, ex, ey), cx = Math.round(w[0]) + 0.5, cy = Math.round(w[1]) + 0.5, bt = (sd < 0 ? beatL : beatR) > 0.55 ? 1 : 0, f2 = flare ? 1 : 0;
+    if (D){ L(G1, ell(cx, cy, 6.4, 6.4)); L(K, ell(cx, cy, 5.2, 5.2));
+      const x0 = cx - 2.5, y0 = cy - 2.5; for (let i = 0; i < 5; i++){ L(G4, rect(x0 + i, y0 + i, 1, 1)); L(G4, rect(x0 + 4 - i, y0 + i, 1, 1)); if (i < 4){ L(G4, rect(x0 + i + 1, y0 + i, 1, 1)); L(G4, rect(x0 + 3 - i, y0 + i, 1, 1)); } }
+      continue; }
+    const r = 7.6 + f2 * 0.9;
+    L(K, ell(cx, cy, r + 1.5, r + 1.5)); L(A[f2 ? 3 : bt ? 2 : 1], ell(cx, cy, r, r)); L(K, ell(cx, cy, r - 1.5, r - 1.5));
+    L(A[f2 ? 4 : bt ? 3 : 2], ell(cx, cy, 4.5, 4.5)); L(K, ell(cx, cy, 3.3, 3.3));
+    if (f2) L(A[3], c => { c.rect(cx - 2.5, cy - 0.5, 5, 1); c.rect(cx - 0.5, cy - 2.5, 1, 5); c.fill(); }); L(A[4], rect(cx + look[0] - 1.5, cy + look[1] - 1.5, 3, 3));
+    const tl = 4 + f2 * 2; for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]){ const x0 = cx + dx * (r - 2.5) - 0.5, y0 = cy + dy * (r - 2.5) - 0.5;
+      L(A[f2 ? 4 : 3], rect(Math.min(x0, x0 + dx * (tl - 1)), Math.min(y0, y0 + dy * (tl - 1)), dx ? tl : 1, dy ? tl : 1)); }
+  }
+  if (D){ const hd = app(ML, 47, 5); drawHeartbreaker2.deadHead = [Math.round(hd[0]), Math.round(hd[1])]; }
 
   const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
   blitBuf(ctx, buf, W, H);
@@ -9788,11 +9822,11 @@ const NEW_ART = {
   wraith: Object.assign((cv, f, acc, dead) => { drawRiptideWraith.dead = dead; drawRiptideWraith(cv, f, acc); }, {ownDead: true, starY: 64, starX: 47, starRX: 11, starRY: 3}),
   sloth: Object.assign((cv, f, acc, dead) => { drawIronSloth.dead = dead; drawIronSloth(cv, f, acc); }, {ownDead: true, starY: 44, starX: 64, starRX: 16, starRY: 3}),
   deadweight: Object.assign((cv, f, acc, dead) => { drawDeadWeight.dead = dead; drawDeadWeight(cv, f, acc); }, {ownDead: true, starY: 12, starX: 66, starRX: 12, starRY: 3}),
-  pumpkin: Object.assign((cv, f, acc, dead) => { drawPumpkinWraith.dead = dead; drawPumpkinWraith(cv, f, acc); }, {ownDead: true, starY: 54, starX: 79, starRX: 12, starRY: 3}),
+  pumpkin: Object.assign((cv, f, acc, dead) => { drawPumpkinScarecrow.dead = dead; drawPumpkinScarecrow(cv, f, acc); }, {ownDead: true, starY: 58, starX: 106, starRX: 12, starRY: 3}),
   turkey: Object.assign((cv, f, acc, dead) => { drawGobbler.dead = dead; drawGobbler(cv, f, acc); }, {ownDead: true, starY: 71, starX: 27, starRX: 12, starRY: 3}),
   krampus: Object.assign((cv, f, acc, dead) => { drawKrampus.dead = dead; drawKrampus(cv, f, acc); }, {ownDead: true, starY: 53, starX: 18, starRX: 12, starRY: 3}),
   hourglass: Object.assign((cv, f, acc, dead) => { drawFatherTime.dead = dead; drawFatherTime(cv, f, acc); }, {ownDead: true, starY: 7, starX: 69, starRX: 12, starRY: 3}),
-  heart: Object.assign((cv, f, acc, dead) => { drawHeartbreaker.dead = dead; drawHeartbreaker(cv, f, acc); }, {ownDead: true, starY: 13, starX: 64, starRX: 12, starRY: 3}),
+  heart: Object.assign((cv, f, acc, dead) => { drawHeartbreaker2.dead = dead; drawHeartbreaker2(cv, f, acc); }, {ownDead: true, starY: 13, starX: 43, starRX: 12, starRY: 3}),
   leviathan: Object.assign((cv, f, acc, dead) => { drawLeviathan.dead = dead; drawLeviathan(cv, f, acc); }, {ownDead: true, fullTile: true, starY: 10, starX: 64, starRX: 14, starRY: 3}),
   maw: Object.assign((cv, f, acc, dead) => { drawMaw.dead = dead; drawMaw(cv, f, acc); }, {ownDead: true, starY: 24, starX: 75, starRX: 12, starRY: 3}),
   hydra: Object.assign((cv, f, acc, dead) => { drawHydra.dead = dead; drawHydra(cv, f, acc); }, {ownDead: true, starY: 28, starX: 64, starRX: 13, starRY: 3}),
