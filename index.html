@@ -930,7 +930,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'c079cbf1a0';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '492c243e94';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1335,6 +1335,7 @@ const SEASONAL = [
 const RITES = [
   {id:'hydra',     name:'The Hydra of Someday', levels:[30,35], weak:['MGT','HRT'], shape:'hydra', rite:true, atk:14, status:'para', beaten:'Every someday became today. No heads left to grow back.', flavor:'Cut off one "later" and two more grow back. A rite of passage for level 30.', drop:'hydracrown'},
   {id:'burnout',   name:'The Burnout',          levels:[55,60], weak:['STA','MOB'], shape:'candle', rite:true, atk:18, status:'poison', beaten:"Rested and steady, you snuffed it out. The candle can't burn you again.", flavor:'A melted giant that lives on overwork. Rest is the only blade that cuts it. A rite of passage for level 55.', drop:'emberhelm'},
+  {id:'maw',       name:'The Maw of Routine',   levels:[75,80], weak:['MOB','HRT'], shape:'maw', rite:true, atk:21, status:'para', beaten:'You broke the loop. The wheel grinds to a stop with nothing left to swallow.', flavor:'A wheel of teeth that swallows your days whole, each one the same as the last. A rite of passage for level 75.', drop:'mawcrown'},
   {id:'leviathan', name:'Leviathan, the Last Tide', levels:[95,100], weak:SK.slice(), shape:'leviathan', rite:true, final:true, atk:25, status:'poison', beaten:'The last tide breaks against you and pulls back for good. Every oath kept.', flavor:'The tide that swallows every habit you ever built. Too big to see all at once. The final boss.', drop:'abysscrown'}
 ];
 const ALL_BOSSES = [...BOSSES, ...TITANS, ...SEASONAL, ...RITES];
@@ -1429,6 +1430,7 @@ const ITEMS = [
   {id:'cosmic',  kind:'color',name:'Celestial', legendary:true},
   {id:'hydracrown', kind:'hat', name:'Hydra Crown',  boss:'hydra',     style:'war',  fx:{st:{MGT:4, HRT:3}}},
   {id:'emberhelm',  kind:'hat', name:'Ember Helm',   boss:'burnout',   style:'guard', fx:{st:{ARM:4, STA:4}}},
+  {id:'mawcrown',   kind:'hat', name:'Crown of Teeth', boss:'maw',     style:'rogue', fx:{st:{MOB:5, HRT:4}}},
   {id:'abysscrown', kind:'hat', name:'Abyssal Crown', boss:'leviathan', style:'cast', fx:{st:{MGT:4, STA:4, MOB:4, ARM:4, HRT:4}, spell:.25}},
   {id:'starcrown', kind:'hat', name:'Crown of Stars', legendary:true, fx:{st:{MGT:2, STA:2, MOB:2, ARM:2, HRT:2}}},
   {id:'sea',     kind:'color',name:'Dotted',     price:100},
@@ -3270,6 +3272,7 @@ function drawHat(hat, cx, top, rx, ry, f, motion){
     antlers:[[[cx-rx+1,top+2,2*rx-1,1],[cx-4,top-5,1,7],[cx-7,top-4,3,1],[cx-6,top-7,1,3],[cx+4,top-5,1,7],[cx+5,top-4,3,1],[cx+6,top-7,1,3],[cx-3,top-7,1,2],[cx+3,top-7,1,2]], []],
     earmuffs:[[[cx-rx+1,top-1,2*rx-1,1],[cx-rx-1,top+2,3,5],[cx+rx-1,top+2,3,5]], [[cx-rx,top+4,1,1],[cx+rx,top+4,1,1]]],
     flowers:[[[cx-rx+1,top+1,2*rx-1,1],...[-5,-2,1,4].map(x => [cx+x-1,top-2,3,3])], [-5,-2,1,4].map(x => [cx+x,top-1,1,1])],
+    mawcrown:[[[cx-6,top-1,13,2],...[-6,-4,-2,0,2,4,6].map(x => [cx+x, top-3, 1, 2])], [[cx-6,top-1,13,1],[cx,top-4,1,1]]],
     hydracrown:[[[cx-6,top-1,13,2],...[-6,-3,0,3,6].map((x,i) => [cx+x, top-3-(i%2)*2, 1, 3 + (i%2)*2]),...[-6,-3,0,3,6].map((x,i) => [cx+x-1, top-4-(i%2)*2, 3, 1])], [[cx-4,top,1,1],[cx,top,1,1],[cx+4,top,1,1]]],
     emberhelm:[[[cx-rx,top-2,2*rx+1,4],[cx-rx+1,top-4,2*rx-1,2],[cx-1,top-8,3,4],[cx-2,top-6,5,2]], [[cx-rx+2,top,2*rx-3,1],[cx,top-7,1,2]]],
     abysscrown:[[[cx-7,top-1,15,3],[cx-7,top-6,2,5],[cx-3,top-8,2,7],[cx+2,top-8,2,7],[cx+6,top-6,2,5],[cx-1,top-11,3,3]], [[cx-5,top,1,1],[cx-1,top,3,1],[cx+5,top,1,1],[cx,top-10,1,1]]],
@@ -6862,6 +6865,389 @@ function drawHeartbreaker(cv, f, accent){
   blitBuf(ctx, buf, W, H);
 }
 
+// ---- Leviathan (style guide v1)
+// Leviathan, the Last Tide (final boss), concept 12A "the black sun". A god of the tide too big to see all at once: shoulders wider than
+// the tile, risen in front of a black sun ringed with tide-mark ticks and cropped by the top of the tile. A small head with three pairs of
+// ridged horns and an arc of five pinprick eyes. The chest is a toothed void that the sea pours out of. A banner-bearer stands at its foot.
+// Drawn on the FULL 128x128 tile (drawLeviathan.fullTile = true): composite at (0,0), not at y+13. deadHead is in tile coordinates.
+// Pop: the five eyes, the water (pool in the void, lip glow, falling streams) and the tide band. Everything else is neutral.
+function drawLeviathan(cv, f, accent){
+  const LOOP = 64, P = (f % LOOP) / LOOP, TAU = Math.PI * 2; f = f % LOOP;                 // one seamless 6.4 s loop: every motion is a whole number of cycles of P
+  const W = 128, H = 128, A = POP_RAMPS[accent] || POP_RAMPS.blush, D = !!drawLeviathan.dead;
+  const K = '#121110', G1 = '#211f1d', G2 = '#2e2a27', G3 = '#3f3a36', G4 = '#57514b', G5 = '#756e66';
+  const B0 = '#35312d', B1 = '#4a4540', B2 = '#615b54', B3 = '#8e867b', B4 = '#c9c2b6';     // bone: horns, ribs, teeth, the banner
+  if (!drawLeviathan.sc){ drawLeviathan.sc = document.createElement('canvas'); drawLeviathan.sc.width = W; drawLeviathan.sc.height = H; }
+  const sc = drawLeviathan.sc, sx = sc.getContext('2d', {willReadFrequently: true}), buf = new Array(W * H).fill(null);
+  let XF = null;
+  const L = shapeLayer(sx, W, H, buf, () => XF);
+  const ell = (x, y, rx, ry, rot = 0) => c => { c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); c.fill(); };
+  const path = pts => c => { c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.closePath(); c.fill(); };
+  const strokeP = (pts, w) => c => { c.lineWidth = w; c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.stroke(); };
+  const rect = (x, y, w, h) => c => { c.rect(x, y, w, h); c.fill(); };
+  const arcE = (x, y, rx, ry, w, a0 = 0, a1 = TAU) => c => { c.lineWidth = w; c.ellipse(x, y, rx, ry, 0, a0, a1); c.stroke(); };
+  const put = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && x < W && y >= 0 && y < H) buf[y * W + x] = c; };   // one exact pixel
+  const get = (x, y) => (x >= 0 && x < W && y >= 0 && y < H) ? buf[y * W + x] : null;
+  const bz = (p, t) => { const u = 1 - t; return [u*u*u*p[0] + 3*u*u*t*p[2] + 3*u*t*t*p[4] + t*t*t*p[6], u*u*u*p[1] + 3*u*u*t*p[3] + 3*u*t*t*p[5] + t*t*t*p[7]]; };
+  const taper = (p, w0, w1, t0 = 0, t1 = 1, n = 26) => c => { for (let i = 0; i <= n; i++){ const t = t0 + (t1 - t0) * i / n, [x, y] = bz(p, t), r = Math.max(0.45, (w0 + (w1 - w0) * t) / 2); c.moveTo(x + r, y); c.arc(x, y, r, 0, TAU); } c.fill(); };
+  const sst = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  const wave = k => Math.sin(TAU * P * k);
+
+  // ------------------------------------------------------------------ timing
+  // the signature beat: the void opens, the tooth rings counter-rotate one step, the outpour surges, the tide rises, the eyes flare in turn
+  const beat = D ? 0 : sst(0.40, 0.54, P) * (1 - sst(0.76, 0.94, P));                      // the void opening and the surge
+  const beatL = D ? 0 : sst(0.46, 0.62, P) * (1 - sst(0.80, 0.98, P));                     // the tide answers a moment later
+  const stp = D ? 0 : sst(0.40, 0.62, P);                                                  // one step of the tooth rings (0 -> 1 is the same picture)
+  const by = D ? 3 : (Math.sin(TAU * P) > 0.25 ? 1 : 0);                                    // the whole mass breathes by a single pixel
+  const hy = D ? 6 : (Math.sin(TAU * P - 0.9) > 0.25 ? 1 : 0);                              // the head follows a beat late
+  const rise = Math.round(beatL * 4);
+
+  // ------------------------------------------------------------------ the black sun: cropped by the top of the tile, a pale corona, a ring of tide marks
+  const SX = 64, SY = 30, SR = 36;
+  { const rotT = D ? 0.07 : TAU * P / 12;                                                   // the ring turns one mark-group per loop: very slow, seamless
+    for (let i = 0; i < 48; i++){ if (D && (i % 5 === 2 || i % 7 === 3)) continue;           // beaten: marks missing
+      const a = i / 48 * TAU + rotT, ca = Math.cos(a), sa = Math.sin(a), major = i % 4 === 0, r1 = major ? 47.5 : i % 2 ? 42 : 44;
+      L(D ? G3 : major ? G5 : G4, c => { c.lineWidth = 1.35; c.lineCap = 'butt'; c.moveTo(SX + ca * 39.5, SY + sa * 39.5); c.lineTo(SX + ca * r1, SY + sa * r1); c.stroke(); }); }
+    if (!D) for (let i = 0; i < 12; i++){ const a = i / 12 * TAU + rotT + TAU / 24, x = SX + Math.cos(a) * 50.5, y = SY + Math.sin(a) * 50.5; if (y > 4 && x > 5 && x < 122) put(x, y, G4); }   // a dot between the long marks
+    L(D ? G3 : G5, ell(SX, SY, SR + 1.3, SR + 1.3)); L(K, ell(SX, SY, SR + 0.2, SR + 0.2));  // the corona: one thin pale line on the edge of the disc
+    L(G1, ell(SX, SY, 29.4, 29.4));   // a lighter heart, so the head stands off it
+    if (D){                                                                                 // beaten: the sun is cracked through and a shard has slipped
+      L(G4, strokeP([[90, 4], [85, 10], [87, 15], [80, 21], [82, 26], [76, 29]], 1)); L(G3, strokeP([[80, 21], [87, 24], [91, 30], [98, 32]], 1)); L(G3, strokeP([[85, 10], [79, 9], [76, 4]], 1));
+      L(G4, strokeP([[37, 7], [42, 13], [40, 18], [46, 23]], 1)); L(G3, strokeP([[40, 18], [34, 21], [32, 27]], 1));
+      L(null, path([[93, 5], [98, 2], [101, 12], [96, 10]])); L(G3, path([[103, 13], [107, 11], [109, 19], [105, 18]])); } }   // a chip gone from the rim, hanging beside it
+
+  // ------------------------------------------------------------------ floating debris: square bits of the dark hanging in the air beside the sun
+  for (const [x, y, s, c, k] of [[13, 30, 2, K, 0], [9, 44, 1, G4, 1.7], [19, 17, 1, G4, 3.1], [114, 27, 2, K, 4.2], [119, 41, 1, G4, 5.5], [108, 14, 1, G4, 0.9], [22, 40, 1, K, 2.4], [105, 43, 1, K, 3.6]]){
+    const yy = D ? y + 9 : y + Math.round(Math.sin(TAU * P + k) * 1.5); L(c, rect(x, yy, s, s)); }
+
+  // ------------------------------------------------------------------ the horns: three ridged pairs, banded bone with a lit upper edge
+  const HX = 64, HY = hy;                                                                   // head offset
+  const horn = (p, w0, w1, nb) => {
+    const nrm = t => { const [x, y] = bz(p, t), [x2, y2] = bz(p, Math.min(1, t + 0.02)), [x1, y1] = bz(p, Math.max(0, t - 0.02)), tx = x2 - x1, ty = y2 - y1, m = Math.hypot(tx, ty) || 1; let nx = -ty / m, ny = tx / m; if (ny > 0){ nx = -nx; ny = -ny; } return [x, y, nx, ny, (w0 + (w1 - w0) * t) / 2]; };   // unit normal on the upper side
+    const edge = (t0, t1, k, w) => c => { c.lineWidth = w; for (let i = 0; i <= 28; i++){ const [x, y, nx, ny, r] = nrm(t0 + (t1 - t0) * i / 28); i ? c.lineTo(x + nx * r * k, y + ny * r * k) : c.moveTo(x + nx * r * k, y + ny * r * k); } c.stroke(); };
+    L(K, taper(p, w0 + 2, w1 + 1.4));                                                        // a black keyline so each horn cuts clean off the sun and off the other horns
+    L(B0, taper(p, w0, w1));                                                                 // shadow tone: the whole horn
+    L(D ? B0 : B1, c => { for (let i = 0; i <= 30; i++){ const [x, y, nx, ny, r] = nrm(0.9 * i / 30), rr = Math.max(0.4, r * 0.62); c.moveTo(x + nx * r * 0.36 + rr, y + ny * r * 0.36); c.arc(x + nx * r * 0.36, y + ny * r * 0.36, rr, 0, TAU); } c.fill(); });   // mid tone: the upper two thirds
+    L(D ? B1 : B2, edge(0.03, 0.74, 0.82, 0.9));                                             // lit tone: one line along the upper edge
+    for (let b = 1; b < nb; b++){ const [x, y, nx, ny, r] = nrm(b / nb * 0.9); L(K, c => { c.lineWidth = 0.85; c.lineCap = 'butt'; c.moveTo(x + nx * (r + 0.4), y + ny * (r + 0.4)); c.lineTo(x - nx * (r + 0.4), y - ny * (r + 0.4)); c.stroke(); });   // growth ridges: black rings across it
+      if (!D) put(x + nx * (r - 0.6) - ny * 1, y + ny * (r - 0.6) + nx * 1, B3); }             // each ridge catches a point of light
+    const [tx, ty] = bz(p, 1); if (!D) put(tx, ty, B3); };
+  const hornsL = [                                                                           // left-side horns as beziers from the skull outward; mirrored for the right
+    [[56, 27, 41, 32, 25, 23, 30, 3], 8.4, 1.4, 8],                                           // the great pair: a wide crescent out and up past the edge of the sun
+    [[55, 35, 45, 41.5, 29, 41.5, 18, 28], 6.4, 1.2, 7],                                          // the low pair: sweeping out level, hooking up at the tip
+    [[60, 18, 55, 13, 52, 6, 56, -4], 5.4, 1.8, 5]];                                          // the crown pair: up and off the top of the tile
+  for (const [p0, w0, w1, nb] of [hornsL[1], hornsL[0], hornsL[2]]) for (const sd of [-1, 1]){
+    let p = p0.slice();
+    if (D){ const a = [0.46, 0.5, 0.3][hornsL.findIndex(h => h[0] === p0)], bx = p[0], byy = p[1], cs = Math.cos(-a), sn = Math.sin(-a);   // beaten: every horn droops from its root
+      for (let i = 0; i < 8; i += 2){ const dx = p[i] - bx, dy = p[i + 1] - byy; p[i] = bx + dx * cs - dy * sn; p[i + 1] = byy + dx * sn + dy * cs; } }
+    p = p.map((v, i) => i % 2 ? v + HY : (sd < 0 ? v : 128 - v));
+    horn(p, w0, w1, nb); }
+
+  // ------------------------------------------------------------------ the body: shoulders wider than the tile, a robe of deep folds with a lit rim
+  const Y = y => y + by;
+  L(K, path([[-4, 121], [-4, Y(72)], [0, Y(56), 13, Y(46), 26, Y(47)], [38, Y(48), 46, Y(53), 50, Y(57)], [53, Y(53), 55, Y(47), 55, Y(41)], [73, Y(41)], [73, Y(47), 75, Y(53), 78, Y(57)], [82, Y(53), 90, Y(48), 102, Y(47)], [115, Y(46), 128, Y(56), 132, Y(72)], [132, 121]]));
+  // folds: long planes one step up from black, each with a hard edge; black valleys between
+  for (const [x0, x1, y0, w] of [[9, 3, 60, 6], [22, 13, 55, 6], [35, 27, 55, 5], [119, 125, 60, 6], [106, 115, 55, 6], [93, 101, 55, 5]])
+    L(G1, taper([x0, Y(y0), x0, Y(y0) + 22, x1, 94, x1, 120], w, 2));
+  for (const [x0, x1, y0] of [[6.6, 0.6, 62], [19.4, 10.4, 57], [32.8, 24.8, 57], [121.4, 127.4, 62], [108.6, 117.6, 57], [95.2, 103.2, 57]])
+    L(G2, strokeP([[x0, Y(y0)], [x0, Y(y0) + 20, x1, 92, x1, 112]], 0.8));                    // the turned edge of each fold, on the side away from the void
+  // the lit rim over each shoulder dome and up the neck, brightest on the crown
+  for (const sd of [-1, 1]){ const X = x => 64 + sd * x;
+    L(G4, strokeP([[X(66), Y(68)], [X(63.4), Y(56.4), X(51), Y(46.8), X(38), Y(47.7)], [X(26), Y(48.7), X(18), Y(53.6), X(14), Y(57.4)], [X(11.4), Y(53.4), X(9.6), Y(47.6), X(9.6), Y(42.6)]], 1));
+    L(G5, strokeP([[X(52), Y(50.6)], [X(46), Y(47.8), X(40), Y(47.5), X(32), Y(48.6)]], 1));
+    L(G3, strokeP([[X(56), Y(57)], [X(50), Y(52.6), X(42), Y(51), X(34), Y(52)]], 0.9)); }                        // a second, dimmer contour under the crown: the dome has thickness
+  // hanging strands: thin threads off the shoulders, each ending in a bead
+  for (const [x, y0, l, k] of [[16, 58, 30, 0], [29.5, 56, 40, 1], [42, 58, 20, 2], [112, 58, 32, 3], [98.5, 56, 42, 4], [86, 58, 18, 5], [5, 66, 26, 6], [123, 66, 24, 7]]){
+    const sw = D ? 0 : Math.round(Math.sin(TAU * P - 1.4 - k * 0.5) * 0.6);                   // lagging far behind the breath
+    L(G3, strokeP([[x, Y(y0)], [x, Y(y0) + l * 0.5, x + sw, Y(y0) + l]], 0.8)); L(G4, rect(Math.round(x + sw - 0.5), Math.round(Y(y0) + l + 2), 1, 2)); }
+
+  // ------------------------------------------------------------------ the head: small, far up, black against the heart of the sun, a lit rim to cut it out
+  { const hY = y => y + HY;
+    L(K, path([[55, hY(46)], [51.4, hY(38), 49.6, hY(31), 52, hY(24)], [54.6, hY(17), 59.6, hY(12.6), 64, hY(9.6)], [68.4, hY(12.6), 73.4, hY(17), 76, hY(24)], [78.4, hY(31), 76.6, hY(38), 73, hY(46)]]));
+    L(D ? G3 : G5, strokeP([[51.6, hY(36)], [50, hY(31), 52.4, hY(24.4)], [54.8, hY(17.6), 59.8, hY(13.2), 64, hY(10.4)]], 1));                    // lit rim, left
+    L(D ? G3 : G4, strokeP([[64, hY(10.4)], [68.2, hY(13.2), 73.2, hY(17.6), 75.6, hY(24.4)], [77.6, hY(31), 76.6, hY(35)]], 1));                 // and a dimmer one, right
+    L(G1, path([[64, hY(12.4)], [61, hY(16), 60, hY(20), 62.6, hY(24.6)], [64, hY(22)], [65.4, hY(24.6)], [68, hY(20), 67, hY(16), 64, hY(12.4)]]));   // a crest plate on the brow
+    L(G3, strokeP([[64, hY(13.4)], [64, hY(21)]], 0.8));
+    for (const sd of [-1, 1]){ L(G1, path([[64 + sd * 3, hY(35)], [64 + sd * 8, hY(36), 64 + sd * 10.4, hY(39.6), 64 + sd * 8.6, hY(45)], [64 + sd * 6, hY(41), 64 + sd * 4, hY(38.4), 64 + sd * 3, hY(35)]]));   // hollow cheeks
+      L(G3, rect(64 + sd * 2 - (sd > 0 ? 0 : 1), hY(36), 1, 2)); }                           // two nasal slits
+  }
+
+  // ------------------------------------------------------------------ the five eyes: pinpricks in a shallow arc like a tide line
+  const eyes = [[-8, 3], [-4, 1], [0, 0], [4, 1], [8, 3]].map(([dx, dy]) => [HX + dx, 28 + HY + dy]);
+  drawLeviathan.deadHead = [64, 10];                                                          // tile coordinates (full-tile art): the dizzy stars orbit just above the sunk head
+  if (D){
+    // beaten: the middle eye is a 5x5 grey X with 2px strokes; the four small ones are 3x3 X's. Upright, pixel-exact.
+    eyes.forEach(([ex, ey], i) => { if (i === 2){ for (const [dx, dy] of [[-2, -2], [-1, -2], [1, -2], [2, -2], [-1, -1], [0, -1], [1, -1], [0, 0], [-1, 1], [0, 1], [1, 1], [-2, 2], [-1, 2], [1, 2], [2, 2]]) put(ex + dx, ey + dy, G4); }
+      else { const ox = i < 2 ? -1 : 1; for (const [dx, dy] of [[-1, -1], [1, -1], [0, 0], [-1, 1], [1, 1]]) put(ex + ox + dx, ey + dy, G4); } });
+  } else eyes.forEach(([ex, ey], i) => {
+    const c0 = 0.55 + i * 0.058, fl = Math.max(0, 1 - Math.abs(P - c0) / 0.075), mid = i === 2;   // each flares in turn, left to right across the arc
+    const halo = fl > 0.6 ? A[2] : fl > 0.2 ? A[1] : mid ? A[1] : A[0];
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) put(ex + dx, ey + dy, halo);
+    if (fl > 0.2) for (const [dx, dy] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) put(ex + dx, ey + dy, fl > 0.6 ? A[1] : A[0]);
+    if (fl > 0.6){ for (const [dx, dy] of [[0, -2], [0, 2]]) put(ex + dx, ey + dy, A[1]); put(ex, ey - 3, A[0]); put(ex, ey + 3, A[0]); }   // a vertical glint on the flare
+    put(ex, ey, fl > 0.2 || mid ? A[4] : A[3]); });
+
+  // ------------------------------------------------------------------ the chest: a spine of plates down to the void, ribs sweeping out and round it
+  const MX = 64, MY = 77 + by, op = 1 + 0.13 * beat, RX = 19.4 * op, RY = 16.4 * op;
+  for (const sd of [-1, 1]) for (let k = 2; k >= 0; k--){
+    const X = x => 64 + sd * x, sg = D ? 2 + k * 1.5 : 0, sp = beat * (1.2 + k * 0.6);         // the ribs spread a little as the void opens; beaten, they sag
+    const p = [X(2.6), Y(48.6 + k * 3.2), X(15 + k * 5 + sp), Y(50 + k * 2.6) + sg * 0.4, X(34 + k * 5.5 + sp), Y(56 + k * 6) + sg, X(28.5 + k * 4.5 + sp), Y(80 + k * 9) + sg];
+    L(K, taper(p, 5.6, 3)); L(B0, taper(p, 3.8, 1.4)); L(D ? B0 : B1, taper(p.map((v, i) => i % 2 ? v - 0.7 : v), 2.2, 0.9, 0.04, 0.9));
+    L(D ? B1 : B2, c => { c.lineWidth = 0.9; for (let i = 0; i <= 20; i++){ const [x, y] = bz(p, 0.14 + 0.42 * i / 20); i ? c.lineTo(x - sd * 0.3, y - 1.3) : c.moveTo(x - sd * 0.3, y - 1.3); } c.stroke(); });   // lit along the top of the curve
+    const [ex, ey] = bz(p, 1); put(ex, ey + 1, D ? B1 : B3); put(ex, ey + 3, B0); }
+  for (let k = 0; k < 5; k++){ const y = Y(45.6 + k * 2.6), w = 3 - (k > 2 ? 1 : 0); L(B0, rect(64 - w, y, w * 2, 2)); L(D ? B1 : B2, rect(64 - w, y, w * 2, 1)); put(63.5, y, K); put(64, y + 1, K); }   // spine plates
+
+  // ------------------------------------------------------------------ the void
+  const teeth = (rx, ry, n, a0, len, lenB, bw, colA, colB, tip) => { for (let i = 0; i < n; i++){ const a = a0 + i / n * TAU, ca = Math.cos(a), sa = Math.sin(a), x = MX + ca * rx, y = MY + sa * ry, l = i % 2 ? len : lenB;
+      const m = Math.hypot(ca * ry, sa * rx) || 1, nx = ca * ry / m, ny = sa * rx / m, tx = -ny, ty = nx;      // true ellipse normal: the teeth stand square to the lip
+      L(i % 2 ? colA : colB, c => { c.moveTo(x + tx * bw, y + ty * bw); c.lineTo(x - tx * bw, y - ty * bw); c.lineTo(x - nx * l, y - ny * l); c.closePath(); c.fill(); });
+      if (tip && i % 2 && sa < 0.2) put(x - nx * (l - 0.6), y - ny * (l - 0.6), tip); } };
+  if (D){
+    // beaten: shut to a toothed seam, the lip sagging round it, a few grey drips still hanging
+    const sy = MY + 3;
+    L(G1, ell(MX, sy, 25, 8)); L(G3, arcE(MX, sy, 24, 7, 1, Math.PI * 1.06, Math.PI * 1.94)); L(K, ell(MX, sy + 0.6, 21.4, 4.2));
+    L(G1, arcE(MX, sy - 6, 18, 5, 1, Math.PI * 1.15, Math.PI * 1.85)); L(G1, arcE(MX, sy + 5, 17, 6, 1, Math.PI * 0.2, Math.PI * 0.8));     // creases where it closed
+    L(B0, path([[MX - 19, sy - 1.6], [MX, sy - 3, MX + 19, sy - 1.6], [MX + 19, sy + 3.4], [MX, sy + 4.6, MX - 19, sy + 3.4]]));                    // lower teeth: the dark tone, as one band
+    for (let i = 0; i < 8; i++){ const x = MX - 17.5 + i * 5, e = Math.abs(i - 3.5) / 3.5, dip = e * e * 1.2;     // upper teeth: pale fangs meshed down into it
+      L(B2, c => { c.moveTo(x - 2.5, sy - 2.8 + dip); c.lineTo(x + 2.5, sy - 2.8 + dip); c.lineTo(x, sy + 3.6 + dip * 0.5); c.closePath(); c.fill(); }); }
+    L(K, strokeP([[MX - 20, sy - 2.6], [MX, sy - 4.2, MX + 20, sy - 2.6]], 1));
+    for (const [x, l] of [[55, 5], [61, 9], [67, 3], [72, 6]]){ L(G3, rect(x, Math.round(sy + 8), 1, l)); put(x, sy + 8 + l + 2, G3); }
+  } else {
+    const surge = beat > 0.5;
+    L(G1, ell(MX, MY, RX + 4.6, RY + 4.6)); L(G4, arcE(MX, MY, RX + 3.8, RY + 3.8, 1, Math.PI * 1.08, Math.PI * 1.92)); L(G3, arcE(MX, MY, RX + 3.8, RY + 3.8, 1, Math.PI * 0.9, Math.PI * 1.08)); L(G3, arcE(MX, MY, RX + 3.8, RY + 3.8, 1, Math.PI * 1.92, Math.PI * 2.1));   // the lip, lit along the top
+    L(A[0], arcE(MX, MY, RX + 3.4, RY + 3.4, 2, Math.PI * 0.14, Math.PI * 0.86)); L(A[surge ? 2 : 1], arcE(MX, MY, RX + 2.8, RY + 2.8, 1, Math.PI * (0.3 - 0.06 * beat), Math.PI * (0.7 + 0.06 * beat)));   // the lip glows where the sea runs over it
+    L(K, ell(MX, MY, RX + 1.6, RY + 1.6));                                                    // absolute black
+    const lv = 3.2 + beat * 2.4;                                                              // the sea pooled behind the lower teeth, deeper on the surge
+    L(A[0], ell(MX, MY + 1.6, RX - 0.6, RY - 0.4)); L(K, ell(MX, MY + 1.6 - lv, RX + 1, RY - 0.2));
+    L(A[1], ell(MX, MY + 1.6, RX - 5, RY - 1.4)); L(K, ell(MX, MY + 2.4 - lv, RX - 3, RY - 0.2 - 0.6));
+    if (surge){ L(A[2], ell(MX, MY + 1.6, RX - 9, RY - 2)); L(K, ell(MX, MY + 3 - lv, RX - 6, RY - 0.8)); }
+    const a1 = 0.17 + stp * TAU / 9, a2 = 0.5 - stp * TAU / 10, a3 = 0.1 + stp * TAU / 2;       // outer ring turns one way, the next the other, the throat ring the first way again
+    teeth(RX - 9.6, RY - 8.4, 10, a2, 3.6, 3.6, 1.5, B1, B0, null);
+    L(G1, arcE(MX, MY - 0.4, RX - 15.4, RY - 13, 1, a3, a3 + TAU * 0.3)); L(G1, arcE(MX, MY - 0.4, RX - 15.4, RY - 13, 1, a3 + TAU * 0.5, a3 + TAU * 0.8));   // a broken ring far down the throat
+    teeth(RX + 1, RY + 1, 18, a1, 6.6, 4.4, 1.75, B3, B2, B4);
+  }
+
+  // ------------------------------------------------------------------ the tide below: a band of sea across the foot of the tile, lapping; it rises on the surge
+  const tideTop = new Array(W).fill(H);
+  if (D){
+    for (let x = 12; x < 116; x++) if (!((x > 40 && x < 44) || (x > 83 && x < 88) || x === 20 || x === 104)) put(x, 117, x > 30 && x < 98 ? G4 : G3);   // drained to a thin grey line
+    for (const [x, w] of [[36, 9], [58, 14], [84, 7]]) L(G3, rect(x, 119, w, 1));
+  } else {
+    for (let x = 0; x < W; x++){ const dx = (x - 63.5) / 67, th = 4.8 * Math.sqrt(Math.max(0, 1 - dx * dx)); if (th < 0.4) continue;
+      const lap = Math.sin(x * 0.21 - TAU * P * 2) * 0.7 + Math.sin(x * 0.083 + TAU * P) * 0.7;   // two travelling swells: both whole cycles per loop
+      const top = Math.round(115.4 - th - rise * Math.min(1, th / 2.4) + lap), bot = Math.round(115.4 + th * 0.95);
+      tideTop[x] = top; for (let y = top; y <= bot; y++) put(x, y, A[0]);
+      if (lap > 0.75 && th > 2) put(x, top, A[1]); }                                           // a lit crest where a swell peaks
+    const yc = 115.6 - rise * 0.55, pu = wave(1);
+    L(A[1], ell(64, yc, 45 + pu * 2 + rise, 2.3 + rise * 0.45)); L(A[2], ell(64, yc + 0.2, 20 - pu * 2 + rise * 2, 1.25 + rise * 0.25)); if (rise >= 2) L(A[3], ell(64, yc + 0.2, 7 + rise, 0.8));
+    for (const [x, k] of [[41, 0], [52, 1.3], [77, 2.6], [88, 3.9], [30, 5.2], [99, 0.7]]){ const on = Math.sin(TAU * P * 2 + k); if (on > 0.2) L(A[on > 0.8 ? 4 : 3], rect(x + Math.round(on), Math.round(yc), 2, 1)); }   // glints
+    for (const [x, w, k] of [[34, 7, 0], [53, 12, 2], [71, 9, 4], [88, 6, 1]]) if (Math.sin(TAU * P + k) > -0.3) L(A[0], rect(x + Math.round(Math.sin(TAU * P + k) * 2), 122, w, 1));     // the tide's own reflection below, in dashes
+  }
+
+  // ------------------------------------------------------------------ the outpour: the sea falling from the void in long pixel threads, running without end
+  if (!D){
+    const cols = [[51.5, 16, 8, 3, 2], [54, 12, 12, 7, 0], [56.5, 16, 12, 1, 1], [59, 12, 8, 9, 0], [61.5, 16, 16, 5, 0], [64, 12, 12, 2, 0], [66.5, 16, 12, 11, 0], [69, 12, 8, 4, 0], [71.5, 16, 16, 8, 1], [74, 12, 12, 0, 0], [76.5, 16, 8, 6, 2]];
+    for (const [cx, per, n, off, tier] of cols){
+      if (tier === 2 && beat < 0.35) continue;                                                // the outermost threads only run on the surge
+      const x = Math.round(cx), dx = (cx - MX) / (RX + 0.5), y0 = Math.round(MY + (RY - 1.5 - (3.2 + beat * 2.4) * 0.5) * Math.sqrt(Math.max(0, 1 - dx * dx))), y1 = Math.min(118, tideTop[x] + 1);
+      const wide = beat > 0.5 && tier === 0 && (off % 2 === 1);                               // on the surge the middle threads double
+      for (let y = y0; y <= y1; y++){ const ph = (((y - P * per * n + off) % per) + per) % per, dl = tier === 1 ? 5 : 7 + Math.round(beat * 3);
+        const c = ph < dl ? (ph >= dl - 1 ? A[beat > 0.5 ? 4 : 3] : ph >= dl - 3 ? A[2] : A[beat > 0.5 ? 2 : 1]) : A[beat > 0.5 ? 1 : 0];   // a dark thread with bright runs falling down it
+        put(x, y, c); if (wide) put(x + 1, y, ph < dl ? A[1] : A[0]); }
+      // where each thread lands: a spark, and a little spray thrown up
+      const sp = (((P * 4 + off * 0.13) % 1) + 1) % 1; put(x, y1 + 1, A[sp < 0.5 ? 4 : 3]);
+      if (tier < 2 || beat > 0.35){ const hgt = 3 + beat * 5 + (off % 3), sd = cx < MX ? -1 : 1, t = (((P * 3 + off * 0.21) % 1) + 1) % 1, px0 = x + sd * (1 + t * (3 + (off % 4))), py0 = y1 - Math.round(4 * t * (1 - t) * hgt);
+        if (off % 2 === 0 || beat > 0.4) put(px0, py0, A[t < 0.6 ? 3 : 2]); } }
+    // drops shaken loose beside the fall
+    for (const [x, k, s] of [[47, 0.15, 3], [81, 0.55, 3], [44, 0.8, 2], [84, 0.35, 2]]){ const t = (((P * s + k) % 1) + 1) % 1, y = MY + RY + 2 + t * (tideTop[x] - MY - RY - 2); if (y < tideTop[x]){ put(x, y, A[2]); put(x, y - 1, A[1]); } }
+  }
+
+  // ------------------------------------------------------------------ the banner-bearer: one tiny figure on a rock at its foot, for scale
+  { const fx = 31, fy = D ? 115 : 109;                                                        // feet
+    if (!D) L(K, path([[fx - 7, 118], [fx - 5, fy + 1.4, fx - 2, fy - 0.4, fx + 1, fy - 0.2], [fx + 4, fy, fx + 6, fy + 2, fx + 8, 118]]));   // the rock: black, standing out of the tide
+    else L(G3, rect(fx - 3, fy, 8, 1));
+    for (let y = fy - 4; y < fy; y++){ put(fx, y, B2); put(fx + 1, y, B1); } put(fx - 1, fy - 1, B1); put(fx - 1, fy - 2, B1);             // a cloaked body
+    put(fx, fy - 5, B4); put(fx + 1, fy - 5, B3); put(fx, fy - 6, B3);                                                                   // head
+    for (let y = fy - 12; y < fy; y++) put(fx + 3, y, B3); put(fx + 2, fy - 3, B2);                                                       // the pole, a hand on it
+    for (let c = 0; c < 5; c++){ const dy = D ? Math.round(c * 0.5) : Math.round(Math.sin(TAU * P * 4 - c * 1.1) * (0.3 + c * 0.22)), h = c === 4 ? 1 : 3;   // the banner streaming, a swallow tail
+      for (let r = 0; r < h; r++) put(fx + 4 + c, fy - 12 + dy + r + (c === 4 ? (Math.sin(TAU * P * 4) > 0 ? 0 : 2) : 0), r === 0 ? B4 : c % 2 ? B3 : B4); }
+  }
+
+  const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
+  blitBuf(ctx, buf, W, H);
+}
+drawLeviathan.fullTile = true;   // art fills the whole 128x128 tile: composite at (0,0) over the dithered panel, not at y+13
+
+// ---- The Maw of Routine (style guide v1)
+// The Swallowing Wheel (working name "maw"): a lamprey disc mouth, three rings of hooked teeth descending to a glowing throat,
+// a crown of seven tide-pool eyes on its upper lip, and its own spined body coiled round it as a wheel halo. It stands on a short
+// neck above a pool of throat-light. Pop: the eyes, the throat, the ground pool. Nothing else.
+function drawMaw(cv, f, accent){
+  const LOOP = 64, TAU = Math.PI * 2; f = ((f % LOOP) + LOOP) % LOOP; const P = f / LOOP;                     // one seamless 6.4 s loop; every cycle is a whole number of turns of P
+  const W = 128, H = 104, A = POP_RAMPS[accent] || POP_RAMPS.blush, D = !!drawMaw.dead;
+  const K = '#121110', G1 = '#211f1d', G2 = '#2e2a27', G3 = '#3f3a36', G4 = '#57514b', G5 = '#756e66';
+  const F0 = '#35312d', F1 = '#4a4540', F2 = '#615b54', F3 = '#8e867b', F4 = '#c9c2b6';                       // the teeth: light-object ramp in hard bands
+  if (!drawMaw.sc){ drawMaw.sc = document.createElement('canvas'); drawMaw.sc.width = W; drawMaw.sc.height = H; }
+  const sc = drawMaw.sc, sx = sc.getContext('2d', {willReadFrequently: true}), buf = new Array(W * H).fill(null);
+  let XF = null;
+  const L = shapeLayer(sx, W, H, buf, () => XF);
+  const ell = (x, y, rx, ry, rot = 0) => c => { c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); c.fill(); };
+  const path = pts => c => { c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.closePath(); c.fill(); };
+  const strokeP = (pts, w) => c => { c.lineWidth = w; c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.stroke(); };
+  const rect = (x, y, w, h) => c => { c.rect(x, y, w, h); c.fill(); };
+  const px = (x, y, c) => L(c, cc => { cc.rect(Math.round(x), Math.round(y), 1, 1); cc.fill(); });
+  const rot = (a, cx, cy) => { const cs = Math.cos(a), sn = Math.sin(a); return [cs, sn, -sn, cs, cx - cs * cx + sn * cy, cy - sn * cx - cs * cy]; };
+  const app = (M, x, y) => M ? [M[0] * x + M[2] * y + M[4], M[1] * x + M[3] * y + M[5]] : [x, y];
+  const arcS = (x, y, r, a0, a1, w = 1) => c => { c.lineWidth = w; c.moveTo(x + r * Math.cos(a0), y + r * Math.sin(a0)); c.arc(x, y, r, a0, a1); c.stroke(); };
+  const ss = t => { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); };
+  const dg = d => d * Math.PI / 180;
+
+  // ------------------------------------------------------------------ the timeline
+  // 0-30 idle (the eyes blink in a ripple) | 30-40 the mouth dilates | 40-50 wide, rings racing, debris spiralling in | 47-50 the throat flares
+  // 51-54 clamped shut with a snap | 54-62 reopens to rest
+  let m = 0;                                                                                                   // mouth: 0 rest, +1 dilated, -1 clamped
+  if (!D){ if (f >= 30 && f < 40) m = ss((f - 30) / 10); else if (f >= 40 && f < 50) m = 1 + 0.04 * Math.sin((f - 40) * TAU / 5); else if (f >= 50 && f < 51) m = 1 - 2 * (f - 50); else if (f >= 51 && f < 54) m = -1; else if (f >= 54) m = -1 + ss((f - 54) / 8) * 1.0 + Math.sin(Math.min(1, (f - 54) / 9) * Math.PI) * 0.12; if (f >= 62) m = 0; }
+  const rush = D ? 0 : f < 30 ? 0 : f < 51 ? Math.pow((f - 30) / 21, 2) : 1;                                     // extra spin: eases in, stops dead on the snap, having added whole symmetry steps
+  const flare = D ? 0 : (f >= 46 && f < 50) ? 1 : 0, shut = !D && f >= 51 && f < 54, snapF = D ? -1 : f - 51;
+  const bob = D ? 0 : Math.round(Math.sin(TAU * P) * 1), bobC = D ? 0 : Math.round(Math.sin(TAU * P - 1.1) * 1);    // breathing; the coil lags a beat behind
+  const jolt = shut && f < 53 ? 1 : 0;
+  const cx = 64, cy = (D ? 57 : 49.5) + bob + jolt, ccx = 64, ccy = (D ? 58 : 48) + bobC;
+  const lipR = D ? 22 : 22 + (m > 0 ? 3 * m : 3.5 * m), thR = D ? 5 : Math.max(0, 5.6 + (m > 0 ? 3.4 * m : 5.6 * m));
+  const pulse = D ? 0 : Math.sin(TAU * P * 2);                                                                   // the throat glow breathes twice a loop
+
+  // ------------------------------------------------------------------ the ground pool: throat-light spilled on the floor, banded
+  if (D){ L(G3, ell(64, 96.6, 27, 3.2)); L(G2, ell(64, 96.8, 18, 2)); L(G4, rect(49, 96, 3, 1)); L(G4, rect(74, 97, 2, 1)); }
+  else { const b = flare ? 1 : 0, g = pulse > 0.3 ? 1 : 0;
+    L(A[0 + b], ell(64, 96.6, 30 + b * 2, 3.6)); L(A[1 + b], ell(64, 96.6, 21 + g, 2.6)); L(A[2 + b], ell(64, 96.9, 11 + g * 2, 1.6));
+    const rp = (P * 2) % 1; L(A[3], rect(Math.round(64 - 13 - rp * 9), 96, 3 - Math.round(rp * 2), 1)); L(A[3], rect(Math.round(64 + 11 + rp * 9), 97, 3 - Math.round(rp * 2), 1)); }   // ripples running outward from the stump
+
+  // ------------------------------------------------------------------ the coil: its own body, a spined segmented wheel behind the mouth, tail tapering away bottom right
+  const T0 = dg(97), T1 = dg(D ? 462 : 486), SEG = dg(12), TL = dg(104);                                         // more than a full turn: the tail overlaps the start, outside it
+  const taper = t => { const u = (T1 - t) / TL; return u >= 1 ? 1 : 0.14 + 0.86 * Math.pow(Math.max(0, u), 0.62); };
+  const cR = t => 34 + Math.pow(Math.max(0, (t - dg(350)) / (T1 - dg(350))), 1.4) * (D ? 5 : 11.5);            // the tail spirals outward past the first turn
+  const slide = D ? 0.4 : 2 * P;                                                                                 // the segments creep toward the tail: two a loop, the opposite way to the outer teeth
+  const bump = t => Math.abs(Math.sin(Math.PI * ((t - T0) / SEG - slide)));                                      // each segment swells between its joints
+  const cW = t => 4.3 * taper(t), cO = t => (4.3 + 1.0 * (bump(t) - 0.5)) * taper(t);
+  const cpt = (t, off) => { const r = cR(t) + off, x = Math.cos(t) * r, y = Math.sin(t) * r;                     // beaten: the wheel sags, caved in at the crown, resting on the floor
+    return D ? [ccx + x * 1.04, ccy + y * (y < 0 ? 0.6 : 0.9) + Math.max(0, -x) * 0.14 + (y < 0 ? Math.max(0, 16 - Math.abs(x - 6)) * 0.3 : 0)] : [ccx + x, ccy + y]; };
+  const strip = (o0, o1, a = T0, b = T1) => c => { const n = Math.ceil((b - a) / dg(2)); for (let i = 0; i <= n; i++){ const t = a + (b - a) * i / n, p = cpt(t, o1(t)); i ? c.lineTo(...p) : c.moveTo(...p); }
+    for (let i = n; i >= 0; i--){ const t = a + (b - a) * i / n; c.lineTo(...cpt(t, o0(t))); } c.closePath(); c.fill(); };
+  const edge = (o, a, b, w = 1) => c => { c.lineWidth = w; const n = Math.ceil((b - a) / dg(2)); for (let i = 0; i <= n; i++){ const t = a + (b - a) * i / n, p = cpt(t, o(t)); i ? c.lineTo(...p) : c.moveTo(...p); } c.stroke(); };
+  const segs = []; for (let i = -1; i < 34; i++){ const t = T0 + (i + slide) * SEG; if (t > T0 - dg(4) && t < T1 - dg(5)) segs.push([t, ((i % 2) + 2) % 2]); }
+  const coil = (a, b) => {
+    // fin spines first (behind the body): curved thorns raked back toward the tail, long and short alternating
+    for (const [t, odd] of segs){ if (t < a - dg(1) || t > b) continue; const tp = taper(t), len = (odd ? 3.4 : 6) * (0.3 + 0.7 * tp) * (D ? 0.6 : 1), w = cW(t), bw = dg(3.6), rk = dg(D ? 11 : 7);
+      const p0 = cpt(t - bw, w - 1), p1 = cpt(t + bw * 0.8, w - 1), tip = cpt(t + rk, w + len), lit = Math.sin(t) < 0.3;
+      L(K, path([[p0[0], p0[1]], [...cpt(t - bw * 0.4, w + len * 0.75), ...tip], [p1[0], p1[1]]]));
+      L(G4, path([cpt(t - bw * 0.6, w - 1), [...cpt(t - bw * 0.2, w + len * 0.72), ...cpt(t + rk * 0.9, w + len - 0.7)], cpt(t + bw * 0.5, w - 1)]));   // the fin itself, tones up from the body so it shows on the dark panel
+      if (!D && lit){ L(G5, strokeP([cpt(t - bw * 0.3, w + len * 0.45), cpt(t + rk * 0.95, w + len - 0.5)], 0.8)); } }
+    L(K, strip(t => -cW(t), cO, a, b));                                                                          // the body
+    L(G1, strip(t => -cW(t) * 0.5, t => cO(t) - 0.6, a, b));                                                     // flank
+    L(G2, strip(t => cW(t) * 0.0, t => cO(t) - 0.9, a, Math.min(b, T1 - dg(4))));                               // back
+    L(G3, strip(t => cW(t) * 0.4, t => cO(t) - 1, Math.max(a, dg(150)), Math.min(b, dg(352))));                  // a lit band on the back where the light falls
+    for (const [t] of segs){ if (t < a || t > b) continue; const w = cW(t); if (w < 1.2) continue;               // joints: a notch on the back, a curved crease on the flank, never a full brick line
+      L(K, strokeP([cpt(t - dg(4.5), -w * 0.95), [...cpt(t - dg(3.5), w * 0.2), ...cpt(t + dg(1), cO(t))]], 1)); }   // swept back like overlapping plates
+    for (const [t] of segs){ if (t < a || t > b) continue; const w = cW(t); if (w < 2.6) continue; const q = cpt(t + SEG * 0.55, -w + 1.3); L(G3, rect(Math.round(q[0] - 1), Math.round(q[1] - 0.5), 2, 1)); }   // belly scutes
+    L(G4, edge(t => cO(t) - 0.5, a, Math.min(b, T1 - dg(1))));                                                   // the rim, lit all round so it never melts into the panel
+    if (!D && a < dg(318)) L(G5, edge(t => cO(t) - 0.5, Math.max(a, dg(186)), dg(318)));                         // brightest over the top left
+    L(G3, edge(t => -cW(t) + 0.5, Math.max(a, dg(120)), Math.min(b, T1 - dg(20)))); };                           // the underside
+  coil(dg(372), T1); coil(T0, dg(372));                                                                          // the tail first, so the first turn overlaps it
+  if (D){ const q = cpt(T1, 0); L(K, strokeP([cpt(T1 - dg(6), 0), [q[0] - 2, q[1] + 2.4], [q[0] - 6, q[1] + 3]], 1.4)); }                         // the tail tip lies along the floor
+
+  // ------------------------------------------------------------------ the neck: a short stump of the same body, rising out of the pool
+  const nt = cy + 15, lean = D ? 5 : 0, nx = y => 64 + lean * Math.max(0, (95 - y) / (95 - nt)) + (D ? 0 : Math.sin((y - 72) / 7.5) * 2.2), nw = y => 5.2 + Math.pow(Math.max(0, (y - 78) / 17), 2) * 4.5 + 0.7 * Math.abs(Math.sin(Math.PI * (y - 74 - (D ? 1 : 0)) / 4.6));
+  const nside = (sd, o = 0) => { const p = []; for (let y = nt; y <= 95.4; y += 0.75) p.push([nx(y) + sd * (nw(y) - o), y]); return p; };
+  L(K, c => { const a = nside(-1), b = nside(1).reverse(); c.moveTo(...a[0]); for (const q of a.slice(1)) c.lineTo(...q); for (const q of b) c.lineTo(...q); c.closePath(); c.fill(); });
+  L(G1, c => { const a = nside(-1, 1.6), b = nside(1, 2.6).reverse(); c.moveTo(...a[0]); for (const q of a.slice(1)) c.lineTo(...q); for (const q of b) c.lineTo(...q); c.closePath(); c.fill(); });
+  L(G2, c => { const a = nside(-1, 1.6), b = nside(-1, 4.4).reverse(); c.moveTo(...a[0]); for (const q of a.slice(1)) c.lineTo(...q); for (const q of b) c.lineTo(...q); c.closePath(); c.fill(); });
+  for (let k = 0; k < 5; k++){ const y = 74 + k * 4.6 + (D ? 1 : 0); if (y < nt + 5) continue; const hw = nw(y) - 0.6, x0 = nx(y); L(K, strokeP([[x0 - hw, y - 0.8], [x0, y + 1.6, x0 + hw, y - 0.8]], 1.1)); L(G3, strokeP([[x0 - hw + 1.6, y + 1], [x0 - 1, y + 2.6, x0 + hw * 0.3, y + 2.2]], 0.9)); }   // segment joints, each lit below
+  L(D ? G3 : G4, strokeP(nside(-1, 0.5).filter(q => q[1] > nt + 7), 1)); L(G3, strokeP(nside(1, 0.5).filter(q => q[1] > nt + 7), 1));
+  for (const [y, sd, l] of [[80, -1, 3.4], [86, 1, 3], [88.5, -1, 2.6]]){ const x = nx(y) + sd * (nw(y) - 0.6); L(K, path([[x, y - 1.6], [x + sd * l, y - 2.6 - l * 0.4], [x, y + 1.4]])); }   // a few thorns up the stump
+  for (const [x, w] of [[51, 2.6], [77, 2.4]]) L(K, ell(x, 95.7, w, 1.1));                               // roots spreading into the pool
+  if (!D){ L(A[3], rect(52, 97, 5, 1)); L(A[3], rect(70, 97, 6, 1)); L(A[4], rect(60, 98, 4, 1)); }               // the pool rings the stump
+
+  // ------------------------------------------------------------------ the disc mouth
+  const tilt = D ? 0.2 + 0.006 * Math.sin(TAU * P) : 0, M = D ? rot(tilt, 64, 92) : null;
+  XF = M;
+  for (let i = 0; i < 26; i++){ const a = i / 26 * TAU + 0.12; L(K, ell(cx + Math.cos(a) * (lipR + 0.2), cy + Math.sin(a) * (lipR + 0.2), 1.9, 1.9)); }   // sucker fringe: a scalloped lip
+  L(K, ell(cx, cy, lipR, lipR));
+  L(G1, ell(cx, cy, lipR - 1.2, lipR - 1.2)); L(K, ell(cx, cy, lipR - 3.6, lipR - 3.6));                         // the lip band, the dark of the mouth
+  for (let i = 0; i < 26; i++){ const a = (i + 0.5) / 26 * TAU + 0.12, c0 = Math.cos(a), s0 = Math.sin(a); L(K, strokeP([[cx + c0 * (lipR - 3.4), cy + s0 * (lipR - 3.4)], [cx + c0 * (lipR - 0.6), cy + s0 * (lipR - 0.6)]], 0.9)); }   // puckers
+  L(G3, arcS(cx, cy, lipR - 0.6, dg(20), dg(160))); L(G4, arcS(cx, cy, lipR - 0.6, dg(160), dg(380)));           // the rim, lit
+  if (!D) L(G5, arcS(cx, cy, lipR - 0.6, dg(196), dg(316)));
+  // three tooth rings. Each has a repeating length pattern, so a turn of one pattern-step is seamless.
+  const R1 = lipR - 2.4, span = R1 - thR, R2 = thR + span * 0.53 + (shut ? 0.8 : 0), R3 = thR + span * 0.2 + (shut ? 0.4 : 0);
+  const rings = [
+    {r: R1, n: 16, per: 4, len: 6.6, bw: 2.0, dir: -1, extra: 2, pat: [1, 0.62, 0.9, 0.5], jit: [0, 0.05, -0.04, 0.03], cols: [F2, F3, F4], sag: 0},
+    {r: R2, n: 12, per: 4, len: 5.0, bw: 1.7, dir: 1, extra: 1, pat: [0.84, 1, 0.64, 0.94], jit: [0.04, 0, -0.05, 0.02], cols: [F1, F2, F3], sag: 1.6},
+    {r: R3, n: 8, per: 4, len: 3.4, bw: 1.3, dir: -1, extra: 1, pat: [1, 0.72, 0.9, 0.66], jit: [0, 0.06, -0.05, 0.02], cols: [F0, F1, F3], sag: 3.2},
+  ];
+  const missing = D ? {0: [3, 4, 9, 12], 1: [2, 7, 8], 2: [1, 5]} : {};                                           // beaten: teeth knocked out
+  // gum ridges between the rings: a banded step down toward the throat, top-lit
+  for (const k of [1, 2]){ const g = rings[k], gy = cy + (D ? g.sag : 0), gr = g.r + 0.9; L(G1, arcS(cx, gy, gr, 0, TAU, 2.2)); L(G3, arcS(cx, gy, gr + 0.8, dg(180), dg(360), 0.9)); L(G2, arcS(cx, gy, gr + 0.8, dg(10), dg(170), 0.9));
+    }   // pores, so the gum never reads as a machined ring
+  // the throat
+  { const ty = cy + (D ? 3.2 : 0);
+    if (D){ L(G1, ell(cx, ty, thR, thR)); L(K, ell(cx, ty + 0.4, thR - 1.4, thR - 1.4)); }
+    else if (thR > 0.8){ const tr = thR + pulse * 0.6 + flare * 1.4, b = flare ? 1 : 0;
+      L(A[0 + b], ell(cx, cy, tr, tr)); L(A[1 + b], ell(cx, cy, tr * 0.74, tr * 0.74)); L(A[2 + b], ell(cx, cy, tr * 0.46, tr * 0.46));
+      if (flare) L(A[4], ell(cx, cy, tr * 0.24, tr * 0.24)); else if (pulse > 0) L(A[3], rect(cx - 1, cy - 1, 2, 2)); else px(cx - 1, cy - 1, A[3]);
+      const sa = -TAU * P * 2 - rush * TAU; for (const o of [0, Math.PI]) L(A[0 + b], arcS(cx, cy, tr * 0.6, sa + o, sa + o + 1.5, 0.9)); } }   // a gullet swirl turning inward
+  const tooth = (g, a, len, cols, yo, droop) => { const ca = Math.cos(a), sa = Math.sin(a), ux = -ca, uy = -sa, tx = -sa * g.dir, ty = ca * g.dir, bx = cx + ca * g.r, by = cy + yo + sa * g.r, bw = g.bw;
+    const hx = ux * len + tx * len * 0.26, hy = uy * len + ty * len * 0.26 + (droop || 0), tipx = bx + hx, tipy = by + hy;   // the tip: inward and raked, so each tooth hooks down the throat
+    // a fang: straight leading edge, bellied back edge; k0 is how far up from the root this band starts
+    const shape = k0 => path([[bx - tx * bw * (1 - k0) + hx * k0 * 0.9, by - ty * bw * (1 - k0) + hy * k0 * 0.9], [bx + ux * len * 0.7 - tx * bw * 0.5, by + uy * len * 0.7 - ty * bw * 0.5, tipx, tipy], [bx + tx * bw * (1 - k0) + hx * k0, by + ty * bw * (1 - k0) + hy * k0]]);
+    L(cols[0], shape(0)); L(cols[1], shape(0.42)); px(tipx - hx * 0.1 - 0.5, tipy - hy * 0.1 - 0.5, cols[2]); };
+  for (const k of [2, 1, 0]){ const g = rings[k], sym = TAU / (g.n / g.per), ang = D ? [0.1, 0.33, 0.5][k] : g.dir * (sym * P + sym * g.extra * rush) + [0.1, 0.33, 0.5][k];
+    const shrink = shut ? 1.12 : m > 0 ? 1 - 0.08 * m : 1;
+    for (let i = 0; i < g.n; i++){ if (missing[k] && missing[k].includes(i)) { if (D){ const a = ang + i / g.n * TAU; L(K, ell(cx + Math.cos(a) * g.r, cy + g.sag + Math.sin(a) * g.r, 1, 1)); } continue; }   // an empty socket
+      const a = ang + i / g.n * TAU + g.jit[i % g.per] + (D ? ((i * 7) % 5 - 2) * 0.05 : 0);
+      tooth(g, a, g.len * g.pat[i % g.per] * shrink, D ? [[F1, F2, F3], [F0, F1, F2], [G2, F0, F1]][k] : g.cols, D ? g.sag : 0, D ? 1.2 : 0); } }
+
+  // ------------------------------------------------------------------ the crown: seven tide-pool eyes on the upper lip, biggest at the top centre
+  const ER = [1.7, 2.4, 3.2, 4.5, 3.2, 2.4, 1.7], EA = [-1.16, -0.84, -0.47, 0, 0.47, 0.84, 1.16];
+  const wide = !D && f >= 33 && f < 50;
+  let bigEye = null;
+  for (let i = 0; i < 7; i++){ const r = ER[i] + (wide && i !== 3 ? 0.3 : 0), a = -Math.PI / 2 + EA[i], er = lipR + 0.6 - (4.5 - ER[i]) * 0.4, x = cx + Math.cos(a) * er, y = cy + Math.sin(a) * er;
+    let st = 2;                                                                                                  // 2 open, 1 half, 0 shut
+    if (D) st = 0; else { const b0 = 6 + i * 2.5; if (f >= b0 && f < b0 + 1) st = 1; else if (f >= b0 + 1 && f < b0 + 3) st = 0; else if (f >= b0 + 3 && f < b0 + 4) st = 1;
+      if (f >= 51 && f < 54.5) st = 0; else if (f >= 54.5 && f < 56 + i * 0.5) st = 1; }
+    L(K, ell(x, y, r + 1.9, r + 1.9)); L(G4, arcS(x, y, r + 1.1, 0, TAU, 1)); if (!D) L(G5, arcS(x, y, r + 1.1, dg(190), dg(330), 1));   // a barnacle rim
+    if (r > 2.8) for (let k = 0; k < 5; k++){ const b = dg(200 + k * 35); px(x + Math.cos(b) * (r + 2.6) - 0.5, y + Math.sin(b) * (r + 2.6) - 0.5, G4); }   // barnacle studs on the big ones
+    L(K, ell(x, y, r + 0.5, r + 0.5));
+    if (i === 3) bigEye = [x, y];
+    if (st === 0){ L(D && i === 3 ? K : G1, ell(x, y, r, r)); if (!(D && i === 3)) L(G4, strokeP([[x - r + 0.8, y + 0.4], [x, y + 1.2, x + r - 0.8, y + 0.4]], 0.9)); continue; }   // shut: a lid seam
+    L(A[1], ell(x, y, r, r));                                                                                    // the pool
+    if (r > 2.2){ const rp = (P * 4 + i * 0.17) % 1, rr = r * (0.42 + 0.5 * rp); L(A[rp > 0.7 ? 1 : 0], arcS(x, y, rr, 0, TAU, 0.9)); L(A[0], arcS(x, y, r - 0.3, dg(20), dg(160), 0.9)); }   // a ripple ring running outward, a shaded lower rim
+    L(A[wide || flare ? 4 : 3], ell(x, y, Math.max(0.75, r * 0.3), Math.max(0.75, r * 0.3)));                    // the bright well at the centre
+    if (i === 3){ L(A[4], rect(Math.round(x) - 1, Math.round(y) - 1, 2, 2)); px(x - r * 0.55, y - r * 0.55, A[3]); }
+    if (st === 1){ L(K, rect(x - r - 1, y - r - 1, 2 * r + 2, r * 0.62 + 1)); L(K, rect(x - r - 1, y + r * 0.38, 2 * r + 2, r + 1)); } }
+  XF = null;
+
+  // ------------------------------------------------------------------ beaten: the big centre eye is a grey 5x5 X, upright and pixel-exact
+  if (D){ const [ex, ey] = app(M, bigEye[0], bigEye[1]).map(Math.round);
+    for (const [dx, dy] of [[-2, -2], [-1, -2], [1, -2], [2, -2], [-1, -1], [0, -1], [1, -1], [0, 0], [-1, 1], [0, 1], [1, 1], [-2, 2], [-1, 2], [1, 2], [2, 2]]) px(ex + dx, ey + dy, G4);
+    drawMaw.deadHead = [ex, ey - 12];
+    // teeth fallen on the floor
+    for (const [x, y, a, len] of [[26, 95, 0.15, 6.4], [42, 97, 2.95, 5], [86, 96.6, -0.2, 6], [100, 94.6, 3.3, 5], [70, 98.4, 0.1, 4]]){ const c0 = Math.cos(a), s0 = Math.sin(a);
+      L(F2, path([[x - s0 * 1.6, y + c0 * 1.6], [x + c0 * len * 0.6 - s0 * 1.9, y + s0 * len * 0.6 + c0 * 1.9, x + c0 * len, y + s0 * len - 0.8], [x + c0 * len * 0.4, y + s0 * len * 0.4 - 0.6, x + s0 * 1.4, y - c0 * 1.4]]));
+      L(F3, rect(Math.round(x + c0 * (len - 2) - 0.5), Math.round(y + s0 * (len - 2) - 1), 2, 1)); px(x + c0 * len - 0.5, y + s0 * len - 1.2, F4); }
+  } else drawMaw.deadHead = [71, 14];
+
+  // ------------------------------------------------------------------ alive extras: drips, debris spiralling in, the snap
+  if (!D){
+    for (const [x, y0, ph] of [[45, 84, 0], [84, 82, 0.5]]){ const t = (P * 2 + ph) % 1, y = y0 + t * t * 12; if (y < 95){ L(K, ell(x, y, 1, 1.3)); if (t > 0.3) px(x - 0.5, y - 3, K); } }   // black drips off the coil into the pool
+    for (let j = 0; j < 10; j++){ const t = (f - 31 - j * 1.1) / 9; if (t < 0 || t > 1) continue;                   // debris torn off the coil, spiralling down the throat
+      for (const [dt, col, s] of [[0.07, G4, 1], [0, t < 0.55 ? F3 : G5, t < 0.55 ? 2 : 1]]){ const u = Math.max(0, t - dt), a = j * 2.4 + 0.6 - u * TAU * 1.15, r = 30 * Math.pow(1 - u, 1.25) + 1.5;
+        const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r; L(r < thR ? K : col, rect(Math.round(x), Math.round(y), s, s)); } }
+    if (snapF >= 0 && snapF < 2){ const r0 = lipR + 4 + snapF * 2.5; for (let i = 0; i < 8; i++){ const a = i / 8 * TAU + 0.39; if (Math.sin(a) < -0.3) continue;     // the snap: short ticks thrown off the lip (none over the eyes)
+        L(G5, strokeP([[cx + Math.cos(a) * r0, cy + Math.sin(a) * r0], [cx + Math.cos(a) * (r0 + 2.4 - snapF), cy + Math.sin(a) * (r0 + 2.4 - snapF)]], 1)); } }
+    if (f >= 54 && f < 60) for (const [dx, k] of [[-9, 0], [7, 1], [-2, 2]]){ const t = (f - 54 - k) / 5; if (t < 0 || t > 1) continue; px(cx + dx, cy + lipR + 3 + t * t * 14, K); }   // spit shaken loose as it reopens
+  }
+
+  const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
+  blitBuf(ctx, buf, W, H);
+}
+
 const NEW_ART = {
   giant: Object.assign((cv, f, acc, dead) => { drawFogColossus.dead = dead; drawFogColossus(cv, f, acc); }, {ownDead: true, starY: 2, starX: 64, starRX: 14, starRY: 3}),
   hunch: Object.assign((cv, f, acc, dead) => { drawHunch.dead = dead; drawHunch(cv, f, acc); }, {ownDead: true, starY: 60, starX: 44, starRX: 15, starRY: 4}),
@@ -6875,11 +7261,13 @@ const NEW_ART = {
   krampus: Object.assign((cv, f, acc, dead) => { drawKrampus.dead = dead; drawKrampus(cv, f, acc); }, {ownDead: true, starY: 53, starX: 18, starRX: 12, starRY: 3}),
   hourglass: Object.assign((cv, f, acc, dead) => { drawFatherTime.dead = dead; drawFatherTime(cv, f, acc); }, {ownDead: true, starY: 7, starX: 69, starRX: 12, starRY: 3}),
   heart: Object.assign((cv, f, acc, dead) => { drawHeartbreaker.dead = dead; drawHeartbreaker(cv, f, acc); }, {ownDead: true, starY: 13, starX: 64, starRX: 12, starRY: 3}),
+  leviathan: Object.assign((cv, f, acc, dead) => { drawLeviathan.dead = dead; drawLeviathan(cv, f, acc); }, {ownDead: true, fullTile: true, starY: 10, starX: 64, starRX: 14, starRY: 3}),
+  maw: Object.assign((cv, f, acc, dead) => { drawMaw.dead = dead; drawMaw(cv, f, acc); }, {ownDead: true, starY: 24, starX: 75, starRX: 12, starRY: 3}),
   golem: Object.assign((cv, f, acc, dead) => { Object.assign(drawLaundryGolem, {pose: 'hips', hanger: 'light', basketLight: true, sticker: false, aura: false, dead}); drawLaundryGolem(cv, f, acc); }, {ownDead: true, starY: 13}),
   gremlin: Object.assign((cv, f, acc, dead) => { drawKneeGremlin.dead = dead; drawKneeGremlin(cv, f, acc); }, {ownDead: true, starY: 50, starX: 62, starRX: 9, starRY: 3, starSmall: true}),
   kraken: Object.assign((cv, f, acc, dead) => { drawCouchKraken.dead = dead; drawCouchKraken(cv, f, acc); }, {ownDead: true, starY: 34}),   // it slumps by itself, so the TV static isn't squashed
 };
-let artLayer = null, oldArtCv = null, panelCv = null, artKey = '', bossTick = -1;   // bossTick: the steady boss frame counter (−1 = derive from the clock)
+let artLayer = null, oldArtCv = null, panelCv = null, artKey = '', bossTick = -1, artFull;   // bossTick: the steady boss frame counter (−1 = derive from the clock)
 // beaten: three chunky four-point stars circling the head, a bright core with pop-coloured arms, twinkling as they go round
 function dizzyStars(g, cy, A, t, cx = 64, rx = 20, ry = 4, small = false){
   for (let i = 0; i < 3; i++){ const a = t * 0.12 + i * Math.PI * 2 / 3, front = Math.sin(a) > -0.2, x = Math.round(cx + Math.cos(a) * rx), y = Math.round(cy + Math.sin(a) * ry);
@@ -6906,19 +7294,21 @@ function drawBossTile(canvas, boss, f, motion, hurt, dead){
         if (u <= 0 || (u < 1 && (1 - u) * 64 > BAY8[y & 7][x & 7])) pg.fillRect(x, y, 1, 1); } }
     g.drawImage(panelCv, 0, 0);
     if (!artLayer){ artLayer = document.createElement('canvas'); artLayer.width = 128; artLayer.height = 104; }
+    if (draw.fullTile && !artFull){ artFull = document.createElement('canvas'); artFull.width = 128; artFull.height = 128; }
+    const layer = draw.fullTile ? artFull : artLayer, OY = draw.fullTile ? 0 : 13;   // a full-tile monster (Leviathan) is too big for the figure layer and runs off the tile's edges
     const acc = popId(), A = POP_RAMPS[acc];
     const af = motion ? (bossTick >= 0 ? bossTick : Math.floor(performance.now() / 100)) : 0, key = boss.shape + '|' + af + '|' + acc + '|' + !!dead;
-    if (key !== artKey){ draw(artLayer, af, acc, !!dead); artKey = key; }   // the mini and full boss canvases share one render per frame
+    if (key !== artKey){ draw(layer, af, acc, !!dead); artKey = key; }   // the mini and full boss canvases share one render per frame
     if (dead && draw.ownDead){
-      g.drawImage(artLayer, 0, 13);
+      g.drawImage(layer, 0, OY);
       const t = motion ? performance.now() / 100 : 0;
-      dizzyStars(g, 13 + draw.starY, A, t, draw.starX, draw.starRX, draw.starRY, draw.starSmall);
+      dizzyStars(g, OY + draw.starY, A, t, draw.starX, draw.starRX, draw.starRY, draw.starSmall);
     } else if (dead){
       // defeated: it slumps down onto the floor and dizzy stars circle where its head was
       const SQ = 0.6, GY = 92; g.drawImage(artLayer, 0, 0, 128, 104, 0, 13 + GY * (1 - SQ), 128, 104 * SQ);
       const t = motion ? performance.now() / 100 : 0;
       dizzyStars(g, 13 + GY * (1 - SQ) + 24 * SQ, A, t);
-    } else g.drawImage(artLayer, 0, 13);
+    } else g.drawImage(layer, 0, OY);
   }
   if (hurt){ g.globalCompositeOperation = 'difference'; g.fillStyle = '#ffffff'; g.fillRect(0, 0, N, N); g.globalCompositeOperation = 'source-over'; }
 }
