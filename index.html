@@ -930,7 +930,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'e74d807219';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'c9e3abcb43';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -4224,12 +4224,26 @@ function drawLaundryGolem(cv, f, accent){
   // ------------------------------------------------------------------ aura: one flat grey shape
   const STICKER = drawLaundryGolem.sticker !== false;
   if (!STICKER && drawLaundryGolem.aura !== false) L(AURA, c => { const r = 14; c.moveTo(14 + r, 4); c.arcTo(114, 4, 114, 100, 22); c.arcTo(114, 100, 14, 100, 22); c.arcTo(14, 100, 14, 4, 22); c.arcTo(14, 4, 114, 4, 22); c.fill(); });
+  // P2: a washing line sagging across the dark behind it, pegged with the things it has not folded yet (shadow shapes, a shade under the panel)
+  { const LN = '#1c1a18', sag = x => 15 + Math.pow((x - 64) / 64, 2) * -9 + 9, sway = i => GD ? 0 : Math.sin(T * 0.8 + i * 1.3) * 1.2;
+    L(LN, c => { c.lineWidth = 1; c.moveTo(4, sag(4)); for (let x = 8; x <= 124; x += 4) c.lineTo(x, sag(x)); c.stroke(); });
+    const hang = (x, i, fn) => { const y = sag(x), s = sway(i); fn(x, y, s); L(G3, c => { c.rect(Math.round(x - 3), Math.round(y - 1), 1, 3); c.rect(Math.round(x + 2), Math.round(y - 1), 1, 3); c.fill(); }); };   // two pegs each
+    hang(20, 0, (x, y, s) => { L(LN, path([[x - 4, y], [x + 3, y], [x + 3 + s, y + 12], [x + 8 + s, y + 14], [x + 9 + s, y + 18], [x - 4 + s, y + 18]])); L(G3, c => { c.rect(Math.round(x - 4), Math.round(y + 3), 7, 1); c.fill(); }); });   // a long sock, with its stripe
+    hang(107, 1, (x, y, s) => { L(LN, path([[x - 7, y], [x - 2, y], [x, y + 2], [x + 2, y], [x + 7, y], [x + 12 + s, y + 6], [x + 9 + s, y + 10], [x + 6 + s, y + 8], [x + 6 + s, y + 20], [x - 6 + s, y + 20], [x - 6 + s, y + 8], [x - 9 + s, y + 10], [x - 12 + s, y + 6]]));   // a shirt
+      L(G3, c => { c.rect(Math.round(x + s * 0.5), Math.round(y + 6), 1, 1); c.rect(Math.round(x + s * 0.7), Math.round(y + 10), 1, 1); c.rect(Math.round(x + s * 0.9), Math.round(y + 14), 1, 1); c.fill(); }); }); }
   // ------------------------------------------------------------------ the puddle it drips into, with splashes and a ripple
   if (GD){ L(G2, ell(64, 92, 31, 5.5)); L(G3, ell(64, 92, 27, 4.2)); L(G4, ell(63, 91.6, 18, 2.6)); }   // beaten: the puddle goes still and grey
   else { L(A[0], ell(64, 92, 31, 5.5)); L(A[1], ell(64, 92, 27, 4.2)); L(A[2], ell(63, 91.6, 18, 2.6));
-  const rp = (f % 40) / 40; L(rp < 0.5 ? A[3] : A[2], c => { c.lineWidth = 1; c.ellipse(64, 92, 8 + rp * 18, 1.4 + rp * 3, 0, 0, Math.PI * 2); c.stroke(); });
+  // P1: satellite pools off the rim, a darker reflection band under the basket, hard glints
+  for (const [x, y, rx, ry] of [[29.5, 93.6, 3.2, 1.2], [99.5, 91, 2.6, 1], [104.5, 93.4, 1, 0.6], [24, 91.6, 1, 0.6]]){ L(A[0], ell(x, y, rx, ry)); if (rx > 2) L(A[1], ell(x, y - 0.2, rx - 1.4, ry - 0.6)); }
+  L(A[0], ell(64, 96.2, 22, 1.5)); L(A[1], ell(64, 89.4, 15, 1.1));
+  L(A[3], c => { c.rect(45, 93, 3, 1); c.rect(77, 94, 4, 1); c.rect(83, 90, 2, 1); c.fill(); }); L(A[4], c => { c.rect(46, 93, 1, 1); c.rect(78, 94, 1, 1); c.fill(); });
+  const rp = (f % 40) / 40;
+  // P2: a second, wider ripple and the puddle's rim breaking into a scalloped edge
+  { const r2 = ((f + 20) % 40) / 40; L(A[1], c => { c.lineWidth = 1; c.ellipse(64, 92, 20 + r2 * 13, 3 + r2 * 2.6, 0, Math.PI * 0.08, Math.PI * 0.92); c.stroke(); });
+    for (let k = 0; k < 9; k++){ const a = Math.PI * (0.06 + k * 0.11), x = 64 + Math.cos(a) * 31.5, y = 92 + Math.sin(a) * 5.6; L(A[0], ell(x, y, 2.4, 1.3)); } } L(rp < 0.5 ? A[3] : A[2], c => { c.lineWidth = 1; c.ellipse(64, 92, 8 + rp * 18, 1.4 + rp * 3, 0, 0, Math.PI * 2); c.stroke(); });
   for (const [x, s, ph] of [[40, -1, 0], [46, 1, 1.4], [84, 1, 0.7], [90, -1, 2.2]]){ const h = 6 + 4 * (0.5 + 0.5 * Math.sin(f * 0.22 + ph));
-    L(A[2], strokeP([[x, 91], [x + s * 1, 91 - h * 0.6, x + s * 3, 91 - h]], 1.2)); L(A[3], ell(x + s * 3.5, 90 - h, 1.1, 1.1)); }
+    L(A[2], strokeP([[x, 91], [x + s * 1, 91 - h * 0.6, x + s * 3, 91 - h]], 1.2)); L(A[3], ell(x + s * 3.5, 90 - h, 1.1, 1.1)); L(A[4], c => { c.rect(Math.round(x + s * 3.5 - 0.5), Math.round(89 - h), 1, 1); c.fill(); }); if (h > 8) L(A[2], c => { c.rect(Math.round(x + s * 5.5), Math.round(86 - h), 1, 1); c.fill(); }); L(A[3], c => { c.rect(Math.round(x - s * 2), 90, 2, 1); c.fill(); }); }
   // drips falling from the basket into the puddle
   for (const [x, ph] of [[54, 0], [71, 9], [62, 4]]){ const t = ((f * 0.55 + ph) % 16) / 16; L(A[2], ell(x, 80 + by * (1 - t) + t * 10, 0.9, 1.6)); } }
   const pre = buf.slice();
@@ -4242,11 +4256,18 @@ function drawLaundryGolem(cv, f, accent){
   // weave: curved horizontal bands, and staggered vertical stitches between them
   for (let k = 0; k < 6; k++){ const y = bTop + 4 + k * 4; L(BK1, c => { c.lineWidth = 1.3; c.moveTo(41 + k * 0.6, y); c.quadraticCurveTo(64, y + 2.4, 87 - k * 0.6, y); c.stroke(); }, 110);
     L(BK2, c => { c.lineWidth = 1.2; for (let i = 0; i < 9; i++){ const x = 45 + i * 4.5 + (k % 2 ? 2.2 : 0) - k * 0.2; if (x > 85 - k) continue; c.moveTo(x, y + 1.5 + Math.sin((x - 64) / 30) * 0.4); c.lineTo(x, y + 3); } c.stroke(); }); }
+  // P1: hard-banded tub: a shadow flank down the right with its stitches dimmed, a lit stave on the left edge, a dark foot
+  L(BK1, c => { c.moveTo(88, bTop + 2); c.bezierCurveTo(87, bTop + 14, 84, bBot - 2, 76, bBot); c.lineTo(73, bBot); c.bezierCurveTo(80.5, bBot - 3, 83.6, bTop + 14, 84.6, bTop + 2); c.closePath(); c.fill(); });
+  for (let k = 0; k < 6; k++){ const y = bTop + 4 + k * 4; L(BK0, c => { c.lineWidth = 1.2; for (let i = 0; i < 9; i++){ const x = 45 + i * 4.5 + (k % 2 ? 2.2 : 0) - k * 0.2; if (x > 85 - k || x < 83 - k * 1.2) continue; c.moveTo(x, y + 1.5); c.lineTo(x, y + 3); } c.stroke(); }); }
+  L(BK2, c => { c.lineWidth = 1; c.moveTo(41, bTop + 3); c.bezierCurveTo(42, bTop + 14, 45, bBot - 2.6, 52, bBot - 0.8); c.stroke(); });
+  L(BK3, c => { c.lineWidth = 1; c.moveTo(41, bTop + 3); c.quadraticCurveTo(41.4, bTop + 8, 42.2, bTop + 11); c.stroke(); });
+  L(BK1, c => { c.moveTo(49, bBot - 1.6); c.quadraticCurveTo(64, bBot - 0.2, 79, bBot - 1.6); c.lineTo(76, bBot); c.lineTo(52, bBot); c.closePath(); c.fill(); });
   // handle holes on each side
-  for (const s of [-1, 1]) L(K, ell(64 + s * 18, bTop + 6, 3.4, 1.6));
+  for (const s of [-1, 1]){ L(BK3, ell(64 + s * 18, bTop + 9.6, 3.6, 1.7)); L(K, ell(64 + s * 18, bTop + 9, 3.4, 1.6)); }
   // the rim: a thick lip with a light top edge
   L(BK2, c => { c.lineWidth = 3.2; c.moveTo(39, bTop - 0.5); c.quadraticCurveTo(64, bTop + 3, 89, bTop - 0.5); c.stroke(); });
   L(BK3, c => { c.lineWidth = 1; c.moveTo(39.5, bTop - 2); c.quadraticCurveTo(64, bTop + 1.4, 88.5, bTop - 2); c.stroke(); });
+  L(PALE, c => { c.rect(47, Math.round(bTop - 2), 3, 1); c.rect(52, Math.round(bTop - 1), 1, 1); c.fill(); });                                  // a catchlight on the rim
   // ------------------------------------------------------------------ the laundry heaped over the rim: the creature's body and head
   const tl = sw(0), tr = sw(2);
   const POSE = drawLaundryGolem.pose || 'rim';
@@ -4270,6 +4291,10 @@ function drawLaundryGolem(cv, f, accent){
     L(K, strokeP(armL, 7)); L(K, strokeP(armR, 7));
     L(K, strokeP([[26, 56 + by], [27, 61 + by, 32, 64 + by, 37, 63 + by]], 6)); L(K, strokeP([[102, 56 + by], [101, 61 + by, 96, 64 + by, 91, 63 + by]], 6));
     for (const [x, y, s] of [[27, 51, -1], [101, 51, 1]]){ L(G2, strokeP([[x, y + by], [x + s * 3, y + 3 + by]], 1)); }
+    // P1: a broken light along each sleeve, set in from the edge so the silhouette stays black, and a stitched cuff
+    for (const sd of [-1, 1]){ const X = x => 64 + sd * x;
+      L(G3, strokeP([[X(24), 45 + by], [X(27), 44.8 + by, X(30), 45.4 + by]], 1)); L(G3, c => { c.rect(Math.round(X(33) - 0.5), Math.round(47 + by), 1, 1); c.rect(Math.round(X(35) - 0.5), Math.round(48 + by), 1, 1); c.fill(); });
+      L(G3, c => { c.rect(Math.round(X(31) - 0.5), Math.round(60 + by), 1, 2); c.rect(Math.round(X(31) - 0.5), Math.round(64 + by), 1, 2); c.fill(); }); }   // the cuff, stitched
     const tap = !GD && (f % 36) < 12 ? [0, 1, 0, 1, 0, 1][(f >> 1) % 6] : 0;
     for (const [x, s, t] of [[39, 1, tap], [89, -1, 0]]){ L(K, ell(x, 63 + by - t, 3.6, 4.6)); for (let k = -1; k <= 1; k++) L(K, ell(x + s * 2.6, 63 + by + k * 2.7 - t, 1.7, 1.6)); for (const k of [-1.4, 1.4]) L(G2, strokeP([[x + s * 0.8, 63 + by + k * 1.9 - t], [x + s * 3.6, 63 + by + k * 1.9 - t]], 0.9)); }
   } else {
@@ -4283,15 +4308,30 @@ function drawLaundryGolem(cv, f, accent){
   // the heap: a lumpy dome of clothes rising over the rim
   L(K, c => { c.moveTo(38, bTop + 1); c.bezierCurveTo(36, 44 + by, 42, 34 + by, 50, 33 + by); c.bezierCurveTo(52, 26 + by, 60, 24 + by, 64, 25 + by); c.bezierCurveTo(70, 23 + by, 78, 26 + by, 79, 33 + by);
     c.bezierCurveTo(87, 34 + by, 92, 44 + by, 90, bTop + 1); c.closePath(); c.fill(); });
+  // P1: a broken light over the heap's upper-left, set two pixels in from the edge so the silhouette stays black
+  { L(G3, strokeP([[41.8, 47 + by], [42, 42.4 + by, 43.6, 40 + by]], 1)); L(G3, strokeP([[46.4, 37.6 + by], [48, 36.6 + by, 50.4, 36.4 + by]], 1));
+    L(G3, strokeP([[54, 31.6 + by], [55, 29.6 + by, 57.4, 28.6 + by]], 1)); L(G4, strokeP([[59.6, 27.8 + by], [62, 27.5 + by, 63.6, 27.6 + by]], 1)); }
   // drapes hanging over the front of the rim, ragged ends
   for (const [x, w, d, ph] of [[46, 7, 9, 0], [56, 6, 6, 1], [70, 7, 8, 2], [80, 6, 10, 3]]){ const dd = d + Math.sin(f * 0.16 + ph) * 0.8;
-    L(K, c => { c.moveTo(x - w / 2, bTop - 2); c.bezierCurveTo(x - w / 2, bTop + dd * 0.6, x - 1, bTop + dd, x, bTop + dd); c.bezierCurveTo(x + 1, bTop + dd, x + w / 2, bTop + dd * 0.6, x + w / 2, bTop - 2); c.closePath(); c.fill(); }); }
+    L(K, c => { c.moveTo(x - w / 2, bTop - 2); c.bezierCurveTo(x - w / 2, bTop + dd * 0.6, x - 1, bTop + dd, x, bTop + dd); c.bezierCurveTo(x + 1, bTop + dd, x + w / 2, bTop + dd * 0.6, x + w / 2, bTop - 2); c.closePath(); c.fill(); });
+    const yb = Math.round(bTop + dd), xr = Math.round(x);
+    L(K, c => { c.rect(xr - 2, yb - 1, 1, 2 + (ph & 1)); c.rect(xr + 1, yb - 1, 1, 1 + ((ph + 1) & 1) * 2); c.fill(); });                             // P1: ragged, torn ends
+    L(G2, strokeP([[x - w / 2 + 1.6, bTop], [x - w / 2 + 1.8, bTop + dd * 0.55]], 1));                                                          // a lit fold down each drape
+    if (ph === 0) L(G3, c => { c.rect(xr - 2, yb - 3, 4, 1); c.fill(); });                                                                       // a towel's hem
+    if (ph === 3) L(G3, c => { c.rect(xr - 2, yb - 3, 4, 1); c.rect(xr - 2, yb - 5, 5, 1); c.fill(); });                                          // a striped sock
+    if (ph === 2) for (let k = 0; k < 3; k++) L(G3, c => { c.rect(xr + 1, Math.round(bTop + 1 + k * 2), 1, 1); c.fill(); }); }                  // a row of stitches
   // cloth detail inside the heap: overlapping fold lines, a shirt collar, a zipper, a towel's fringed hem
   for (const pts of [[[44, 46 + by], [50, 42 + by, 56, 43 + by]], [[72, 43 + by], [78, 41 + by, 85, 45 + by]], [[52, 34 + by], [58, 30 + by, 66, 31 + by]], [[66, 31 + by], [72, 30 + by, 77, 34 + by]], [[46, 52 + by], [52, 50 + by, 58, 52 + by]], [[70, 52 + by], [76, 50 + by, 82, 52 + by]]])
     L(G2, strokeP(pts, 1));
   L(G3, strokeP([[55, 37 + by], [59, 41 + by], [63, 37 + by]], 1)); L(G3, strokeP([[55, 37 + by], [57, 35 + by]], 1)); L(G3, strokeP([[63, 37 + by], [61, 35 + by]], 1));   // a collar
   for (let k = 0; k < 6; k++) L(G4, ell(77 + (k % 2) * 0.8, 36 + k * 1.6 + by, 0.5, 0.5));                                                                         // a zipper
   for (let k = 0; k < 5; k++) L(G3, strokeP([[40 + k * 1.6, 50 + by], [39.6 + k * 1.6, 53 + by]], 0.9));                                                              // towel fringe
+  // P1: a sewn patch, a button placket, a dashed seam, brighter fold crests
+  { const Y = y => Math.round(y + by);
+    L(G1, c => { c.rect(81, Y(46), 5, 5); c.fill(); }); L(G4, c => { for (const [x, y] of [[81, 45], [84, 45], [86, 47], [80, 48], [86, 50], [82, 51], [84, 51]]) c.rect(x, Y(y), 1, 1); c.fill(); });
+        L(G4, c => { c.rect(47, Y(39), 1, 1); c.rect(47, Y(42), 1, 1); c.fill(); }); L(G2, c => { c.rect(47, Y(44), 1, 1); c.fill(); });   // a shirt front with buttons
+    L(G3, c => { for (let k = 0; k < 5; k++) c.rect(67 + k * 2, Y(29 + (k > 2 ? 1 : 0)), 1, 1); c.fill(); });                                 // a dashed seam over the crown
+    L(G3, strokeP([[46, 45.4 + by], [49, 43.2 + by, 52, 42.8 + by]], 1)); L(G3, strokeP([[54, 32.4 + by], [57, 30.4 + by, 60, 30.4 + by]], 1)); }
   if (drawLaundryGolem.later) drawLaundryGolem.later();
   // sleeves and straps curling up off the top like smoke, thinning to a curl
   const curl = (x0, y0, dir, len, ph, w) => { const s = sw(ph) * 2; const pts = [[x0, y0], [x0 + dir * 2 + s, y0 - len * 0.5, x0 + dir * 7 + s, y0 - len * 0.7, x0 + dir * 6 + s * 1.3, y0 - len]];
@@ -4301,14 +4341,17 @@ function drawLaundryGolem(cv, f, accent){
   const HANG = drawLaundryGolem.hanger === 'dark' ? A[1] : drawLaundryGolem.hanger === 'white' ? '#f1eee4' : drawLaundryGolem.hanger === 'light' ? A[3] : A[2];
   { const ha = GD ? 0.5 : 0, hc = Math.cos(ha), hs = Math.sin(ha), R = (x, y) => [64 + (x - 64) * hc - (y - 26) * hs, 26 + by + (x - 64) * hs + (y - 26) * hc];   // beaten: knocked askew
     L(HANG, c => { c.lineWidth = 1.2; c.moveTo(...R(56, 26)); c.lineTo(...R(64, 20)); c.lineTo(...R(72, 26)); c.stroke(); });
-    L(HANG, c => { c.lineWidth = 1.2; c.moveTo(...R(64, 20)); c.lineTo(...R(64, 17)); const [cx, cy] = R(66, 15); c.arc(cx, cy, 2.2, Math.PI * 0.9 + ha, Math.PI * 2.1 + ha); c.stroke(); }); }
+    L(HANG, c => { c.lineWidth = 1.2; c.moveTo(...R(64, 20)); c.lineTo(...R(64, 17)); const [cx, cy] = R(66, 15); c.arc(cx, cy, 2.2, Math.PI * 0.9 + ha, Math.PI * 2.1 + ha); c.stroke(); });
+    if (!GD){ L(A[1], c => { c.lineWidth = 1; c.moveTo(...R(57, 27.2)); c.lineTo(...R(59.6, 25.2)); c.moveTo(...R(71, 27.2)); c.lineTo(...R(68.4, 25.2)); c.stroke(); });
+      L(A[4], c => { const [hx, hy] = R(64, 19.6), [kx, ky] = R(66, 13); c.rect(Math.round(hx - 0.5), Math.round(hy - 0.5), 1, 1); c.rect(Math.round(kx - 0.5), Math.round(ky - 0.5), 1, 1); c.fill(); }); } }
   // ------------------------------------------------------------------ the eyes: a cluster glowing in the dark of the heap
   const look = [0, -1, 0, 1][(f >> 4) % 4], blink = f % 60 >= 56;
   L(G1, ell(64, 41 + by, 13, 6.5));                                                                                   // a hollow in the clothes
   // almond eyes slanted down toward the middle under a heavy fold, slit pupils: angry, not cute
   const eye = (x, y, rx, ry, rot, big) => { if (blink && big){ L(A[2], strokeP([[x - rx, y + rot * 3], [x + rx, y - rot * 3]], 1)); return; }
-    L(A[0], ell(x, y, rx + 1, ry + 0.9, rot)); L(A[2], ell(x, y, rx, ry, rot)); L(A[3], ell(x - rx * 0.2, y - ry * 0.1, rx * 0.55, ry * 0.45, rot)); L(K, ell(x + look * 0.7, y + 0.2, 0.7, ry * 0.95, 0));
+    L(A[0], ell(x, y, rx + 1, ry + 0.9, rot)); L(A[2], ell(x, y, rx, ry, rot)); L(A[1], c => { c.ellipse(x, y, rx, ry, rot, 0.15, Math.PI - 0.15); c.ellipse(x, y - 1.3, rx * 1.1, ry, rot, Math.PI - 0.1, 0.1, true); c.fill(); }); L(A[3], ell(x - rx * 0.2, y - ry * 0.1, rx * 0.55, ry * 0.45, rot)); L(K, ell(x + look * 0.7, y + 0.2, 0.7, ry * 0.95, 0));
     if (big){ L(G1, c => { c.moveTo(x - rx - 1.5, y - ry - 1.5 - rot * 5); c.lineTo(x + rx + 1.5, y - ry - 1.5 + rot * 5); c.lineTo(x + rx + 1.5, y - 1.4 + rot * 5); c.lineTo(x - rx - 1.5, y - 1.4 - rot * 5); c.closePath(); c.fill(); });   // the brow fold cuts the top of the eye
+      L(G3, strokeP([[x - rx - 1, y - 1.5 - rot * 4.4], [x + rx + 1, y - 1.5 + rot * 4.4]], 0.9));                                                 // P1: a lid line under the brow fold
       L(A[4], ell(x - rx * 0.4, y + ry * 0.2, 0.55, 0.55)); } };
   if (drawLaundryGolem.dead){ for (const ex0 of [57.5, 70.5]){ L('#57514b', strokeP([[ex0 - 3, 39 + by], [ex0 + 3, 45 + by]], 2)); L('#57514b', strokeP([[ex0 + 3, 39 + by], [ex0 - 3, 45 + by]], 2)); } }   // defeated: X eyes
   else { eye(57.5, 42 + by, 5, 3, 0.26, true); eye(70.5, 42 + by, 5, 3, -0.26, true); }
@@ -4318,6 +4361,14 @@ function drawLaundryGolem(cv, f, accent){
     if (t > 0.94) continue; L('#8f877c', c => { c.lineWidth = 0.9; c.arc(x, y, r, 0, Math.PI * 2); c.stroke(); }, 90); L('#c9c2b6', ell(x - r * 0.4, y - r * 0.4, 0.5, 0.5), 60); }
   if (!GD) for (let i = 0; i < 7; i++){ const t = ((f * 0.3 + i * 9) % 40) / 40, x = [34, 94, 44, 86, 28, 100, 64][i] + Math.sin(t * 5 + i) * 1.6, y = 60 - t * 40 + (i % 3) * 4, s = [1.6, 1.2, 1, 1.4, 0.9, 1.1, 1][i];
     if (t < 0.9) L(G4, c => { c.rect(Math.round(x), Math.round(y), Math.round(s + 0.4), Math.round(s + 0.4)); c.fill(); }); }
+  // P2: suds heaped at both ends of the puddle, and a glint that walks along the hanger
+  if (!GD){ for (const [x, y, r] of [[30, 88.6, 3.2], [35, 91, 2.2], [26, 91.6, 1.8], [98, 88.4, 2.8], [102.4, 91, 2.2], [94, 91.2, 1.6], [33.6, 85, 1.4], [100.6, 84.6, 1.2]]){ const yy = Math.round(y + Math.sin(T * 1.1 + x) * 0.5) + 0.5, xx = Math.round(x) + 0.5;
+      L(G1, ell(xx, yy, r + 0.4, r + 0.4)); L('#8f877c', c => { c.lineWidth = 0.9; c.arc(xx, yy, r, 0, Math.PI * 2); c.stroke(); }, 90); L('#c9c2b6', c => { c.rect(Math.round(xx - r * 0.55), Math.round(yy - r * 0.6), 1, 1); c.fill(); }); }
+    const g = (f % 48); if (g < 6){ const gx = Math.round(57 + g * 3), gy = Math.round(26 + by - (4 - Math.abs(gx - 64) * 0.72)); L(A[4], c => { c.rect(gx - 1, gy, 3, 1); c.rect(gx, gy - 1, 1, 3); c.fill(); }); } }
+  // P1: torn scraps of cloth hanging in the air off its shoulders, and one lost sock drifting up with the bubbles
+  if (!GD){ for (const [x, y, s2, ph] of [[34, 36, 2, 0], [94, 34, 2, 1.7], [30, 29, 1, 3.1], [98, 42, 1, 4.4], [37, 30, 1, 5.2], [91, 27, 1, 2.4]]) L(K, c => { c.rect(Math.round(x + Math.sin(T * 0.7 + ph) * 1.2), Math.round(y + by * 0.6 + Math.cos(T + ph) * 1.6), s2, s2); c.fill(); });
+    const t = ((f * 0.22 + 24) % 70) / 70, sxk = Math.round(107 + Math.sin(t * 7) * 2.4), syk = Math.round(84 - t * 70);
+    if (false){ L(K, c => { c.rect(sxk - 1, syk - 1, 5, 7); c.rect(sxk - 1, syk + 4, 8, 5); c.fill(); }); L(G4, c => { c.rect(sxk, syk, 3, 6); c.rect(sxk, syk + 5, 6, 3); c.fill(); }); L(G5, c => { c.rect(sxk, syk + 2, 1, 4); c.rect(sxk + 1, syk + 5, 4, 1); c.fill(); }); L('#c9c2b6', c => { c.rect(sxk, syk, 3, 1); c.fill(); }); L(G2, c => { c.rect(sxk, syk + 1, 3, 1); c.rect(sxk + 5, syk + 6, 1, 2); c.fill(); }); } }
   // ------------------------------------------------------------------ out
   const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
   if (STICKER){
@@ -4359,6 +4410,8 @@ function drawCouchKraken(cv, f, accent){
   const rrect = (x, y, w, h, r) => c => { c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); c.fill(); };
   const KD = !!drawCouchKraken.dead, breathe = Math.sin(f * 0.11) * 1.2, br = KD ? 6 + Math.sin(f * 0.05) * 0.4 : breathe;   // beaten: it sags deep into the cushions
   const click = !KD && (f % 44) < 4, flick = !KD && (f % 44) < 8;   // every few seconds it clicks to the next episode (not once it's beaten)
+  const px = (x, y, c, w = 1, h = 1) => L(c, cc => { cc.rect(Math.round(x), Math.round(y), w, h); cc.fill(); });
+  L(K, c => { c.rect(29, 86, 70, 2); c.fill(); }); L(G1, c => { c.rect(24, 88, 80, 1); c.rect(33, 85, 62, 1); c.fill(); });                       // P1: the couch's own shadow on the floor
   // ------------------------------------------------------------------ TV glow spilling across the floor (the ground effect)
   const glow = flick ? 1 : 0;
   if (KD){
@@ -4371,28 +4424,18 @@ function drawCouchKraken(cv, f, accent){
   L(glow ? A[1] : A[0], path([[32, 99], [96, 99], [87, 88], [41, 88]])); L(glow ? A[2] : A[1], path([[41, 97], [87, 97], [81, 89], [47, 89]])); L(glow ? A[4] : A[3], strokeP([[44, 88.5], [84, 88.5]], 1)); L(glow ? A[3] : A[2], path([[52, 95], [76, 95], [73, 91], [55, 91]]));
   { const t = (f % 24) / 24, y = Math.round(89 + t * 9), k = (y - 88) / 11; L(glow ? A[4] : A[3], rrect(Math.round(41 - k * 9) + 2, y, Math.round(46 + k * 18) - 4, 1, 0)); }   // a scanline rolling down the glow
   }
+  if (!KD){ // P1: the glow's sides break up into stepped flecks, two hard glints on its far edge, static sparks lifting off it
+    for (const s of [-1, 1]) for (const [dx, y, w] of [[36, 98, 3], [34, 96, 2], [31, 94, 2], [29, 92, 1], [26.6, 90, 1], [38, 100, 2]]) px(64 + s * dx - (s < 0 ? w - 1 : 0), y, A[0], w, 1);
+    px(50, 88, A[4], 3, 1); px(74, 88, A[4], 2, 1); L(A[1], path([[36, 99], [92, 99], [90.6, 97.6], [37.4, 97.6]]));
+    for (let i = 0; i < 5; i++){ const t = ((f * 0.5 + i * 9) % 26) / 26, x = [44, 84, 56, 76, 66][i] + Math.sin(t * 5 + i) * 1.4, y = 87 - t * 9; if (t < 0.8) px(x, y, t < 0.3 ? A[3] : t < 0.6 ? A[2] : A[1]); } }
+  { // P2: the tub the popcorn came out of, on its side
+    L(K, path([[8, 88.6], [22.6, 86.6], [22.6, 99.4], [8, 97.4]])); L(C2, path([[9, 89.6], [21, 87.8], [21, 98.2], [9, 96.4]]));
+    for (const y of [89.6, 93, 96]) L(C1, path([[9, y + 0.3], [21, y - 0.6], [21, y + 1], [9, y + 1.4]]));
+    L(C3, path([[9, 89.6], [21, 87.8], [21, 88.8], [9, 90.4]])); L(K, ell(21.6, 93, 2.6, 6)); L(G1, ell(21.8, 93, 1.5, 4.6)); L(C3, c => { c.lineWidth = 1; c.ellipse(21.6, 93, 2, 5.4, 0, Math.PI * 1.1, Math.PI * 1.9); c.stroke(); });
+    for (const [x, y] of [[25.6, 91], [27, 97.4], [36, 97], [21.6, 95.4]]){ L('#8f877c', ell(x, y + 0.4, 1.5, 1.1)); L('#c9c2b6', ell(x - 0.3, y - 0.3, 1.1, 0.9)); }
+    if (!KD){ L(flick ? A[1] : A[0], c => { c.rect(36, 85, 56, 1); c.fill(); }); px(33, 87, flick ? A[2] : A[1], 2, 1); px(93, 87, flick ? A[2] : A[1], 2, 1); } }
   // spilled popcorn on the floor; on a click the two kernels nearest the glow catch it
   for (const [x, y] of [[29, 93], [32.5, 95.5], [98, 94], [101, 91.5], [24, 96], [104, 96]]){ const lit = flick && (x === 32.5 || x === 98); L(lit ? A[1] : '#8f877c', ell(x, y + 0.4, 1.5, 1.1)); L('#c9c2b6', ell(x - 0.3, y - 0.3, 1.1, 0.9)); L('#c9c2b6', ell(x + 0.9, y + 0.2, 0.7, 0.6)); }
-  // ------------------------------------------------------------------ the couch: back, arms, cushions, piping, little legs
-  L(G1, rrect(31, 84, 4, 4, 1)); L(G1, rrect(93, 84, 4, 4, 1));                           // legs
-  L(C1, rrect(24, 46, 80, 32, 9));                                                         // back (shaded)
-  L(C0, rrect(26, 44, 76, 30, 9));
-  L(C3, c => { c.lineWidth = 1; c.moveTo(34, 44.5); c.lineTo(94, 44.5); c.stroke(); });      // lit rim along the back
-  for (const x of [51, 77]) L(C1, strokeP([[x, 48], [x, 66]], 1));                         // back cushion seams
-  for (const x of [38, 64, 90]) for (const y of [52, 60]) { L(C1, ell(x, y + 0.5, 1, 0.9)); L(C2, ell(x - 0.3, y - 0.2, 0.6, 0.6)); }   // tufts
-  L(C1, rrect(26, 66, 76, 18, 5)); L(C0, rrect(27, 65, 74, 16, 5));                        // seat
-  L(C1, strokeP([[64, 66], [64, 80]], 1)); L(C3, strokeP([[32, 65.5], [96, 65.5]], 1));        // cushion split, front piping
-  for (const s of [-1, 1]){ const ax = 64 + s * 44;                                         // the arms: rolled, with a lit curl
-    L(C1, ell(ax, 66, 8, 16)); L(C0, ell(ax - s * 0.5, 65, 7, 15)); L(C2, c => { c.lineWidth = 1; c.ellipse(ax, 53, 5, 3.4, 0, Math.PI, Math.PI * 2); c.stroke(); }); L(C3, ell(ax - s * 2, 51.5, 1.3, 0.7)); L(C3, c => { c.lineWidth = 1; c.ellipse(ax, 51.2, 6.4, 2.6, 0, Math.PI * 1.1, Math.PI * 1.9); c.stroke(); }); L(C2, strokeP([[ax - 6, 79], [ax + 6, 79]].map(([x, y]) => [x, y]), 1)); }
-  // a throw blanket over the right side of the back, with a fringed hem
-  { const BL = '#4a4540', BS = '#35312d';
-    const drape = c => { c.moveTo(82, 69); c.bezierCurveTo(88, 66.5, 95, 66.5, 101, 68); c.lineTo(101.5, 80); c.bezierCurveTo(99, 82.5, 97, 81, 95, 83); c.bezierCurveTo(93, 85, 90, 82.5, 88, 84); c.bezierCurveTo(86, 85.5, 84, 83, 82.5, 83.5); c.closePath(); c.fill(); };
-    L(BL, drape);
-    for (const y of [74, 80]) L(BS, c => { c.lineWidth = 1.1; c.moveTo(82.5, y); c.quadraticCurveTo(92, y + 2, 101.3, y - 0.5); c.stroke(); });   // two stripes bowed over the roll
-    L('#615b54', c => { c.lineWidth = 1; c.moveTo(83, 71.5); c.bezierCurveTo(89, 69.8, 95, 69.8, 100.5, 71); c.stroke(); });   // the roll over the seat front
-    for (const [x, y, h] of [[83, 83.5, 2], [85, 84.6, 1], [87, 84.2, 2], [89, 84.4, 1], [91, 84.2, 2], [93, 85, 1], [95, 83.6, 2], [97, 82.6, 1], [99, 81.4, 2]]) L('#615b54', rrect(x, Math.round(y), 1, h + 1, 0)); }
-  // ------------------------------------------------------------------ the kraken: a slumped mantle sunk into the seat
-  // two tentacles draped over the couch arms, sliding down to the floor
   const sw = Math.sin(f * 0.13);
   const bez = (p0, p1, p2, p3, t) => { const u = 1 - t; return [u*u*u*p0[0] + 3*u*u*t*p1[0] + 3*u*t*t*p2[0] + t*t*t*p3[0], u*u*u*p0[1] + 3*u*u*t*p1[1] + 3*u*t*t*p2[1] + t*t*t*p3[1]]; };
   const taper = (segs, w0, w1, suckers, side) => { const n = segs.length; let k = 0;
@@ -4407,6 +4450,52 @@ function drawCouchKraken(cv, f, accent){
   const stamp = (pts, w0, w1, side, gap) => { const n = pts.length; if (gap) L(gap, discs(pts, n, w0, w1, 1.4, n * 0.45)); L(K, discs(pts, n, w0, w1, 0, -1));
     pts.forEach(([x, y], i) => { const w = w0 + (w1 - w0) * i / n; if (i % 8 !== 4 || w < 3.4 || i > n * 0.8) return; const [x2, y2] = pts[Math.min(n - 1, i + 1)], nx = -(y2 - y), ny = x2 - x, nl = Math.hypot(nx, ny) || 1, o = Math.max(0, w / 2 - 1.9) * side, r = 0.55 + w * 0.06;
       L(G4, ell(x + nx / nl * o, y + ny / nl * o, r * 1.25, r)); if (w > 5) L(G5, ell(x + nx / nl * o - 0.3, y + ny / nl * o - 0.3, 0.45, 0.45)); }); };
+  // P2: two more arms rising from behind the couch, curling lazily. The left one has found a drink.
+  { const up = KD ? 9 : 0, wv = KD ? 0 : sw * 1.4;
+    const lp = curl(legs([[[25, 54], [18, 46 + up * 0.4], [13, 38 + up * 0.7], [16 + wv * 0.4, 29 + up]]]), 21 + wv * 0.4, 30.5 + up, 0.55, 1, 0);
+    const rp = curl(legs([[[103, 54], [110, 46 + up * 0.4], [116, 37 + up * 0.7], [112.5 - wv * 0.5, 26 + up]]]), 107.5 - wv * 0.5, 27 + up, 1.15, -1, -wv * 0.2);
+    stamp(rp, 6.4, 1.4, 1); stamp(lp, 6.4, 2.6, -1);
+    for (const p of [lp, rp]){ const q = p.slice(6, 24).filter((_, i) => i % 2 === 0); L(G3, c => { c.lineWidth = 1; const s = p === lp ? -1.6 : 1.6; c.moveTo(q[0][0] + s, q[0][1]); for (const [x, y] of q.slice(1)) c.lineTo(x + s, y - 0.4); c.stroke(); }); }   // a rim light up the outer side
+    if (!KD){ const cx = Math.round(22 + wv * 0.4), cy = Math.round(20);                                                                         // the cup: lid, straw, a shadow side, a band
+      L(K, path([[cx - 5, cy - 1], [cx + 5, cy - 1], [cx + 4, cy + 12], [cx - 4, cy + 12]])); L(C3, path([[cx - 4, cy], [cx + 4, cy], [cx + 3, cy + 11], [cx - 3, cy + 11]]));
+      L(C0, path([[cx + 1, cy], [cx + 4, cy], [cx + 3, cy + 11], [cx + 1, cy + 11]])); px(cx - 4, cy + 4, C1, 8, 2); px(cx - 4, cy + 4, C0, 5, 2); px(cx - 3, cy + 1, '#c9c2b6', 1, 2);
+      px(cx - 5, cy - 2, K, 11, 3); px(cx - 4, cy - 1, '#c9c2b6', 9, 1); px(cx + 2, cy - 1, C3, 3, 1);
+      L(K, strokeP([[cx + 1, cy - 2], [cx + 2, cy - 7], [cx + 5, cy - 9]], 2.6)); L(C3, strokeP([[cx + 1, cy - 2], [cx + 2, cy - 7], [cx + 5, cy - 9]], 1));
+      L(K, strokeP([[cx - 6, cy + 9.6], [cx - 2, cy + 8, cx + 3, cy + 9.4, cx + 6, cy + 7.6]], 2.8)); L(G4, ell(cx - 1.5, cy + 8.6, 1, 0.7)); L(G4, ell(cx + 3, cy + 8.8, 0.9, 0.7)); } }   // the tip wrapped round it
+  // ------------------------------------------------------------------ the couch: back, arms, cushions, piping, little legs
+  L(G1, rrect(31, 84, 4, 4, 1)); L(G1, rrect(93, 84, 4, 4, 1));                           // legs
+  L(C1, rrect(24, 46, 80, 32, 9));                                                         // back (shaded)
+  L(C0, rrect(26, 44, 76, 30, 9));
+  L(C3, c => { c.lineWidth = 1; c.moveTo(34, 44.5); c.lineTo(94, 44.5); c.stroke(); });      // lit rim along the back
+  for (const x of [51, 77]) L(C1, strokeP([[x, 48], [x, 66]], 1));                         // back cushion seams
+  for (const x of [38, 64, 90]) for (const y of [52, 60]) { L(C1, ell(x, y + 0.5, 1, 0.9)); L(C2, ell(x - 0.3, y - 0.2, 0.6, 0.6)); }   // tufts
+  L(C1, rrect(26, 66, 76, 18, 5)); L(C0, rrect(27, 65, 74, 16, 5));                        // seat
+  L(C1, strokeP([[64, 66], [64, 80]], 1)); L(C3, strokeP([[32, 65.5], [96, 65.5]], 1));        // cushion split, front piping
+  for (const s of [-1, 1]){ const ax = 64 + s * 44;                                         // the arms: rolled, with a lit curl
+    L(C1, ell(ax, 66, 8, 16)); L(C0, ell(ax - s * 0.5, 65, 7, 15)); L(C2, c => { c.lineWidth = 1; c.ellipse(ax, 53, 5, 3.4, 0, Math.PI, Math.PI * 2); c.stroke(); }); L(C3, ell(ax - s * 2, 51.5, 1.3, 0.7)); L(C3, c => { c.lineWidth = 1; c.ellipse(ax, 51.2, 6.4, 2.6, 0, Math.PI * 1.1, Math.PI * 1.9); c.stroke(); }); L(C2, strokeP([[ax - 6, 79], [ax + 6, 79]].map(([x, y]) => [x, y]), 1)); }
+  // P1: upholstery. A lit band under the top rail, diamond creases off each tuft, the kraken's weight pressed into the cushions as a hard cast shadow,
+  // a pleated skirt along the front, stitched seams, feet on the legs
+  L(C2, c => { c.rect(35, 46, 58, 1); c.fill(); }); px(37, 44, '#c9c2b6', 5, 1); px(44, 44, '#c9c2b6', 1, 1);
+  for (const x of [38, 90]) for (const y of [52, 60]) for (const [dx, dy] of [[-2, -2], [2, -2], [-2, 2], [2, 2], [-3, -3], [3, 3]]) px(x + dx, y + dy, C1);
+  for (const x of [51, 77]) for (let y = 49; y < 64; y += 3) px(x + 1, y, C2);                                                                    // a lit side to each seam
+  { const snap = buf.slice();                                                                                                                    // the cast shadow only lands on upholstery
+    L(C1, c => { c.moveTo(42, 72); c.bezierCurveTo(35, 60 + br, 35.4, 28 + br, 64, 25 + br); c.bezierCurveTo(92.6, 29 + br, 93, 60 + br, 86, 72); c.closePath(); c.fill(); });
+    L(C1, ell(64, 72.5, 27, 5.4)); L('#35312d', ell(64, 73, 23, 3.6));
+    for (let i = 0; i < W * H; i++) if (buf[i] !== snap[i] && snap[i] !== C0 && snap[i] !== C2) buf[i] = snap[i]; }
+  L(C1, c => { c.rect(30, 81, 68, 3); c.fill(); }); for (let x = 33; x < 97; x += 5) px(x, 82, '#35312d', 1, 2); L(C2, c => { c.rect(31, 81, 66, 1); c.fill(); });   // skirt, pleats
+  for (let x = 31; x < 46; x += 2) px(x, 68, C1);                                                                                                // stitches under the piping
+  for (const x of [31, 93]){ px(x, 84, G3, 1, 3); px(x - 1, 87, G2, 6, 1); }                                                                     // lit legs with feet
+  for (const s of [-1, 1]){ const ax = 64 + s * 44; L(C1, c => { c.lineWidth = 1; c.moveTo(ax + s * 7, 58); c.quadraticCurveTo(ax + s * 8.4, 68, ax + s * 6.4, 78); c.stroke(); }); for (const y of [59, 64, 69, 74]) px(ax - s * 6.4 - 0.5, y, C3); }   // a shaded outer side, nailheads down the inner
+  // a throw blanket over the right side of the back, with a fringed hem
+  { const BL = '#4a4540', BS = '#35312d';
+    const drape = c => { c.moveTo(82, 69); c.bezierCurveTo(88, 66.5, 95, 66.5, 101, 68); c.lineTo(101.5, 80); c.bezierCurveTo(99, 82.5, 97, 81, 95, 83); c.bezierCurveTo(93, 85, 90, 82.5, 88, 84); c.bezierCurveTo(86, 85.5, 84, 83, 82.5, 83.5); c.closePath(); c.fill(); };
+    L(BL, drape);
+    for (const y of [74, 80]) L(BS, c => { c.lineWidth = 1.1; c.moveTo(82.5, y); c.quadraticCurveTo(92, y + 2, 101.3, y - 0.5); c.stroke(); });   // two stripes bowed over the roll
+    L('#615b54', c => { c.lineWidth = 1; c.moveTo(83, 71.5); c.bezierCurveTo(89, 69.8, 95, 69.8, 100.5, 71); c.stroke(); });   // the roll over the seat front
+    for (const [x, y, h] of [[83, 83.5, 2], [85, 84.6, 1], [87, 84.2, 2], [89, 84.4, 1], [91, 84.2, 2], [93, 85, 1], [95, 83.6, 2], [97, 82.6, 1], [99, 81.4, 2]]) L('#615b54', rrect(x, Math.round(y), 1, h + 1, 0));
+    for (const [x, y] of [[85, 77], [89, 77.6], [93, 77.4], [97, 76.6], [87, 72.6], [91, 72.8], [95, 72.4], [99, 72]]) px(x, y, '#615b54'); }   // P1: a woven fleck between the stripes
+  // ------------------------------------------------------------------ the kraken: a slumped mantle sunk into the seat
+  // two tentacles draped over the couch arms, sliding down to the floor
   for (const s of [-1, 1]){ const X = x => 64 + s * x, ph = (s < 0 ? sw : -sw) * 0.35;
     // root at the mantle, flopped over the rolled arm, hanging down its front, ending in a lazy spiral
     stamp(curl(legs([[[X(16), 62 + br], [X(26), 50 + br * 0.5], [X(38), 46], [X(44), 49]], [[X(44), 49], [X(48.5), 51], [X(49), 58], [X(48.5), 64]]]), X(44), 68, 0.72, s, ph), 9, 2, s);
@@ -4420,6 +4509,12 @@ function drawCouchKraken(cv, f, accent){
   L(G3, c => { c.lineWidth = 1; c.ellipse(64, 47 + br, 20.5, 18.5, 0, Math.PI * 1.3, Math.PI * 1.62); c.stroke(); });   // rim light carried over the crown
   L(G2, strokeP([[67, 29 + br], [71, 30.5 + br, 73, 33 + br]], 1)); L(G4, ell(52, 33 + br, 1.6, 1));
   for (const [x, y] of [[58, 31], [71, 32], [75, 39], [54, 39]]) L(G2, ell(x, y + br, 0.9, 0.7));
+  // P1: skin. Ringed spots on the crown, a second rim band behind the lit edge, sag creases where it settles into the seat, bags under the eyes
+  for (const [x, y, r] of [[74.5, 37.5, 2.2], [69.5, 31.5, 1.6], [79.5, 45.5, 1.5]]) L(G2, c => { c.lineWidth = 1; c.arc(x, y + br, r, 0, Math.PI * 2); c.stroke(); });
+  L(G1, c => { c.lineWidth = 1.2; c.ellipse(64, 50 + br, 19.4, 19.4, 0, Math.PI * 0.98, Math.PI * 1.3); c.stroke(); });
+  L(G4, strokeP([[44.4, 44 + br], [45, 40.6 + br, 46.6, 38 + br]], 1)); px(48, 35 + br, G4);                                                     // the brightest stretch of the rim
+  for (const [x, h] of [[50, 4], [56, 3], [72, 3], [78, 4]]) L(G2, strokeP([[x, 66 - h + br * 0.5], [x + (x < 64 ? -0.8 : 0.8), 66 + br * 0.2]], 1));
+  if (!KD) for (const sd of [-1, 1]) L(G2, strokeP([[64 + sd * 12.6, 49.6 + br], [64 + sd * 9, 51.2 + br, 64 + sd * 5.6, 50.2 + br]], 1));
   // the short tentacles at its front, lazily curled on the seat; the right one holds the remote out toward you
   stamp(curl(legs([[[48, 65 + br], [44, 72], [39, 77], [33, 74]]]), 37.5, 71, 1.2, 1, sw * 0.25), 5.5, 1.3, -1, C0);
   const lift = click ? 1.5 : 0;
@@ -4429,6 +4524,7 @@ function drawCouchKraken(cv, f, accent){
     L(K, rrect(89.5, 40 - R, 10, 20, 3)); L(G5, rrect(90.5, 41 - R, 8, 18, 2.4)); L('#8e867b', strokeP([[92, 41.6 - R], [97, 41.6 - R]], 1));   // the remote
     if (KD){ L(G3, rrect(92.5, 44, 4, 4, 1)); L(G4, rrect(93, 44, 3, 3, 0.6)); } else { L(A[1], rrect(92.5, 44 - R, 4, 4, 1)); L(click ? A[3] : A[2], rrect(93, 44.5 - R, 3, 3, 0.6)); L(click ? A[4] : A[3], rrect(93, 44.5 - R, 1, 1, 0)); }   // one big button, glowing until it's beaten
     for (const [x, y] of [[92, 50.5], [96, 50.5], [92, 53], [96, 53]]) L(G3, rrect(x, y - R, 1.5, 1.5, 0));
+    L(G4, rrect(97, 43 - R, 1, 14, 0)); L('#8e867b', rrect(91, 43 - R, 1, 13, 0)); L(G3, rrect(93, 56 - R, 3, 1, 0)); if (!KD) L(A[0], rrect(92.5, 48 - R, 4, 1, 0));   // P1: a shadow side, a lit side, a grille, the button's shadow
     L(KD ? G3 : click ? A[4] : A[2], rrect(94, 39 - R, 1, 1, 0)); XF = null;                                                    // the LED tip
     { const t = f % 44; if (!KD && t < 3) for (let k = 0; k < 3; k++){ const r = 2.6 + k * 2 + t, a = -Math.PI * 0.62; L(t === 0 ? A[2] : t === 1 ? A[1] : A[0], c => { c.lineWidth = 1; c.arc(94.5, 39 - R, r, a - 0.3, a + 0.3); c.stroke(); }); } }   // the click: broken signal arcs off the tip, fading over 3 frames
     if (!KD){ L(K, strokeP([[94, 59.5 - R], [97.5, 59 - R, 99.5, 56 - R]], 2.6)); L(K, ell(99.2, 55.5 - R, 1.4, 1.4)); } }   // the tentacle tip wrapped round its base
@@ -4436,11 +4532,12 @@ function drawCouchKraken(cv, f, accent){
   const lk = (f % 60), look = lk < 5 ? -2 : (lk > 30 && lk < 35) ? 2 : 0, droop = (f % 90) > 80 ? 1.5 : 0;   // a quick sideways glance, lids sag now and then
   if (drawCouchKraken.dead) for (const ex0 of [56.5, 71.5]){ const ey = 45 + br; L(G4, strokeP([[ex0 - 3, ey - 3], [ex0 + 3, ey + 3]], 2)); L(G4, strokeP([[ex0 + 3, ey - 3], [ex0 - 3, ey + 3]], 2)); }   // defeated: X eyes
   else for (const [ex, rot] of [[56.5, 0.34], [71.5, -0.34]]){ const ey = 45 + br, rx = 5.6, ry = 3, sd = rot > 0 ? 1 : -1;   // sd: +1 left eye, inner corner on its right
-    L(A[0], ell(ex, ey, rx + 1, ry + 0.9, rot)); L(A[2], ell(ex, ey, rx, ry, rot)); L(A[3], ell(ex + sd * rx * 0.15, ey + 0.4, rx * 0.5, ry * 0.4, rot)); L(K, ell(ex + look + sd * 0.6, ey + 0.3, 0.6, ry * 0.9, 0));
+    L(A[0], ell(ex, ey, rx + 1, ry + 0.9, rot)); L(A[2], ell(ex, ey, rx, ry, rot)); L(A[1], c => { c.ellipse(ex, ey, rx, ry, rot, 0.2, Math.PI - 0.2); c.ellipse(ex, ey - 1.4, rx * 1.1, ry, rot, Math.PI - 0.1, 0.1, true); c.fill(); }); L(A[3], ell(ex + sd * rx * 0.15, ey + 0.4, rx * 0.5, ry * 0.4, rot)); L(K, ell(ex + look + sd * 0.6, ey + 0.3, 0.6, ry * 0.9, 0));
     // the brow fold: a hard wedge cutting down to the inner corner, so the eye narrows to a glare
     L(K, c => { const o = ex - sd * (rx + 2), i = ex + sd * (rx + 2); c.moveTo(o, ey - ry - 3); c.lineTo(i, ey - ry - 3); c.lineTo(i, ey + 0.6 + droop * 0.4); c.lineTo(o, ey - 2.2 + droop); c.closePath(); c.fill(); });
     L(G3, strokeP([[ex - sd * (rx + 1.5), ey - 2.9 + droop], [ex + sd * (rx + 1), ey + 0.1 + droop * 0.4]], 0.9));     // a cold lit edge on the brow
     L(A[4], ell(ex - sd * rx * 0.35, ey + ry * 0.35, 0.55, 0.55)); }
+  for (const [x, y] of [[30.5, 69], [100, 63.6]]){ L('#8f877c', ell(x, y + 0.4, 1.3, 1)); L('#c9c2b6', ell(x - 0.2, y - 0.2, 0.9, 0.7)); }       // P1: popcorn that never made it
   // ------------------------------------------------------------------ dust motes drifting in the TV light
   for (let i = 0; i < 6; i++){ const t = ((f * 0.3 + i * 11) % 50) / 50, x = [42, 86, 50, 78, 36, 92][i] + Math.sin(t * 6 + i) * 2, y = 92 - t * 40; if (t < 0.9) L(t < 0.4 ? '#c9c2b6' : '#8f877c', ell(x, y, 0.6, 0.6), 60); }
   const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
@@ -4711,18 +4808,33 @@ function drawHunch(cv, f, accent){
   // ------------------------------------------------------------------ the ground: screen light spilling under the phone, hard bands
   const gx = head[0] - 2;
   if (D){ L(G2, ell(gx + 6, 96, 22, 2.6)); }
-  else { const hot = flick ? 1 : 0; L(A[0], ell(gx, 96, 26, 3.2)); L(A[1 + hot], ell(gx, 96, 16, 2)); L(A[2 + hot], ell(gx, 96, 7, 1)); }
+  else { const hot = flick ? 1 : 0; L(A[0], ell(gx, 96, 26, 3.2)); L(A[1 + hot], ell(gx, 96, 16, 2)); L(A[2 + hot], ell(gx, 96, 7, 1));
+    // P1: the spill's ends step away into flecks, a darker lip along its near edge, a hot core, one glint
+    for (const s of [-1, 1]){ L(A[0], rect(Math.round(gx + s * 29) - 1, 96, 3, 1)); L(A[0], rect(Math.round(gx + s * 33), 96, 1, 1)); L(A[0], rect(Math.round(gx + s * 21), 99, 2, 1)); L(A[1 + hot], rect(Math.round(gx + s * 19) - 1, 95, 2, 1)); }
+    L(A[0], ell(gx, 98.6, 20, 1)); L(A[3 + hot], rect(Math.round(gx) - 2, 96, 5, 1)); L(A[4], rect(Math.round(gx) - 9, 95, 2, 1)); }
+  // P1: the floor cracked round the socket, a few shards lying where they fell
+  for (const pts2 of [[[80, 96.5], [75, 98.5], [71, 98.5]], [[92, 96.5], [97, 98.5], [101, 98]], [[86, 97], [87, 100.5]], [[97, 98.5], [99, 101]]]) L(K, strokeP(pts2, 1));
+  L(K, path([[104, 97], [107.4, 95.6], [108, 97.6]])); L(K, rect(68, 100, 2, 1)); L(G3, rect(105, 96, 2, 1)); L(G3, rect(62, 99, 1, 1));
 
   // ------------------------------------------------------------------ the lure's glow: a soft halo behind the phone head, like an anglerfish light (off when beaten)
   if (!D){ const gx2 = head[0] - 2, gy2 = head[1] + 18, pul = (f % 28) < 14 ? 0 : 1;
     L(A[0], ell(gx2, gy2, 21 + pul, 22 + pul)); L(A[1], ell(gx2, gy2, 16, 17));
+    L(A[2], c => { c.lineWidth = 1; c.ellipse(gx2, gy2, 13.5, 14.5, 0, Math.PI * 0.98, Math.PI * 1.36); c.stroke(); });                                // P1: a lit crescent inside the glow
+    for (let k = 0; k < 4; k++){ const a0 = k * Math.PI / 2 + TAU * P / 4 + 0.5; L(A[0], c => { c.lineWidth = 1; c.ellipse(gx2, gy2, 25.5 + pul, 26.5 + pul, 0, a0, a0 + 0.42); c.stroke(); }); }   // and a broken ring turning slowly round it
     for (let k = 0; k < 10; k++){ const a = k / 10 * Math.PI * 2 + TAU * P / 10, r = 23 + (k % 3); if ((k + (f >> 3)) % 4) L(A[0], rect(Math.round(gx2 + Math.cos(a) * r), Math.round(gy2 + Math.sin(a) * r * 1.05), 1, 1)); } }   // its edge breaking into motes
+  // P2: the lure broadcasting. Three hard arcs stepping outward from the glow, lit one after another
+  if (!D){ const gx2 = head[0] - 2, gy2 = head[1] + 18, st = (f >> 2) % 7;
+    for (let k = 0; k < 3; k++){ const r = 29.5 + k * 4.5, on = st === k || st === k + 1, sp = 0.5 - k * 0.09; if (st < k) continue;
+      L(on ? A[1] : A[0], c => { c.lineWidth = on && k < 2 ? 1.6 : 1; c.ellipse(gx2, gy2, r, r * 1.04, 0, Math.PI - sp, Math.PI + sp); c.stroke(); });
+      if (k < 2) L(on ? A[1] : A[0], c => { c.lineWidth = 1; c.ellipse(gx2, gy2, r, r * 1.04, 0, Math.PI * 1.5 - sp * 0.8 - 0.5, Math.PI * 1.5 - 0.5); c.stroke(); }); } }
   // ------------------------------------------------------------------ rib-legs: arched black ribs from the lower vertebrae down to the floor, tipped with points
   for (const [i, sd, reach] of [[1, -1, 16], [1, 1, 14], [3, -1, 22], [3, 1, 18]]){
     const [x, y] = pts[i], fx = x + sd * reach + (sd < 0 ? cl * -2 : 0), lag = D ? 0 : Math.sin(TAU * P * 2 - 0.8 + i) * 0.8;   // ribs settle a beat behind the breath
     L(K, strokeP([[x, y], [x + sd * reach * 0.6, y - 8 + lag, fx, y + 2 + lag, fx + sd * 1, 95]], 4.4));
     L(G3, strokeP([[x + sd * 2.4, y - 2.4 + lag * 0.5], [x + sd * reach * 0.55, y - 8.4 + lag, fx - sd * 1, y - 2 + lag]], 1));                              // a dark lit edge on the top of each rib
     L(K, path([[fx + sd * 1 - 1.6, 94], [fx + sd * 2.6, 97.4], [fx + sd * 1 + 1.6, 94]]));                                      // pointed tips
+    L(K, path([[fx + sd * 1 - 2.2, 93], [fx - sd * 2.6, 97], [fx + sd * 1, 94.6]])); L(G4, rect(Math.round(fx + sd * 0.4), 92, 1, 2));   // P1: a second, back-swept claw; a glint on the knuckle above it
+    for (const t of [0.36, 0.52]){ const u = 1 - t, qx = u * u * (x + sd * 2.4) + 2 * u * t * (x + sd * reach * 0.55) + t * t * (fx - sd * 1), qy = u * u * (y - 2.4) + 2 * u * t * (y - 8.4 + lag) + t * t * (y - 2 + lag); L(K, rect(Math.round(qx), Math.round(qy - 1), 1, 2)); }   // growth notches cut through the lit edge
   }
 
   // ------------------------------------------------------------------ the vertebrae: dark blocks stacked along the curve with gaps of panel between, spikes off the outer side
@@ -4731,7 +4843,7 @@ function drawHunch(cv, f, accent){
     const hw = 7 - i * 0.26, hl = Math.hypot(x2 - x, y2 - y) * 0.4, cxv = (x + x2) / 2, cyv = (y + y2) / 2;
     const quad = (w, l, o = 0) => [[cxv - tx * l + nx * (w + o), cyv - ty * l + ny * (w + o)], [cxv + tx * l + nx * (w + o), cyv + ty * l + ny * (w + o)], [cxv + tx * l - nx * (w - o), cyv + ty * l - ny * (w - o)], [cxv - tx * l - nx * (w - o), cyv - ty * l - ny * (w - o)]];
     // the spinous process: a backward-raked spike off the outer edge, lagging the curl
-    const sl = (8 - i * 0.34) * (1 + cl * 0.15), rake = 0.55 + (D ? 0.5 : 0);
+    const sl = (8 - i * 0.34) * (1 + cl * 0.15) * 1.35, rake = 0.55 + (D ? 0.5 : 0);
     const sb = [cxv + nx * hw * 0.85, cyv + ny * hw * 0.85], tip = [sb[0] + (nx * Math.cos(rake) - tx * Math.sin(rake)) * sl, sb[1] + (ny * Math.cos(rake) - ty * Math.sin(rake)) * sl];
     if (i % 2 === 1 && i >= 3 && i <= N - 4){ L(K, path([[sb[0] + tx * 2.4, sb[1] + ty * 2.4], tip, [sb[0] - tx * 2.4, sb[1] - ty * 2.4]])); L(G4, strokeP([[sb[0] + tx * 1.6, sb[1] + ty * 1.6], tip], 1)); }   // spikes only along the dorsal curve
     // the body of the vertebra in hard bands: black, a dark band, a lit crescent on the outer edge
@@ -4740,10 +4852,14 @@ function drawHunch(cv, f, accent){
     L(G3, path(quad(hw * 0.22, hl - 1, hw * 0.7)));                                                                              // lit band on the outer edge
     L(G4, strokeP([[cxv - tx * (hl - 1.4) + nx * (hw - 0.9), cyv - ty * (hl - 1.4) + ny * (hw - 0.9)], [cxv + tx * (hl - 1.8) + nx * (hw - 0.9), cyv + ty * (hl - 1.8) + ny * (hw - 0.9)]], 1));   // bright crescent
     L(K, ell(cxv - nx * 0.6, cyv - ny * 0.6, 1, 1));                                                                              // the spinal canal
-    // side processes: little knobs poking out of the inner edge
+    // P1: side processes poking out of the inner edge, short spurs between the big spikes, pits in the lit band, a glint on the leading corner
+    if (i >= 1 && i % 2 === 0) L(K, path([[cxv - nx * (hw - 0.6) - tx * 1.8, cyv - ny * (hw - 0.6) - ty * 1.8], [cxv - nx * (hw + 2.4) + tx * 0.6, cyv - ny * (hw + 2.4) + ty * 0.6], [cxv - nx * (hw - 0.6) + tx * 1.8, cyv - ny * (hw - 0.6) + ty * 1.8]]));
+    if (i % 2 === 0 && i >= 4 && i <= N - 4){ const tp = [sb[0] + (nx * Math.cos(rake) - tx * Math.sin(rake)) * sl * 0.42, sb[1] + (ny * Math.cos(rake) - ty * Math.sin(rake)) * sl * 0.42]; L(K, path([[sb[0] + tx * 1.7, sb[1] + ty * 1.7], tp, [sb[0] - tx * 1.7, sb[1] - ty * 1.7]])); }
+    if (i % 3 === 1) px(cxv + nx * hw * 0.5 - tx * 0.8, cyv + ny * hw * 0.5 - ty * 0.8, K);
+    if (i % 2 === 1) px(cxv + nx * (hw - 1.2) + tx * (hl - 2), cyv + ny * (hw - 1.2) + ty * (hl - 2), G5);
   }
   // the vertebra at the floor sits in a cracked socket
-  L(K, path([[78, 96], [82, 92], [90, 92], [94, 96]]));
+  L(K, path([[78, 96], [82, 92], [90, 92], [94, 96]])); L(G3, rect(83, 92, 4, 1)); L(G2, rect(88, 93, 3, 1));
 
   // ------------------------------------------------------------------ the phone: hanging off the end of the spine by a short stalk of discs, its screen the face
   const ph = D ? 0.5 : 0.08 + cl * 0.12, cs = Math.cos(ph), sn = Math.sin(ph);                                                   // it tilts toward you; tips over when beaten
@@ -4753,6 +4869,8 @@ function drawHunch(cv, f, accent){
   L(K, c => { c.moveTo(X0 + 3, Y0); c.arcTo(X0 + pw, Y0, X0 + pw, Y0 + phh, 3); c.arcTo(X0 + pw, Y0 + phh, X0, Y0 + phh, 3); c.arcTo(X0, Y0 + phh, X0, Y0, 3); c.arcTo(X0, Y0, X0 + pw, Y0, 3); c.closePath(); c.fill(); });   // body
   L(G3, strokeP([[X0 + 1.2, Y0 + 3], [X0 + 1.2, Y0 + phh - 3]], 1)); L(G2, strokeP([[X0 + 3, Y0 + 1.2], [X0 + pw - 3, Y0 + 1.2]], 1));   // lit edges
   L(G4, rect(X0 + pw / 2 - 2, Y0 + 1.6, 4, 1)); L(G4, rect(X0 + pw - 4, Y0 + 1.6, 1, 1));                                       // speaker slot, camera
+  L(K, rect(X0 + pw - 0.4, Y0 + 7, 1.6, 5)); L(K, rect(X0 + pw - 0.4, Y0 + 14, 1.6, 3)); L(G3, rect(X0 + pw + 0.2, Y0 + 8, 1, 2));                   // P1: side buttons breaking the edge
+  L(G3, rect(X0 + pw / 2 - 3, Y0 + phh - 2.6, 6, 1)); L(G5, rect(X0 + 1.6, Y0 + 1.4, 2, 1)); L(G2, strokeP([[X0 + pw - 1.2, Y0 + 4], [X0 + pw - 1.2, Y0 + phh - 4]], 1));   // home bar, corner glint, a dim far edge
   const SX = X0 + 2.4, SY = Y0 + 4, SW = pw - 4.8, SH = phh - 8.4;
   if (D){
     L(G3, c => { c.lineWidth = 1; c.rect(X0 + 0.5, Y0 + 0.5, pw - 1, phh - 1); c.stroke(); });                                       // a bezel rim so the dead phone reads
@@ -4772,10 +4890,11 @@ function drawHunch(cv, f, accent){
     const blink = f === 20 || f === 21, ey = SY + 5;
     for (const [ex, sd] of [[SX + 2.4, -1], [SX + SW - 7.4, 1]]){
       if (blink){ L(A[3], rect(ex, ey + 2, 5, 1)); continue; }
-      L(A[3], rect(ex, ey, 5, 5)); L(A[2], rect(ex, ey + 4, 5, 1)); L(A[4], rect(ex + (sd < 0 ? 1 : 3), ey + 1, 1, 1));                                                               // the eye, lit from the top
+      L(A[1], rect(ex - 1, ey - 1, 7, 1)); L(A[3], rect(ex, ey, 5, 5)); L(A[2], rect(ex, ey + 4, 5, 1)); L(A[2], rect(sd < 0 ? ex : ex + 4, ey + 1, 1, 3)); L(A[1], rect(sd < 0 ? ex : ex + 4, ey + 4, 1, 1));   // P1: lid line, a banded iris L(A[4], rect(ex + (sd < 0 ? 1 : 3), ey + 1, 1, 1));                                                               // the eye, lit from the top
       L(K, rect(ex + (sd < 0 ? 3 : 1), ey + 2, 1.4, 2));                                     // the pupil, glancing at the scroll
       L(G1, rect(sd < 0 ? ex + 2 : ex, ey, 3, 1)); L(G1, rect(sd < 0 ? ex + 4 : ex, ey + 1, 1, 1)); L(A[2], rect(ex - 1, ey + 5, 7, 1));                           // the brow stepping down to the inner corner
     }
+    L(A[1], rect(SX + 2, SY + 1, SW - 4, 1));                                                                                         // P1: the top of the screen glowing
     const my = SY + SH - 6;
     L(A[2], rect(SX + 2.4, my - 0.6, SW - 4.8, 4.2)); L(K, rect(SX + 3, my, SW - 6, 3));                                                                                           // the mouth, a dark slot
     for (let k = 0; k < 4; k++){ const x = SX + 3.6 + k * (SW - 8) / 3; L(A[4], path([[x, my], [x + 1.6, my], [x + 0.8, my + 2]])); }   // pixel fangs
@@ -4784,10 +4903,21 @@ function drawHunch(cv, f, accent){
   // the stalk: three discs joining the last vertebra to the phone, so the head can't float free
   for (let k = 0; k < 3; k++){ const t = (k + 1) / 4, x = head[0] + (PX - head[0]) * t, y = head[1] + (PY - head[1]) * t; L(K, ell(x, y, 3 - k * 0.3, 1.8)); L(G3, rect(Math.round(x - 2), Math.round(y - 1.6), 3, 1)); }
 
+  // P2: one thin bone arm reaching in from the spine, a claw resting on the screen; on the flick it drags upward
+  { const [ax, ay] = pts[6], el = D ? [ax - 4, ay + 14] : [ax - 10, ay + 23 + br * 0.4 - cl * 3], wr = D ? [ax - 3, ay + 26] : [PX + 17.5, PY + 16 - cl * 7];
+    const bone = (a, b, w) => { L(K, strokeP([a, b], w)); L(K, ell(a[0], a[1], w * 0.75, w * 0.75)); L(K, ell(b[0], b[1], w * 0.7, w * 0.7)); const dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1; L(G3, strokeP([[a[0] + dx * 0.2 + dy / l * 0.9, a[1] + dy * 0.2 - dx / l * 0.9], [a[0] + dx * 0.75 + dy / l * 0.9, a[1] + dy * 0.75 - dx / l * 0.9]], 1)); };
+    bone([ax - 3, ay + 1], el, 3); bone(el, wr, 2.4); L(G4, rect(Math.round(el[0]), Math.round(el[1] - 1), 1, 1));
+    const fd = D ? [[-1, 5], [1.6, 5], [-3, 3.6]] : [[-5.6, -3.4], [-5.4, 0.4], [-4, 3.6]];                                                            // three finger bones; the first is the one on the glass
+    fd.forEach(([dx, dy], k) => { L(K, strokeP([wr, [wr[0] + dx * 0.55, wr[1] + dy * 0.55 - (k === 0 && !D ? 1.2 : 0)], [wr[0] + dx, wr[1] + dy]], 1.5)); });
+    if (flick) L(A[4], rect(Math.round(wr[0] - 6.6), Math.round(wr[1] - 3.4), 1, 1)); }
+  // P2: notifications drifting up off the screen, each a small grey bubble with its tail
+  if (!D) for (let i = 0; i < 2; i++){ const t = ((P * 2 + i * 0.5) % 1), x = Math.round(PX - 21 - i * 5 + Math.sin(t * 5 + i) * 1.5), y = Math.round(PY + 2 - t * 22 - i * 3); if (t > 0.86) continue;
+    const c0 = t < 0.5 ? '#8f877c' : t < 0.7 ? G4 : G3; L(K, rect(x - 1, y - 1, 9, 7)); L(c0, rect(x, y, 7, 5)); L(K, c => { c.rect(x, y, 1, 1); c.rect(x + 6, y, 1, 1); c.rect(x, y + 4, 1, 1); c.rect(x + 6, y + 4, 1, 1); c.rect(x + 1, y + 2, 1, 1); c.rect(x + 3, y + 2, 1, 1); c.rect(x + 5, y + 2, 1, 1); c.fill(); }); L(c0, rect(x + 4, y + 5, 2, 1)); L(c0, rect(x + 5, y + 6, 1, 1)); }
   // ------------------------------------------------------------------ floating: vertebra chips and square debris breaking off the outer curve, scroll ticks rising off the screen
   if (!D){
     for (let i = 0; i < 6; i++){ const t = ((P * 2 + i * 0.25) % 1), [bx, by] = pts[2 + i], x = bx + 7 + t * 10 + (i % 2) * 2, y = by - 4 - t * 12, s = t < 0.35 ? 2 : 1;
       if (t < 0.85) L(t < 0.4 ? G3 : G2, rect(Math.round(x), Math.round(y), s, s)); }
+    for (let i = 0; i < 4; i++){ const t = ((P * 2 + i * 0.27 + 0.1) % 1), [bx, by] = pts[4 + i * 2], x = bx + 12 + t * 8, y = by - 2 - t * 9; if (t < 0.7) L(K, rect(Math.round(x), Math.round(y), t < 0.3 ? 2 : 1, t < 0.3 ? 2 : 1)); }   // P1: black bone chips too, so the outer curve crumbles
     for (let i = 0; i < 3; i++){ const t = ((P * 3 + i * 0.33) % 1), x = PX - 18 - i * 2, y = PY + 20 - t * 26; if (t < 0.9) L('#8f877c', rect(Math.round(x), Math.round(y), 3 - i, 1)); }
   }
 
@@ -6345,7 +6475,35 @@ function drawKrampus(cv, f, accent){
   if (!drawKrampus.sc){ drawKrampus.sc = document.createElement('canvas'); drawKrampus.sc.width = W; drawKrampus.sc.height = H; }
   const sc = drawKrampus.sc, sx = sc.getContext('2d', {willReadFrequently: true}), buf = new Array(W * H).fill(null);
   let XF = null;
-  const L = shapeLayer(sx, W, H, buf, () => XF);
+  // a local shape layer: the same rasteriser as the shared shapeLayer (same canvas calls, same alpha threshold), but it reads back only the
+  // shape's bounding box even under a transform (the shared one reads the whole canvas for every transformed shape, which was most of the frame cost)
+  const L = (() => { const E = {x0: 0, y0: 0, x1: 0, y1: 0, lw: 1};
+    const ext = (x, y, r = 0) => { if (x - r < E.x0) E.x0 = x - r; if (x + r > E.x1) E.x1 = x + r; if (y - r < E.y0) E.y0 = y - r; if (y + r > E.y1) E.y1 = y + r; };
+    const c = { set lineWidth(v){ if (v > E.lw) E.lw = v; sx.lineWidth = v; }, get lineWidth(){ return sx.lineWidth; },
+      moveTo(x, y){ ext(x, y); sx.moveTo(x, y); }, lineTo(x, y){ ext(x, y); sx.lineTo(x, y); },
+      quadraticCurveTo(a, b, x, y){ ext(a, b); ext(x, y); sx.quadraticCurveTo(a, b, x, y); },
+      bezierCurveTo(a, b, e, g, x, y){ ext(a, b); ext(e, g); ext(x, y); sx.bezierCurveTo(a, b, e, g, x, y); },
+      ellipse(x, y, rx, ry, ...r){ ext(x, y, Math.max(rx, ry)); sx.ellipse(x, y, rx, ry, ...r); },
+      arc(x, y, r, ...a){ ext(x, y, r); sx.arc(x, y, r, ...a); },
+      rect(x, y, w, h){ ext(x, y); ext(x + w, y + h); sx.rect(x, y, w, h); },
+      closePath(){ sx.closePath(); }, fill(){ sx.fill(); }, stroke(){ sx.stroke(); } };
+    let prev = null;
+    return (color, fn, th = 120) => {
+      sx.setTransform(1, 0, 0, 1, 0, 0); if (prev) sx.clearRect(prev[0], prev[1], prev[2], prev[3]); else sx.clearRect(0, 0, W, H);
+      const xf = XF; if (xf) sx.setTransform(xf[0], xf[1], xf[2], xf[3], xf[4], xf[5]);
+      sx.fillStyle = '#fff'; sx.strokeStyle = '#fff'; sx.lineCap = 'round'; sx.lineJoin = 'round'; sx.lineWidth = 1;
+      E.x0 = Infinity; E.y0 = Infinity; E.x1 = -Infinity; E.y1 = -Infinity; E.lw = 1;
+      sx.beginPath(); fn(c);
+      if (!isFinite(E.x0)){ prev = null; return; }
+      let ax = E.x0, ay = E.y0, bx = E.x1, by = E.y1, pd = E.lw / 2 + 2;
+      if (xf){ const xs = [xf[0] * ax + xf[2] * ay, xf[0] * bx + xf[2] * ay, xf[0] * ax + xf[2] * by, xf[0] * bx + xf[2] * by], ys = [xf[1] * ax + xf[3] * ay, xf[1] * bx + xf[3] * ay, xf[1] * ax + xf[3] * by, xf[1] * bx + xf[3] * by];
+        ax = Math.min(...xs) + xf[4]; bx = Math.max(...xs) + xf[4]; ay = Math.min(...ys) + xf[5]; by = Math.max(...ys) + xf[5]; pd = E.lw / 2 * Math.max(1, Math.hypot(xf[0], xf[1]), Math.hypot(xf[2], xf[3])) + 2; }
+      const x0 = Math.max(0, Math.floor(ax - pd)), y0 = Math.max(0, Math.floor(ay - pd)), x1 = Math.min(W, Math.ceil(bx + pd)), y1 = Math.min(H, Math.ceil(by + pd));
+      const w = x1 - x0, h = y1 - y0; if (w <= 0 || h <= 0){ prev = null; return; }
+      prev = [x0, y0, w, h];
+      const d = sx.getImageData(x0, y0, w, h).data;
+      for (let yy = 0; yy < h; yy++){ const row = (y0 + yy) * W + x0, ri = yy * w * 4 + 3; for (let xx = 0; xx < w; xx++) if (d[ri + xx * 4] >= th) buf[row + xx] = color; }
+    }; })();
   const ell = (x, y, rx, ry, rot = 0) => c => { c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); c.fill(); };
   const path = pts => c => { c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.closePath(); c.fill(); };
   const strokeP = (pts, w) => c => { c.lineWidth = w; c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.stroke(); };
