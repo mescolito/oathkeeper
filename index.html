@@ -930,7 +930,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '0430ca1840';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '2da206176f';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1233,6 +1233,8 @@ const CHECK_MAX = 12;
 // partial progress: steps ticked on a task or to-do you didn't finish that day pay 1-2 G each when the day ends,
 // up to STEP_CAP a day (finishing it pays the normal reward instead, so nothing pays twice)
 const STEP_CAP = 12;
+// keys a closed notice is remembered under: plain ones, and the mini-boss ones that carry the fight's start date
+const DISMISS_KEY = /^(?:[a-z]{2,12}|mini(?:esc|ran)?-\d{4}-\d{2}-\d{2})$/;
 const MP_PER_TASK = 10, SKILL_MAX = 5, TODO_CAP = 5, TODO_LISTS = 50, TODO_OPEN = 300;
 // skills you can use in battle: up to SKILL_SLOTS equipped at once; equipping one costs SKILL_EQ_FEE gold (taking one off is free)
 const SKILL_SLOTS = 4, SKILL_EQ_FEE = 50;
@@ -1707,7 +1709,7 @@ function sanitize(s, created){
   if (obj(s.settings)){ const st = s.settings, col = obj(st.collapse) ? st.collapse : {}, dis = obj(st.dismissed) ? st.dismissed : {};
     out.settings = {theme: st.theme === 'dark' ? 'dark' : 'light', pop: ['blush', 'sea', 'mint', 'gold', 'lilac', 'coral'].includes(st.pop) ? st.pop : 'blush', rollover: int(st.rollover, 0, 5, 0), hideDone: !!st.hideDone, hideRest: !!st.hideRest,
       collapse: {vitals: !!col.vitals, boss: !!col.boss}, dismissed: {}};
-    for (const [k, v] of Object.entries(dis)) if (/^[a-z]{2,12}$/.test(k) && isDate(v)) out.settings.dismissed[k] = v; }
+    for (const [k, v] of Object.entries(dis)) if (DISMISS_KEY.test(k) && isDate(v)) out.settings.dismissed[k] = v; }
   // gear and looks sold back to the shop: you keep half the price; the purchase still counts as spent
   out.sells = (Array.isArray(s.sells) ? s.sells : []).filter(x => obj(x) && typeof x.id === 'string' && (GEAR_BY[x.id] || ITEM[x.id]) && isDate(x.date)).map(x => ({id: x.id, ts: num(x.ts, 0), date: x.date, cost: int(x.cost, 0, 100000, 0), g: int(x.g, 0, 50000, 0)}));
   out.results = {};
@@ -10017,7 +10019,9 @@ function renderDrawer(){
 let drawerWant = false;
 function openDrawer(){ const d = document.getElementById('drawer'); drawerWant = true; renderDrawer(); d.hidden = false; requestAnimationFrame(() => requestAnimationFrame(() => { if (drawerWant) d.classList.add('open'); })); }
 function closeDrawer(){ const d = document.getElementById('drawer'); drawerWant = false; if (d.hidden) return; d.classList.remove('open'); setTimeout(() => { if (!drawerWant) d.hidden = true; }, 260); }
-const dismissed = k => S.settings.dismissed[k] === D.today;
+// a closed notice stays closed for the day; a mini-boss notice shows for two days, so closing it also holds the day after
+const dismissKeep = (k, v) => v === D.today || (k.startsWith('mini') && k.includes('-') && v === D.yest);
+const dismissed = k => dismissKeep(k, S.settings.dismissed[k]);
 const notice = (k, html) => `<div class="mystery">${svg('gift',18,2)} <span class="ntext">${html}</span><button class="nclose" data-dismiss="${k}" aria-label="Close">${svg('x',16,2.4)}</button></div>`;
 function vitals(compact){
   const lv = D.lv, C = D.C;
@@ -11242,10 +11246,16 @@ function renderInner(){
   if (tab === 'stats' || tab === 'skills'){ sheetMode = 'stats'; statsSec = tab; } else if (tab === 'inv') sheetMode = 'inv'; else if (sheetMode === 'stats' || sheetMode === 'inv') sheetMode = null;
   v.innerHTML = tab === 'today' ? renderToday() : tab === 'battle' ? renderBattle() : tab === 'todo' ? renderTodo() : tab === 'shop' ? renderShop() : tab === 'focus' ? renderFocus() : tab === 'sleep' ? renderSleep() : tab === 'stats' || tab === 'skills' ? `<div class="pagewrap">${renderStatsPanel(tab)}</div>` : tab === 'inv' ? `<div class="pagewrap">${renderInventory()}</div>` : tab === 'riff' ? `<div class="pagewrap">${renderRiff()}</div>` : renderSettings();
   document.querySelectorAll('#tabs button[data-tab]').forEach(b => b.setAttribute('aria-current', b.dataset.tab === tab ? 'page' : 'false'));
+  centerTabs(v);
   drawIcons(v);
   if ((sheetMode === 'stats' || sheetMode === 'inv') && !document.getElementById('sheet').hidden) renderSheet();
   draw();
   showAward();
+}
+// keep the selected name in view in a scrolling strip of names (the to-do lists), centred where there's room
+function centerTabs(root){
+  (root || document).querySelectorAll('.tdtabs').forEach(s => { const on = s.querySelector('.tdtab.on'); if (!on || s.scrollWidth <= s.clientWidth) return;
+    const a = s.getBoundingClientRect(), b = on.getBoundingClientRect(); s.scrollLeft += (b.left + b.width / 2) - (a.left + a.width / 2); });
 }
 function drawIcons(root){
   const st = Math.min(2, Math.max(1, stage(D.lv.level)));
@@ -12168,7 +12178,7 @@ function onClick(e){
   if (el.dataset.clearchecked){ const L = S.todos.lists.find(x => x.id === el.dataset.clearchecked); if (!L || L.kind !== 'plain') return; const n = L.items.filter(it => it.doneOn).length; L.items = L.items.filter(it => !it.doneOn); save(); render(); toast(`Cleared ${n} checked item${n === 1 ? '' : 's'}`); return; }
   if (el.dataset.delitem){ const [lid, iid] = el.dataset.delitem.split('|'); const L = S.todos.lists.find(x => x.id === lid); if (!L) return; const it = L.items.find(x => x.id === iid); if (!it || (it.doneOn && L.kind !== 'plain')) return; L.items = L.items.filter(x => x.id !== iid); save(); render(); return; }
   if (el.dataset.collapse){ const k = el.dataset.collapse; if (k !== 'vitals' && k !== 'boss') return; S.settings.collapse[k] = !S.settings.collapse[k]; save(); render(); return; }
-  if (el.dataset.dismiss){ const k = el.dataset.dismiss; if (!/^[a-z]{2,12}$/.test(k)) return; S.settings.dismissed = Object.fromEntries(Object.entries(S.settings.dismissed).filter(([, v]) => v === D.today)); S.settings.dismissed[k] = D.today; save(); render(); return; }
+  if (el.dataset.dismiss){ const k = el.dataset.dismiss; if (!DISMISS_KEY.test(k)) return; S.settings.dismissed = Object.fromEntries(Object.entries(S.settings.dismissed).filter(([kk, v]) => dismissKeep(kk, v))); S.settings.dismissed[k] = D.today; save(); render(); return; }
   if (el.dataset.bsec){ battleSec = ['inn','info'].includes(el.dataset.bsec) ? el.dataset.bsec : 'skills'; render(); return; }
   if (el.dataset.inn){
     if (el.dataset.inn === 'in'){ if (innNow()) return; if (D.balance < D.innFee){ toast('Not enough gold for a night at the Inn'); return; }
@@ -12246,7 +12256,8 @@ function onClick(e){
   if (el.dataset.equip){ const it = ITEM[el.dataset.equip]; if (!it || !((it.boss || it.legendary) ? D.drops.has(it.id) : (S.owned.includes(it.id) || it.price === 0))) return; const slot = it.kind; if (slot === 'hat'){ setHat(S.equip.hat === it.id ? null : it.id); } else S.equip[slot] = it.id; save(); render(); return; }
   if (el.dataset.todaytab){ todayTab = ['week', 'timer'].includes(el.dataset.todaytab) ? el.dataset.todaytab : 'day'; try { localStorage.setItem(TODAY_TAB_KEY, todayTab); } catch(e){} render(); return; }
   if ('newtask' in el.dataset){ openEditor(null); const [nc, nt] = (el.dataset.newtask || '').split('|'); if (nc === 'week') draft.cad = 'week'; if (TOD_KEYS.includes(nt)) draft.tod = nt; if (nc === 'week' || nt) renderEditor(); return; }
-  if (el.dataset.invtab){ invTab = el.dataset.invtab; if (sheetMode === 'inv' && !document.getElementById('sheet').hidden){ renderSheet(); return; } }
+  if (el.dataset.invtab){ invTab = INV_TABS.some(([v]) => v === el.dataset.invtab) ? el.dataset.invtab : 'gear'; if (sheetMode === 'inv' && !document.getElementById('sheet').hidden){ renderSheet(); return; }
+    if (!el.dataset.plus){ if (tab === 'inv') render(); return; } }   // a filter pill on the Inventory page; the bag row (data-plus) carries on below and opens the page
   // the big + adds whatever you're looking at: a daily, a habit, a timer, or an item in the open to-do list
   if (el.dataset.plus === 'task'){
     if (tab === 'today' && todayTab === 'timer'){ openTimerEditor(null); return; }
@@ -12665,6 +12676,38 @@ function sdragEnd(){
 }
 document.addEventListener('pointerup', e => { if (sdrag && e.pointerId === sdrag.pid) sdragEnd(); });
 document.addEventListener('pointercancel', e => { if (sdrag && e.pointerId === sdrag.pid) sdragEnd(); });
+
+/* ---------- SWIPE-NAV start (item 4). Swipe left or right on touch to change the Today tab (Dailies, Habits, Timers) or the to-do list.
+   An addition only: it presses the neighbouring name for you, so it does exactly what a tap does. Delete down to SWIPE-NAV end to hold it back. ---------- */
+{ let sw = null;
+  const SWIPE_MIN = 50, SWIPE_RATIO = 2, SWIPE_MS = 600, SWIPE_EDGE = 16;   // at least 50px across, over twice the up-down travel, within 0.6s; not from the screen edge (the browser's own back swipe)
+  const swipeBlocked = t => {
+    if (recoveryMode || drag || sdrag || pkCtx || document.body.classList.contains('dragmode')) return true;
+    if (tab !== 'today' && tab !== 'todo') return true;
+    if (['sheet', 'drawer', 'qm', 'pk', 'qa', 'award'].some(id => { const o = document.getElementById(id); return o && !o.hidden; })) return true;
+    if (!t || !t.closest || !(t.closest('#view') || t === document.documentElement || t === document.body || t === document.getElementById('view').parentElement)) return true;   // the page content, or the blank space under a short page
+    if (t.closest('input, textarea, select, form, [contenteditable], [data-drag], [data-sdrag], .tdgrip, .sgrip, .tdmenu, .lofimenu, .dragging')) return true;
+    // a strip that scrolls sideways keeps its own scrolling
+    for (let n = t; n && n.id !== 'view' && n !== document.body && n !== document.documentElement; n = n.parentElement) if (n.scrollWidth > n.clientWidth + 1 && /auto|scroll/.test(getComputedStyle(n).overflowX)) return true;
+    return false; };
+  const swEnd = () => { if (!sw) return; const t = sw.t; t.removeEventListener('touchmove', swMove); t.removeEventListener('touchend', swUp); t.removeEventListener('touchcancel', swEnd); sw = null; };
+  const swMove = e => { if (sw && (e.touches.length !== 1 || drag || sdrag)) swEnd(); };   // a second finger or a reorder drag calls it off
+  const swUp = e => {
+    const g = sw; swEnd(); if (!g || e.touches.length || swipeBlocked(document.getElementById('view'))) return;
+    const p = e.changedTouches[0], dx = p.clientX - g.x, dy = p.clientY - g.y;
+    if (Math.abs(dx) < SWIPE_MIN || Math.abs(dx) <= SWIPE_RATIO * Math.abs(dy) || e.timeStamp - g.ts > SWIPE_MS || tab !== g.tab) return;
+    const names = [...document.querySelectorAll(tab === 'today' ? '#view .tdtab[data-todaytab]' : '#view .tdtab[data-todolist]')];
+    const i = names.findIndex(b => b.classList.contains('on')), to = names[i + (dx < 0 ? 1 : -1)];   // left = next, right = previous; stops at the ends
+    if (i >= 0 && to) to.click(); };
+  document.addEventListener('touchstart', e => {
+    swEnd(); if (e.touches.length !== 1) return;
+    const p = e.touches[0]; if (p.clientX < SWIPE_EDGE || p.clientX > innerWidth - SWIPE_EDGE || swipeBlocked(e.target)) return;
+    // listen on the touched element itself: the page may redraw mid-swipe, and a removed element stops reporting to the document
+    sw = {t: e.target, x: p.clientX, y: p.clientY, ts: e.timeStamp, tab};
+    e.target.addEventListener('touchmove', swMove, {passive: true}); e.target.addEventListener('touchend', swUp, {passive: true}); e.target.addEventListener('touchcancel', swEnd, {passive: true});
+  }, {passive: true});
+}
+/* ---------- SWIPE-NAV end ---------- */
 
 /* ---------- focus timer clock: finishes sessions even if you were on another tab or away ---------- */
 function pomoTick(){
