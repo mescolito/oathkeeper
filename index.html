@@ -191,6 +191,38 @@ label.f{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:60
 .sync i{width:8px;height:8px;border-radius:50%;background:#cfc6b4;flex:none}
 .sync.ok i{background:#7fa35a}
 
+
+/* item tiles (shop, inventory, bestiary) */
+.tilegrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.tile{border:0;background:var(--card);border-radius:20px;padding:8px 6px 12px;display:flex;flex-direction:column;align-items:center;gap:4px;font:inherit;color:var(--ink);box-shadow:0 1px 0 var(--line);cursor:pointer;min-width:0;text-align:center;transition:transform .12s}
+.tile:active{transform:scale(.97)}
+.tile canvas{border-radius:14px;background:#141312;image-rendering:pixelated;width:100%}
+.tile canvas.icon{aspect-ratio:1}
+.tile canvas.hat{aspect-ratio:1;object-fit:contain}
+.tile canvas.wide{aspect-ratio:64/44}
+.tile b{font-size:13px;font-weight:600;line-height:1.2;overflow-wrap:anywhere;margin-top:4px}
+.tile .tfoot{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.tile.eq{box-shadow:inset 0 0 0 2px var(--ink)}
+.tile[disabled]{cursor:default}
+.tile.owned canvas{filter:grayscale(1);opacity:.45}
+.tile.owned b{opacity:.6}
+.tile.locked canvas{filter:brightness(.42)}
+.qmitem[disabled]{opacity:.45;cursor:default}
+.qmsec .tagstyle{margin:0;align-self:auto}
+.seg.gone{visibility:hidden;pointer-events:none}
+.slideghost{position:fixed;overflow:hidden;pointer-events:none;z-index:1}
+html.sliding,html.sliding body{overflow-x:clip}
+/* roomier inventory and bestiary pages */
+.invpage{display:flex;flex-direction:column;gap:30px}
+.invpage section{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0}
+.invpage .slotgrid{gap:12px;margin-bottom:0}
+.invpage .slot{padding:12px 4px 12px;gap:5px;border-radius:20px}
+.invpage .catpills{padding-bottom:0}
+.beasttop{display:flex;gap:28px}
+.tile.beast canvas{aspect-ratio:1;background:#141312}
+.tile.beast.unmet canvas{filter:brightness(0) invert(.16)}
+.tile.beast.unmet b{color:var(--muted)}
 /* shop filters, stats panel */
 .filters{display:flex;flex-direction:column;gap:10px}
 .catpills{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;margin:0 -18px;padding-left:18px;padding-right:18px}
@@ -930,7 +962,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '2da206176f';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'ce0b333823';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -9973,8 +10005,8 @@ function daysText(days){
   const run = idx.every((v,i) => i===0 || v === idx[i-1]+1);
   return run && s.length > 2 ? `${DOW[s[0]]}–${DOW[s[s.length-1]]}` : s.map(d => DOW[d]).join(', ');
 }
-const TITLES = {today:'Today', battle:'Battle', todo:'To-dos', shop:'Shop', settings:'Settings', focus:'Focus', sleep:'Sleep', riff:'Riff’s stall', stats:'Stats', skills:'Skill tree', inv:'Inventory'};
-const PAGE_TABS = ['settings', 'focus', 'sleep', 'stats', 'skills', 'inv', 'riff'];   // full pages opened from the side menu, with a back button
+const TITLES = {today:'Today', battle:'Battle', todo:'To-dos', shop:'Shop', settings:'Settings', focus:'Focus', sleep:'Sleep', riff:'Riff’s stall', stats:'Stats', skills:'Skill tree', inv:'Inventory', beasts:'Bestiary'};
+const PAGE_TABS = ['settings', 'focus', 'sleep', 'stats', 'skills', 'inv', 'riff', 'beasts'];   // full pages opened from the side menu, with a back button
 function renderHeader(){
   const d = parseKey(D.today).toLocaleDateString('en-US', {weekday:'long', month:'short', day:'numeric'});
   const dark = tab === 'focus' || tab === 'sleep'; document.body.classList.toggle('focusmode', dark); document.documentElement.classList.toggle('focusmode', dark); document.body.classList.toggle('sleepmode', tab === 'sleep'); document.body.dataset.pomo = pomoState();
@@ -9986,7 +10018,7 @@ function renderHeader(){
     document.getElementById('top').innerHTML = `<button class="fpill" data-back aria-label="Back to ${TITLES[prevTab] || 'Today'}">${svg('back',20,2.4)} Back</button><span class="fpill" aria-label="${D.balance} gold"><i class="gdot"></i>${D.balance} G</span>`;
     return;
   }
-  if (tab === 'settings' || tab === 'stats' || tab === 'skills' || tab === 'inv' || tab === 'riff'){
+  if (tab === 'settings' || tab === 'stats' || tab === 'skills' || tab === 'inv' || tab === 'riff' || tab === 'beasts'){
     document.getElementById('top').innerHTML = `<div class="row" style="gap:10px;align-items:center"><button class="iconbtn sm" data-back aria-label="Back to ${TITLES[prevTab] || 'Today'}">${svg('back',22,2.4)}</button><h1>${TITLES[tab]}</h1></div>
       <button class="btn ghost" data-back>Done</button>`;
     return;
@@ -10003,6 +10035,7 @@ const DRAWER_ITEMS = [
   ],
   [   // your character
     {tab: 'inv', label: 'Inventory', icon: 'bag'},
+    {tab: 'beasts', label: 'Bestiary', icon: 'book', status: () => { const s = beastStats(); return `${beastAll().filter(x => s[x.key]).length}/${beastAll().length}`; }},
     {tab: 'stats', label: 'Stats', icon: 'bars'},
     {tab: 'skills', label: 'Skill tree', icon: 'bolt', status: () => D.points ? `${D.points} point${D.points === 1 ? '' : 's'}` : ''},
   ],
@@ -10266,7 +10299,7 @@ function renderToday(){
     <canvas id="bossMiniCv" width="128" height="128" aria-hidden="true"></canvas>
   </button><button class="cardtog" data-collapse="boss" aria-expanded="true" aria-label="Collapse the boss card">${svg('back',16,2.6)}</button></div>`}
   <div class="tdtabs" role="tablist" aria-label="Which tasks"><button role="tab" class="tdtab ${todayTab === 'day' ? 'on' : ''}" data-todaytab="day" aria-selected="${todayTab === 'day'}">Dailies</button><button role="tab" class="tdtab ${todayTab === 'week' ? 'on' : ''}" data-todaytab="week" aria-selected="${todayTab === 'week'}">Habits</button><button role="tab" class="tdtab ${todayTab === 'timer' ? 'on' : ''}" data-todaytab="timer" aria-selected="${todayTab === 'timer'}">Timers</button></div>
-  ${todayTab === 'timer' ? timersView() : `<div class="row between"><span class="muted small" style="white-space:nowrap">${todayTab === 'day' ? `${doneD} of ${dueD.length} done` : `${weekLeft} left · ${wkRange}`}</span>
+  ${todayTab === 'timer' ? `<div class="row between"><span class="muted small" style="white-space:nowrap">${timersLive().filter(t => !t.done || !t.finished).length} running</span><div class="seg gone" aria-hidden="true"><button tabindex="-1" data-vday="today" class="on">Today</button><button tabindex="-1" data-vday="yest">Yesterday</button></div></div>${timersView()}` : `<div class="row between"><span class="muted small" style="white-space:nowrap">${todayTab === 'day' ? `${doneD} of ${dueD.length} done` : `${weekLeft} left · ${wkRange}`}</span>
     <div class="seg" role="group" aria-label="Which day to log"><button data-vday="today" class="${vday==='today'?'on':''}">Today</button><button data-vday="yest" class="${vday==='yest'?'on':''}">Yesterday</button></div></div>
   ${todayTab === 'day'
     ? `${hide && dailiesAll.length && !dailies.length ? '<p class="how">All done here.</p>' : ''}${todGroups(dailies, 'day', k)}`
@@ -10557,6 +10590,13 @@ function plainList(L, vis){
   </div>
   `;
 }
+
+/* ---------- item tiles: three across; tap one for its half menu (details and actions) ---------- */
+const tileInfo = {};
+function tileGrid(list){
+  return `<div class="tilegrid">${list.map(x => { tileInfo[x.key] = x;
+    return `<button class="tile ${x.cls || ''}" ${x.detail ? `data-itemopen="${x.key}" aria-haspopup="menu"` : 'disabled'}>${x.art}<b>${x.name}</b>${x.foot ? `<span class="tfoot">${x.foot}</span>` : ''}</button>`; }).join('')}</div>`;
+}
 /* ---------- shop ---------- */
 const SHOP_CATS = [['all','All'],['weapon','Hands'],['armor','Armor'],['rune','Runes'],['potion','Potions'],['hat','Hats']];
 function shopItems(){
@@ -10624,9 +10664,11 @@ function renderShop(){
     else if (!s.ok) btn = `<button class="btn" disabled>Needs ${reqText(it)}</button>`;
     else btn = `<button class="btn gold" ${it.gear ? `data-buygear="${it.id}"` : `data-buy="${it.id}"`} ${s.afford ? '' : 'disabled'}>Buy · ${it.price} G</button>`;
     const lockd = !s.owned && (!s.ok || !s.afford);   // above your level/stats or price: the art dims to gray
-    return `<div class="item ${s.eq?'eq':''} ${s.owned && !it.potion && !it.rune ? 'owned' : ''} ${lockd ? 'locked' : ''}">${itemArt(it)}
-      <b>${esc(it.name)}</b><span class="tags">${styleTag(it)}${tierTag(it)}</span><span class="small muted">${esc(it.text)}${(it.req || it.lvl) && !s.owned && !s.eq ? ` · needs ${reqText(it)}` : ''}</span>${seasonTag(it)}${btn}</div>`;
-  }).join('');
+    const have = (it.potion || it.rune) && D.bag[it.id] || 0, own = s.owned && !it.potion && !it.rune;
+    return {key: 's:' + it.id, art: itemArt(it), name: esc(it.name) + (have ? ` (${have})` : ''), cls: `${s.eq ? 'eq' : ''} ${own ? 'owned' : ''} ${lockd ? 'locked' : ''}`,
+      foot: own ? (s.eq ? 'Equipped' : 'Owned') : `${it.price} G`,
+      detail: {title: it.name, secs: [`${styleTag(it)}${tierTag(it)}${own ? `<span class="tagtier">${s.eq ? 'Equipped' : 'Owned'}</span>` : ''}${have ? `<span class="tagtier">${have} in bag</span>` : ''}${seasonTag(it)}`, `<span class="qmnotetxt">${esc(it.text)}${(it.req || it.lvl) && !s.owned && !s.eq ? ` · needs ${reqText(it)}` : ''}</span>`], btn}};
+  });
   return `<div class="shopfront"><canvas id="shopCv" width="112" height="56" role="img" aria-label="The shop, seen from the street"></canvas></div>
   <div class="bignum"><b>${D.balance}</b><span>gold to spend</span></div>
   <button class="card bagrow" data-plus="inv"><span><b>Inventory</b><span class="muted small" style="display:block">Equip gear, drink potions and set runes (${D.activeRunes.length}/${RUNE_SLOTS} active)</span></span><span class="bagopen">Open ›</span></button>
@@ -10643,7 +10685,7 @@ function renderShop(){
       <button class="catpill ${shopAfford ? 'on' : ''}" data-shoptog="afford" aria-pressed="${shopAfford}" title="Only what you can buy right now">${shopAfford ? svg('check',14,3) + ' ' : ''}Can buy now</button>
     </div>
   </div>
-  ${items.length ? `<div class="shopgrid">${cards}</div>` : `<p class="how">Nothing fits that filter.</p>`}
+  ${items.length ? tileGrid(cards) : `<p class="how">Nothing fits that filter.</p>`}
   `;
 }
 function itemArt(it, small){
@@ -10676,35 +10718,63 @@ function renderInventory(){
   <div class="slotgrid four">${[0,1,2].map(i => runes[i] ? slot(`Rune ${i+1}`, runes[i], null, '', `${runes[i].left}d left`) : slot(`Rune ${i+1}`, null, null, '◇')).join('')}${(() => { const lr = LRUNE_BY[gearAt(Date.now()).lrune];
     return `<button class="slot legend ${lr ? 'full' : ''}" ${lr ? `data-lrune="${lr.id}"` : 'disabled'} aria-label="Legendary rune: ${lr ? esc(lr.name) + ', tap to take off' : 'empty'}"><span class="slotart">${lr ? itemArt({...lr, kind:'lrune'}, true) : '<span class="slotempty">✦</span>'}</span><span class="slotl">Legendary</span><span class="slotn">${lr ? esc(lr.name.replace('Rune of the ', '')) : D.altar.got.length ? 'Empty' : 'Locked'}</span></button>`; })()}</div>
   `;
-  let list = '';
-  const row = (it, sub, btn) => `<div class="invrow">${itemArt(it, true)}<span class="tbody"><span class="tname">${esc(it.name)}</span><span class="tmeta">${sub}</span></span><span class="invbtns">${btn}</span></div>`;
+  let list = '', pre = '';
+  const tiles = [];
+  const row = (it, sub, btn, n, eq) => { tiles.push({key: 'i:' + it.id, art: itemArt(it), name: esc(it.name) + (n ? ` (${n})` : ''), cls: eq ? 'eq' : '', foot: eq ? 'Equipped' : '',
+    detail: {title: it.name, secs: [`${styleTag(it)}${tierTag(it)}${eq ? '<span class="tagtier">Equipped</span>' : ''}${n ? `<span class="tagtier">${n} in bag</span>` : ''}`, `<span class="qmnotetxt">${sub}</span>`], btn}}); return ''; };
   if (invTab === 'gear'){
     const mine = GEAR.filter(x => owns(x.id));
     list = mine.map(x => { const it = {...x, gear:true}, eq = S.gear[x.slot] === x.id, ok = canWear(x, D.statLv);
       const block = !eq && x.slot === 'offhand' ? offhandBlock(S.gear.weapon, x.id) : '';
-      return row(it, `${esc(SLOTS[x.slot])}${handTxt(x)}${x.style ? ' · ' + STYLES[x.style].name : ''} · ${esc(gearText(x))}${x.boss ? ' · prize' : ''}`, (block ? `<button class="btn sm" disabled>${(GEAR_BY[S.gear.weapon] || {}).hands === 2 ? 'Hands full' : 'Blades only'}</button>` : ok || eq ? `<button class="btn ${eq ? 'ghost' : 'primary'} sm" data-equipgear="${x.id}">${eq ? 'Take off' : 'Equip'}</button>` : `<button class="btn sm" disabled>Needs ${reqText({req: x.req})}</button>`) + sellBtn(x, eq)); }).join('');
+      return row(it, `${esc(SLOTS[x.slot])}${handTxt(x)} · ${esc(gearText(x))}${x.boss ? ' · prize' : ''}`, (block ? `<button class="btn sm" disabled>${(GEAR_BY[S.gear.weapon] || {}).hands === 2 ? 'Hands full' : 'Blades only'}</button>` : ok || eq ? `<button class="btn ${eq ? 'ghost' : 'primary'} sm" data-equipgear="${x.id}">${eq ? 'Take off' : 'Equip'}</button>` : `<button class="btn sm" disabled>Needs ${reqText({req: x.req})}</button>`) + sellBtn(x, eq), 0, eq); }).join('');
     if (!mine.length) list = `<p class="how">No gear yet.</p>`;
   } else if (invTab === 'potion'){
     const mine = POTIONS.filter(p => D.bag[p.id]);
-    list = mine.map(p => { const ps = potionState(p); return row({...p, kind:'potion'}, `${D.bag[p.id]} in bag · ${esc(p.text)}`, `<button class="btn gold sm" data-usepot="${p.id}" ${ps.ok ? '' : 'disabled'}>${ps.ok ? 'Drink' : esc(ps.why)}</button>`); }).join('');
+    list = mine.map(p => { const ps = potionState(p); return row({...p, kind:'potion'}, esc(p.text), `<button class="btn gold sm" data-usepot="${p.id}" ${ps.ok ? '' : 'disabled'}>${ps.ok ? 'Drink' : esc(ps.why)}</button>`, D.bag[p.id]); }).join('');
     if (D.smog.owned) list += row({id: 'weather', name: 'Weather Machine', kind: 'weather'}, 'Clears toxic air', `<button class="btn gold sm" data-weatheruse ${D.smog.pts ? '' : 'disabled'}>${D.smog.pts ? 'Use' : 'Air is clear'}</button>`);
     if (!mine.length && !D.smog.owned) list = `<p class="how">No potions.</p>`;
   } else if (invTab === 'rune'){
     const mine = RUNES.filter(r => D.bag[r.id]), eqL = gearAt(Date.now()).lrune;
-    const legends = LEGEND_RUNES.filter(r => D.altar.got.includes(r.id)).map(r => row({...r, kind:'lrune'}, `Legendary · ${esc(r.text)} · never runs out`, `<button class="btn ${eqL === r.id ? 'ghost' : 'primary'} sm" data-lrune="${r.id}">${eqL === r.id ? 'Take off' : 'Equip'}</button>`)).join('');
-    list = legends + (D.tokens ? `<div class="mystery">${svg('gift',18,2)} Perfect week! Pick a free rune for your bag:</div><div class="chips">${RUNES.filter(r => meetsReq(r, D.statLv)).map(r => `<button class="chip" data-runetoken="${r.id}">${esc(runeName(r))}</button>`).join('')}</div>` : '')
-      + mine.map(r => { const rs = runeState(r); return row({...r, name: runeName(r), kind:'rune'}, `${D.bag[r.id]} in bag · ${esc(runeText(r))}`, `<button class="btn gold sm" data-userune="${r.id}" ${rs.canUse ? '' : 'disabled'}>${rs.canUse ? 'Activate' : esc(rs.why)}</button>`); }).join('');
-    if (!mine.length && !D.tokens) list = `<p class="how">No runes.</p>`;
+    const legends = LEGEND_RUNES.filter(r => D.altar.got.includes(r.id)).map(r => row({...r, kind:'lrune'}, `Legendary · ${esc(r.text)} · never runs out`, `<button class="btn ${eqL === r.id ? 'ghost' : 'primary'} sm" data-lrune="${r.id}">${eqL === r.id ? 'Take off' : 'Equip'}</button>`, 0, eqL === r.id)).join('');
+    pre = (D.tokens ? `<div class="mystery">${svg('gift',18,2)} Perfect week! Pick a free rune for your bag:</div><div class="chips">${RUNES.filter(r => meetsReq(r, D.statLv)).map(r => `<button class="chip" data-runetoken="${r.id}">${esc(runeName(r))}</button>`).join('')}</div>` : '');
+    list = mine.map(r => { const rs = runeState(r); return row({...r, name: runeName(r), kind:'rune'}, esc(runeText(r)), `<button class="btn gold sm" data-userune="${r.id}" ${rs.canUse ? '' : 'disabled'}>${rs.canUse ? 'Activate' : esc(rs.why)}</button>`, D.bag[r.id]); }).join('');
+    if (!mine.length && !D.tokens && !legends) list = `<p class="how">No runes.</p>`;
   } else {
     const kinds = invTab === 'hat' ? ['hat'] : ['bg','color'];
     const mine = ITEMS.filter(i => kinds.includes(i.kind) && owns(i.id));
     list = mine.map(i => { const eq = S.equip[i.kind] === i.id; const what = i.kind === 'hat' ? 'Helmet' : i.kind === 'bg' ? 'Scene' : 'Pattern';
-      return row(i, `${what}${i.style ? ' · ' + STYLES[i.style].name : ''}${i.fx ? ' · ' + esc(fxText(i.fx)) : ''}${i.boss ? ' · prize' : i.season ? ` · ${esc(i.when)}` : ''}`, (i.kind === 'hat' ? `<button class="btn ${eq ? 'ghost' : 'primary'} sm" data-equip="${i.id}">${eq ? 'Take off' : 'Wear'}</button>` : `<button class="btn ${eq ? 'ghost' : 'primary'} sm" data-equip="${i.id}" ${eq ? 'disabled' : ''}>${eq ? 'In use' : 'Use'}</button>`) + sellBtn(i, eq)); }).join('');
+      return row(i, `${what}${i.fx ? ' · ' + esc(fxText(i.fx)) : ''}${i.boss ? ' · prize' : i.season ? ` · ${esc(i.when)}` : ''}`, (i.kind === 'hat' ? `<button class="btn ${eq ? 'ghost' : 'primary'} sm" data-equip="${i.id}">${eq ? 'Take off' : 'Wear'}</button>` : `<button class="btn ${eq ? 'ghost' : 'primary'} sm" data-equip="${i.id}" ${eq ? 'disabled' : ''}>${eq ? 'In use' : 'Use'}</button>`) + sellBtn(i, eq), 0, eq); }).join('');
     if (!mine.length) list = `<p class="how">${invTab === 'hat' ? 'No hats yet.' : 'Nothing here yet.'}</p>`;
   }
-  return `${altarCard()}${chestCard()}<div class="sec-h"><h2>Equipped</h2></div>${eqHtml}
-  <div class="catpills" role="group" aria-label="Inventory type">${INV_TABS.map(([v,l]) => `<button class="catpill ${invTab===v?'on':''}" data-invtab="${v}" aria-pressed="${invTab===v}">${l}${v==='potion' || v==='rune' ? ` <span class="small">${(v==='potion' ? POTIONS : RUNES).reduce((a,x) => a + (D.bag[x.id]||0), 0) || ''}</span>` : ''}</button>`).join('')}</div>
-  <div class="list">${list}</div>`;
+  const nBag = v => v === 'potion' ? POTIONS.reduce((a, x) => a + (D.bag[x.id] || 0), 0) : v === 'rune' ? RUNES.reduce((a, x) => a + (D.bag[x.id] || 0), 0) + D.altar.got.length : v === 'gear' ? GEAR.filter(x => owns(x.id)).length : ITEMS.filter(i => (v === 'hat' ? ['hat'] : ['bg','color']).includes(i.kind) && owns(i.id)).length;
+  return `<div class="invpage">${altarCard()}${chestCard()}
+  <section><h2 class="eyebrow">Equipped</h2>${eqHtml}</section>
+  <section><h2 class="eyebrow">Bag</h2>
+  <div class="catpills" role="group" aria-label="Inventory type">${INV_TABS.map(([v,l]) => `<button class="catpill ${invTab===v?'on':''}" data-invtab="${v}" aria-pressed="${invTab===v}">${l} (${nBag(v)})</button>`).join('')}</div>
+  ${pre}${tiles.length ? tileGrid(tiles) : list}</section></div>`;
+}
+
+/* ---------- bestiary: every boss and mini-boss you've met, read from your fight history ---------- */
+const BEAST_GROUPS = [['Bosses', () => BOSSES, 'Boss'], ['Titans', () => TITANS, 'Titan'], ['Holiday bosses', () => SEASONAL, 'Holiday boss'], ['Rites of passage', () => RITES, 'Rite of passage'], ['Mini-bosses', () => MINIS, 'Mini-boss']];
+const beastAll = () => BEAST_GROUPS.flatMap(([, get, kind]) => get().map(b => ({b, kind, key: (kind === 'Mini-boss' ? 'm:' : 'b:') + b.id})));
+function beastStats(){
+  const st = {};
+  const add = (key, status, d) => { const s = st[key] || (st[key] = {met: 0, won: 0, first: d, last: d}); s.met++; if (status === 'won') s.won++; if (d < s.first) s.first = d; if (d > s.last) s.last = d; };
+  D.fights.forEach(F => add('b:' + F.boss.id, F.status, F.start));
+  D.minis.forEach(M => add('m:' + M.m.id, M.status, M.from));
+  return st;
+}
+function renderBeasts(){
+  const st = beastStats(), all = beastAll(), met = all.filter(x => st[x.key]).length, won = all.filter(x => st[x.key] && st[x.key].won).length;
+  const groups = BEAST_GROUPS.map(([title, get, kind]) => { const mine = all.filter(x => x.kind === kind); if (!mine.length) return '';
+    const grid = tileGrid(mine.map(({b, key}) => { const s = st[key];
+      const prize = b.drop && (ITEM[b.drop] || GEAR_BY[b.drop]);
+      return {key, cls: `beast ${s ? (s.won ? 'won' : 'met') : 'unmet'}`, art: `<canvas class="beastcv" width="128" height="128" data-beast="${key}" aria-hidden="true"></canvas>`, name: s ? esc(b.name) : '???', foot: s ? (s.won ? `Beaten ${s.won}×` : 'Not beaten') : '',
+        detail: !s ? null : {title: b.name, secs: [`<span class="tagtier">${kind}</span>${(b.weak.length >= 5 ? ['ALL'] : b.weak).map(k => `<span class="chip-s" style="background:${k === 'ALL' ? 'var(--yellow)' : STATS[k].c}">Weak to ${k === 'ALL' ? 'every stat' : esc(STATS[k].name)}</span>`).join('')}`,
+          `<span class="qmnotetxt">${esc(s.won && b.beaten ? b.beaten : b.flavor)}</span>`,
+          `<span class="qmnotetxt">Fought ${s.met} · Beaten ${s.won} · First met ${fmt(s.first)}${s.last !== s.first ? ` · Last met ${fmt(s.last)}` : ''}${prize ? ` · Prize: ${esc(prize.name)}` : ''}</span>`], btn: ''}}; }));
+    return `<section><h2 class="eyebrow">${title} (${mine.filter(x => st[x.key]).length}/${mine.length})</h2>${grid}</section>`; }).join('');
+  return `<div class="invpage"><div class="beasttop"><div class="bignum"><b>${met}</b><span>of ${all.length} met</span></div><div class="bignum"><b>${won}</b><span>beaten</span></div></div>${groups}</div>`;
 }
 
 /* ---------- the next boss, so you can prepare ---------- */
@@ -11244,7 +11314,7 @@ function renderInner(){
   renderHeader();
   const v = document.getElementById('view');
   if (tab === 'stats' || tab === 'skills'){ sheetMode = 'stats'; statsSec = tab; } else if (tab === 'inv') sheetMode = 'inv'; else if (sheetMode === 'stats' || sheetMode === 'inv') sheetMode = null;
-  v.innerHTML = tab === 'today' ? renderToday() : tab === 'battle' ? renderBattle() : tab === 'todo' ? renderTodo() : tab === 'shop' ? renderShop() : tab === 'focus' ? renderFocus() : tab === 'sleep' ? renderSleep() : tab === 'stats' || tab === 'skills' ? `<div class="pagewrap">${renderStatsPanel(tab)}</div>` : tab === 'inv' ? `<div class="pagewrap">${renderInventory()}</div>` : tab === 'riff' ? `<div class="pagewrap">${renderRiff()}</div>` : renderSettings();
+  v.innerHTML = tab === 'today' ? renderToday() : tab === 'battle' ? renderBattle() : tab === 'todo' ? renderTodo() : tab === 'shop' ? renderShop() : tab === 'focus' ? renderFocus() : tab === 'sleep' ? renderSleep() : tab === 'stats' || tab === 'skills' ? `<div class="pagewrap">${renderStatsPanel(tab)}</div>` : tab === 'inv' ? `<div class="pagewrap">${renderInventory()}</div>` : tab === 'riff' ? `<div class="pagewrap">${renderRiff()}</div>` : tab === 'beasts' ? `<div class="pagewrap">${renderBeasts()}</div>` : renderSettings();
   document.querySelectorAll('#tabs button[data-tab]').forEach(b => b.setAttribute('aria-current', b.dataset.tab === tab ? 'page' : 'false'));
   centerTabs(v);
   drawIcons(v);
@@ -11260,6 +11330,7 @@ function centerTabs(root){
 function drawIcons(root){
   const st = Math.min(2, Math.max(1, stage(D.lv.level)));
   drawChestIcons(root); drawAltarIcons(root);
+  root.querySelectorAll('canvas[data-beast]').forEach(cv => { const x = beastAll().find(y => y.key === cv.dataset.beast); if (x) try { drawBoss(cv, x.b, 0, false, false, false); } catch (e){} });
   root.querySelectorAll('canvas[data-icon]').forEach(cv => {
     const [kind, id] = cv.dataset.icon.split(':');
     if (kind === 'bg') drawScene(cv, {bg:id, f:0, motion:false, noPet:true});
@@ -11717,7 +11788,14 @@ function renderQuick(){
   const qm = document.getElementById('qm'), card = document.getElementById('qmcard'); if (!qmCtx){ qm.hidden = true; return; }
   const item = (act, icon, label, cls = '') => `<button class="qmitem ${cls}" data-qmact="${act}" role="menuitem">${svg(icon, 19, 2)}<span>${label}</span></button>`;
   let html = '';
-  if (qmCtx.kind === 't'){ const t = S.tasks.find(x => x.id === qmCtx.id);
+  if (qmCtx.kind === 'i'){ const x = tileInfo[qmCtx.key]; if (!x || !x.detail){ qmCtx = null; qm.hidden = true; return; }
+    // the item's own buttons (buy, sell, equip…) become menu lines; they keep their data so the usual handlers run
+    const tmp = document.createElement('div'); tmp.innerHTML = x.detail.btn || '';
+    const ic = b => b.dataset.sell ? 'send' : b.dataset.buy || b.dataset.buygear || b.dataset.bagbuy ? 'bag' : /take off/i.test(b.textContent) ? 'x' : b.dataset.usepot || b.dataset.userune ? 'bolt' : 'check';
+    const acts = [...tmp.querySelectorAll('button')].map(b => { b.className = 'qmitem' + (b.dataset.sell ? ' danger' : ''); b.setAttribute('role', 'menuitem'); b.innerHTML = svg(ic(b), 19, 2) + `<span>${esc(b.textContent.trim())}</span>`; return b.outerHTML; }).join('');
+    const secs = x.detail.secs.filter(Boolean);
+    html = `<div class="qmhead">${esc(x.detail.title)}</div>` + (secs.length ? `<div class="qmsecs">${secs.map(v => `<div class="qmsec">${v}</div>`).join('')}</div>` : '') + acts; }
+  else if (qmCtx.kind === 't'){ const t = S.tasks.find(x => x.id === qmCtx.id);
     html = qmTop(t.name, t.note, '', qmCtx.meta) + `${item('copy', 'copy', 'Make a copy')}${item('edit', 'pencil', 'Edit task')}${item('del', 'trash', qmCtx.del ? 'Tap again to delete' : 'Delete task', 'danger')}`; }
   else if (qmCtx.kind === 'm'){ const tm = timersLive().find(x => x.id === qmCtx.id), cost = Math.min(TIMER_RESET_G, Math.max(0, D.balance));
     html = qmTop(tm.name, tm.note, timerInfo(tm)) + item('edit', 'pencil', 'Edit timer') + (tm.done ? item('again', 'reroll', 'Start again') : item('reset', 'reroll', qmCtx.reset ? `Tap again to reset: −${Math.ceil(D.C.maxHP * TIMER_RESET_HP)} HP, −${cost} G` : 'Reset timer', qmCtx.reset ? 'danger' : '')) + item('del', 'trash', qmCtx.del ? 'Tap again to delete' : 'Delete timer', 'danger'); }
@@ -12042,7 +12120,7 @@ function qaToDraft(name, c = qaCtx){ const d = {id: 't' + Date.now().toString(36
   return d;
 }
 /* ---------- events ---------- */
-document.addEventListener('click', e => { try { onClick(e); } catch(err){ console.error(err); enterRecovery(String(err && err.message || err)); showRecovery(); } });
+document.addEventListener('click', e => { try { const inItem = qmCtx && qmCtx.kind === 'i' && e.target.closest && e.target.closest('#qmcard .qmitem'); onClick(e); if (inItem && qmCtx && qmCtx.kind === 'i'){ if (sellArm && tileInfo[qmCtx.key]) renderQuick(); else closeQuick(); } } catch(err){ console.error(err); enterRecovery(String(err && err.message || err)); showRecovery(); } });
 function onClick(e){
   // tapping a task or to-do anywhere but its buttons opens its quick menu
   if (!e.target.closest('button, input, select, textarea, a, form, .tdgrip, .sgrip, .cl') && e.target.closest('[data-qm]') && !recoveryMode){ const q = e.target.closest('[data-qm]'); openQuick(q.dataset.qm, q); return; }
@@ -12276,6 +12354,7 @@ function onClick(e){
     if (statDraft.c !== b.c) m.c = statDraft.c; if (statDraft.icon !== statEdit) m.icon = statDraft.icon;
     if (Object.keys(m).length) S.statMeta[statEdit] = m; else delete S.statMeta[statEdit];
     applyStatMeta(); const nmShown = STATS[statEdit].name; statEdit = null; statDraft = null; save(); render(); renderSheet(); toast(`${nmShown} updated`); return; }
+  if (el.dataset.itemopen){ if (tileInfo[el.dataset.itemopen]){ qmCtx = {kind: 'i', key: el.dataset.itemopen}; renderQuick(); } return; }
   if (el.dataset.cat){ shopCat = el.dataset.cat; render(); return; }
   if (el.dataset.shoptog){ if (el.dataset.shoptog === 'mylv') shopMyLv = !shopMyLv; else shopAfford = !shopAfford; render(); return; }
   if (el.dataset.shoptier){ shopTier = TIER_BY[el.dataset.shoptier] ? el.dataset.shoptier : 'all'; render(); return; }
@@ -12677,35 +12756,102 @@ function sdragEnd(){
 document.addEventListener('pointerup', e => { if (sdrag && e.pointerId === sdrag.pid) sdragEnd(); });
 document.addEventListener('pointercancel', e => { if (sdrag && e.pointerId === sdrag.pid) sdragEnd(); });
 
-/* ---------- SWIPE-NAV start (item 4). Swipe left or right on touch to change the Today tab (Dailies, Habits, Timers) or the to-do list.
-   An addition only: it presses the neighbouring name for you, so it does exactly what a tap does. Delete down to SWIPE-NAV end to hold it back. ---------- */
-{ let sw = null;
-  const SWIPE_MIN = 50, SWIPE_RATIO = 2, SWIPE_MS = 600, SWIPE_EDGE = 16;   // at least 50px across, over twice the up-down travel, within 0.6s; not from the screen edge (the browser's own back swipe)
+/* ---------- SWIPE-NAV start. Dailies, Habits, Timers and the to-do lists work like pages side by side: drag one aside and the next follows your finger; a tap on a name slides the same way.
+   Delete down to SWIPE-NAV end to go back to plain taps. ---------- */
+{ let sw = null, busy = false, noSlide = false;
+  const EASE = 'cubic-bezier(.22,.8,.24,1)', EDGE = 16;
   const swipeBlocked = t => {
-    if (recoveryMode || drag || sdrag || pkCtx || document.body.classList.contains('dragmode')) return true;
+    if (busy || recoveryMode || drag || sdrag || pkCtx || document.body.classList.contains('dragmode')) return true;
     if (tab !== 'today' && tab !== 'todo') return true;
     if (['sheet', 'drawer', 'qm', 'pk', 'qa', 'award'].some(id => { const o = document.getElementById(id); return o && !o.hidden; })) return true;
-    if (!t || !t.closest || !(t.closest('#view') || t === document.documentElement || t === document.body || t === document.getElementById('view').parentElement)) return true;   // the page content, or the blank space under a short page
+    if (!t || !t.closest || !(t.closest('#view') || t === document.documentElement || t === document.body || t === document.getElementById('view').parentElement)) return true;
     if (t.closest('input, textarea, select, form, [contenteditable], [data-drag], [data-sdrag], .tdgrip, .sgrip, .tdmenu, .lofimenu, .dragging')) return true;
-    // a strip that scrolls sideways keeps its own scrolling
-    for (let n = t; n && n.id !== 'view' && n !== document.body && n !== document.documentElement; n = n.parentElement) if (n.scrollWidth > n.clientWidth + 1 && /auto|scroll/.test(getComputedStyle(n).overflowX)) return true;
+    for (let n = t; n && n.id !== 'view' && n !== document.body && n !== document.documentElement; n = n.parentElement) if (n.scrollWidth > n.clientWidth + 1 && /auto|scroll/.test(getComputedStyle(n).overflowX)) return true;   // a strip that scrolls sideways keeps its own scrolling
     return false; };
-  const swEnd = () => { if (!sw) return; const t = sw.t; t.removeEventListener('touchmove', swMove); t.removeEventListener('touchend', swUp); t.removeEventListener('touchcancel', swEnd); sw = null; };
-  const swMove = e => { if (sw && (e.touches.length !== 1 || drag || sdrag)) swEnd(); };   // a second finger or a reorder drag calls it off
-  const swUp = e => {
-    const g = sw; swEnd(); if (!g || e.touches.length || swipeBlocked(document.getElementById('view'))) return;
-    const p = e.changedTouches[0], dx = p.clientX - g.x, dy = p.clientY - g.y;
-    if (Math.abs(dx) < SWIPE_MIN || Math.abs(dx) <= SWIPE_RATIO * Math.abs(dy) || e.timeStamp - g.ts > SWIPE_MS || tab !== g.tab) return;
-    const names = [...document.querySelectorAll(tab === 'today' ? '#view .tdtab[data-todaytab]' : '#view .tdtab[data-todolist]')];
-    const i = names.findIndex(b => b.classList.contains('on')), to = names[i + (dx < 0 ? 1 : -1)];   // left = next, right = previous; stops at the ends
-    if (i >= 0 && to) to.click(); };
+  const strip = () => document.querySelector('#view .tdtabs');
+  const after = s => { const out = []; for (let n = s.nextElementSibling; n; n = n.nextElementSibling) out.push(n); return out; };
+  const W = () => document.documentElement.clientWidth;
+  // the neighbouring page, drawn for real and parked off to one side
+  function pane(to){
+    const s = strip(), host = s.parentElement, cs = getComputedStyle(host), hr = host.getBoundingClientRect(), top = s.getBoundingClientRect().bottom;
+    let html;
+    if (to.dataset.todaytab){ const k = todayTab; todayTab = to.dataset.todaytab; try { html = renderToday(); } finally { todayTab = k; } }
+    else { const k = [todoList, todoMenu, todoRename, todoAdd, todoDelArm]; todoList = to.dataset.todolist; todoMenu = false; todoRename = false; todoAdd = null; todoDelArm = null; try { html = renderTodo(); } finally { [todoList, todoMenu, todoRename, todoAdd, todoDelArm] = k; } }
+    const tmp = document.createElement('div'); tmp.innerHTML = html; const s2 = tmp.querySelector('.tdtabs'); if (!s2) return null;
+    const g = document.createElement('div'); g.className = 'slideghost'; g.style.cssText = `top:${top}px;left:0;width:${W()}px;height:${Math.max(0, innerHeight - top)}px`;
+    const inner = document.createElement('div'), first = after(s)[0], pl = parseFloat(cs.paddingLeft) || 0, pr = parseFloat(cs.paddingRight) || 0;
+    inner.style.cssText = `position:absolute;top:${first ? first.getBoundingClientRect().top - top : 0}px;left:${hr.left + pl}px;width:${hr.width - pl - pr}px;display:flex;flex-direction:column;gap:${cs.rowGap === 'normal' ? '0px' : cs.rowGap};will-change:transform`;
+    // the count and Today/Yesterday row never slides: it stays put between pages that both have it, and fades in place when one page (Timers) has none
+    const kids = after(s2), pin = isPin(kids[0]) ? kids.shift() : null, curPin = isPin(first), mt = n => parseFloat(getComputedStyle(n).marginTop) || 0, y0 = first ? first.getBoundingClientRect().top - mt(first) - top : 0, gap = parseFloat(cs.rowGap) || 0;
+    kids.forEach(n => inner.appendChild(n)); g.appendChild(inner); document.body.appendChild(g);
+    let pinBox = null;
+    if (pin && curPin){ const nx = after(s)[1]; inner.style.top = `${nx ? nx.getBoundingClientRect().top - mt(nx) - top : first.getBoundingClientRect().bottom - top + gap}px`; }
+    else if (pin){ pinBox = document.createElement('div'); pinBox.style.cssText = `position:absolute;top:${y0}px;left:${hr.left + pl}px;width:${hr.width - pl - pr}px;opacity:0`; pinBox.appendChild(pin); g.appendChild(pinBox); inner.style.top = `${y0 + pinBox.offsetHeight + gap}px`; }
+    else inner.style.top = `${y0}px`;
+    g.querySelectorAll('[id]').forEach(x => x.removeAttribute('id')); try { drawIcons(inner); } catch (err){}
+    return {g, inner, pin: !!pin, pinBox, pinGone: !!(pin && pin.querySelector('.seg.gone')), pinTxt: pin && pin.querySelector('.muted') ? pin.querySelector('.muted').textContent : null};
+  }
+  const isPin = n => !!(n && n.matches && n.matches('.row.between') && n.querySelector('[data-vday]'));
+  const names = () => { const s = strip(); return s ? [...s.querySelectorAll('.tdtab')] : []; };
+  const setX = (st, x, ms) => { const tr = ms ? `transform ${ms}ms ${EASE}` : 'none', d = x < 0 ? 1 : -1;
+    const act = st.panes[st.keep || d], f = Math.min(1, Math.abs(x) / W()), tr2 = ms ? `${tr}, opacity ${ms}ms linear` : 'none';
+    st.cur.forEach(n => { n.style.transition = tr2; if (n === st.pinEl){ n.style.transform = ''; n.style.opacity = act && !act.pin ? String(1 - f) : '';
+        const seg = n.querySelector('.seg'), gone = seg && seg.classList.contains('gone');   // the day toggle fades where it stands when Timers is on one side
+        if (seg){ seg.style.transition = ms ? `opacity ${ms}ms linear` : 'none'; if (act && act.pin && act.pinGone !== gone){ seg.style.visibility = 'visible'; seg.style.opacity = String(gone ? f : 1 - f); } else { seg.style.visibility = ''; seg.style.opacity = ''; } } }
+      else n.style.transform = `translateX(${x}px)`; });
+    if (act && act.pinBox){ act.pinBox.style.transition = tr2; act.pinBox.style.opacity = String(f); }
+    for (const k of [1, -1]){ const p = st.panes[k]; if (!p) continue; p.g.style.display = (st.keep || d) === k ? '' : 'none'; p.inner.style.transition = tr; p.inner.style.transform = `translateX(${x + k * W()}px)`; } };
+  const clean = st => { Object.values(st.panes).forEach(p => p && p.g.remove()); st.cur.forEach(n => { n.style.transition = ''; n.style.transform = ''; n.style.opacity = ''; }); document.documentElement.classList.remove('sliding'); };
+  // press the name for real once the slide has landed; the row of names glides to it
+  const land = to => { const from = strip() ? strip().scrollLeft : 0, y = scrollY, v = document.getElementById('view'); noSlide = true; try { to.click(); } finally { noSlide = false; }
+    // a shorter page must not make the screen jump: keep enough height to stay scrolled where you were
+    v.style.minHeight = ''; const want = y + innerHeight - (v.getBoundingClientRect().top + scrollY); if (v.offsetHeight < want) v.style.minHeight = `${Math.ceil(want)}px`; if (scrollY !== y) scrollTo(0, y);
+    const s = strip(); if (s){ const target = s.scrollLeft; if (target !== from){ s.scrollLeft = from; s.scrollTo({left: target, behavior: motionOK ? 'smooth' : 'auto'}); } } };
+  const settle = (st, to, ms) => { busy = true; st.keep = to ? st.dir : 0;
+    const act = to && st.panes[st.dir]; if (act && act.pinTxt != null && st.pinEl){ const a = st.pinEl.querySelector('.muted'), b2 = {textContent: act.pinTxt}; if (a && b2) a.textContent = b2.textContent; }   // the count line just changes to the new section's
+    setX(st, to ? -st.dir * W() : 0, ms);
+    setTimeout(() => { if (to && to.isConnected) land(to); clean(st); busy = false; }, ms + 20); };
+  const begin = dir => { const all = names(), i = all.findIndex(b => b.classList.contains('on')); const cur = after(strip()); const st = {cur, pinEl: isPin(cur[0]) ? cur[0] : null, panes: {}, to: {1: all[i + 1], [-1]: i > 0 ? all[i - 1] : undefined}, dir};
+    document.documentElement.classList.add('sliding'); return st; };
+  const need = (st, k) => { if (st.to[k] && !(k in st.panes)) st.panes[k] = pane(st.to[k]); };
+
+  const swEnd = () => { if (!sw) return; const t = sw.t; t.removeEventListener('touchmove', swMove); t.removeEventListener('touchend', swUp); t.removeEventListener('touchcancel', swCancel); sw = null; };
+  const swCancel = () => { const g = sw; swEnd(); if (g && g.st) settle(g.st, null, 160); };
+  const swMove = e => { if (!sw) return;
+    if (e.touches.length !== 1 || drag || sdrag){ swCancel(); return; }
+    const p = e.touches[0], dx = p.clientX - sw.x, dy = p.clientY - sw.y;
+    if (!sw.st){
+      if (Math.abs(dy) > 10 && Math.abs(dy) >= Math.abs(dx)){ swEnd(); return; }            // scrolling up or down: leave it alone
+      if (Math.abs(dx) < 10 || Math.abs(dx) < 1.5 * Math.abs(dy)) return;
+      if (!motionOK || !strip()){ return; }
+      sw.st = begin(dx < 0 ? 1 : -1); sw.x0 = dx; }
+    if (e.cancelable) e.preventDefault();
+    let x = dx - sw.x0; const k = x < 0 ? 1 : -1; sw.st.dir = k; need(sw.st, k);
+    if (!sw.st.to[k]) x *= .25;                                                              // nothing that way: it resists
+    sw.dx = x; setX(sw.st, x, 0); };
+  const swUp = e => { const g = sw; swEnd(); if (!g) return;
+    if (!g.st){   // reduced motion: a plain swipe still switches
+      if (motionOK || e.touches.length || swipeBlocked(document.getElementById('view'))) return;
+      const p = e.changedTouches[0], dx = p.clientX - g.x, dy = p.clientY - g.y; if (Math.abs(dx) < 50 || Math.abs(dx) <= 2 * Math.abs(dy)) return;
+      const all = names(), i = all.findIndex(b => b.classList.contains('on')), to = all[i + (dx < 0 ? 1 : -1)]; if (i >= 0 && to) to.click(); return; }
+    const x = g.dx || 0, k = x < 0 ? 1 : -1, to = g.st.to[k], far = Math.abs(x) > W() * .28 || (Math.abs(x) > 36 && e.timeStamp - g.ts < 320);
+    g.st.dir = k; settle(g.st, to && far ? to : null, to && far ? Math.max(140, Math.round(260 * (1 - Math.abs(x) / W()))) : 180); };
   document.addEventListener('touchstart', e => {
     swEnd(); if (e.touches.length !== 1) return;
-    const p = e.touches[0]; if (p.clientX < SWIPE_EDGE || p.clientX > innerWidth - SWIPE_EDGE || swipeBlocked(e.target)) return;
-    // listen on the touched element itself: the page may redraw mid-swipe, and a removed element stops reporting to the document
-    sw = {t: e.target, x: p.clientX, y: p.clientY, ts: e.timeStamp, tab};
-    e.target.addEventListener('touchmove', swMove, {passive: true}); e.target.addEventListener('touchend', swUp, {passive: true}); e.target.addEventListener('touchcancel', swEnd, {passive: true});
+    const p = e.touches[0]; if (p.clientX < EDGE || p.clientX > innerWidth - EDGE || swipeBlocked(e.target)) return;
+    sw = {t: e.target, x: p.clientX, y: p.clientY, ts: e.timeStamp};   // listen on the touched element itself: a removed element stops reporting to the document
+    e.target.addEventListener('touchmove', swMove, {passive: false}); e.target.addEventListener('touchend', swUp, {passive: true}); e.target.addEventListener('touchcancel', swCancel, {passive: true});
   }, {passive: true});
+  document.addEventListener('click', e => { if (e.target.closest && e.target.closest('[data-tab], [data-back], [data-plus]')) document.getElementById('view').style.minHeight = ''; }, true);
+  // a tap on a name slides too
+  document.addEventListener('click', e => {
+    const to = e.target.closest && e.target.closest('#view .tdtab'); if (!to || noSlide || !motionOK || to.classList.contains('on')) return;
+    if (busy || tab !== 'today' && tab !== 'todo'){ if (busy){ e.stopPropagation(); e.preventDefault(); } return; }
+    const all = names(), dir = all.indexOf(to) > all.findIndex(b => b.classList.contains('on')) ? 1 : -1;
+    e.stopPropagation(); e.preventDefault();
+    const st = begin(dir); st.to[dir] = to; need(st, dir); if (!st.panes[dir]){ clean(st); land(to); return; }
+    st.keep = dir; setX(st, 0, 0); st.panes[dir].inner.getBoundingClientRect(); settle(st, to, 280);
+  }, true);
 }
 /* ---------- SWIPE-NAV end ---------- */
 
