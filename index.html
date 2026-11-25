@@ -962,7 +962,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'ce0b333823';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'ac6636a56e';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -10119,6 +10119,9 @@ function checklistBlock(t, k, locked){
     <button class="clhead" data-clopen="${esc(t.id)}" aria-expanded="${open}" aria-label="${open ? 'Hide' : 'Show'} checklist, ${got} of ${cl.length} done">${bar(100*got/cl.length, null, 'clbar')}<span class="cln">${got}/${cl.length}</span><span class="clchev">${svg(open ? 'up' : 'down',16,2.4)}</span></button>
   </div>`;
 }
+// the last mini-boss, if you beat it after the boss fell (it stays on the Today card until the next boss or mini-boss shows up)
+const miniDown = () => { const lm = D.minis[D.minis.length - 1]; return !D.mini && lm && lm.status === 'won' && D.cur.status === 'won' ? lm : null; };
+const todayFoe = () => { const lm = miniDown(); return D.mini ? {foe: D.mini.m, down: false} : lm ? {foe: lm.m, down: true} : {foe: D.cur.boss, down: D.cur.status === 'won'}; };
 function assistMsg(){
   const f = D.cur, daysLeft = dayIdx(f.end) - dayIdx(D.today) + 1, a = D.lastAttack;
   if (D.inn) return {k:'Resting at the Inn', p:`Fight paused. ${D.innFee} G a day.`, cta:'See battle'};
@@ -10127,6 +10130,7 @@ function assistMsg(){
   if (a && a.dmg > 0) return {k:`Last night · ${a.boss}`, p:`Hit you for ${a.dmg} HP for ${a.missed} missed dailies${a.dodged ? ` (you dodged ${a.dodged})` : ''}.${a.status ? ` You're ${STATUS[a.status].name.toLowerCase()}.` : ''}`, cta:'See battle'};
   if (D.mini){ const mm = D.mini, m = mm.m; return {k:`${m.name} · mini-boss`, p:`${mm.rem} HP to go. ${m.weak.map(x => STATS[x].name).join(' and ')} hit twice as hard. Prize: ${miniPrizeTxt(mm)}. Runs off ${fmtDow(mm.flees)}.`, cta:"Let's fight"}; }
   if (D.readyCount && f.status === 'now') return {k:`${S.petName} says`, p:`${D.readyCount} skill${D.readyCount===1?' is':'s are'} ready to use. Time to hit ${f.boss.name}.`, cta:'Use skills'};
+  if (miniDown()) return {k:'Victory', p:`You beat the ${miniDown().m.name}. ${(D.nextRite || bossFor(f.c+1)).name} shows up ${fmt(addDays(f.end,1))}.${S.altarFrom ? ' Until then, finished tasks earn Keystones.' : ''}`, cta:'See battle'};
   if (f.status === 'won') return {k:'Victory', p:`You beat ${f.boss.name}. ${(D.nextRite || bossFor(f.c+1)).name} shows up ${fmt(addDays(f.end,1))}.${S.altarFrom ? ' Until then, finished tasks earn Keystones.' : ''}${D.smog.on ? ' Missed dailies will turn the air toxic.' : ''}`, cta:'See battle'};
   const weakTxt = f.boss.weak.length >= 5 ? 'Every stat hits it hard.' : `${f.boss.weak.map(s => STATS[s].name).join(' and ')} tasks hit twice as hard.`;
   return {k:`${f.boss.name} · ${daysLeft} day${daysLeft===1?'':'s'} left`, p:`${f.rem} HP to go. ${weakTxt}`, cta:"Let's fight"};
@@ -10293,7 +10297,7 @@ function renderToday(){
   ${chestCard()}
   ${D.partial[D.yest] && !dismissed('partial') ? notice('partial', `Partial progress yesterday: <b>+${D.partial[D.yest].g} G</b> for ${D.partial[D.yest].n} step${D.partial[D.yest].n === 1 ? '' : 's'} on unfinished tasks`) : ''}
   ${D.tokens && !dismissed('tokens') ? notice('tokens', `${D.tokens} free rune${D.tokens===1?'':'s'} waiting in your inventory`) : ''}
-  ${S.settings.collapse.boss ? `<div class="mini assistmini"><button class="minimain" data-tab="battle"><canvas id="bossMiniCv" width="128" height="128" aria-hidden="true"></canvas><span><b>${esc(D.mini ? D.mini.m.name : D.cur.boss.name)}</b><span class="small">${D.mini ? `${D.mini.rem}/${D.mini.hp} HP` : D.cur.status === 'now' ? `${D.cur.rem}/${D.cur.hp} HP` : esc(a.k)}</span></span></button><button class="minitog" data-collapse="boss" aria-expanded="false" aria-label="Show the boss card">${svg('back',16,2.6)}</button></div>`
+  ${S.settings.collapse.boss ? `<div class="mini assistmini"><button class="minimain" data-tab="battle"><canvas id="bossMiniCv" width="128" height="128" aria-hidden="true"></canvas><span><b>${esc(todayFoe().foe.name)}</b><span class="small">${D.mini ? `${D.mini.rem}/${D.mini.hp} HP` : D.cur.status === 'now' ? `${D.cur.rem}/${D.cur.hp} HP` : esc(a.k)}</span></span></button><button class="minitog" data-collapse="boss" aria-expanded="false" aria-label="Show the boss card">${svg('back',16,2.6)}</button></div>`
   : `<div class="assistwrap"><button class="assist" id="bossmini" data-tab="battle">
     <span><span class="k">${esc(a.k)}</span><p>${esc(a.p)}</p><span class="pillbtn">${esc(a.cta)}</span></span>
     <canvas id="bossMiniCv" width="128" height="128" aria-hidden="true"></canvas>
@@ -11319,7 +11323,7 @@ function renderInner(){
   centerTabs(v);
   drawIcons(v);
   if ((sheetMode === 'stats' || sheetMode === 'inv') && !document.getElementById('sheet').hidden) renderSheet();
-  draw();
+  draw(); drawNewBoss(true);
   showAward();
 }
 // keep the selected name in view in a scrolling strip of names (the to-do lists), centred where there's room
@@ -11346,8 +11350,9 @@ function draw(){
   const hurt = now < hurtUntil && Math.floor(now/90)%2 === 0;
   const foe = D.mini ? D.mini.m : D.cur.boss, down = !D.mini && D.cur.status === 'won';
   const fx = (typeof conf !== 'undefined' && conf && conf.raf) || (typeof stars !== 'undefined' && stars && stars.raf);   // hold the boss still while confetti or stars are flying, so they stay smooth
-  if ((!fx || hurt) && !(foe && NEW_ART[foe.shape])){ const m = document.getElementById('bossMiniCv'); if (m) drawBoss(m, foe, frame, motionOK, hurt, down);
-  const b = document.getElementById('bossCv'); if (b) drawBoss(b, foe, frame, motionOK, hurt, down); }   // redrawn bosses run on their own steady 10 fps loop below
+  const tf = todayFoe();   // the Today card can show a beaten mini-boss; the Battle page keeps the boss
+  if (!fx || hurt){ const m = document.getElementById('bossMiniCv'); if (m && !NEW_ART[tf.foe.shape]) drawBoss(m, tf.foe, frame, motionOK, hurt, tf.down);
+  const b = document.getElementById('bossCv'); if (b && !(foe && NEW_ART[foe.shape])) drawBoss(b, foe, frame, motionOK, hurt, down); }   // redrawn bosses run on their own steady 10 fps loop below
   const sp = document.getElementById('spaceCv'); if (sp) drawSpace(sp);
   const nc = document.getElementById('nightCv'); if (nc) drawNight(nc);
   const shc = document.getElementById('shopCv'); if (shc) drawShopFront(shc, motionOK ? frame : 0);
@@ -11355,13 +11360,13 @@ function draw(){
 }
 setInterval(() => { frame++; if (motionOK || Date.now() < jumpUntil + 200 || Date.now() < hurtUntil + 200) draw(); }, 140);
 // redrawn bosses animate at exactly 10 fps (their frames are designed at 100 ms), so they step one frame per tick and loop cleanly
-function drawNewBoss(){ if (recoveryMode || !D) return; const foe = D.mini ? D.mini.m : D.cur.boss; if (!foe || !NEW_ART[foe.shape]) return;
+function drawNewBoss(still){ if (recoveryMode || !D) return; const foe = D.mini ? D.mini.m : D.cur.boss, tf = todayFoe(); if (!foe) return;
   const now = Date.now(), hurt = now < hurtUntil && Math.floor(now / 90) % 2 === 0, down = !D.mini && D.cur.status === 'won';
   const fx = (typeof conf !== 'undefined' && conf && conf.raf) || (typeof stars !== 'undefined' && stars && stars.raf);
-  if (fx && !hurt) return;
-  bossTick = (bossTick < 0 ? 0 : bossTick) + 1;
-  for (const id of ['bossMiniCv', 'bossCv']){ const cv = document.getElementById(id); if (cv) drawBoss(cv, foe, frame, motionOK, hurt, down); } }
-setInterval(drawNewBoss, 100);
+  if (still !== true){ if (fx && !hurt) return; bossTick = (bossTick < 0 ? 0 : bossTick) + 1; }   // still: paint the current frame straight after a redraw, so the picture never blinks
+  const m = document.getElementById('bossMiniCv'); if (m && NEW_ART[tf.foe.shape]) drawBoss(m, tf.foe, frame, motionOK, hurt, tf.down);
+  const b = document.getElementById('bossCv'); if (b && NEW_ART[foe.shape]) drawBoss(b, foe, frame, motionOK, hurt, down); }
+setInterval(() => drawNewBoss(), 100);
 setInterval(() => { if (recoveryMode || !D) return; let nd; try { nd = derive(); } catch(e){ render(); return; } if (nd.today !== D.today || nd.mood !== D.mood) render(); }, 60000);
 function floatAt(x, y, html){
   // keep it on screen; a zero rect means the button was re-rendered away, so use the middle
