@@ -930,7 +930,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '61d3ac4046';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'ef27803131';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -8727,6 +8727,147 @@ function drawKeyhole(cv, f, accent){
   blitBuf(ctx, buf, W, H);
 }
 
+// ---- Snooze Kobold (style guide v1)
+// The Snooze Kobold, 16B "the dial". "Hits snooze for you. Nine times." A black lidded orb that is one eye, almost shut under a heavy banded
+// lid with a snooze button on its crown. Nine small discs wheel round it on a dial, each a shut eye: eight spent, one lit and tethered.
+// Once a loop the lit disc rings, the eye snaps half open, the button drops, the lid slams, the light dies and the next disc round lights.
+// The dial turns exactly one ninth per loop, so the new lit disc ends where the old one began. Pop: the eye, the lit disc and tether, the pool.
+function drawSnooze(cv, f, accent){
+  const LOOP = 64, P = (f % LOOP) / LOOP, TAU = Math.PI * 2; f = f % LOOP;
+  const W = 128, H = 104, A = POP_RAMPS[accent] || POP_RAMPS.blush, D = !!drawSnooze.dead;
+  const K = '#121110', G1 = '#211f1d', G2 = '#2e2a27', G3 = '#3f3a36', G4 = '#57514b', G5 = '#756e66';
+  if (!drawSnooze.sc){ drawSnooze.sc = document.createElement('canvas'); drawSnooze.sc.width = W; drawSnooze.sc.height = H; }
+  const sc = drawSnooze.sc, sx = sc.getContext('2d', {willReadFrequently: true}), buf = new Array(W * H).fill(null);
+  let XF = null;
+  const L = shapeLayer(sx, W, H, buf, () => XF);
+  const ell = (x, y, rx, ry, rot = 0) => c => { c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); c.fill(); };
+  const path = pts => c => { c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.closePath(); c.fill(); };
+  const strokeP = (pts, w) => c => { c.lineWidth = w; c.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? c.lineTo(...p) : p.length === 4 ? c.quadraticCurveTo(...p) : c.bezierCurveTo(...p); c.stroke(); };
+  const rect = (x, y, w, h) => c => { c.rect(x, y, w, h); c.fill(); };
+  const R = (c, x, y, w = 1, h = 1) => L(c, rect(Math.round(x), Math.round(y), w, h));
+  const rot = (a, cx, cy) => { const cs = Math.cos(a), sn = Math.sin(a); return [cs, sn, -sn, cs, cx - cs * cx + sn * cy, cy - sn * cx - cs * cy]; };
+  const ap = (m, x, y) => [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]];
+  const arc = (c, x, y, rx, ry, w, a0, a1) => L(c, k => { k.lineWidth = w; k.ellipse(x, y, rx, ry, 0, a0, a1); k.stroke(); });
+  const greyX = (x, y) => { for (let i = 0; i < 5; i++) for (let j = 0; j < 5; j++) if (Math.abs(i - j) <= 1 || Math.abs(i + j - 4) <= 1){ if ((i === 2 && (j === 0 || j === 4)) || (j === 2 && (i === 0 || i === 4))) continue; L(G4, rect(x + i, y + j, 1, 1)); } };
+  const ss = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  const cx = 64, cy = 45, RO = 33;
+
+  // ------------------------------------------------------------------ the beat, all in loop phase
+  const T_RING = 0.42, T_OPEN = 0.47, T_PRESS = 0.60, T_SLAM = 0.625, T_NEXT = 0.72;
+  const ringing = !D && P >= T_RING && P < T_SLAM, dark = !D && P >= T_SLAM && P < T_NEXT;
+  // the eye's opening in pixels: sinks 4 -> 1 as it nods off (with one small jerk back), snaps to 8 on the alarm, 0 on the slam, creeps back to 4
+  let lo;
+  if (P < T_OPEN){ const u = P / T_OPEN; lo = 4 - 3.2 * ss(0, 1, u) + (u > 0.52 && u < 0.62 ? 1 : 0); }
+  else if (P < T_SLAM) lo = P < T_OPEN + 0.02 ? 6 : 8;
+  else if (P < 0.80) lo = 0;
+  else lo = 4 * ss(0.80, 0.985, P);
+  lo = Math.round(lo); if (D) lo = 8;
+  const press = !D && P >= T_PRESS && P < 0.70 ? 2 : !D && P >= 0.70 && P < 0.75 ? 1 : 0;        // the snooze button: down just before the lid, slow to come back
+  const slam = !D && P >= T_SLAM && P < T_SLAM + 0.05;
+  const cb = D ? 0 : slam ? 2 : (P >= T_SLAM + 0.05 && P < T_SLAM + 0.09) ? 1 : (ringing && P >= T_OPEN && P < T_OPEN + 0.04) ? -2 : Math.round(Math.sin(TAU * P * 2) * 1);   // the core floats; jolts up awake, thumps down on the slam
+  const disc = k => { const a = -Math.PI / 2 - TAU * 0.5 / 9 + TAU * (P - k) / 9; return [cx + Math.cos(a) * RO, cy + Math.sin(a) * RO, a]; };
+  const litK = P < T_SLAM ? 0 : 1;
+
+  // ------------------------------------------------------------------ the pool: banded, dimming when the light is killed
+  if (D){ L(G1, ell(cx, 96, 44, 3.4)); L(K, ell(cx - 2, 96, 26, 1.6)); }
+  else { const dim = dark ? 1 : 0, fl = ringing && (f & 1) ? 1 : 0;
+    L(A[0], ell(cx, 95, 27, 3.6)); if (!dim) L(A[1], ell(cx, 95, 20 + fl * 2, 2.4)); else L(A[0], ell(cx, 95, 20, 2.4));
+    L(A[dim ? 1 : 2], ell(cx, 95, 12 + fl * 2, 1.3)); if (!dim) R(A[4], cx - 4 - fl * 2, 95, 8 + fl * 4, 1);
+    R(K, cx - 9, 93, 18, 1); R(A[0], cx - 33, 95, 3, 1); R(A[0], cx + 31, 96, 2, 1); R(A[1], cx + 36, 95, 1, 1); R(A[1], cx - 37, 96, 1, 1); }
+
+  // ------------------------------------------------------------------ floating debris
+  if (!D){ const deb = [[14, 30, 2, 1, 0.3], [112, 26, 2, 2, 1.9], [20, 66, 1, 1, 4.1], [108, 70, 2, 1, 2.6], [10, 50, 1, 2, 5.2], [118, 48, 1, 1, 0.9], [26, 14, 1, 1, 3.3], [100, 10, 2, 2, 1.2], [34, 84, 2, 1, 2.2], [96, 86, 1, 1, 4.6]];
+    for (const [x, y, s, n, ph] of deb) R(K, x + Math.round(Math.sin(TAU * P * n + ph) * 1.5), y + Math.round(Math.cos(TAU * P * n + ph) * 2), s, s);
+    R(A[1], 22 + Math.round(Math.sin(TAU * P + 1) * 2), 78 - Math.round(((P + 0.3) % 1) * 5)); R(A[0], 106, 80 - Math.round(((P + 0.7) % 1) * 6), 2, 2); }
+
+  // ------------------------------------------------------------------ the dial: a track with fixed ticks, then nine discs
+  const drawDisc = (x, y, lit, flare, cool) => { x = Math.round(x); y = Math.round(y);
+    if (flare) x += (f & 1) ? 1 : -1;
+    const r = lit ? 7 : 6;
+    L(K, ell(x + 0.5, y + 0.5, r, r));
+    if (!lit){ arc(G3, x + 0.5, y + 0.5, r - 1, r - 1, 1, Math.PI * 1.1, Math.PI * 1.62); R(G1, x - 3, y + 3, 7, 1);         // a lit rim, a faint lower band
+      R(G1, x - 4, y - 2, 9, 1); R(cool ? G5 : G4, x - 3, y, 7, 1); R(cool ? '#8e867b' : G5, x - 3, y, 2, 1); }   // its shut-eye dash, two short lashes
+    else if (!flare){ arc(A[0], x + 0.5, y + 0.5, 8.5, 8.5, 1, 0, TAU); arc(A[1], x + 0.5, y + 0.5, 8.5, 8.5, 1, Math.PI * 1.05, Math.PI * 1.7);
+      R(A[0], x - 4, y - 1, 9, 4); R(A[1], x - 3, y, 7, 2); R(A[3], x - 3, y + 1, 7, 1); R(A[4], x - 1, y + 1, 3, 1); R(K, x, y, 1, 1); R(K, x - 5, y - 2, 11, 2);
+      R(A[1], x - 2, y + 8, 1, 2); R(A[0], x - 2, y + 11 + Math.round(((P * 2) % 1) * 3), 1, 1); }
+    else { arc(A[2], x + 0.5, y + 0.5, 8.5, 8.5, 1, 0, TAU);
+      R(A[1], x - 5, y - 2, 11, 5); R(A[3], x - 4, y - 1, 9, 3); R(A[4], x - 3, y, 7, 1); R(K, x - 1, y - 1, 3, 3); R(A[4], x - 1, y - 1, 1, 1); } };
+  if (!D){
+    arc(G1, cx, cy, RO, RO, 1, 0, TAU);
+    for (let i = 0; i < 36; i++){ const a = i / 36 * TAU, big = i % 4 === 0; R(K, cx + Math.cos(a) * (RO + (big ? 0 : 0)) - 0.5, cy + Math.sin(a) * RO - 0.5, 1, 1); if (big) R(K, cx + Math.cos(a) * (RO - 2) - 0.5, cy + Math.sin(a) * (RO - 2) - 0.5, 1, 1); }
+    // the tether: a dotted pop line from the core to the lit disc. It dies with the light, then runs out to the next one.
+    const teth = (k, from, to, c0, c1) => { const [x, y, a] = disc(k); for (let d = 21; d < RO - 7; d += 2){ const u = (d - 21) / (RO - 28); if (u < from || u > to) continue; R(((d / 2) | 0) % 2 ? c0 : c1, cx + Math.cos(a) * d - 0.5, cy + Math.sin(a) * d - 0.5, 1, 1); } };
+    for (let k = 0; k < 9; k++) if (k !== litK || dark){ const [, , a] = disc(k); R(G1, cx + Math.cos(a) * 24 - 0.5, cy + Math.sin(a) * 24 - 0.5, 1, 1); }    // spent stubs
+    if (P < T_SLAM) teth(0, 0, 1, ringing ? A[2] : A[1], ringing ? A[3] : A[0]);
+    else if (P < T_NEXT) teth(1, 0, ss(T_SLAM + 0.02, T_NEXT, P), A[1], A[2]);
+    else teth(1, 0, 1, A[1], A[0]);
+    for (let k = 8; k >= 0; k--){ const [x, y] = disc(k), lit = k === litK && !dark;
+      drawDisc(x, y, lit, lit && ringing, k === 0 && P >= T_SLAM && P < T_SLAM + 0.07); }
+    // the alarm: short pulse rings thrown off the lit disc's sides
+    if (ringing){ const [x, y] = disc(0); for (let j = 0; j < 3; j++){ const u = ((P - T_RING) * 9 + j / 3) % 1, r = 10 + u * 9, c = u < 0.35 ? A[3] : u < 0.7 ? A[1] : A[0];
+        arc(c, x + 0.5, y + 0.5, r, r, u < 0.35 ? 1.6 : 1, Math.PI * 0.86, Math.PI * 1.14); arc(c, x + 0.5, y + 0.5, r, r, u < 0.35 ? 1.6 : 1, -Math.PI * 0.14, Math.PI * 0.14); } }
+    // the killed light: a few embers fall off the disc and go out
+    if (P >= T_SLAM && P < 0.86){ const [x, y] = disc(0), u = (P - T_SLAM) / (0.86 - T_SLAM); for (const [dx, v, s] of [[-4, 16, 2], [1, 24, 1], [5, 12, 1], [-1, 9, 2]]){ if (u * 24 > v + 6) continue; R(u < 0.3 ? A[2] : u < 0.6 ? A[1] : A[0], x + dx + u * dx * 0.6, y + 7 + u * v, s, s); } }
+  }
+
+  // ------------------------------------------------------------------ the core: a lidded orb. Drawn through one function so the beaten one can be tilted.
+  const core = (X, Y) => { const yb = Y + 5, yl = yb - lo, yT = Y - 18 - Math.round(lo * 0.25);
+    L(K, ell(X, Y + 1, 17, 17));                                                                       // the body behind the lids
+    // the socket and the eye in it
+    if (D){ R(K, X - 15, Y - 5, 30, 10); }
+    else { R(A[0], X - 15, Y - 5, 30, 10); R(A[1], X - 14, Y - 4, 28, 9);
+      L(A[2], ell(X, Y, 5.5, 5.5)); arc(A[3], X, Y, 4, 4, 1, 0, TAU); L(K, ell(X, Y, 2.4, 2.4)); R(A[4], X - 3, Y - 3, 2, 1);
+      for (const s of [-1, 1]){ R(A[0], X + s * 10 - 1, Y - 4, 2, 8); R(A[0], X + s * 13 - 1, Y - 4, 1, 8); }                        // the socket darkens in steps to its corners
+      R(A[2], X - 13, yb - 1, 26, 1); R(A[3], X - 10, yb - 1, 20, 1); R(A[4], X - 4, yb - 1, 8, 1);                      // the wet lower rim of the eye
+      if (lo === 1) R(A[1], X - 12, yb, 24, 1); }
+    // the lower lid and bowl: narrower than the lid, one hard band
+    L(K, path([[X - 18, yb], [X + 18, yb], [X + 18, yb + 2], [X + 16, yb + 8, X + 9, yb + 12], [X + 4, yb + 14, X, yb + 14], [X - 4, yb + 14, X - 9, yb + 12], [X - 16, yb + 8, X - 18, yb + 2]]));
+    R(G3, X - 17, yb, 34, 1); R(G4, X - 17, yb, 10, 1); R(G1, X - 14, yb + 5, 28, 2); R(G3, X - 14, yb + 5, 7, 1);                   // a lit lip, a band
+    arc(G3, X, yb + 1, 16, 12.4, 1, Math.PI * 0.66, Math.PI * 0.9);
+    R(K, X - 3, yb + 13, 6, 3); R(G3, X - 3, yb + 14, 2, 1);                                                // a nub under the bowl
+    // the heavy lid: a banded dome with a flat brim
+    L(K, path([[X - 20, yl - 2], [X - 20, yl - 11, X - 14, yT + 5], [X - 7, yT, X, yT], [X + 7, yT, X + 14, yT + 5], [X + 20, yl - 11, X + 20, yl - 2]]));
+    R(K, X - 22, yl - 3, 44, 3);                                                                          // the brim, overhanging
+    const hw = y => Math.round(20 * Math.sqrt(Math.max(0, 1 - Math.pow((yl - 2 - y) / (yl - 2 - yT), 2))));
+    { const y = yl - 9, w = hw(y) - 2; R(G1, X - w, y, w * 2, 3); R(G3, X - w, y, Math.round(w * 0.55), 1); }                       // one wide band round the dome
+    R(G3, X - 21, yl - 3, 42, 1); R(G5, X - 21, yl - 3, 13, 1); R(G4, X - 8, yl - 3, 7, 1);                                         // the brim's lit top edge
+    arc(G4, X, yl - 2, 19, yl - 3 - yT, 1, Math.PI * 1.1, Math.PI * 1.36); arc(G3, X, yl - 2, 19, yl - 3 - yT, 1, Math.PI * 1.36, Math.PI * 1.5);   // the faint lit rim on the crown
+    for (const [dx, l] of [[-22, 3], [-20, 2], [21, 3], [19, 1]]) R(K, X + dx, yl, 1, l);                                        // lashes off the brim ends
+    if (lo >= 3) for (const dx of [-10, -4, 5, 11]) R(K, X + dx, yl, 1, Math.min(2, lo - 2));                                    // and heavy ones across the eye
+    // the snooze button on the crown
+    R(K, X - 2, yT - 2, 4, 3); R(K, X - 5, yT - 4 + press, 10, 2); R(G4, X - 4, yT - 4 + press, 4, 1); R(G3, X, yT - 4 + press, 3, 1);
+    return [yb, yl, yT]; };
+
+  if (!D){
+    const Y = cy + cb, [yb, yl, yT] = core(cx, Y);
+    // drips hanging from the bowl, and one slow pop drip from the corner of the seam
+    for (const [dx, l, k] of [[-9, 3, 1], [-1, 5, 2], [9, 2, 3]]){ const ll = l + Math.round(Math.sin(TAU * P + k * 2) * 1), y0 = yb + (Math.abs(dx) > 5 ? 11 : 16); R(K, cx + dx, y0, 1 + (l > 4 ? 1 : 0), ll); if (l > 4) R(K, cx + dx, y0 + ll + 2 + Math.round(((P + 0.4) % 1) * 5), 1, 1); }
+    const dp = P < 0.5 ? 1 + Math.round(ss(0, 0.5, P) * 4) : P >= 0.86 ? 1 : 0;
+    if (dp) { R(A[1], cx - 12, yb, 1, dp); R(A[2], cx - 12, yb + dp - 1, 1, 1); }
+    if (P >= 0.5 && P < 0.74){ const u = (P - 0.5) / 0.24, y = yb + 5 + u * u * (93 - yb - 5); R(A[2], cx - 12, y, 1, 2); }
+    if (P >= 0.74 && P < 0.86){ const u = (P - 0.74) / 0.12; arc(A[3], cx - 12, 95, 2 + u * 6, 0.6 + u * 1.2, 1, 0, TAU); }
+    // the tap: speed lines above the button, shock dashes off the brim
+    if (P >= T_PRESS && P < T_SLAM){ R(G5, cx - 1, yT - 11, 2, 4); R(G4, cx - 6, yT - 10, 1, 3); R(G4, cx + 5, yT - 10, 1, 3); }
+    if (slam){ for (const s of [-1, 1]){ R(G5, cx + s * 27 - 2, yl - 2, 4, 1); R(G4, cx + s * 26 - 1, yl - 6, 3, 1); R(G4, cx + s * 26 - 1, yl + 2, 3, 1); } R(K, cx - 25, yl + 5, 2, 2); R(K, cx + 24, yl + 6, 2, 2); }
+  } else {
+    // ---------------------------------------------------------------- beaten: the dial has stopped. Discs lie scattered, the core dropped and tilted.
+    const flat = (x, y) => { L(K, ell(x, y + 1, 7, 3)); L(K, ell(x, y, 7, 3)); L(G1, ell(x, y, 5.6, 2)); arc(G3, x, y, 6, 2.2, 1, Math.PI * 1.05, Math.PI * 1.75); R(G4, x - 3, y, 6, 1); };
+    const up = (x, y, a) => { XF = rot(a, x, y); L(K, ell(x, y, 6, 6)); arc(G3, x, y, 5, 5, 1, Math.PI * 1.1, Math.PI * 1.62); R(G4, x - 3, y, 7, 1); R(G5, x - 3, y, 2, 1); XF = null; };
+    flat(15, 93); up(29, 89, 0.5); flat(40, 97); flat(97, 98); flat(113, 95); flat(111, 91); up(98, 89, -0.35); flat(25, 99);
+    // bits of the track
+    arc(G1, 22, 80, 12, 4, 1, Math.PI * 1.1, Math.PI * 1.7); arc(G1, 104, 78, 10, 3, 1, Math.PI * 1.3, Math.PI * 1.9); R(K, 14, 84, 2, 2); R(K, 118, 84, 1, 1); R(K, 50, 99, 2, 1); R(K, 88, 100, 1, 1);
+    const X = 62, Y = 75, a = -0.32; XF = rot(a, X, Y + 16); const m = XF; core(X, Y);
+    
+    XF = null; up(80, 91, 1.2);                                                                          // the ninth disc leans on the fallen core
+    const e = ap(m, X, Y + 0.5); greyX(Math.round(e[0]) - 2, Math.round(e[1]) - 2);
+    const hd = ap(m, X, Y - 26); drawSnooze.deadHead = [Math.round(hd[0]), Math.round(hd[1])];
+  }
+  if (!drawSnooze.deadHead) drawSnooze.deadHead = [52, 54];
+
+  const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, W, H);
+  blitBuf(ctx, buf, W, H);
+}
+
 const NEW_ART = {
   giant: Object.assign((cv, f, acc, dead) => { drawFogColossus.dead = dead; drawFogColossus(cv, f, acc); }, {ownDead: true, starY: 2, starX: 64, starRX: 14, starRY: 3}),
   hunch: Object.assign((cv, f, acc, dead) => { drawHunch.dead = dead; drawHunch(cv, f, acc); }, {ownDead: true, starY: 60, starX: 44, starRX: 15, starRY: 4}),
@@ -8752,6 +8893,7 @@ const NEW_ART = {
   humbar: Object.assign((cv, f, acc, dead) => { drawHumBar.dead = dead; drawHumBar(cv, f, acc); }, {ownDead: true, starY: 31, starX: 64, starRX: 12, starRY: 3}),
   troll: Object.assign((cv, f, acc, dead) => { drawArch.dead = dead; drawArch(cv, f, acc); }, {ownDead: true, starY: 56, starX: 42, starRX: 12, starRY: 3}),
   keyhole: Object.assign((cv, f, acc, dead) => { drawKeyhole.dead = dead; drawKeyhole(cv, f, acc); }, {ownDead: true, starY: 21, starX: 88, starRX: 12, starRY: 3}),
+  kobold: Object.assign((cv, f, acc, dead) => { drawSnooze.dead = dead; drawSnooze(cv, f, acc); }, {ownDead: true, starY: 51, starX: 49, starRX: 12, starRY: 3}),
   golem: Object.assign((cv, f, acc, dead) => { Object.assign(drawLaundryGolem, {pose: 'hips', hanger: 'light', basketLight: true, sticker: false, aura: false, dead}); drawLaundryGolem(cv, f, acc); }, {ownDead: true, starY: 13}),
   gremlin: Object.assign((cv, f, acc, dead) => { drawKneeGremlin.dead = dead; drawKneeGremlin(cv, f, acc); }, {ownDead: true, starY: 50, starX: 62, starRX: 9, starRY: 3, starSmall: true}),
   kraken: Object.assign((cv, f, acc, dead) => { drawCouchKraken.dead = dead; drawCouchKraken(cv, f, acc); }, {ownDead: true, starY: 34}),   // it slumps by itself, so the TV static isn't squashed
