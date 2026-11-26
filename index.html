@@ -809,6 +809,83 @@ html .pkcustom input{flex:1;min-width:0;border:0;background:var(--track);border-
 .rrbtn{padding:5px 10px;font-size:11.5px;min-height:0}
 .rrmore{font-size:11.5px;min-height:0;padding:4px 2px}
 
+/* ---- Breathe: guided breathing. Dark like Focus and Sleep, with the pop colour for the breath itself ---- */
+body.focusmode.breathmode,body.focusmode.breathmode[data-pomo]{--g1:#40263f;--g2:#1c1521}
+.brpage{gap:10px;padding-bottom:120px}
+.brdeck{display:flex;width:100%;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+.brdeck::-webkit-scrollbar{display:none}
+.brcard{flex:0 0 100%;min-width:0;scroll-snap-align:center;scroll-snap-stop:always;display:flex;flex-direction:column;align-items:center;gap:14px;padding:6px 10px 0}
+.brchips{display:inline-flex;gap:4px;padding:8px 10px;border-radius:18px;background:rgba(241,238,228,.08);box-shadow:inset 0 0 0 1px rgba(241,238,228,.1)}
+.brchip{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:52px;padding:2px 4px;color:#f1eee4;font-size:12px;font-weight:600;line-height:1.2}
+.brchip svg{opacity:.9}
+.brchip b{font-variant-numeric:tabular-nums;font-weight:700}
+.brtext{margin:0;max-width:300px;min-height:66px;text-align:center;font-size:16px;line-height:1.4;color:#d6d0dc}
+.brdots{display:flex;justify-content:center}
+.brdot{width:26px;height:40px;border:0;background:none;padding:0;cursor:pointer;display:grid;place-items:center}
+.brdot::before{content:'';width:7px;height:7px;border-radius:50%;background:rgba(241,238,228,.28);transition:background .2s ease}
+.brdot.on::before{background:var(--pink)}
+.brctl{display:grid;grid-template-columns:48px auto 48px;align-items:center;justify-content:center;gap:34px;margin-top:2px}
+.iconbtn.brib{background:rgba(241,238,228,.1);color:#f1eee4;box-shadow:inset 0 0 0 1px rgba(241,238,228,.14);font:inherit;font-size:24px;font-weight:500;line-height:1}
+.iconbtn.brib.on{background:var(--pink);color:#171614;box-shadow:none}
+.iconbtn.brib:disabled{opacity:.35;cursor:default}
+.brstart{width:128px;height:128px;border-radius:50%;border:0;background:#f7f3ee;color:#141312;font:inherit;font-size:20px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;box-shadow:0 0 0 9px rgba(241,238,228,.08),0 0 46px rgba(238,183,216,.28)}
+.brstart b{font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:40px;line-height:1;font-variant-numeric:tabular-nums}
+.brstart span{font-size:13px;font-weight:600}
+.brstart.sm{width:72px;height:72px;font-size:16px;box-shadow:0 0 0 7px rgba(241,238,228,.08)}
+.brmin{min-height:44px;padding:9px 18px;font-size:14px;font-variant-numeric:tabular-nums;margin-top:8px}
+.brmin.go{background:var(--pink);color:#171614;box-shadow:none}
+.brnote{margin:6px 0 0;font-size:13px;color:#a9a3b8;text-align:center}
+/* the session: a full-screen stage; the buttons fade away until you tap */
+body.breathrun .nav{display:none}
+body.breathrun .top{position:relative;z-index:8}
+.brstage{position:fixed;inset:0;z-index:6;color:#f1eee4;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.brfield{position:absolute;left:50%;top:47%;width:min(78vw,300px,46vh);aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:rgba(241,238,228,.07);box-shadow:inset 0 0 0 1px rgba(241,238,228,.07)}
+.brring{position:absolute;inset:0;border-radius:50%;background:var(--pink);opacity:.3;transform:scale(.36);will-change:transform}
+.brarc{position:absolute;inset:-7px;width:calc(100% + 14px);height:calc(100% + 14px);transform:rotate(-90deg);display:none}
+.brarc circle{fill:none;stroke-width:2.2;stroke:rgba(241,238,228,.12)}
+.brarc circle + circle{stroke:var(--pink);stroke-linecap:round}
+.brcore{position:absolute;left:32%;top:32%;width:36%;height:36%;border-radius:50%;background:var(--pink);color:#171614;display:grid;place-items:center;font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;box-shadow:0 6px 26px rgba(0,0,0,.28)}
+.brcore span.swap{animation:brswap .45s ease}
+@keyframes brswap{from{opacity:0}to{opacity:1}}
+.brsr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.brtop{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top) + 82px);display:flex;justify-content:center}
+.brbottom{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 34px);display:flex;flex-direction:column;align-items:center}
+.brbottom .brctl{gap:22px;grid-template-columns:48px auto 48px}
+.brmid{display:flex;align-items:center;gap:14px}
+body.breathrun .top,.brtop,.brbottom{transition:opacity .35s ease}
+body.breathrun:not(.brshow) .top,body.breathrun:not(.brshow) .brtop,body.breathrun:not(.brshow) .brbottom{opacity:0;pointer-events:none}
+/* the finish */
+.brfin{gap:16px;padding-top:10px}
+.brbig{width:176px;height:176px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(241,238,228,.07);box-shadow:inset 0 0 0 2px var(--pink),0 0 0 10px rgba(241,238,228,.05);margin-top:6px}
+.brbig b{font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:68px;line-height:1;font-variant-numeric:tabular-nums}
+.brbig span{font-size:15px;color:#d6d0dc;font-weight:600}
+.brfin .brtext{min-height:0;font-size:18px;color:#f1eee4}
+.brstats{display:grid;grid-template-columns:1fr 1fr;width:100%;max-width:330px;border-radius:20px;background:rgba(241,238,228,.08);box-shadow:inset 0 0 0 1px rgba(241,238,228,.1)}
+.brstats div{display:flex;flex-direction:column;align-items:center;gap:2px;padding:14px 8px}
+.brstats div + div{border-left:1px solid rgba(241,238,228,.12)}
+.brstats span{font-size:13px;color:#bdb6c8;font-weight:600}
+.brstats b{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}
+.brcont{width:100%;max-width:330px;min-height:54px;border:0;border-radius:999px;background:#f7f3ee;color:#141312;font:inherit;font-size:16px;font-weight:700;cursor:pointer;margin-top:6px}
+/* Breathe hides the app's bottom bar; Back and the side menu still lead out */
+body.breathmode .nav{display:none}
+/* the Audio sheet is the app's bottom sheet, in the page's dark colours */
+body.breathmode .qm{background:rgba(6,5,8,.5)}
+body.breathmode .qmcard{background:#26212b;--ink:#f1eee4;--muted:#a9a3b8;--line:rgba(241,238,228,.16);--track:rgba(241,238,228,.1);color:#f1eee4;box-shadow:0 -6px 40px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06)}
+.brsheet{padding:0 10px 4px;display:flex;flex-direction:column}
+.brsheet h3{margin:14px 4px 8px;font-size:13px;font-weight:600;color:#bdb6c8}
+body.breathmode .qmcard .seg{background:rgba(241,238,228,.09)}
+body.breathmode .qmcard .seg button{color:#cfc9d6;font-size:14px;padding:9px 4px}
+body.breathmode .qmcard .seg button.on{background:var(--pink);color:#171614}
+.brvol{display:flex;align-items:center;gap:12px;padding:0 4px;min-height:44px}
+.brvol input{flex:1;min-width:0;height:44px;margin:0;accent-color:var(--pink);background:none}
+.brvol output{width:44px;text-align:right;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+.brsheet .brcont{max-width:none;margin-top:16px}
+@media (prefers-reduced-motion: reduce){
+  .brring{display:none}
+  .brarc{display:block}
+  .brdeck{scroll-behavior:auto}
+}
+
 /* ---- quick menu, quick add, full-screen editors ---- */
 .qm{position:fixed;inset:0;z-index:40;background:rgba(15,14,12,.38);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);animation:qmfade .2s ease}
 .qm[hidden]{display:none}
@@ -963,7 +1040,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '7101f8ad3b';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'db4a68a977';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1625,6 +1702,35 @@ const dayList = a => Array.isArray(a) ? Array.from(new Set(a.map(x => int(x,0,6,
 const byDate = (v, fn) => { const out = {}; if (!obj(v)) return out; for (const [d, inner] of Object.entries(v)){ if (!isDate(d) && !/^w?\d{4}-\d{2}-\d{2}$/.test(d)) continue; const r = fn(inner); if (r && Object.keys(r).length) out[d] = r; } return out; };
 const PROTO_KEYS = new Set(Object.getOwnPropertyNames(Object.prototype).concat(['__proto__','prototype','constructor']));
 const byId = (v, fn) => { const out = {}; if (!obj(v)) return out; for (const [id, x] of Object.entries(v)){ if (typeof id !== 'string' || id.length > 40 || PROTO_KEYS.has(id)) continue; const r = fn(x, id); if (r !== undefined) out[id] = r; } return out; };
+/* ---------- Breathe: the exercises and what is kept in the save ----------
+   S.breath = {cfg: {ex, mins: {exId: minutes}, tone, scape, vol, haptic}, log: {'YYYY-MM-DD': finished sessions}, total: n}
+   The key is only written once Breathe has been used, so a save that never opened it stays exactly as it was. */
+const BREATH_EX = [   // pat = seconds to breathe in, hold, breathe out, hold (0 leaves that part out)
+  {id: 'sleep', name: 'Sleep', pat: [4, 7, 8, 0], text: 'In through the nose, hold, then a long breath out through the mouth. Good in bed.', end: 'Sleep well.'},
+  {id: 'calm', name: 'Calm', pat: [4, 4, 4, 4], text: 'Box breathing. Four even sides, nothing forced.', end: 'Steady.'},
+  {id: 'balance', name: 'Balance', pat: [5, 0, 5, 0], text: 'Five in, five out, no pauses. Breathe low into the belly.', end: 'Evened out.'},
+  {id: 'unwind', name: 'Unwind', pat: [4, 0, 6, 0], text: 'Out longer than in. Let your shoulders drop on each breath out.', end: 'Shoulders down.'},
+  {id: 'energize', name: 'Energize', pat: [2, 0, 2, 0], text: 'Quick, full breaths through the nose. For mornings. Stop if you feel dizzy.', end: 'Awake.'},
+];
+const BREATH_BY = Object.fromEntries(BREATH_EX.map(x => [x.id, x]));
+const BREATH_TONES = ['sine', 'synth', 'bowl', 'off'], BREATH_SCAPES = ['forest', 'river', 'drone', 'off'];
+const BREATH_MIN_LO = 1, BREATH_MIN_HI = 20, BREATH_MIN_DEF = 4;
+function cleanBreath(b){
+  const c = obj(b.cfg) ? b.cfg : {}, mins = {}, log = {};
+  if (obj(c.mins)) for (const ex of BREATH_EX) if (c.mins[ex.id] != null) mins[ex.id] = int(c.mins[ex.id], BREATH_MIN_LO, BREATH_MIN_HI, BREATH_MIN_DEF);
+  if (obj(b.log)) for (const d of Object.keys(b.log).filter(isDate).sort().slice(-1500)){ const n = int(b.log[d], 0, 999, 0); if (n > 0) log[d] = n; }
+  const days = Object.values(log).reduce((a, n) => a + n, 0);
+  return {cfg: {ex: BREATH_BY[c.ex] ? c.ex : 'sleep', mins, tone: BREATH_TONES.includes(c.tone) ? c.tone : 'sine', scape: BREATH_SCAPES.includes(c.scape) ? c.scape : 'off', vol: int(c.vol, 0, 100, 60), haptic: c.haptic !== false},
+    log, total: Math.max(days, int(b.total, 0, 1e6, 0))};
+}
+// two devices: the newer one's settings; each day keeps the higher count, and so does the total
+function mergeBreath(nw, od){
+  if (!obj(nw)) return od; if (!obj(od)) return nw;
+  const out = clone(nw); if (!obj(out.log)) out.log = {};
+  for (const [d, n] of Object.entries(obj(od.log) ? od.log : {})) if (!(Number(out.log[d]) >= Number(n))) out.log[d] = n;
+  out.total = Math.max(Number(out.total) || 0, Number(od.total) || 0);
+  return out;
+}
 function sanitize(s, created){
   const out = {};
   out.created = isDate(s.created) ? s.created : created;
@@ -1697,6 +1803,7 @@ function sanitize(s, created){
   if (obj(s.pomo)){ const c = obj(s.pomo.cfg) ? s.pomo.cfg : {}; const r = s.pomo.run;
     out.pomo = {cfg: {focus: int(c.focus, 5, 90, 25), short: int(c.short, 1, 30, 5), long: int(c.long, 5, 60, 15), every: int(c.every, 2, 8, 4), sound: c.sound !== false, music: c.music !== false, lofi: LOFI_KEYS.includes(c.lofi) ? c.lofi : 'chill', haptic: c.haptic !== false, sleepSnd: ['orange', 'deeper', 'deepest'].includes(c.sleepSnd) ? c.sleepSnd : 'orange', sleepHrs: [8, 10, 12, 0].includes(c.sleepHrs) ? c.sleepHrs : 8, sleepVol: [20, 40, 60, 80, 100].includes(c.sleepVol) ? c.sleepVol : 60},
       run: obj(r) && ['focus','short','long'].includes(r.phase) ? {phase: r.phase, startTs: num(r.startTs, 0), pausedMs: num(r.pausedMs, 0), pauseAt: r.pauseAt ? num(r.pauseAt, 0) : null, n: int(r.n, 0, 999, 0), idle: !!r.idle, ...(r.mins ? {mins: int(r.mins, 5, 90, 25)} : {}), ...(r.extra ? {extra: int(r.extra, 0, 3600000, 0)} : {})} : null}; }
+  if ('breath' in s) out.breath = cleanBreath(obj(s.breath) ? s.breath : {});   // Breathe: settings and finished sessions (absent until it is used)
   out.pomoLog = (Array.isArray(s.pomoLog) ? s.pomoLog : []).filter(x => obj(x)).map(x => ({ts: num(x.ts, 0), mins: int(x.mins, 1, 90, 25)})).filter(x => x.ts > 0);
   out.testGold = PREVIEW && Array.isArray(s.testGold) ? s.testGold.filter(x => obj(x)).map(x => ({ts: num(x.ts, 0), g: int(x.g, 0, 100000, 0)})) : [];
   // which checklist steps are ticked, per day and task
@@ -2510,6 +2617,7 @@ function mergeSaves(a, b){
   if (o.altarFrom && (!out.altarFrom || o.altarFrom < out.altarFrom)) out.altarFrom = o.altarFrom;
   if (o.habitFrom && (!out.habitFrom || o.habitFrom < out.habitFrom)) out.habitFrom = o.habitFrom;
   if (o.habitWk) out.habitWk = 1;
+  if (out.breath || o.breath) out.breath = mergeBreath(out.breath, o.breath);
   if (o.slumpFrom && (!out.slumpFrom || o.slumpFrom < out.slumpFrom)) out.slumpFrom = o.slumpFrom;
   if (o.smogFrom && (!out.smogFrom || o.smogFrom < out.smogFrom)) out.smogFrom = o.smogFrom;
   if (o.sirenFrom && (!out.sirenFrom || o.sirenFrom < out.sirenFrom)) out.sirenFrom = o.sirenFrom;
@@ -9968,7 +10076,13 @@ const ICON = {
   clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
   sunrise:'<path d="M3 18h18M7.5 18a4.5 4.5 0 019 0M12 5v3M4.6 10.6l2 2M19.4 10.6l-2 2M2.5 14.5h2M19.5 14.5h2"/>',
   sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>',
-  bed:'<path d="M3 18v-8M3 14h18v4M21 14v-2a3 3 0 00-3-3h-7v5"/><circle cx="7" cy="11" r="2"/>'
+  bed:'<path d="M3 18v-8M3 14h18v4M21 14v-2a3 3 0 00-3-3h-7v5"/><circle cx="7" cy="11" r="2"/>',
+  wind:'<path d="M3 9h10a3 3 0 10-3-3"/><path d="M3 14h14.5a3 3 0 11-3 3"/><path d="M3 19h6"/>',
+  sliders:'<path d="M4 7h8M18 7h2M4 17h2M12 17h8"/><circle cx="15" cy="7" r="2.6"/><circle cx="9" cy="17" r="2.6"/>',
+  vibe:'<rect x="8.5" y="4" width="7" height="16" rx="2"/><path d="M5 9.5v5M2.5 11v2M19 9.5v5M21.5 11v2"/>',
+  brin:'<path d="M12 19V6M6.5 11.5L12 6l5.5 5.5"/>',
+  brout:'<path d="M12 5v13M6.5 12.5L12 18l5.5-5.5"/>',
+  brhold:'<circle cx="12" cy="12" r="8.5"/><path d="M10 9v6M14 9v6"/>'
 };
 
 /* ---------- UI ---------- */
@@ -10008,13 +10122,20 @@ function daysText(days){
   const run = idx.every((v,i) => i===0 || v === idx[i-1]+1);
   return run && s.length > 2 ? `${DOW[s[0]]}–${DOW[s[s.length-1]]}` : s.map(d => DOW[d]).join(', ');
 }
-const TITLES = {today:'Today', battle:'Battle', todo:'To-dos', shop:'Shop', settings:'Settings', focus:'Focus', sleep:'Sleep', riff:'Riff’s stall', stats:'Stats', skills:'Skill tree', inv:'Inventory', beasts:'Bestiary'};
-const PAGE_TABS = ['settings', 'focus', 'sleep', 'stats', 'skills', 'inv', 'riff', 'beasts'];   // full pages opened from the side menu, with a back button
+const TITLES = {today:'Today', battle:'Battle', todo:'To-dos', shop:'Shop', settings:'Settings', focus:'Focus', sleep:'Sleep', breathe:'Breathe', riff:'Riff’s stall', stats:'Stats', skills:'Skill tree', inv:'Inventory', beasts:'Bestiary'};
+const PAGE_TABS = ['settings', 'focus', 'sleep', 'breathe', 'stats', 'skills', 'inv', 'riff', 'beasts'];   // full pages opened from the side menu, with a back button
 function renderHeader(){
   const d = parseKey(D.today).toLocaleDateString('en-US', {weekday:'long', month:'short', day:'numeric'});
-  const dark = tab === 'focus' || tab === 'sleep'; document.body.classList.toggle('focusmode', dark); document.documentElement.classList.toggle('focusmode', dark); document.body.classList.toggle('sleepmode', tab === 'sleep'); document.body.dataset.pomo = pomoState();
+  const dark = tab === 'focus' || tab === 'sleep' || tab === 'breathe'; document.body.classList.toggle('focusmode', dark); document.documentElement.classList.toggle('focusmode', dark); document.body.classList.toggle('sleepmode', tab === 'sleep'); document.body.dataset.pomo = pomoState();
+  { const br = tab === 'breathe', run = br && !!breathRun; if (!br) breathChrome = false; document.body.classList.toggle('breathmode', br); document.body.classList.toggle('breathrun', run); document.body.classList.toggle('brshow', run && (!!breathRun.pauseAt || breathChrome)); }
   if (tab === 'focus'){
     document.getElementById('top').innerHTML = `<button class="fpill" data-back aria-label="Back to ${TITLES[prevTab] || 'Today'}">${svg('back',20,2.4)} Back</button><span class="row" style="gap:8px">${musicBtn()}<span class="fpill" aria-label="${D.balance} gold"><i class="gdot"></i>${D.balance} G</span></span>`;
+    return;
+  }
+  if (tab === 'breathe'){
+    document.getElementById('top').innerHTML = `<button class="fpill" data-back aria-label="Back to ${TITLES[prevTab] || 'Today'}">${svg('back',20,2.4)} Back</button>` + (breathRun
+      ? `<button class="iconbtn brib" data-breath="stop" aria-label="End the session">${svg('x',20,2.4)}</button>`
+      : `<span class="fpill" aria-label="${D.balance} gold"><i class="gdot"></i>${D.balance} G</span>`);
     return;
   }
   if (tab === 'sleep'){
@@ -10028,13 +10149,14 @@ function renderHeader(){
   }
   document.getElementById('top').innerHTML = `<div><span class="eyebrow">${d}</span><h1>${TITLES[tab]}</h1></div>
     <div class="row" style="gap:8px"><span class="goldpill" aria-label="${D.balance} gold"><i></i>${D.balance} G</span>
-    <button class="iconbtn sm ${(S.pomo.run && !S.pomo.run.idle) || sleepRun ? 'dotted' : ''}" data-drawer aria-label="Menu" aria-haspopup="dialog">${svg('menu',21,2.2)}</button></div>`;
+    <button class="iconbtn sm ${(S.pomo.run && !S.pomo.run.idle) || sleepRun || breathRun ? 'dotted' : ''}" data-drawer aria-label="Menu" aria-haspopup="dialog">${svg('menu',21,2.2)}</button></div>`;
 }
 /* ---------- side menu: slides in from the right. Add a feature by adding a line to DRAWER_ITEMS ---------- */
 const DRAWER_ITEMS = [
   [   // features
     {tab: 'focus', label: 'Focus Mode', icon: 'timer', status: () => S.pomo.run && !S.pomo.run.idle ? (S.pomo.run.pauseAt ? 'Paused' : 'Running') : ''},
     {tab: 'sleep', label: 'Sleep Mode', icon: 'moon', status: () => sleepRun ? (sleepRun.paused ? 'Paused' : 'Playing') : ''},
+    {tab: 'breathe', label: 'Breathe', icon: 'wind', status: () => breathRun ? (breathRun.pauseAt ? 'Paused' : 'Running') : ''},
   ],
   [   // your character
     {tab: 'inv', label: 'Inventory', icon: 'bag'},
@@ -11052,6 +11174,57 @@ function renderFocus(){
 }
 /* what the timer is doing right now: idle, focus, paused, short (break) or long (break) */
 function pomoState(){ const r = S.pomo && S.pomo.run; if (!r || r.idle) return 'idle'; if (r.pauseAt) return 'paused'; return r.phase; }
+/* ---------- Breathe page: pick an exercise, the session, the finish ---------- */
+const BREATH_PH = [['in', 'In', 'brin'], ['hold', 'Hold', 'brhold'], ['out', 'Out', 'brout'], ['hold2', 'Hold', 'brhold']];
+const BREATH_FILL = {play: '<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>', pause: '<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>', stop: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2.5"/></svg>'};
+const breathChips = ex => `<div class="brchips" role="img" aria-label="${BREATH_PH.map(([k, l], i) => ex.pat[i] ? `${l} ${ex.pat[i]}` : '').filter(Boolean).join(', ')} seconds">${BREATH_PH.map(([k, l, ic], i) => ex.pat[i] ? `<span class="brchip">${svg(ic, 20, 2)}<span>${l} <b>${ex.pat[i]}</b></span></span>` : '').join('')}</div>`;
+function breathSideBtns(cfg){
+  return [BREATH_VIBE ? `<button class="iconbtn brib ${cfg.haptic ? 'on' : ''}" data-breath="hap" aria-pressed="${cfg.haptic}" aria-label="Vibration">${svg('vibe', 21, 2)}</button>` : '<span></span>',
+    `<button class="iconbtn brib" data-breath="audio" aria-haspopup="dialog" aria-label="Audio settings">${svg('sliders', 21, 2)}</button>`];
+}
+function renderBreath(){
+  const cfg = breathCfg(), r = breathRun, [hapBtn, audioBtn] = breathSideBtns(cfg);
+  if (r){ const ex = BREATH_BY[r.ex], paused = !!r.pauseAt, C = 2 * Math.PI * 48;
+    return `<section class="brstage" id="brStage" aria-label="${ex.name} breathing">
+      <div class="brtop">${breathChips(ex)}</div>
+      <div class="brfield"><i class="brring" id="brRing"></i>
+        <svg class="brarc" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="48"/><circle id="brArc" cx="50" cy="50" r="48" stroke-dasharray="${C.toFixed(2)}" stroke-dashoffset="${C.toFixed(2)}"/></svg>
+        <div class="brcore"><span id="brLabel" aria-hidden="true"></span></div></div>
+      <span class="brsr" id="brSay" aria-live="polite"></span>
+      <div class="brbottom"><div class="brctl">${hapBtn}
+          <span class="brmid">${paused ? `<button class="iconbtn brib" data-breath="stop" aria-label="Stop">${BREATH_FILL.stop}</button><button class="brstart sm" data-breath="resume" aria-label="Resume">${BREATH_FILL.play}</button>` : `<button class="brstart sm" data-breath="pause" aria-label="Pause">${BREATH_FILL.pause}</button>`}</span>
+          ${audioBtn}</div>
+        <span class="fpill brmin" id="brTime" aria-label="Time left"></span></div>
+    </section>`; }
+  if (breathView === 'done' && breathDone){ const d = breathDone, ex = BREATH_BY[d.ex] || BREATH_EX[0];
+    return `<section class="space brpage brfin" aria-label="Session finished">
+      <div class="brbig"><b>${d.breaths}</b><span>breath${d.breaths === 1 ? '' : 's'}</span></div>
+      <p class="brtext">${ex.end}</p>
+      <div class="brstats"><div><span>Streak</span><b>${breathStreak()}</b></div><div><span>Total sessions</span><b>${(S.breath && S.breath.total) || 0}</b></div></div>
+      <button class="brcont" data-breath="cont">Continue</button>
+    </section>`; }
+  const other = [lofi ? 'Focus music' : '', sleepRun && !sleepRun.paused ? 'Sleep noise' : ''].filter(Boolean).join(' and ');
+  const ed = breathEdit;
+  return `<section class="space brpage" aria-label="Breathe">
+    <div class="brdeck" id="brDeck" aria-label="Exercises">${BREATH_EX.map(ex => `<article class="brcard" aria-label="${ex.name}">${breathChips(ex)}<h2 class="ptitle">${ex.name}</h2><p class="brtext">${ex.text}</p></article>`).join('')}</div>
+    <div class="brdots">${BREATH_EX.map(ex => `<button class="brdot ${ex.id === cfg.ex ? 'on' : ''}" data-breath="ex:${ex.id}" aria-label="${ex.name}" aria-pressed="${ex.id === cfg.ex}"></button>`).join('')}</div>
+    ${ed == null ? `<div class="brctl">${hapBtn}<button class="brstart" data-breath="start">Start</button>${audioBtn}</div>
+    <button class="fpill brmin" data-breath="mins" aria-label="${cfg.mins} minutes. Change">${cfg.mins} min</button>`
+    : `<div class="brctl"><button class="iconbtn brib" data-breath="step:-1" ${ed <= BREATH_MIN_LO ? 'disabled' : ''} aria-label="One minute less">−</button><div class="brstart" aria-live="polite"><b>${ed}</b><span>minute${ed === 1 ? '' : 's'}</span></div><button class="iconbtn brib" data-breath="step:1" ${ed >= BREATH_MIN_HI ? 'disabled' : ''} aria-label="One minute more">+</button></div>
+    <button class="fpill brmin go" data-breath="minsave">Save</button>`}
+    ${other ? `<p class="brnote">${other} keeps playing.</p>` : ''}
+  </section>`;
+}
+// the Audio sheet (drawn inside the app's bottom sheet)
+function breathSheetHtml(){
+  const cfg = breathCfg(), cap = s => s[0].toUpperCase() + s.slice(1);
+  const seg = (key, list, cur, label) => `<div class="seg wide" role="group" aria-label="${label}">${list.map(v => `<button class="${v === cur ? 'on' : ''}" data-breath="${key}:${v}" aria-pressed="${v === cur}">${cap(v)}</button>`).join('')}</div>`;
+  return `<div class="qmhead">${svg('music', 17, 2.2)} Audio</div><div class="brsheet">
+    <h3>Breath tone</h3>${seg('tone', BREATH_TONES, cfg.tone, 'Breath tone')}
+    <h3>Soundscape</h3>${seg('scape', BREATH_SCAPES, cfg.scape, 'Soundscape')}
+    <h3>Volume</h3><label class="brvol"><input type="range" id="brVol" min="0" max="100" step="5" value="${cfg.vol}" aria-label="Volume"><output id="brVolOut">${cfg.vol}%</output></label>
+    <button class="brcont" data-breath="sheetdone">Save</button></div>`;
+}
 /* ---------- Sleep Mode page ---------- */
 function renderSleep(){
   const cfg = sleepCfg(), r = sleepRun, on = r && !r.paused;
@@ -11348,9 +11521,10 @@ function renderInner(){
   renderHeader();
   const v = document.getElementById('view');
   if (tab === 'stats' || tab === 'skills'){ sheetMode = 'stats'; statsSec = tab; } else if (tab === 'inv') sheetMode = 'inv'; else if (sheetMode === 'stats' || sheetMode === 'inv') sheetMode = null;
-  v.innerHTML = tab === 'today' ? renderToday() : tab === 'battle' ? renderBattle() : tab === 'todo' ? renderTodo() : tab === 'shop' ? renderShop() : tab === 'focus' ? renderFocus() : tab === 'sleep' ? renderSleep() : tab === 'stats' || tab === 'skills' ? `<div class="pagewrap">${renderStatsPanel(tab)}</div>` : tab === 'inv' ? `<div class="pagewrap">${renderInventory()}</div>` : tab === 'riff' ? `<div class="pagewrap">${renderRiff()}</div>` : tab === 'beasts' ? `<div class="pagewrap">${renderBeasts()}</div>` : renderSettings();
+  v.innerHTML = tab === 'today' ? renderToday() : tab === 'battle' ? renderBattle() : tab === 'todo' ? renderTodo() : tab === 'shop' ? renderShop() : tab === 'focus' ? renderFocus() : tab === 'sleep' ? renderSleep() : tab === 'breathe' ? renderBreath() : tab === 'stats' || tab === 'skills' ? `<div class="pagewrap">${renderStatsPanel(tab)}</div>` : tab === 'inv' ? `<div class="pagewrap">${renderInventory()}</div>` : tab === 'riff' ? `<div class="pagewrap">${renderRiff()}</div>` : tab === 'beasts' ? `<div class="pagewrap">${renderBeasts()}</div>` : renderSettings();
   document.querySelectorAll('#tabs button[data-tab]').forEach(b => b.setAttribute('aria-current', b.dataset.tab === tab ? 'page' : 'false'));
   centerTabs(v);
+  breathAfter();
   drawIcons(v);
   if ((sheetMode === 'stats' || sheetMode === 'inv') && !document.getElementById('sheet').hidden) renderSheet();
   draw(); drawNewBoss(true);
@@ -11823,7 +11997,8 @@ function renderQuick(){
   const qm = document.getElementById('qm'), card = document.getElementById('qmcard'); if (!qmCtx){ qm.hidden = true; return; }
   const item = (act, icon, label, cls = '') => `<button class="qmitem ${cls}" data-qmact="${act}" role="menuitem">${svg(icon, 19, 2)}<span>${label}</span></button>`;
   let html = '';
-  if (qmCtx.kind === 'i'){ const x = tileInfo[qmCtx.key]; if (!x || !x.detail){ qmCtx = null; qm.hidden = true; return; }
+  if (qmCtx.kind === 'breath') html = breathSheetHtml();
+  else if (qmCtx.kind === 'i'){ const x = tileInfo[qmCtx.key]; if (!x || !x.detail){ qmCtx = null; qm.hidden = true; return; }
     // the item's own buttons (buy, sell, equip…) become menu lines; they keep their data so the usual handlers run
     const tmp = document.createElement('div'); tmp.innerHTML = x.detail.btn || '';
     const ic = b => b.dataset.sell ? 'send' : b.dataset.buy || b.dataset.buygear || b.dataset.bagbuy || 'weatherbuy' in b.dataset ? 'bag' : /take off/i.test(b.textContent) ? 'x' : b.dataset.usepot || b.dataset.userune ? 'bolt' : 'check';
@@ -12299,6 +12474,7 @@ function onClick(e){
     if (st.from >= D.today) S.inn = S.inn.filter(x => x !== st); else st.to = D.yest;
     save(); render(); toast('Checked out. The fight is back on.'); return; }
   if ('musicmenu' in el.dataset){ musicMenu = !musicMenu; sfxInit(); render(); return; }
+  if (el.dataset.breath){ breathCmd(el.dataset.breath); return; }
   if (el.dataset.sleep){ sleepCmd(el.dataset.sleep); return; }
   if (el.dataset.lofi){ const v = el.dataset.lofi; musicMenu = false; sfxInit();
     if (v === 'off') S.pomo.cfg.music = false; else if (LOFI_STYLES[v]){ S.pomo.cfg.music = true; S.pomo.cfg.lofi = v; }
@@ -12678,7 +12854,7 @@ async function checkForUpdate(opts = {}){
   } catch(e){}
 }
 var updateWaiting = false;
-function updateBusy(){ try { return !!(lofi || (typeof sleepRun !== 'undefined' && sleepRun) || (S.pomo && S.pomo.run && !S.pomo.run.idle)); } catch(e){ return false; } }
+function updateBusy(){ try { return !!(lofi || (typeof sleepRun !== 'undefined' && sleepRun) || (typeof breathRun !== 'undefined' && breathRun) || (S.pomo && S.pomo.run && !S.pomo.run.idle)); } catch(e){ return false; } }
 if (PAGES){ setInterval(checkForUpdate, 30 * 60 * 1000); setTimeout(checkForUpdate, 3000); setInterval(() => { if (updateWaiting && !updateBusy()){ updateWaiting = false; checkForUpdate(); } }, 15000); }
 if (PAGES){ document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { checkForUpdate(); gistPull(); } }); window.addEventListener('online', () => gistPull()); if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {}); }
 initCloud().finally(() => { if (migratedNow){ migratedNow = false; save(); render(); } });
@@ -13472,6 +13648,190 @@ function lofiSample(L, kind, m){
   let pk = 0; for (let i = 0; i < len; i++) pk = Math.max(pk, Math.abs(y[i])); if (pk) for (let i = 0; i < len; i++) y[i] /= pk;
   const tail = Math.floor(sr * 0.05); for (let i = 0; i < tail; i++) y[len - 1 - i] *= i / tail;
   return (L.smp[key] = b); }
+/* ---------- Breathe: a guided breathing session ----------
+   The clock is the wall clock: every frame works out where in the pattern we are from timestamps, so a dropped
+   frame (or a stalled tab) never puts the ring out of time. Sound is made on the device; nothing is downloaded. */
+var breathRun = null, breathView = 'pick', breathEdit = null, breathDone = null, breathChrome = false;
+var BREATH_VIBE = typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function';   // iPhone has no vibration for web pages: the button is left out there
+const BREATH_LEAD = 1500, BREATH_LO = 0.36;   // a moment to settle before the first breath; the ring's resting size (the centre disc)
+function breathCfg(){ const c = (S.breath && S.breath.cfg) || {}, ex = BREATH_BY[c.ex] ? c.ex : 'sleep';
+  return {ex, mins: int(c.mins && c.mins[ex], BREATH_MIN_LO, BREATH_MIN_HI, BREATH_MIN_DEF), tone: BREATH_TONES.includes(c.tone) ? c.tone : 'sine', scape: BREATH_SCAPES.includes(c.scape) ? c.scape : 'off', vol: int(c.vol, 0, 100, 60), haptic: c.haptic !== false}; }
+function breathSet(k, v){ if (!obj(S.breath)) S.breath = {cfg: {}, log: {}, total: 0}; if (!obj(S.breath.cfg)) S.breath.cfg = {}; if (!obj(S.breath.cfg.mins)) S.breath.cfg.mins = {};
+  if (k === 'mins') S.breath.cfg.mins[breathCfg().ex] = v; else S.breath.cfg[k] = v; save(); }
+// whole breaths only: the session is the number of full cycles nearest to the minutes asked for
+function breathPlan(exId, mins){ const ex = BREATH_BY[exId], ph = BREATH_PH.map(([k], i) => [k, ex.pat[i]]).filter(p => p[1] > 0), cyc = ph.reduce((a, p) => a + p[1], 0) * 1000, n = Math.max(1, Math.round(mins * 60000 / cyc));
+  return {ex: exId, ph, cyc, n, total: n * cyc}; }
+function breathPos(r, now){ const el = (r.pauseAt || now) - r.t0 - r.pausedMs;
+  if (el < 0) return {lead: true, left: r.total};
+  if (el >= r.total) return {done: true};
+  const c = el % r.cyc; let acc = 0;
+  for (let i = 0; i < r.ph.length; i++){ const d = r.ph[i][1] * 1000; if (c < acc + d) return {i, k: r.ph[i][0], d, t: c - acc, n: Math.floor(el / r.cyc), left: r.total - el}; acc += d; }
+  return {done: true}; }
+function breathStreak(){ const log = (S.breath && S.breath.log) || {}; let d = todayKey(), n = 0; if (!log[d]) d = addDays(d, -1); while (log[d]){ n++; d = addDays(d, -1); } return n; }
+function breathStep(){
+  const r = breathRun; if (!r) return;
+  const p = breathPos(r, Date.now());
+  if (p.done){ breathFinish(); return; }
+  const key = p.lead ? 'lead' : p.n + ':' + p.i;
+  if (key !== r.key && !r.pauseAt){ r.key = key; if (!p.lead){ breathCue(p.k, (p.d - p.t) / 1000, p.t / p.d); breathBuzz(p.k); } }
+  breathPaint(r, p);
+}
+function breathPaint(r, p){
+  const lab = document.getElementById('brLabel'); if (!lab) return;   // the session carries on while you are on another page
+  const hold = p.k === 'hold' || p.k === 'hold2', word = p.lead ? 'Ready' : p.k === 'in' ? 'Inhale' : p.k === 'out' ? 'Exhale' : 'Hold';
+  let txt = word; if (hold){ const rem = Math.ceil((p.d - p.t) / 1000); if (rem < p.d / 1000) txt = String(rem); }   // "Hold", then the seconds left
+  if (lab.textContent !== txt){ lab.textContent = txt;
+    if (lab.dataset.w !== word){ lab.dataset.w = word; lab.classList.remove('swap'); void lab.offsetWidth; lab.classList.add('swap'); const say = document.getElementById('brSay'); if (say) say.textContent = p.lead ? '' : word; } }
+  const x = p.lead ? 0 : p.t / p.d, e = 0.5 - 0.5 * Math.cos(Math.PI * x), f = p.lead ? 0 : p.k === 'in' ? e : p.k === 'out' ? 1 - e : p.k === 'hold' ? 1 : 0;   // how full the breath is, 0 to 1
+  if (motionOK){ const ring = document.getElementById('brRing'); if (ring) ring.style.transform = `scale(${(BREATH_LO + (1 - BREATH_LO) * f).toFixed(4)})`; }
+  else { const arc = document.getElementById('brArc'); if (arc) arc.setAttribute('stroke-dashoffset', (2 * Math.PI * 48 * (1 - f)).toFixed(2)); }
+  const tm = document.getElementById('brTime'), left = mmss(p.left).padStart(5, '0'); if (tm && tm.textContent !== left) tm.textContent = left;
+}
+var breathRaf = false;
+function breathLoop(){ if (breathRaf) return; breathRaf = true;
+  const tick = () => { if (!breathRun || breathRun.pauseAt){ breathRaf = false; return; } try { breathStep(); } catch(e){ console.error(e); breathRaf = false; return; } if (breathRun) requestAnimationFrame(tick); else breathRaf = false; };
+  requestAnimationFrame(tick); }
+// frames stop when the page is not being drawn; this keeps the phase changes (sound, the finish) going
+setInterval(() => { if (breathRun && !breathRun.pauseAt && !recoveryMode){ try { breathStep(); } catch(e){} } }, 250);
+function breathRefresh(){ if (tab === 'breathe') render(); else renderHeader(); }
+function breathAfter(){   // after every render: put the exercise strip where it belongs, paint the session at once
+  const deck = document.getElementById('brDeck');
+  if (deck){ const i = BREATH_EX.findIndex(x => x.id === breathCfg().ex); deck.scrollLeft = i * deck.clientWidth;
+    let t = 0; deck.addEventListener('scroll', () => { clearTimeout(t); t = setTimeout(() => { if (!deck.isConnected || !deck.clientWidth) return; const j = Math.max(0, Math.min(BREATH_EX.length - 1, Math.round(deck.scrollLeft / deck.clientWidth)));
+      if (BREATH_EX[j].id !== breathCfg().ex){ breathEdit = null; breathSet('ex', BREATH_EX[j].id); render(); } }, 110); }, {passive: true}); }
+  if (breathRun && document.getElementById('brLabel')) breathPaint(breathRun, breathPos(breathRun, Date.now()));
+}
+function breathShow(on, hold){ breathChrome = on; clearTimeout(breathShow.t); document.body.classList.toggle('brshow', tab === 'breathe' && !!breathRun && (on || !!breathRun.pauseAt));
+  if (on && !hold) breathShow.t = setTimeout(() => { if (!qmCtx) breathShow(false); }, 4500); }
+function breathCmd(cmd){
+  const i = cmd.indexOf(':'), k = i < 0 ? cmd : cmd.slice(0, i), v = i < 0 ? '' : cmd.slice(i + 1), cfg = breathCfg();
+  if (k === 'ex' && BREATH_BY[v]){ if (breathRun) return; breathEdit = null;
+    const deck = document.getElementById('brDeck'), j = BREATH_EX.findIndex(x => x.id === v);
+    if (deck && motionOK && deck.scrollTo && v !== cfg.ex){ deck.scrollTo({left: j * deck.clientWidth, behavior: 'smooth'}); return; }   // the strip's own scroll handler finishes the change
+    breathSet('ex', v); render(); return; }
+  if (k === 'mins'){ breathEdit = cfg.mins; render(); return; }
+  if (k === 'step'){ if (breathEdit == null) return; breathEdit = Math.max(BREATH_MIN_LO, Math.min(BREATH_MIN_HI, breathEdit + (v === '1' ? 1 : -1))); render(); return; }
+  if (k === 'minsave'){ if (breathEdit != null) breathSet('mins', breathEdit); breathEdit = null; render(); return; }
+  if (k === 'hap'){ breathSet('haptic', !cfg.haptic); if (!cfg.haptic) breathBuzz('in'); render(); if (breathRun) breathShow(true); return; }
+  if (k === 'audio'){ breathGraph(); breathWakeAudio(); qmCtx = {kind: 'breath'}; renderQuick(); if (breathRun) breathShow(true, true); return; }
+  if (k === 'sheetdone'){ closeQuick(); if (breathRun) breathShow(true); return; }
+  if (k === 'tone' && BREATH_TONES.includes(v)){ breathSet('tone', v); renderQuick(); if (!breathRun || breathRun.pauseAt) breathSample(); return; }
+  if (k === 'scape' && BREATH_SCAPES.includes(v)){ breathSet('scape', v); renderQuick(); breathScape(v); if (!breathRun || breathRun.pauseAt) breathSample(true); return; }
+  if (k === 'start'){ if (breathRun) return;
+    // inside the tap: phones only let sound start from a tap
+    breathEdit = null; breathDone = null; breathView = 'pick';
+    breathRun = {...breathPlan(cfg.ex, cfg.mins), t0: Date.now() + BREATH_LEAD, pausedMs: 0, pauseAt: 0, key: ''};
+    if (cfg.tone !== 'off' || cfg.scape !== 'off'){ try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch(e){} }   // as Sleep Mode does: plays with the silent switch on
+    clearTimeout(breathSample.t); breathGraph(); breathWakeAudio(); breathScape(cfg.scape); breathAwake(true); breathShow(false); render(); breathLoop(); return; }
+  if (!breathRun) { if (k === 'cont'){ breathDone = null; breathView = 'pick'; render(); } return; }
+  if (k === 'pause'){ breathPause(); return; }
+  if (k === 'resume'){ const r = breathRun; if (!r.pauseAt) return; r.pausedMs += Date.now() - r.pauseAt; r.pauseAt = 0; r.key = '';
+    breathWakeAudio(); breathAwake(true); breathShow(false); breathRefresh(); breathLoop(); return; }
+  if (k === 'stop'){ breathEnd(); breathView = 'pick'; breathRefresh(); return; }   // ended early: nothing is logged
+}
+function breathPause(){ const r = breathRun; if (!r || r.pauseAt) return; r.pauseAt = Date.now(); breathHush(0.12, true); breathSleepAudio(); breathAwake(false); breathRefresh(); }
+function breathEnd(){ breathRun = null; breathChrome = false; clearTimeout(breathShow.t); breathHush(0.3, true); breathScape('off', 1.2); breathAwake(false);
+  setTimeout(() => { if (!breathRun && !qmCtx) breathSleepAudio(); }, 3200); if (qmCtx && qmCtx.kind === 'breath') closeQuick(); }
+function breathFinish(){
+  const r = breathRun; if (!r) return;
+  if (breathCfg().tone !== 'off') breathBell();
+  breathEnd(); breathBuzz('end');
+  if (!obj(S.breath)) S.breath = {cfg: {}, log: {}, total: 0}; if (!obj(S.breath.log)) S.breath.log = {};
+  const d = todayKey(); S.breath.log[d] = (S.breath.log[d] || 0) + 1; S.breath.total = (S.breath.total || 0) + 1;
+  // REWARD HOOK (mock: nothing is granted). A finished session could pay out here: gold, XP, MP or HP, once a day or per
+  // session. That is an economy decision for the owner, so it is left empty. `r.ex`, `r.n` (breaths) and `r.total` (ms) are at hand.
+  save();
+  breathDone = {ex: r.ex, breaths: r.n}; breathView = 'done';
+  if (tab === 'breathe') render(); else { renderHeader(); toast(`Breathing done · ${r.n} breaths`); }
+}
+function breathBuzz(k){ try { if (BREATH_VIBE && breathCfg().haptic) navigator.vibrate(k === 'end' ? [60, 90, 60] : k === 'in' ? 35 : k === 'out' ? [20, 60, 20] : 12); } catch(e){} }
+// keep the screen on while breathing
+var breathLock = null;
+function breathAwake(on){ try {
+  if (!on){ if (breathLock){ const l = breathLock; breathLock = null; l.release().catch(() => {}); } return; }
+  if (breathLock || !navigator.wakeLock || document.visibilityState !== 'visible') return;
+  navigator.wakeLock.request('screen').then(l => { if (breathRun && !breathRun.pauseAt && !breathLock){ breathLock = l; l.addEventListener('release', () => { if (breathLock === l) breathLock = null; }); } else l.release().catch(() => {}); }, () => {});
+} catch(e){} }
+// leaving the app (or the screen going off) pauses the session, so a finished session is one you were there for
+document.addEventListener('visibilitychange', () => { if (document.visibilityState !== 'visible' && breathRun && !breathRun.pauseAt) breathPause(); });
+// tap the session to bring the buttons back, tap again to send them away
+document.addEventListener('click', e => { if (!breathRun || breathRun.pauseAt || !e.target.closest) return; if (e.target.closest('#brStage') && !e.target.closest('button')) breathShow(!breathChrome); });
+document.addEventListener('focusin', e => { if (breathRun && tab === 'breathe' && !breathChrome && e.target.closest && e.target.closest('#brStage button, #top button')) breathShow(true); });
+document.getElementById('qm').addEventListener('input', e => { if (e.target.id !== 'brVol') return; const v = int(e.target.value, 0, 100, 60); breathSet('vol', v); const o = document.getElementById('brVolOut'); if (o) o.textContent = v + '%'; breathLevel(0.08); });
+document.getElementById('qm').addEventListener('change', e => { if (e.target.id === 'brVol' && (!breathRun || breathRun.pauseAt)) breathSample(); });
+
+/* Breathe sound. Its own small audio graph, like Sleep Mode's, so it never touches the Focus music or the Sleep noise:
+   those keep playing underneath, exactly as they already do with each other. */
+var breathCtx = null, breathOut = null, breathTones = [], breathAmb = null, breathNoiseBuf = null;
+const breathGainOf = vol => Math.pow(vol / 100, 2);   // the same even-feeling steps as Sleep Mode's volume
+function breathGraph(){
+  if (!breathCtx || breathCtx.state === 'closed'){ const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
+    breathCtx = new AC(); breathTones = []; breathAmb = null; breathNoiseBuf = null; breathOut = breathCtx.createGain(); breathOut.gain.value = breathGainOf(breathCfg().vol); breathOut.connect(breathCtx.destination); }
+  return breathCtx; }
+function breathWakeAudio(){ try { if (!breathCtx) return; if (breathCtx.state !== 'running'){ const p = breathCtx.resume(); if (p && p.catch) p.catch(() => {}); } breathLevel(0.4); } catch(e){} }
+function breathSleepAudio(){ try { if (!breathCtx || breathCtx.state !== 'running') return; const p = breathOut.gain, t = breathCtx.currentTime; p.cancelScheduledValues(t); p.setValueAtTime(p.value, t); p.linearRampToValueAtTime(0, t + 0.25);
+  setTimeout(() => { try { if (breathCtx && (!breathRun || breathRun.pauseAt) && !breathSample.on) breathCtx.suspend(); } catch(e){} }, 320); } catch(e){} }
+function breathLevel(secs){ try { if (!breathCtx) return; const p = breathOut.gain, t = breathCtx.currentTime; p.cancelScheduledValues(t); p.setValueAtTime(p.value, t); p.linearRampToValueAtTime(breathGainOf(breathCfg().vol), t + secs); } catch(e){} }
+// a taste of the chosen sounds while you are picking them in the Audio sheet
+function breathSample(amb){ if (!breathGraph()) return; breathSample.on = true; breathWakeAudio(); if (!amb) breathCue('in', 1.8, 0); else breathScape(breathCfg().scape);
+  clearTimeout(breathSample.t); breathSample.t = setTimeout(() => { breathSample.on = false; if (!breathRun){ breathScape('off', 1); setTimeout(() => { if (!breathRun && !breathSample.on) breathSleepAudio(); }, 1100); } else if (breathRun.pauseAt) breathSleepAudio(); }, amb ? 6000 : 2200); }
+function breathHush(fade, all){ const c = breathCtx; if (!c) return; const keep = [];
+  for (const T of breathTones){ if (T.end < c.currentTime) continue; if (T.ring && !all){ keep.push(T); continue; }
+    try { const t = c.currentTime, p = T.g.gain; p.cancelScheduledValues(t); p.setValueAtTime(p.value, t); p.linearRampToValueAtTime(0, t + fade); T.nodes.forEach(o => o.stop(t + fade + 0.05)); } catch(e){} }
+  breathTones = keep; }
+// one phase of the breath: a soft tone that rises as you breathe in and falls as you breathe out; a hold is a light tick
+function breathCue(k, secs, from){
+  const c = breathCtx, kind = breathCfg().tone; breathHush(0.15);
+  if (!c || c.state === 'closed' || kind === 'off' || secs < 0.25) return;
+  const t = c.currentTime + 0.03, g = c.createGain(), nodes = []; g.gain.value = 0; g.connect(breathOut);
+  const osc = (type, f, to) => { const o = c.createOscillator(); o.type = type; o.frequency.setValueAtTime(f, t); if (to) o.frequency.exponentialRampToValueAtTime(to, t + secs); o.start(t); nodes.push(o); return o; };
+  if (k === 'hold' || k === 'hold2'){ const o = osc('sine', k === 'hold' ? 523.25 : 392); o.connect(g);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.05, t + 0.03); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.45); g.gain.linearRampToValueAtTime(0, t + 0.5); o.stop(t + 0.55);
+    breathTones.push({g, nodes, end: t + 0.55, ring: true}); return; }
+  const up = k === 'in';
+  if (kind === 'bowl'){   // a struck bowl: a few ringing partials that die away through the phase (and over a hold)
+    const f = up ? 293.66 : 220, len = Math.min(9, secs + 2.5);
+    for (const [m, v, dec] of [[1, 1, 1], [2.71, 0.34, 0.55], [5.15, 0.1, 0.3]]){ const o = osc('sine', f * m), pg = c.createGain(); pg.gain.setValueAtTime(v, t); pg.gain.exponentialRampToValueAtTime(v * 0.001, t + len * dec); o.connect(pg); pg.connect(g); o.stop(t + len); }
+    { const o = osc('sine', f * 1.004), pg = c.createGain(); pg.gain.value = 0.5; o.connect(pg); pg.connect(g); o.stop(t + len); }   // a slow beat, like a real bowl
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.11, t + 0.04); g.gain.exponentialRampToValueAtTime(0.0004, t + len - 0.1); g.gain.linearRampToValueAtTime(0, t + len);
+    breathTones.push({g, nodes, end: t + len, ring: true}); return; }
+  const lo = 174.61, hi = 261.63, f0 = up ? lo : hi, f1 = up ? hi : lo, fa = f0 * Math.pow(f1 / f0, from || 0);   // F3 to C4 and back; picks up part-way after a pause
+  const peak = kind === 'synth' ? 0.075 : 0.13, a = Math.min(0.7, secs * 0.3), rel = Math.min(0.9, secs * 0.35);
+  if (kind === 'synth'){ const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 0.7; lp.frequency.setValueAtTime(up ? 420 : 1300, t); lp.frequency.exponentialRampToValueAtTime(up ? 1300 : 420, t + secs); lp.connect(g);
+    for (const cents of [-7, 7]){ const o = osc('sawtooth', fa, f1); o.detune.value = cents; o.connect(lp); }
+    const sub = osc('triangle', fa / 2, f1 / 2), sg = c.createGain(); sg.gain.value = 0.6; sub.connect(sg); sg.connect(lp); }
+  else { osc('sine', fa, f1).connect(g); const o2 = osc('sine', fa * 2, f1 * 2), g2 = c.createGain(); g2.gain.value = 0.12; o2.connect(g2); g2.connect(g); }
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + a); g.gain.setValueAtTime(peak, t + Math.max(a, secs - rel)); g.gain.linearRampToValueAtTime(0, t + secs);
+  nodes.forEach(o => o.stop(t + secs + 0.05)); breathTones.push({g, nodes, end: t + secs + 0.05});
+}
+function breathBell(){ const c = breathCtx; if (!c || c.state === 'closed') return; const t = c.currentTime + 0.05, g = c.createGain(); g.connect(breathOut);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.1, t + 0.03); g.gain.exponentialRampToValueAtTime(0.0004, t + 2.8);
+  for (const [f, v] of [[392, 1], [587.33, 0.5], [784, 0.2]]){ const o = c.createOscillator(), pg = c.createGain(); o.frequency.value = f; pg.gain.value = v; o.connect(pg); pg.connect(g); o.start(t); o.stop(t + 3); } }
+function breathNoise(){ if (breathNoiseBuf) return breathNoiseBuf; const c = breathCtx, n = Math.floor(c.sampleRate * 3), b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0); for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1; return (breathNoiseBuf = b); }
+// the soundscape under the breath: River (filtered noise that burbles), Forest (leaves, wind and the odd bird), Drone (slow detuned low tones)
+function breathScape(kind, fade = 0.8){
+  const c = breathCtx; if (!c || c.state === 'closed') return;
+  if (breathAmb && breathAmb.kind === kind) return;
+  if (breathAmb){ const A = breathAmb; breathAmb = null; clearInterval(A.timer); try { const t = c.currentTime, p = A.out.gain; p.cancelScheduledValues(t); p.setValueAtTime(p.value, t); p.linearRampToValueAtTime(0, t + fade); A.nodes.forEach(o => o.stop(t + fade + 0.1)); } catch(e){} }
+  if (kind === 'off' || !BREATH_SCAPES.includes(kind)) return;
+  const t = c.currentTime, out = c.createGain(), nodes = []; out.gain.setValueAtTime(0, t); out.gain.linearRampToValueAtTime(1, t + 1.6); out.connect(breathOut);
+  const noise = (type, f, q, vol) => { const s = c.createBufferSource(), fl = c.createBiquadFilter(), g = c.createGain(); s.buffer = breathNoise(); s.loop = true; fl.type = type; fl.frequency.value = f; fl.Q.value = q; g.gain.value = vol; s.connect(fl); fl.connect(g); g.connect(out); s.start(t, Math.random() * 2.5); nodes.push(s); return {fl, g}; };
+  const lfo = (param, hz, depth) => { const o = c.createOscillator(), g = c.createGain(); o.frequency.value = hz; g.gain.value = depth; o.connect(g); g.connect(param); o.start(t); nodes.push(o); };
+  let timer = 0;
+  if (kind === 'river'){ const a = noise('lowpass', 620, 0.4, 0.2); lfo(a.fl.frequency, 0.09, 200); const b = noise('bandpass', 1400, 0.9, 0.085); lfo(b.g.gain, 0.31, 0.04); lfo(b.fl.frequency, 0.17, 380); const d = noise('bandpass', 3300, 1.4, 0.028); lfo(d.g.gain, 0.73, 0.016); }
+  else if (kind === 'forest'){ const w = noise('bandpass', 2600, 0.6, 0.035); lfo(w.g.gain, 0.06, 0.022); const low = noise('lowpass', 260, 0.3, 0.1); lfo(low.g.gain, 0.045, 0.045);
+    timer = setInterval(() => { if (c.state !== 'running') return; const r = Math.random(); if (r < 0.22) breathBird(out); else if (r < 0.3) breathRustle(out); }, 650); }
+  else { for (const [f, v] of [[110, 0.07], [110.6, 0.07], [164.81, 0.04], [165.5, 0.035], [220.3, 0.022], [55, 0.06]]){ const o = c.createOscillator(), g = c.createGain(); o.type = 'sine'; o.frequency.value = f; g.gain.value = v; o.connect(g); g.connect(out); o.start(t); nodes.push(o); lfo(g.gain, 0.03 + Math.random() * 0.05, v * 0.45); } }
+  breathAmb = {kind, out, nodes, timer};
+}
+function breathBird(out){ const c = breathCtx, n = 2 + Math.floor(Math.random() * 4), base = 2600 + Math.random() * 2200, gap = 0.09 + Math.random() * 0.09, vol = 0.012 + Math.random() * 0.02; let t = c.currentTime + 0.05;
+  const pan = c.createStereoPanner ? c.createStereoPanner() : null; if (pan){ pan.pan.value = Math.random() * 1.6 - 0.8; pan.connect(out); }
+  for (let i = 0; i < n; i++){ const o = c.createOscillator(), g = c.createGain(), f = base * (1 + (Math.random() - 0.5) * 0.12), len = 0.05 + Math.random() * 0.07; o.type = 'sine';
+    o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * (Math.random() < 0.5 ? 1.25 : 0.8), t + len);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.012); g.gain.linearRampToValueAtTime(0, t + len); o.connect(g); g.connect(pan || out); o.start(t); o.stop(t + len + 0.02); t += gap; } }
+function breathRustle(out){ const c = breathCtx, t = c.currentTime + 0.05, s = c.createBufferSource(), fl = c.createBiquadFilter(), g = c.createGain(), len = 0.5 + Math.random() * 0.9; s.buffer = breathNoise(); fl.type = 'bandpass'; fl.frequency.value = 3500 + Math.random() * 2500; fl.Q.value = 0.8;
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.02 + Math.random() * 0.02, t + len * 0.4); g.gain.linearRampToValueAtTime(0, t + len); s.connect(fl); fl.connect(g); g.connect(out); s.start(t, Math.random() * 1.5, len + 0.1); }
+
 /* ---------- Sleep Mode: deep noise made on the device, looped through an <audio> element so it keeps going with the screen locked ---------- */
 // "Orange" copies Sean's recording: its level (dB) at each frequency, relative to the 50 Hz peak
 var SLEEP_CURVE = [[20,-29.9],[22.4,-24.8],[25.2,-16.9],[28.3,-9.6],[31.7,-5.1],[35.6,-2],[40,-.4],[44.9,-.2],[50.4,0],[56.6,-.1],[63.5,-.5],[71.3,-1.4],[80,-3.3],[89.8,-5.4],[100.8,-7.5],[113.1,-8.7],[127,-11.1],[142.5,-12.7],[160,-15.2],[179.6,-17.2],[201.6,-19.4],[226.3,-21.6],[254,-24],[285.1,-26.5],[320,-28.9],[359.2,-31.4],[403.2,-33.7],[452.5,-36.2],[508,-38.3],[570.2,-40.4],[640,-42.2],[718.4,-44.3],[806.3,-46],[905.1,-47.3],[1015.9,-48.8],[1140.4,-50],[1280,-51.2],[1436.8,-52.4],[1612.7,-53.6],[1810.2,-54.7],[2031.9,-55.9],[2280.7,-57.2],[2560,-58.6],[2873.5,-60],[3225.4,-61.7],[3620.4,-63.3],[4063.7,-64.9],[4561.4,-66.7],[5120,-68.3],[5747,-70.1],[6450.8,-71.8],[7240.8,-73.7],[8127.5,-75.8],[9122.8,-79.2],[10240,-88.9],[11025,-100]];
