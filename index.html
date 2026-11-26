@@ -1040,7 +1040,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'db4a68a977';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '2910254936';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -10122,7 +10122,7 @@ function daysText(days){
   const run = idx.every((v,i) => i===0 || v === idx[i-1]+1);
   return run && s.length > 2 ? `${DOW[s[0]]}–${DOW[s[s.length-1]]}` : s.map(d => DOW[d]).join(', ');
 }
-const TITLES = {today:'Today', battle:'Battle', todo:'To-dos', shop:'Shop', settings:'Settings', focus:'Focus', sleep:'Sleep', breathe:'Breathe', riff:'Riff’s stall', stats:'Stats', skills:'Skill tree', inv:'Inventory', beasts:'Bestiary'};
+const TITLES = {today:'Today', battle:'Battle', todo:'To-dos', shop:'Shop', settings:'Settings', focus:'Focus', sleep:'Sleep', breathe:'Breath', riff:'Riff’s stall', stats:'Stats', skills:'Skill tree', inv:'Inventory', beasts:'Bestiary'};
 const PAGE_TABS = ['settings', 'focus', 'sleep', 'breathe', 'stats', 'skills', 'inv', 'riff', 'beasts'];   // full pages opened from the side menu, with a back button
 function renderHeader(){
   const d = parseKey(D.today).toLocaleDateString('en-US', {weekday:'long', month:'short', day:'numeric'});
@@ -10154,9 +10154,9 @@ function renderHeader(){
 /* ---------- side menu: slides in from the right. Add a feature by adding a line to DRAWER_ITEMS ---------- */
 const DRAWER_ITEMS = [
   [   // features
-    {tab: 'focus', label: 'Focus Mode', icon: 'timer', status: () => S.pomo.run && !S.pomo.run.idle ? (S.pomo.run.pauseAt ? 'Paused' : 'Running') : ''},
-    {tab: 'sleep', label: 'Sleep Mode', icon: 'moon', status: () => sleepRun ? (sleepRun.paused ? 'Paused' : 'Playing') : ''},
-    {tab: 'breathe', label: 'Breathe', icon: 'wind', status: () => breathRun ? (breathRun.pauseAt ? 'Paused' : 'Running') : ''},
+    {tab: 'focus', label: 'Focus', icon: 'timer', status: () => S.pomo.run && !S.pomo.run.idle ? (S.pomo.run.pauseAt ? 'Paused' : 'Running') : ''},
+    {tab: 'sleep', label: 'Sleep', icon: 'moon', status: () => sleepRun ? (sleepRun.paused ? 'Paused' : 'Playing') : ''},
+    {tab: 'breathe', label: 'Breath', icon: 'wind', status: () => breathRun ? (breathRun.pauseAt ? 'Paused' : 'Running') : ''},
   ],
   [   // your character
     {tab: 'inv', label: 'Inventory', icon: 'bag'},
@@ -11205,7 +11205,7 @@ function renderBreath(){
     </section>`; }
   const other = [lofi ? 'Focus music' : '', sleepRun && !sleepRun.paused ? 'Sleep noise' : ''].filter(Boolean).join(' and ');
   const ed = breathEdit;
-  return `<section class="space brpage" aria-label="Breathe">
+  return `<section class="space brpage" aria-label="Breath">
     <div class="brdeck" id="brDeck" aria-label="Exercises">${BREATH_EX.map(ex => `<article class="brcard" aria-label="${ex.name}">${breathChips(ex)}<h2 class="ptitle">${ex.name}</h2><p class="brtext">${ex.text}</p></article>`).join('')}</div>
     <div class="brdots">${BREATH_EX.map(ex => `<button class="brdot ${ex.id === cfg.ex ? 'on' : ''}" data-breath="ex:${ex.id}" aria-label="${ex.name}" aria-pressed="${ex.id === cfg.ex}"></button>`).join('')}</div>
     ${ed == null ? `<div class="brctl">${hapBtn}<button class="brstart" data-breath="start">Start</button>${audioBtn}</div>
@@ -11232,7 +11232,7 @@ function renderSleep(){
   const sub = !r ? (cfg.hrs ? `Plays for ${cfg.hrs} hours` : 'Plays until you stop it') : r.busy && !r.paused ? 'Mixing the noise…' : r.paused ? 'Paused' : r.end ? `Until ${tfmt(r.end)}` : 'Playing until you stop it';
   const playIc = on ? '<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>' : '<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
   const main = !r ? 'data-sleep="start" aria-label="Start the noise"' : on ? 'data-sleep="pause" aria-label="Pause"' : 'data-sleep="resume" aria-label="Resume"';
-  return `<section class="space" aria-label="Sleep Mode">
+  return `<section class="space" aria-label="Sleep">
     <h2 class="ptitle">Sleep</h2>
     <div class="psub">${sub}</div>
     <div class="nightwrap"><canvas id="nightCv" width="52" height="52" role="img" aria-label="${esc(S.petName)} asleep"></canvas></div>
@@ -13249,7 +13249,7 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 function lofiStart(mode, delay = 0, fadeIn = 2.5){
   sfxInit(); if (!actx) return;
   lofiKeepPlay();   // keeps the music alive when the screen locks
-  try { if ('mediaSession' in navigator && !(typeof sleepRun !== 'undefined' && sleepRun) && LOFI_STYLES[lofiKey()]) navigator.mediaSession.metadata = new MediaMetadata({title: LOFI_STYLES[lofiKey()].label + (mode === 'break' ? ' · break' : ''), artist: 'Oathkeeper', album: 'Focus Mode'}); } catch(e){}
+  try { if ('mediaSession' in navigator && !(typeof sleepRun !== 'undefined' && sleepRun) && LOFI_STYLES[lofiKey()]) navigator.mediaSession.metadata = new MediaMetadata({title: LOFI_STYLES[lofiKey()].label + (mode === 'break' ? ' · break' : ''), artist: 'Oathkeeper', album: 'Focus'}); } catch(e){}
   try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch(e){}   // play even with the iPhone's silent switch on
   const style = lofiKey(), sty = LOFI_STYLES[style], part = sty[mode], now = actx.currentTime;
   const master = actx.createGain(); master.gain.setValueAtTime(0.0001, now); master.gain.setValueAtTime(0.0001, now + delay);
@@ -13904,7 +13904,7 @@ function sleepPlay(kind){
 function sleepLevel(to, secs){ const p = sleepOut.gain, t = sleepCtx.currentTime; p.cancelScheduledValues(t); p.setValueAtTime(p.value, t); p.linearRampToValueAtTime(to, t + secs); }
 function sleepMedia(cfg){
   if (!('mediaSession' in navigator)) return;
-  try { navigator.mediaSession.metadata = new MediaMetadata({title: `${SLEEP_SOUNDS[cfg.snd].label} noise`, artist: 'Oathkeeper', album: 'Sleep Mode'});
+  try { navigator.mediaSession.metadata = new MediaMetadata({title: `${SLEEP_SOUNDS[cfg.snd].label} noise`, artist: 'Oathkeeper', album: 'Sleep'});
     navigator.mediaSession.setActionHandler('play', () => sleepCmd('resume'));
     navigator.mediaSession.setActionHandler('pause', () => sleepCmd('pause'));
     navigator.mediaSession.setActionHandler('stop', () => sleepCmd('stop'));
