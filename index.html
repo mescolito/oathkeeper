@@ -402,8 +402,9 @@ body.focusmode .nav::before{background:linear-gradient(to bottom, transparent, #
 .altarpanel{display:flex;gap:14px;align-items:flex-start}
 .altarpanel .altarbig{width:72px;height:72px;border-radius:16px;background:#141312;image-rendering:pixelated;flex:none}
 .altarpanel b{font-size:17px}
-.chesticon{width:40px;height:40px;border-radius:10px;background:#141312;image-rendering:pixelated;flex:none}
-.awardin canvas.chestbig{width:150px;height:150px;border-radius:24px;background:#141312;image-rendering:pixelated}
+/* stage1-shaded-icons: 32x32 art at whole multiples (1x CSS = 2x/3x on phones; 5x in the award popup) */
+.chesticon{width:32px;height:32px;border-radius:9px;background:#141312;image-rendering:pixelated;flex:none}
+.awardin canvas.chestbig{width:160px;height:160px;border-radius:24px;background:#141312;image-rendering:pixelated}
 html[data-mode="dark"] .awardin canvas.chestbig{background:transparent}
 .hprow{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .nextboss{flex:none;border:0;background:var(--ink);color:var(--inv);border-radius:999px;font:inherit;font-size:14px;font-weight:700;padding:10px 16px;cursor:pointer;white-space:nowrap}
@@ -1040,7 +1041,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '2910254936';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '1dabc6eed9';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -3686,7 +3687,61 @@ Object.assign(GEAR_ART, {
 /* Shop icons: just the item, centered on a 24×24 black tile. */
 /* Every item icon gets the same finish: a dithered shadow inside its lower-right edges for volume,
    and top-tier gear a small pink glint, so the art reads with depth instead of as flat cut-outs. */
+/* stage1-shaded-icons: shaded item icons (wiki 13). Potions, runes, legendary runes, the Keystone, the Focus chest and the
+   Purifying Censer are stored as palette-indexed pixel grids, one packed string each: a base-36 digit is one pixel's
+   palette index, and an upper-case letter after it repeats that index (letter code - 64) more times. Index 0 is empty
+   (the tile shows through), 1-7 are the grey steps below, 8-12 are the five steps of the player's Pop colour ramp,
+   13 and up are fixed item colours (SHADE_FIX: the Focus chest's gold, then shadow/core/lit for each potion liquid).
+   Each icon is decoded once, painted once per pop colour onto a tiny cached canvas, and stamped from there. */
+const SHADE_GREY = ['', '#1d1b19', '#2d2a27', '#433e39', '#645e56', '#8e867b', '#bdb6aa', '#f1eee4'];
+const SHADE_FIX = ['#5c4114', '#a1772a', '#d9a948', '#f1d895', '#fdf7e6', '#7a1f26', '#cf3f3a', '#ff8a72', '#22408c', '#3b7ade', '#8fc6ff', '#1f6a34', '#3fae4c', '#a2e47c', '#8a4a12', '#e08a24', '#ffc76c', '#552f8e', '#9160dc', '#cfa8ff', '#136a66', '#22ae9f', '#8ce9da'];
+const SHADE_ART = {
+  pot_hp: '0ZG5B40S54A30S43B0Q65F0Q53210S53210S53210S53210R53D0O5A3Bk3A530L53J0J5373Dk3D0H5373L0G57AkK10G5kCjB7jAiC10G57kBjEkjiA10G57kBjDkjkiA10G3jiAkj7jCkiB10H3jiJ10J31jiF1A0M31F0ZZC',
+  pot_mp: '0ZH650T5aA50T540S65D0R53210S53210R53n3B0P53F0N573Bn3C0M573F10M57AnE10M5nAmBnlA10M3m7mAnmnl10N5nmBnl10O3mlmAlA10P3m7lA10R5ml10S31B0T650S6A5A650P54E50ZZC',
+  pot_anti: '0ZZZY5F40O53E20O42F0M6K0L3I0K5L30G5A3M530E57AqM10E5qDpEoD10E57qCpC67BpoA10E57qCpA6Ao6AopoA10E57qCp6Ao6BopoA10E5qApqA6Ao6BoApoA10E5qD6o6BoAp7oA10E5qoqBo6BoApBoA10E3poB6oJ10F31poJ1A0I31J0ZZA',
+  pot_remedy: '0ZH540T54B0S43B0S5B30R53D0P573E0O573D10O3F10P31D0Q6F0O5F360L5A3G530J53Ft3Ba30H5373L0G57AtK10G5tCsB7sAtrB10G57tBsDtstrA10G37rAts7sCtrB10H3srJ10J31srF1A0M31F0ZZC',
+  pot_elixir: '0ZH650T6ba50S5a940T540S5E0R5B30S53210R53D0P53Bw3B0N573G0L573Dw3C0J573K0H57AwK30G3vuwAvEuC10H3vuwA7vBuvuA10J3vuAw7uD10L3vuAwuC10N31F0Q6B50Q6A5C650N54G50ZZB',
+  pot_agi: '0ZE540T54B0S43B0R65D0R53210R6E0R532106A0P53210B60A30K53B230D350I53Bz3B0B735A0G53H0A6A35A0E5373Cz3C0A635A0E573H10A6A35A0D57AzG10A6A350E5zByA7yxB10B6A350D57zAyCzxA10B6A350D57zAyBzyzx10C6350D3yxz7yBzxA10D690E3yxF10Fa0F3yxD10P31D0ZZG',
+  rune_gold: '0ZZB6B5D40L654H540I64K340H54K3A40F54M320F54C2D4E340E54B2F4D320E54A2H4B320F54A2B5B2B524320F54A2B54A2B52A4340E54A2B54A2B52A5320E54A2H52A5320E54B2F52Aa5320E54C2D52B5A320E54D52E5A4320E54F5E4A320E434L320G43A4I3A20H43J2A0J42I0ZZB',
+  rune_xp: '0ZZC6B5E40K654H340I64K340G54M340F54A34J320E54N320E54E2C4D320E54C2A45B2A4B320E54B245A2A4A524A320E54A24542aA24B24320E54A254A2aA254A25320E4C24B2A5A4245320F54B2A4A5A2A454320F54C52C45A4A320F54E5C4C320E4O320F54J34A320F43A4J320H423J20K42I0ZZA',
+  rune_ward: '0ZZA6B5F40K64J540H64K320G54M340F54M320F54B2I4A340E54B2I54320E54B2A5E2A54320E54B2A54D2A54320E54B2A54aA4A2A54320E54B2A54aA542A54320E54C2A4A5A2A5A4320E54C2A54B2A54A320E54D2A4A2A5A4A320E4F2C5A4B320F54E2A5A4C320F43A4D5A4D320G43A4I320I423I20L42H0ZZA',
+  rune_wither: '0ZZC6B0A5C40K654A34054B340I64E54D340H54L340F54J34A320F54B24C24B24320F54C24B254245320F54D24A252454320F54E242A454A320F54B24B2A5A4B320F54C24A25A4a4A320F54D2B54B5320G54E525494B340F54F254A534320F54F254D320F54D2D4B320G434D5D4A320H434H3A20J43H2A0L42G0ZZC',
+  rune_seal: '0ZZY6B5G40J64J340H64L340F54A34K340E54E2C4D320E54D2A5A2A4C320E54D25A4A254B320E54D254B254B320E54C2G4B320E54C2G54A320E54C2BaA2B54A320E54C2BaA2B54A320E54C2Ca2B54A320E54C2G54A320E4D2G54A320F54C5G3A20G43A4I3A20H423I2A0K42H0ZZB',
+  rune_agi: '0ZZD6B5C40M654G540J64J340H54K320H54G2B4A340F54F2D54320E54F2E5320F54E2Ca25A320F54D2Ca2A54320F54D2Ba2A5A4320F54C2Ba2A5A4A320F54C2Aa25B4B320F54C2925A4D320F54D25A4E320E54D2454E320F4D2454F320G534B54G320G4234I320J43I20L42H0ZZC',
+  rune_MGT: '0ZZE6B540P654D540L654G340J54J340H54L340F54G24D320F54F2B4D340E54F2B54C320E54F2B54C320E54F2B54C320E54F2B54B320F54F2B54B320F54C242D424A340E54C2H54320E54D5B25D4320E54A34D254D320E434E2a24D320F434E5B4B320H43K20J42J0ZZA',
+  rune_STA: '0ZZD6B540P654D540M64H540J54J340H54L340G54M340E54G24E320E4H2A4A34A320F54E2B54C320F54D2C524B320E54E2D424A320E54D2B52C54320E54C2B5a42B54320E54C2B5aA2B54320E54C2B59a2B54320E4E2B452A5A4320F54D2D5A4A320F43A4C5D4A320H423J20K42I0ZZA',
+  rune_MOB: '0ZZE6B540P654D540L654G340J54J340H54L340F54M320F54N340E54B924B2C4B320E54C2A4A2C54A320E54Ba2B42C54A320E54C2B52C54A320E54B2C52C54A320E54C2B52D4A320E54D2A52E4320E54E5A2E5320E4I5E320F54E2F320G434E5F20H43J2A0J42I0ZZB',
+  rune_ARM: '0ZZD6B5A40O654E540L64H340J54J340H54L340G54L320F54N340E54D2AaA2A4C320E54C2G4B320E54B2I4A320E54B2I54320E54B25G254320E54B2C4A2C54320E54B2C542C54320E54B2C542C5320F54B2C542C5320F434342B542B5A320G434B5B4A5B4320H43K20J42J0ZZA',
+  rune_HRT: '0ZZE6B40Q654B340N654F5A40J54J340H54L340F54N340E54G24E320E54F2424D320E54E245424C320E54D24524A24B320E54C2452424A24A320E54B24524a424A24320E54C24A24245245320E54D24A2452454320E54E24A52454A320E4G242454B320F54F2454A3A20G43A4E54B3A20H423I2A0K42H0ZZB',
+  lrune_dawn: '0ZH6A0S6E0O6CaA6C0L6B0E65A0J760B5B40B5A0H6A0A6A4C540A5A0F6A0A64H0A5A0E6A054C24E0540D6A0A5424B5424A30A4A0C6A054B52B4A54B04A0B6Aa054B2D4C3094A0A6Aa054A2Ba2B4B3094A0B6A04C5F4A304A0C6A0A52H430A4A0D6A04A5H304A0E650A4H30A4A0F5A0A434C3A0A4A0H5A0B43B0B4A0J5B0E4B0L54B9A4C0O4E0S4A0ZH',
+  lrune_hoard: '0ZH6A0S6E0O6CaA6C0L6B0E65A0J760B5B40B5A0H6A0A6A4C540A5A0F6A0A64H0A5A0E6A054A2A42A4C0540D6A0A54B2B5A4A30A4A0C6A054B2D4D04A0B6Aa054A2F4B3094A0A6Aa0542Ca2C4A3094A0B6A04A2H54304A0C6A0A52H530A4A0D6A04A2F5A304A0E650A4A5F30A4A0F5A0A434C3A0A4A0H5A0B43B0B4A0J5B0E4B0L54B9A4C0O4E0S4A0ZH',
+  lrune_well: '0ZH6A0S6E0O6CaA6C0L6B0E65A0J760B5B40B5A0H6A0A6A4C540A5A0F6A0A64H0A5A0E6A054C24E0540D6A0A54B2B4C30A4A0C6A054B2Aa2A4D04A0B6Aa054B2D54B3094A0A6Aa054C2B5A4B3094A0B6A04E5B4C304A0C6A0A524F2430A4A0D6A04A2F45304A0E650A4A5F30A4A0F5A0A434C3A0A4A0H5A0B43B0B4A0J5B0E4B0L54B9A4C0O4E0S4A0ZH',
+  keystone: '0ZZZX6C5J40O64M340N64N340M4O320I3B2054A3I43203B20E32A1054A34G5432032A10E32A1054A34G5432032A10E32A1054A34G5432032A10E32A1054A34A2C4A5432032A10E2B104B342A5A2A45432032A10F32B054A325A4A25432032A10G32A1054A325ba425432032A10G32A1054A325aA525432032A10G32A1054A32545A25432032A10G32A1054A3254B25432032A10G2B104B3454C5432032A10H32B054A34C5432032A10I32A1054A34C5432032A10I32A1054A3A4B5432032A10I32A1054A34C5432032A10I32A1054A34C5432032A10I2B104B5E432032A10J21A2054F32021B0P54F320U53G20U42H0ZZZZB',
+  fchest: '0ZZZZZZZZJh0ZCh7h0J5fe4IfAe0Bh0I45feA3IfeA430J453fhe3Ifhe3230Hhf3AfeA3IfeA3AfA0Gf31S2f0G43BfeA3BhgAf3BfeA3A210G43Bfhe3AhfBef3Afhe3hA10G42BfeA2hgfBed2AfeA2gAfe0FeAfgfBh7hg1AgCfBgCe0F4CfeA4hgfdAed4AfeA4B30G43BfeA3Agf1Aed3AfeA3A210G43BfeA3AfefAed3AfeA3A210G43Bfhe3BfeAd3Bfhe3A210G43BfeA3Cfd3CfeA3A210G41V0G43BfeA3IfeA3A210G43BfeA3IfeA3A210Gf3Bfhe3Ifhe3A2f0GfA2AfeA2IfeA2AfA0FfXe0EedX0ZZZT',
+  fchest_open: '0ZZZZ5A4IfA0O5fB3IfB30Bh0H53f3A1I3Af230h7h0F4313B1I3B1230h0Ff4313B1I3B1210Hh4313B1I3B1210Ffh7hf13B1I3B1210Hh4313B1FgA13B1210Hf4313d31hCgAfe1d3A1210I421dhB7hfEgAd3d210I31dhgAfhgAfAgAfAgBd1A0H21AhfAefBefBefBefg1A20G21hfBgAfAgAfAgAfAgAfg120G2hfDefBefBefBefAg20G2eAgAeAgAeAgAeAgAeAhAge20GgRfeAgA0GeW0G43BfAe3BhgAf3BfAe3hg10G43BfeA3BgdB3BfeA3gf10G43Bfhe3BfeAd3Bfhe3eA10G41V0G43BfeA3IfeA3A210G43Bfhe3Ifhe3A210G42BfeA2IfeA2B10FfXe0EedX0ZZZT',
+  weather: '0ZH5A0T50A50C80O5A0D90N65B0D90L404A040Ca0L605A050B90L40A4A0A40A90K60B650B580K40A765A650A40K6B5E65A0J464A349A434A540I53A93a3Aa393A50H6O0H676J50I65J430I54A54H30J534G3A0M53F0Q6B50S64A30Q5A3C5A0ZZC',
+};
+const shadeIdx = {}, shadeCv = {};
+function shadeIcon(id){
+  const src = SHADE_ART[id]; if (!src) return null;
+  const pop = popId(), key = id + '|' + pop; if (shadeCv[key]) return shadeCv[key];
+  let ix = shadeIdx[id];
+  if (!ix){ ix = []; let cur = 0; for (let i = 0; i < src.length; i++){ const c = src.charCodeAt(i); if (c >= 65 && c <= 90){ for (let k = c - 64; k > 0; k--) ix.push(cur); } else { cur = parseInt(src[i], 36); ix.push(cur); } } shadeIdx[id] = ix; }
+  const n = Math.round(Math.sqrt(ix.length)), cv = document.createElement('canvas'), A = POP_RAMPS[pop] || POP_RAMPS.blush;
+  cv.width = n; cv.height = n; const g = cv.getContext('2d');
+  for (let i = 0; i < ix.length; i++){ const v = ix[i]; if (!v) continue; g.fillStyle = v < 8 ? SHADE_GREY[v] : v < 13 ? A[v - 8] : SHADE_FIX[v - 13]; g.fillRect(i % n, (i / n) | 0, 1, 1); }
+  return shadeCv[key] = cv;
+}
+// stamp a shaded icon on a canvas, whole pixels only, centred; dx nudges it sideways (the chest's shake)
+function stampShaded(g, id, S2, dx){
+  const im = shadeIcon(id); if (!im) return false;
+  const sc = Math.max(1, Math.floor(S2 / im.width)), o = Math.floor((S2 - im.width * sc) / 2);
+  g.imageSmoothingEnabled = false; g.drawImage(im, o + (dx || 0), o, im.width * sc, im.width * sc); return true;
+}
 function drawIcon(canvas, kind, id){
+  const sid = kind === 'weather' ? 'weather' : id;
+  if ((kind === 'weather' || kind === 'potion' || kind === 'rune' || kind === 'lrune') && SHADE_ART[sid]){   // shaded art, on the same near-black plate as every other icon
+    const g = canvas.getContext('2d'), S2 = canvas.width; g.fillStyle = PB; g.fillRect(0, 0, S2, S2); stampShaded(g, sid, S2, 0); return; }
   drawIconBase(canvas, kind, id);
   if (kind === 'color' || kind === 'weather') return;
   const S2 = canvas.width, c2 = canvas.getContext('2d'), img = c2.getImageData(0, 0, S2, S2), d = img.data;
@@ -10544,13 +10599,13 @@ function smogNote(){
   const lastTxt = last && !last.shield && (last.hp || last.mp) ? ` Last night −${last.hp} HP, −${last.mp} MP${last.status ? `, ${STATUS[last.status].name.toLowerCase()}` : ''}.` : '';
   const can = D.balance >= sm.clear;
   return `<div class="mystery smognote">${svg('wave',18,2)} <span class="ntext"><b>Toxic air: ${sm.pts}</b>.${lastTxt} Tonight −${hpN} HP, −${mpN} MP. Each finished daily or to-do clears 1.</span>
-    ${sm.owned ? `<button class="btn sm primary" data-weatheruse>Use Weather Machine</button>` : `<button class="btn sm ${weatherArm ? 'danger' : ''}" data-weather ${can ? '' : 'disabled'}>${weatherArm ? `Clear for ${sm.clear} G?` : `Weather Machine · ${sm.clear} G`}</button>`}</div>`;
+    ${sm.owned ? `<button class="btn sm primary" data-weatheruse>Use Purifying Censer</button>` : `<button class="btn sm ${weatherArm ? 'danger' : ''}" data-weather ${can ? '' : 'disabled'}>${weatherArm ? `Clear for ${sm.clear} G?` : `Purifying Censer · ${sm.clear} G`}</button>`}</div>`;
 }
 // the Weather Machine in the shop: buy one ahead and keep it in your bag (you can hold one)
 function weatherShopCard(){
   const sm = D.smog; if (!sm) return '';
   const can = !sm.owned && D.balance >= sm.price;
-  return `<div class="card weathercard"><canvas class="icon sm" width="24" height="24" data-icon="weather:weather" aria-hidden="true"></canvas><span class="tbody"><span class="tname">Weather Machine</span><span class="small muted">Clears toxic air. Hold 1.</span></span>
+  return `<div class="card weathercard"><canvas class="icon sm" width="24" height="24" data-icon="weather:weather" aria-hidden="true"></canvas><span class="tbody"><span class="tname">Purifying Censer</span><span class="small muted">Clears toxic air. Hold 1.</span></span>
     <button class="btn sm ${weatherArm === 'shop' ? 'danger' : 'gold'}" data-weatherbuy ${can ? '' : 'disabled'}>${sm.owned ? 'In your bag' : weatherArm === 'shop' ? `Buy for ${sm.price} G?` : `${sm.price} G`}</button></div>`;
 }
 function slumpNote(){
@@ -10821,9 +10876,9 @@ function renderShop(){
   // the Weather Machine is a shop item like any other: it sits with the potions
   const sm = D.smog;
   if (sm && (shopCat === 'all' || shopCat === 'potion') && shopStyle === 'all' && shopTier === 'all' && !(shopAfford && (sm.owned || D.balance < sm.price))){
-    const wm = {id: 'weather', name: 'Weather Machine', kind: 'weather'}, can = !sm.owned && D.balance >= sm.price;
-    cards.unshift({key: 's:weather', art: itemArt(wm), name: 'Weather Machine' + (sm.owned ? ' (1)' : ''), cls: !sm.owned && !can ? 'locked' : '', foot: `${sm.price} G`,
-      detail: {title: 'Weather Machine', secs: [sm.owned ? '<span class="tagtier">1 in bag</span>' : '', '<span class="qmnotetxt">Clears toxic air. Hold 1.</span>'],
+    const wm = {id: 'weather', name: 'Purifying Censer', kind: 'weather'}, can = !sm.owned && D.balance >= sm.price;
+    cards.unshift({key: 's:weather', art: itemArt(wm), name: 'Purifying Censer' + (sm.owned ? ' (1)' : ''), cls: !sm.owned && !can ? 'locked' : '', foot: `${sm.price} G`,
+      detail: {title: 'Purifying Censer', secs: [sm.owned ? '<span class="tagtier">1 in bag</span>' : '', '<span class="qmnotetxt">Clears toxic air. Hold 1.</span>'],
         btn: sm.owned ? (sm.pts ? '<button class="btn gold" data-weatheruse>Use</button>' : '') : `<button class="btn gold" data-weatherbuy ${can ? '' : 'disabled'}>Buy · ${sm.price} G</button>`}});
   }
   return `<div class="shopfront"><canvas id="shopCv" width="112" height="56" role="img" aria-label="The shop, seen from the street"></canvas></div>
@@ -10887,7 +10942,7 @@ function renderInventory(){
   } else if (invTab === 'potion'){
     const mine = POTIONS.filter(p => D.bag[p.id]);
     list = mine.map(p => { const ps = potionState(p); return row({...p, kind:'potion'}, esc(p.text), `<button class="btn gold sm" data-usepot="${p.id}" ${ps.ok ? '' : 'disabled'}>${ps.ok ? 'Drink' : esc(ps.why)}</button>`, D.bag[p.id]); }).join('');
-    if (D.smog.owned) list += row({id: 'weather', name: 'Weather Machine', kind: 'weather'}, 'Clears toxic air', `<button class="btn gold sm" data-weatheruse ${D.smog.pts ? '' : 'disabled'}>${D.smog.pts ? 'Use' : 'Air is clear'}</button>`);
+    if (D.smog.owned) list += row({id: 'weather', name: 'Purifying Censer', kind: 'weather'}, 'Clears toxic air', `<button class="btn gold sm" data-weatheruse ${D.smog.pts ? '' : 'disabled'}>${D.smog.pts ? 'Use' : 'Air is clear'}</button>`);
     if (!mine.length && !D.smog.owned) list = `<p class="how">No potions.</p>`;
   } else if (invTab === 'rune'){
     const mine = RUNES.filter(r => D.bag[r.id]), eqL = gearAt(Date.now()).lrune;
@@ -11012,7 +11067,9 @@ function drawAltar(cv, bob, glow, open){
   for (let i = 0; i <= 4; i++){ H(cy - 4 + i, 16 - i, 15 + i); H(cy + 4 - i, 16 - i, 15 + i); }
   g.clearRect(15, cy - 2, 2, 1); g.clearRect(14, cy, 4, 1); g.clearRect(15, cy + 2, 2, 1); g.clearRect(15, cy - 1, 1, 3);
 }
-function drawAltarIcons(root){ (root || document).querySelectorAll('canvas.altaricon, canvas.altarbig').forEach(cv => { if (!cv.closest('.altarbox')) drawAltar(cv, 0, false, false); }); }
+function drawAltarIcons(root){ (root || document).querySelectorAll('canvas.altaricon, canvas.altarbig').forEach(cv => { if (cv.closest('.altarbox')) return;
+  if (cv.classList.contains('altaricon')){ const g = cv.getContext('2d'); g.clearRect(0, 0, 32, 32); stampShaded(g, 'keystone', 32, 0); }   // the Keystone count card shows a Keystone
+  else drawAltar(cv, 0, false, false); }); }
 function openAltarUI(key, outcome){
   const el = document.getElementById('award'); if (!el) return;
   const leg = outcome.kind === 'legendary', left = D.altar.keys.length, lr = leg ? LRUNE_BY[outcome.id] : null;
@@ -11045,33 +11102,12 @@ function chestCard(){
   const n = D.pomo.chests.length; if (!n) return '';
   return `<div class="mystery chestcard"><canvas class="chesticon" width="32" height="32" aria-hidden="true"></canvas><span class="ntext"><b>${n} Focus chest${n === 1 ? '' : 's'}</b> to open</span><button class="btn gold sm" data-openchest>Open</button></div>`;
 }
-// draws the pixel chest in the app's black-and-white pixel style: closed, or open with light spilling out
+// draws the Focus chest (stage1-shaded-icons): the shaded pixel art, closed (gold lock, gold light at the seam) or open on a heap of gold coins
 function drawChest(cv, open, shake, glow){
   // the tile behind the chest comes from CSS, so in dark mode the big chest can sit straight on the card with no square
-  const g = cv.getContext('2d'); g.clearRect(0, 0, 32, 32); g.fillStyle = PW;
-  const P = (x, y) => g.fillRect(x + shake, y, 1, 1), H = (y, a, b) => { for (let x = a; x <= b; x++) P(x, y); }, V = (x, a, b) => { for (let y = a; y <= b; y++) P(x, y); };
-  if (glow){ g.fillStyle = STAR_PINK; for (let y = 1; y < 31; y++) for (let x = 1; x < 31; x++) if ((x + y) % 4 === 0 && (x < 4 || x > 27 || y < 3 || y > 28)) P(x, y); g.fillStyle = PW; }
-  // the box: outline, two metal straps, a plank line
-  V(4, 17, 27); V(27, 17, 27); H(27, 4, 27); H(17, 4, 27);
-  for (const x of [8, 9, 22, 23]) V(x, 17, 27);
-  H(22, 10, 21);
-  if (open){
-    // the lid tipped back, seen from inside, with the straps
-    H(5, 6, 25); V(5, 6, 15); V(26, 6, 15); H(6, 5, 5); H(6, 26, 26);
-    for (const x of [8, 9, 22, 23]) V(x, 6, 15);
-    // treasure heaped inside
-    H(16, 6, 25); H(15, 7, 11); H(15, 14, 18); H(15, 20, 24); H(14, 9, 10); H(14, 15, 17); H(14, 21, 22); P(16, 13);
-    // light and sparkles
-    for (const [x, y] of [[13, 1], [15, 0], [18, 1], [11, 3], [20, 3], [16, 2]]) P(x, y);
-    V(1, 8, 10); H(9, 0, 2); V(30, 11, 13); H(12, 29, 31);
-  } else {
-    // a rounded lid with the straps running over it
-    H(9, 7, 24); P(5, 10); P(6, 10); P(25, 10); P(26, 10); V(4, 11, 16); V(27, 11, 16);
-    for (const x of [8, 9, 22, 23]) V(x, 10, 16);
-    // the lock plate and keyhole
-    for (let y = 14; y <= 20; y++) H(y, 14, 17);
-    g.clearRect(15 + shake, 16, 2, 2); g.clearRect(15 + shake, 18, 1, 1);
-  }
+  const g = cv.getContext('2d'); g.clearRect(0, 0, 32, 32);
+  if (glow){ g.fillStyle = STAR_PINK; for (let y = 1; y < 31; y++) for (let x = 1; x < 31; x++) if ((x + y) % 4 === 0 && (x < 4 || x > 27 || y < 3 || y > 28)) g.fillRect(x + shake, y, 1, 1); }
+  stampShaded(g, open ? 'fchest_open' : 'fchest', 32, shake);
 }
 function drawChestIcons(root){ (root || document).querySelectorAll('canvas.chesticon').forEach(cv => drawChest(cv, false, 0, false)); }
 function openChestUI(ts, outcome){
@@ -12377,11 +12413,11 @@ function onClick(e){
   if ('tddel' in el.dataset){ const {L, it} = todoFind(tdraft.lid, tdraft.iid); if (!todoDeletable(L, it)) return; if (!tdDelArm){ tdDelArm = true; readTodoFields(); renderTodoEditor(); return; } L.items = L.items.filter(x => x.id !== it.id); save(); closeEditor(); render(); toast('Deleted'); return; }
   if ('weather' in el.dataset){ const sm = D.smog; if (!sm || !sm.pts || D.balance < sm.clear) return;
     if (!weatherArm){ weatherArm = true; render(); return; }
-    weatherArm = false; S.buys.push({kind: 'weather', id: 'weather', ts: Date.now(), g: sm.clear, date: D.today}); save(); render(); toast(`The Weather Machine cleared the air. −${sm.clear} G`); return; }
+    weatherArm = false; S.buys.push({kind: 'weather', id: 'weather', ts: Date.now(), g: sm.clear, date: D.today}); save(); render(); toast(`The Purifying Censer cleared the air. −${sm.clear} G`); return; }
   if ('weatherbuy' in el.dataset){ const sm = D.smog; if (!sm || sm.owned || D.balance < sm.price) return;
-    weatherArm = false; S.buys.push({kind: 'weatherbuy', id: 'weather', ts: Date.now(), g: sm.price, date: D.today}); save(); render(); toast(`Weather Machine is in your bag. −${sm.price} G`); return; }
+    weatherArm = false; S.buys.push({kind: 'weatherbuy', id: 'weather', ts: Date.now(), g: sm.price, date: D.today}); save(); render(); toast(`Purifying Censer is in your bag. −${sm.price} G`); return; }
   if ('weatheruse' in el.dataset){ const sm = D.smog; if (!sm || !sm.owned || !sm.pts) return;
-    S.buys.push({kind: 'weatheruse', id: 'weather', ts: Date.now(), g: 0, date: D.today}); save(); render(); toast('The Weather Machine cleared the air.'); return; }
+    S.buys.push({kind: 'weatheruse', id: 'weather', ts: Date.now(), g: 0, date: D.today}); save(); render(); toast('The Purifying Censer cleared the air.'); return; }
   if (weatherArm){ weatherArm = false; render(); }
   if (sellArm && !el.dataset.sell){ sellArm = null; if (!Object.keys(el.dataset).length){ render(); return; } }
   if (recoveryMode){
