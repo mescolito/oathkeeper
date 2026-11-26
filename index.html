@@ -825,7 +825,10 @@ body.focusmode.breathmode,body.focusmode.breathmode[data-pomo]{--g1:#40263f;--g2
 .brdot{width:26px;height:40px;border:0;background:none;padding:0;cursor:pointer;display:grid;place-items:center}
 .brdot::before{content:'';width:7px;height:7px;border-radius:50%;background:rgba(241,238,228,.28);transition:background .2s ease}
 .brdot.on::before{background:var(--pink)}
-.brctl{display:grid;grid-template-columns:48px auto 48px;align-items:center;justify-content:center;gap:34px;margin-top:2px}
+/* three columns, the two sides always equal: the middle button is centred whichever side buttons exist */
+.brctl{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:34px;width:100%;margin-top:2px}
+.brctl > :first-child{justify-self:end}
+.brctl > :last-child{justify-self:start}
 .iconbtn.brib{background:rgba(241,238,228,.1);color:#f1eee4;box-shadow:inset 0 0 0 1px rgba(241,238,228,.14);font:inherit;font-size:24px;font-weight:500;line-height:1}
 .iconbtn.brib.on{background:var(--pink);color:#171614;box-shadow:none}
 .iconbtn.brib:disabled{opacity:.35;cursor:default}
@@ -851,7 +854,7 @@ body.breathrun .top{position:relative;z-index:8}
 .brsr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .brtop{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top) + 82px);display:flex;justify-content:center}
 .brbottom{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 34px);display:flex;flex-direction:column;align-items:center}
-.brbottom .brctl{gap:22px;grid-template-columns:48px auto 48px}
+.brbottom .brctl{gap:22px}
 .brmid{display:flex;align-items:center;gap:14px}
 body.breathrun .top,.brtop,.brbottom{transition:opacity .35s ease}
 body.breathrun:not(.brshow) .top,body.breathrun:not(.brshow) .brtop,body.breathrun:not(.brshow) .brbottom{opacity:0;pointer-events:none}
@@ -896,13 +899,17 @@ body.breathmode .qmcard .seg button.on{background:var(--pink);color:#171614}
 .brunder :empty{display:none}
 /* goal first: Recent and Favourites, then six goals; a goal opens its exercises as rows */
 .brhome,.brgoalv{gap:8px;align-items:stretch}
+/* Breath home: the page is at least one screen tall and the goal tiles take whatever height is left (brfill) */
+body.breathmode .app:has(> #view > .brhome){min-height:100vh;min-height:100svh;padding-bottom:max(16px, calc(env(safe-area-inset-bottom) + 8px))}
+body.breathmode .app:has(> #view > .brhome) > #view{flex:1 0 auto}
+.brhome{flex:1 0 auto;padding-bottom:0}
 .brh{margin:8px 6px 0;align-self:flex-start;font-size:13px;font-weight:600;color:#bdb6c8}
 .brmini{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .brlet{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-height:76px;padding:10px 10px;border:0;border-radius:16px;background:rgba(241,238,228,.08);box-shadow:inset 0 0 0 1px rgba(241,238,228,.1);color:#f1eee4;font:inherit;text-align:left;cursor:pointer;min-width:0}
 .brlet b{font-size:14px;font-weight:700;line-height:1.2;overflow-wrap:anywhere}
 .brlet small{font-size:12px;font-weight:500;color:#bdb6c8;font-variant-numeric:tabular-nums}
 .brlet b + small{margin-top:auto}
-.brgoals{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.brgoals{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:minmax(68px,1fr);gap:10px;margin-top:8px;flex:1 0 auto}
 .brgoal{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;min-height:68px;padding:12px 16px;border:0;border-radius:20px;background:rgba(241,238,228,.08);box-shadow:inset 0 0 0 1px rgba(241,238,228,.1);color:#f1eee4;font:inherit;font-size:17px;font-weight:700;text-align:left;cursor:pointer}
 .brgoal svg{color:var(--pink)}
 .brgoal:last-child:nth-child(odd){grid-column:1 / -1}
@@ -1077,7 +1084,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '87a1e481a5';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '7ddfb7c91e';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -10378,7 +10385,7 @@ function renderHeader(){
     return;
   }
   if (tab === 'breathe'){
-    document.getElementById('top').innerHTML = (breathInner() ? `<button class="fpill" data-breath="up" aria-label="Back to ${breathView === 'goal' ? 'Breath' : 'the list'}">${svg('back',20,2.4)} Back</button>` : `<button class="fpill" data-back aria-label="Back to ${TITLES[prevTab] || 'Today'}">${svg('back',20,2.4)} Back</button>`) + (breathRun
+    document.getElementById('top').innerHTML = (breathInner() ? `<button class="fpill" data-breath="up" aria-label="Back to ${breathRun ? BREATH_BY[breathRun.ex].name : 'Breath'}">${svg('back',20,2.4)} Back</button>` : `<button class="fpill" data-back aria-label="Back to ${TITLES[prevTab] || 'Today'}">${svg('back',20,2.4)} Back</button>`) + (breathRun
       ? `<button class="iconbtn brib" data-breath="stop" aria-label="End the session">${svg('x',20,2.4)}</button>`
       : `<span class="fpill" aria-label="${D.balance} gold"><i class="gdot"></i>${D.balance} G</span>`);
     return;
@@ -11455,8 +11462,8 @@ function renderBreath(){
         <div class="brcore"><span id="brLabel" aria-hidden="true"></span></div>
         <div class="brunder" aria-hidden="true"><span id="brSub"></span></div></div>
       <span class="brsr" id="brSay" aria-live="polite"></span>
-      <div class="brbottom"><div class="brctl">${hapBtn}
-          <span class="brmid">${paused ? `<button class="iconbtn brib" data-breath="stop" aria-label="Stop">${BREATH_FILL.stop}</button><button class="brstart sm" data-breath="resume" aria-label="Resume">${BREATH_FILL.play}</button>` : `<button class="brstart sm" data-breath="pause" aria-label="Pause">${BREATH_FILL.pause}</button>`}</span>
+      <div class="brbottom"><div class="brctl"><span class="brmid">${BREATH_VIBE ? hapBtn : ''}${paused ? `<button class="iconbtn brib" data-breath="stop" aria-label="Stop">${BREATH_FILL.stop}</button>` : ''}</span>
+          ${paused ? `<button class="brstart sm" data-breath="resume" aria-label="Resume">${BREATH_FILL.play}</button>` : `<button class="brstart sm" data-breath="pause" aria-label="Pause">${BREATH_FILL.pause}</button>`}
           ${audioBtn}</div>
         <span class="fpill brmin" id="brTime" aria-label="Time left"></span></div>
     </section>`; }
@@ -13930,7 +13937,9 @@ function lofiSample(L, kind, m){
 var breathRun = null, breathView = 'home', breathGoal = 'calm', breathEdit = null, breathDone = null, breathChrome = false;
 var BREATH_VIBE = typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function';   // iPhone has no vibration for web pages: the button is left out there
 const BREATH_LEAD = 1500, BREATH_LO = 0.36;   // a moment to settle before the first breath; the ring's resting size (the centre disc)
-const breathInner = () => !breathRun && (breathView === 'goal' || breathView === 'pick');   // Back steps out a level
+// Back steps up one level inside Breath: session -> its exercise -> Breath home; a goal page or the finished screen -> home.
+// Only the home page's Back leaves Breath.
+const breathInner = () => !!breathRun || breathView === 'goal' || breathView === 'pick' || breathView === 'done';
 // what the exercise screen swipes through: the goal the current exercise is in
 function breathDeck(){ const ex = BREATH_BY[breathCfg().ex]; return BREATH_EX.filter(x => x.g === ex.g); }
 function breathKeep(k, ids){ if (!obj(S.breath)) S.breath = {cfg: {}, log: {}, total: 0}; S.breath[k] = ids; save(); }
@@ -14009,7 +14018,8 @@ function breathCmd(cmd){
     breathSet('ex', v); render(); return; }
   if (k === 'pick' && BREATH_BY[v]){ if (breathRun) return; breathEdit = null; breathDone = null; breathSet('ex', v); breathView = 'pick'; render(); window.scrollTo(0, 0); return; }   // straight there, no sliding past the ones between
   if (k === 'goal' && BREATH_GROUPS.some(g => g[0] === v)){ if (breathRun) return; breathGoal = v; breathView = 'goal'; render(); window.scrollTo(0, 0); return; }
-  if (k === 'up'){ if (breathRun) return; breathEdit = null; if (breathView === 'pick'){ breathGoal = BREATH_BY[cfg.ex].g; breathView = 'goal'; } else breathView = 'home'; render(); window.scrollTo(0, 0); return; }
+  if (k === 'up'){ if (breathRun){ breathEnd(); breathView = 'pick'; breathRefresh(); return; }   // ended early, as the X does: nothing is logged
+    breathEdit = null; breathDone = null; breathView = 'home'; render(); window.scrollTo(0, 0); return; }
   if (k === 'fav' && BREATH_BY[v]){ const f = breathIds(S.breath && S.breath.fav, 60); breathKeep('fav', f.includes(v) ? f.filter(id => id !== v) : [...f, v]); render(); return; }
   if (k === 'side' && (v === 'left' || v === 'right')){ if (breathRun) return; if (v !== cfg.side) breathSet('side', v); render(); return; }
   if (k === 'mins'){ breathEdit = cfg.mins; render(); return; }
