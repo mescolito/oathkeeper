@@ -100,6 +100,7 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block;width
 .tkick{font-size:12px;font-weight:600;color:var(--muted)}
 .tname{font-size:16.5px;font-weight:600;line-height:1.25}
 .trow.done .tname{color:var(--muted)}
+.tthru{font-size:12px;font-weight:500;color:var(--muted);margin-left:3px;white-space:nowrap}
 .tmeta{display:flex;flex-wrap:wrap;gap:5px 6px;align-items:center;font-size:13px;color:var(--muted)}
 .chip-s{font-size:11px;font-weight:700;padding:2px 7px;border-radius:999px;color:var(--ink)}
 .chip-weak{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--ink);color:#fff}
@@ -962,7 +963,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '696c097978';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '7101f8ad3b';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -10079,7 +10080,7 @@ function taskRow(t, k){
   const boss = D.cur.boss, weak = stats.some(s => boss.weak.includes(s)) && D.cur.status === 'now';
   const cad = schedAt(t,k).cad;
   const isD = done(k, t.id), r = rewardOf(t, cad), rested = cad === 'day' && !isD && waived(k, t.id);
-  let meta = '', disabled = false, wk = '';
+  let meta = '', disabled = false, wk = '', thru = '';
   if (cad === 'day' && rested){ disabled = true; meta = 'Rested with a skill · streak holds'; }
   else if (cad === 'day'){
     if (!isDue(t,k)){ disabled = !isD; meta = 'Rest day'; }
@@ -10090,8 +10091,15 @@ function taskRow(t, k){
     meta = (n >= tg ? 'Weekly goal hit' : `+${r.xp} xp each`) + (tg < weekTarget(t,k) ? ' · lightened' : '') + (t.bonus ? ` · bonus at ${t.bonus}` : '');
     const hb = D.habits.lv[t.id]; if (hb) meta += hb.next != null ? ` · ${hb.shown}/${hb.next} to ${HABIT_LV[hb.lv + 1].name}` : ' · Mastered: ' + fxText(masteryFx(t));
     if (!isDue(t,k)){ disabled = !isD; meta = `Not open today · opens ${daysText(schedAt(t,k).days)}`; }
+    // a weekly task open on only some days: say when its window closes ("thru Sunday") or, on a closed day, when it opens
+    const sd = schedAt(t,k).days;
+    if (sd && sd.length && sd.length < 7 && !isD){
+      const longDow = d => parseKey(d).toLocaleDateString('en-US', {weekday:'long'});
+      if (isDue(t,k)){ if (n < tg){ let last = k; for (let i = 6; i >= 0; i--){ const d = addDays(weekKey(k), i); if (sd.includes(parseKey(d).getDay())){ last = d; break; } } thru = last === k ? 'last day' : 'thru ' + longDow(last); } }
+      else { for (let i = 1; i <= 7; i++){ const d = addDays(k, i); if (sd.includes(parseKey(d).getDay())){ thru = 'opens ' + longDow(d); break; } } }
+    }
   }
-  const sw = startOf(t, k); if (sw){ disabled = true; meta = `Starts ${fmtDow(sw)}`; wk = ''; }
+  const sw = startOf(t, k); if (sw){ disabled = true; meta = `Starts ${fmtDow(sw)}`; wk = ''; thru = ''; }
   const closed = sw || (!isD && !rested && !isDue(t,k));
   const name = isPool ? pick.name : t.name;
   let rr = '';
@@ -10104,7 +10112,7 @@ function taskRow(t, k){
   }
   return `<div class="trow ${isD?'done':''} ${rested?'rested':''} ${closed?'closed':''}" data-qm="t|${esc(t.id)}">
     <span class="ticon" style="background:${STATS[prim].c}">${tIcon(t, prim)}</span>
-    <div class="tbody">${isPool || t.archived ? `<span class="tkick">${isPool ? esc(t.name) : ''}${t.archived ? (isPool ? ' · ' : '') + (k === D.today ? 'Archived · last day today' : 'Archived') : ''}</span>` : ''}<span class="tname">${esc(name)}${sirenTag('t', t.id)}${t.note ? ` <span class="notedot" aria-label="Has notes">${svg('note',12,2.2)}</span>` : ''}</span>${isD ? '' : wk}
+    <div class="tbody">${isPool || t.archived ? `<span class="tkick">${isPool ? esc(t.name) : ''}${t.archived ? (isPool ? ' · ' : '') + (k === D.today ? 'Archived · last day today' : 'Archived') : ''}</span>` : ''}<span class="tname">${esc(name)}${sirenTag('t', t.id)}${thru ? ` <span class="tthru">${thru}</span>` : ''}${t.note ? ` <span class="notedot" aria-label="Has notes">${svg('note',12,2.2)}</span>` : ''}</span>${isD ? '' : wk}
       <span class="tmeta">${isD ? `<span>Done${cad === 'week' ? ` · ${weekCount(t.id,k)} of ${effTarget(t,k)} this week` : ''}</span>` : `${stats.map(chipS).join('')}${weak ? '<span class="chip-weak">2× dmg</span>' : ''}<span>${esc(meta)}</span>`}</span>${rr}</div>
     <button class="check" data-toggle="${esc(t.id)}" aria-pressed="${isD}" aria-label="${isD ? 'Undo' : 'Complete'} ${esc(name)}" ${disabled?'disabled':''}>${svg('check',18,2.8)}</button>
     ${checklistBlock(t, k, disabled || closed)}
