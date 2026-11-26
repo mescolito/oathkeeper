@@ -816,8 +816,8 @@ body.focusmode.breathmode,body.focusmode.breathmode[data-pomo]{--g1:#40263f;--g2
 .brdeck{display:flex;width:100%;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
 .brdeck::-webkit-scrollbar{display:none}
 .brcard{flex:0 0 100%;min-width:0;scroll-snap-align:center;scroll-snap-stop:always;display:flex;flex-direction:column;align-items:center;gap:14px;padding:6px 10px 0}
-.brchips{display:inline-flex;gap:4px;padding:8px 10px;border-radius:18px;background:rgba(241,238,228,.08);box-shadow:inset 0 0 0 1px rgba(241,238,228,.1)}
-.brchip{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:52px;padding:2px 4px;color:#f1eee4;font-size:12px;font-weight:600;line-height:1.2}
+.brchips{display:inline-flex;flex-wrap:wrap;justify-content:space-evenly;align-items:center;max-width:100%;min-width:min(100%,272px);gap:2px;padding:14px 8px;border-radius:22px;border-radius:18px;background:rgba(241,238,228,.08);box-shadow:inset 0 0 0 1px rgba(241,238,228,.1)}
+.brchip{display:flex;align-items:center;justify-content:center;min-width:0;padding:0 3px;color:#dddae2;font-size:15px;font-weight:600;line-height:1.2}
 .brchip svg{opacity:.9}
 .brchip b{font-variant-numeric:tabular-nums;font-weight:700}
 .brtext{margin:0;max-width:300px;min-height:66px;text-align:center;font-size:16px;line-height:1.4;color:#d6d0dc}
@@ -881,6 +881,42 @@ body.breathmode .qmcard .seg button.on{background:var(--pink);color:#171614}
 .brvol input{flex:1;min-width:0;height:44px;margin:0;accent-color:var(--pink);background:none}
 .brvol output{width:44px;text-align:right;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
 .brsheet .brcont{max-width:none;margin-top:16px}
+/* second pass: more exercises, picked from a full page: Recent, Favourites, then goals that open their lists */
+.brchip.brx{min-width:0;padding:2px 8px 2px 2px;font-size:15px;font-weight:700;color:#dddae2;white-space:nowrap}
+.brchip svg{display:block;overflow:visible;width:min(72px, calc((100vw - 118px) / var(--n, 3)));height:auto}
+.brcard .ptitle{min-height:44px;display:flex;align-items:center;justify-content:center}
+.brcard.pick .brtext{min-height:0}
+.brside{display:inline-flex;padding:3px;border-radius:999px;background:rgba(241,238,228,.09)}
+.brside button{min-width:76px;min-height:36px;border:0;border-radius:999px;background:none;color:#cfc9d6;font:inherit;font-size:14px;font-weight:600;cursor:pointer;position:relative}
+.brside button::after{content:'';position:absolute;inset:-4px 0}
+.brside button.on{background:var(--pink);color:#171614}
+.brcount{min-height:40px;border:0;background:none;padding:0 14px;color:#bdb6c8;font:inherit;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;display:flex;align-items:center;align-self:center}
+.brunder{position:absolute;left:0;right:0;top:71%;display:flex;flex-direction:column;align-items:center;gap:2px;pointer-events:none;color:#f1eee4;font-size:13px;font-weight:600;line-height:1.25;text-align:center;font-variant-numeric:tabular-nums}
+.brunder b{font-size:17px;font-weight:700}
+.brunder :empty{display:none}
+/* goal first: Recent and Favourites, then six goals; a goal opens its exercises as rows */
+.brhome,.brgoalv{gap:8px;align-items:stretch}
+.brh{margin:8px 6px 0;align-self:flex-start;font-size:13px;font-weight:600;color:#bdb6c8}
+.brmini{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.brlet{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-height:76px;padding:10px 10px;border:0;border-radius:16px;background:rgba(241,238,228,.08);box-shadow:inset 0 0 0 1px rgba(241,238,228,.1);color:#f1eee4;font:inherit;text-align:left;cursor:pointer;min-width:0}
+.brlet b{font-size:14px;font-weight:700;line-height:1.2;overflow-wrap:anywhere}
+.brlet small{font-size:12px;font-weight:500;color:#bdb6c8;font-variant-numeric:tabular-nums}
+.brlet b + small{margin-top:auto}
+.brgoals{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.brgoal{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;min-height:68px;padding:12px 16px;border:0;border-radius:20px;background:rgba(241,238,228,.08);box-shadow:inset 0 0 0 1px rgba(241,238,228,.1);color:#f1eee4;font:inherit;font-size:17px;font-weight:700;text-align:left;cursor:pointer}
+.brgoal svg{color:var(--pink)}
+.brgoal:last-child:nth-child(odd){grid-column:1 / -1}
+.brgoal span{font-size:14px;font-weight:600;color:#bdb6c8;font-variant-numeric:tabular-nums}
+.brrows{display:flex;flex-direction:column;border-radius:20px;background:rgba(241,238,228,.08);box-shadow:inset 0 0 0 1px rgba(241,238,228,.1);margin-top:8px;overflow:hidden}
+.brline{display:flex;align-items:stretch}
+.brline + .brline{border-top:1px solid rgba(241,238,228,.1)}
+.brgo{flex:1;min-width:0;display:flex;align-items:center;gap:10px;min-height:56px;padding:8px 4px 8px 16px;border:0;background:none;color:#f1eee4;font:inherit;font-size:16px;font-weight:600;text-align:left;cursor:pointer}
+.brgo span{flex:1;min-width:0}
+.brgo small{font-size:13px;font-weight:500;color:#bdb6c8;font-variant-numeric:tabular-nums;white-space:nowrap}
+.brgo small + small{width:44px;text-align:right}
+.brstar{flex:none;width:48px;border:0;background:none;color:#8f889c;cursor:pointer;display:grid;place-items:center}
+.brstar.on{color:var(--pink)}
+.brstar.on svg{fill:currentColor}
 @media (prefers-reduced-motion: reduce){
   .brring{display:none}
   .brarc{display:block}
@@ -1041,7 +1077,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '86a9458199';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '87a1e481a5';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1704,25 +1740,84 @@ const byDate = (v, fn) => { const out = {}; if (!obj(v)) return out; for (const 
 const PROTO_KEYS = new Set(Object.getOwnPropertyNames(Object.prototype).concat(['__proto__','prototype','constructor']));
 const byId = (v, fn) => { const out = {}; if (!obj(v)) return out; for (const [id, x] of Object.entries(v)){ if (typeof id !== 'string' || id.length > 40 || PROTO_KEYS.has(id)) continue; const r = fn(x, id); if (r !== undefined) out[id] = r; } return out; };
 /* ---------- Breathe: the exercises and what is kept in the save ----------
-   S.breath = {cfg: {ex, mins: {exId: minutes}, tone, scape, vol, haptic}, log: {'YYYY-MM-DD': finished sessions}, total: n}
+   S.breath = {cfg: {ex, mins: {exId: minutes}, tone, scape, vol, haptic, side?: 'left' | 'right'}, log: {'YYYY-MM-DD': finished sessions}, total: n,
+               recent?: [ids, newest first, three at most], fav?: [ids]}
    The key is only written once Breathe has been used, so a save that never opened it stays exactly as it was. */
-const BREATH_EX = [   // pat = seconds to breathe in, hold, breathe out, hold (0 leaves that part out)
-  {id: 'sleep', name: 'Sleep', pat: [4, 7, 8, 0], text: 'In through the nose, hold, then a long breath out through the mouth. Good in bed.', end: 'Sleep well.'},
-  {id: 'calm', name: 'Calm', pat: [4, 4, 4, 4], text: 'Box breathing. Four even sides, nothing forced.', end: 'Steady.'},
-  {id: 'balance', name: 'Balance', pat: [5, 0, 5, 0], text: 'Five in, five out, no pauses. Breathe low into the belly.', end: 'Evened out.'},
-  {id: 'unwind', name: 'Unwind', pat: [4, 0, 6, 0], text: 'Out longer than in. Let your shoulders drop on each breath out.', end: 'Shoulders down.'},
-  {id: 'energize', name: 'Energize', pat: [2, 0, 2, 0], text: 'Quick, full breaths through the nose. For mornings. Stop if you feel dizzy.', end: 'Awake.'},
+/* An exercise is one cycle of steps, any number of them: {do: 'in' | 'out' | 'hold', via: 'nose' | 'mouth' | 'left' | 'right'
+   (a hold has none), s: seconds}. 'left' and 'right' are single nostrils.
+   - Two inhales in a row are a double inhale: the second is "Again" and the pair counts as one breath.
+   - `pick: true` would let the person choose the side (cfg.side; steps written for the left, mirrored for the right). No exercise
+     sets it now: Arouse is left only, as listed. Adding `pick: true` to it brings up a Left / Right switch on its screen.
+   - `reps: n` makes sets: the cycle n times, then `rest` seconds of normal breathing, and again until the time is used.
+   - `g` is the goal it is listed under, `mins` the minutes it starts with, `adv` marks the demanding ones.
+   The ids sleep, calm, unwind and energize are from the first version and are kept on the exercise with the same timing
+   (Sleep 4-7-8, Box Breath 4-4-4-4, Brain Fog 2 4-6, Energize), so saved minutes keep their meaning. The first version's
+   'balance' (5 in, 5 out through the nose) is not on the owner's list: BREATH_OLD sends it to Stress Relief, the even nose
+   breath with no holds, and the save is moved over when it is read. The log only counts sessions per day, so it is untouched.
+   The text is the owner's purpose line; the three fast ones add a short safety line.
+   The array is in picker order (goal by goal), which is also the swipe order. */
+const BREATH_GROUPS = [['calm', 'Calm', 'wind'], ['sleep', 'Sleep', 'moon'], ['focus', 'Focus', 'timer'], ['energy', 'Energy', 'bolt'], ['train', 'Training', 'bars']];
+// every step names its route: there is no default. N / M / L / R as in the owner's list (both nostrils, mouth, left nostril, right nostril)
+const BIN = (via, s) => ({do: 'in', via, s}), BOUT = (via, s) => ({do: 'out', via, s}), BHOLD = s => ({do: 'hold', s});
+const BREATH_ADV = ' Stop if you feel light-headed.';
+const BREATH_OLD = {balance: 'stress'};   // first-version ids that are no longer listed -> the exercise that takes their place
+const breathNew = id => typeof id === 'string' && Object.prototype.hasOwnProperty.call(BREATH_OLD, id) ? BREATH_OLD[id] : id;
+const BREATH_EX = [
+  {id: 'b478', g: 'calm', name: '4-7-8', mins: 5, steps: [BIN('nose', 4), BHOLD(7), BOUT('nose', 8)], text: 'Relaxation and nervous system regulation.', end: 'Wound down.'},
+  {id: 'anxiety', g: 'calm', name: 'Anxiety Ease', mins: 5, steps: [BIN('nose', 4), BHOLD(2), BOUT('nose', 6)], text: 'Anxiety and stress reduction.', end: 'Slower now.'},
+  {id: 'stress', g: 'calm', name: 'Stress Relief', mins: 4, steps: [BIN('nose', 8), BOUT('nose', 8)], text: 'Stress reduction and relaxation.', end: 'Let go.'},
+  {id: 'relax', g: 'calm', name: 'Auto Relaxer', mins: 4, steps: [BIN('nose', 1), BIN('nose', 1), BOUT('mouth', 6)], text: 'Relaxation and stress reduction.', end: 'Reset.'},
+  {id: 'oki1', g: 'calm', name: 'Okinaga 1', mins: 5, steps: [BIN('nose', 15), BOUT('mouth', 15)], text: 'Calmness, anxiety management and breath control.', end: 'Long and slow.'},
+  {id: 'walking', g: 'calm', name: 'Walking', mins: 4, steps: [BIN('nose', 4), BOUT('mouth', 4)], text: 'Breathing regulation and post-workout relaxation.', end: 'Easy pace.'},
+  {id: 'oki2', g: 'calm', name: 'Okinaga 2', mins: 4, steps: [BIN('nose', 20), BOUT('mouth', 20)], text: 'Calmness, anxiety management and advanced breath control.', end: 'Long and slow.'},
+  {id: 'sleep', g: 'sleep', name: 'Sleep', mins: 4, steps: [BIN('nose', 4), BHOLD(7), BOUT('mouth', 8)], text: 'Relaxation and sleep preparation.', end: 'Sleep well.'},
+  {id: 'backsleep', g: 'sleep', name: 'Back To Sleep', mins: 4, steps: [BIN('nose', 4), BHOLD(4), BOUT('nose', 6), BHOLD(2)], text: 'Relaxation and returning to sleep.', end: 'Back to sleep.'},
+  {id: 'deepfocus', g: 'focus', name: 'Deep Focus', mins: 4, steps: [BIN('left', 4), BOUT('right', 4), BIN('right', 4), BOUT('left', 4)], text: 'Concentration, mental clarity and focus.', end: 'Ready to work.'},
+  {id: 'calm', g: 'focus', name: 'Box Breath', mins: 4, steps: [BIN('nose', 4), BHOLD(4), BOUT('mouth', 4), BHOLD(4)], text: 'Stress reduction, focus and composure.', end: 'Steady.'},
+  {id: 'fog', g: 'focus', name: 'Brain Fog', mins: 4, reps: 10, rest: 15, steps: [BIN('nose', 4), BHOLD(4), BOUT('nose', 6), BHOLD(2)], text: 'Concentration and reduced mental fatigue.', end: 'Clearer.'},
+  {id: 'unwind', g: 'focus', name: 'Brain Fog 2', mins: 5, steps: [BIN('nose', 4), BOUT('mouth', 6)], text: 'Mental clarity and reduced brain fog.', end: 'Clearer.'},
+  {id: 'pregame', g: 'focus', name: 'Pre Game', mins: 4, steps: [BIN('nose', 6), BHOLD(6), BOUT('mouth', 6), BHOLD(6)], text: 'Performance preparation and concentration.', end: 'Ready.'},
+  {id: 'awake', g: 'energy', name: 'Awake', mins: 4, steps: [BIN('nose', 6), BOUT('mouth', 2)], text: 'Energy, alertness and wakefulness.', end: 'Awake.'},
+  {id: 'arouse', g: 'energy', name: 'Arouse', mins: 5, steps: [BIN('left', 6), BOUT('left', 6)], text: 'Physical awareness and arousal.', end: 'Tuned in.'},
+  {id: 'energize', g: 'energy', name: 'Energize', mins: 3, reps: 20, rest: 15, adv: true, steps: [BIN('nose', 2), BOUT('nose', 1)], text: 'Energy, mood and reduced fatigue.' + BREATH_ADV, end: 'Awake.'},
+  {id: 'energize2', g: 'energy', name: 'Energize 2.0', mins: 4, reps: 30, rest: 15, adv: true, steps: [BIN('nose', 2), BOUT('nose', 1)], text: 'Energy, alertness and focus.' + BREATH_ADV, end: 'Charged.'},
+  {id: 'flow', g: 'energy', name: 'Flow State', mins: 2, reps: 30, rest: 15, adv: true, steps: [BIN('nose', 2), BOUT('nose', 1)], text: 'Energy, mental readiness and focus.' + BREATH_ADV, end: 'Go.'},
+  {id: 'lung', g: 'train', name: 'Lung Capacity', mins: 5, steps: [BIN('nose', 6), BHOLD(18), BOUT('mouth', 6)], text: 'Lung capacity, breath control and endurance.', end: 'Well held.'},
+  {id: 'stamina', g: 'train', name: 'Stamina 1', mins: 4, steps: [BIN('nose', 6), BHOLD(12), BOUT('mouth', 6)], text: 'Respiratory endurance and breath control.', end: 'Well held.'},
+  {id: 'airhunger', g: 'train', name: 'Air Hunger', mins: 5, steps: [BIN('nose', 3), BOUT('nose', 3)], text: 'Breathing control and air hunger tolerance.', end: 'Stayed easy.'},
 ];
-const BREATH_BY = Object.fromEntries(BREATH_EX.map(x => [x.id, x]));
+/* The cycle as it is run: the side applied, and for each step how full the breath is when it starts and ends (f0, f1; 0 to 1).
+   A lone inhale fills to 1; the first of a double inhale stops at 0.7. `again` marks an inhale that follows an inhale.
+   k is what the sound and the buzz go by: 'in', 'out', 'hold' (held full) or 'hold2' (held empty). */
+function breathSteps(ex, side){
+  const flip = ex.pick && side === 'right', S0 = ex.steps, br = S0.filter(st => st.do !== 'hold');
+  let lvl = br.length && br[br.length - 1].do === 'in' ? 1 : 0, prev = '';   // a cycle starts where the last one ended
+  return S0.map((st, i) => {
+    if (st.do === 'hold') return {do: 'hold', s: st.s, k: lvl >= 0.5 ? 'hold' : 'hold2', f0: lvl, f1: lvl};
+    let more = 0; while (S0[i + 1 + more] && S0[i + 1 + more].do === st.do) more++;   // the same kind of step still to come in this run
+    const f0 = lvl, f1 = st.do === 'in' ? Math.max(0.2, 1 - 0.3 * more) : Math.min(0.8, 0.3 * more), again = prev === st.do; lvl = f1; prev = st.do;
+    return {do: st.do, via: flip && st.via === 'left' ? 'right' : flip && st.via === 'right' ? 'left' : st.via, s: st.s, k: st.do, f0, f1, again};
+  });
+}
+const breathCycle = ex => ex.steps.reduce((a, st) => a + st.s, 0);   // seconds
+const breathInhales = ex => Math.max(1, ex.steps.filter((st, i) => st.do === 'in' && !(i && ex.steps[i - 1].do === 'in')).length);   // breaths per cycle
+const breathPat = ex => ex.steps.map(st => st.s).join(' · ') + (ex.reps ? ' × ' + ex.reps : '');
+const BREATH_BY = Object.assign(Object.create(null), Object.fromEntries(BREATH_EX.map(x => [x.id, x])));
 const BREATH_TONES = ['sine', 'synth', 'bowl', 'off'], BREATH_SCAPES = ['forest', 'river', 'drone', 'off'];
 const BREATH_MIN_LO = 1, BREATH_MIN_HI = 20, BREATH_MIN_DEF = 4;
+const breathDefMins = ex => int(ex && ex.mins, BREATH_MIN_LO, BREATH_MIN_HI, BREATH_MIN_DEF);
+const breathIds = (a, max) => [...new Set((Array.isArray(a) ? a : []).map(breathNew).filter(id => typeof id === 'string' && BREATH_BY[id]))].slice(0, max);
 function cleanBreath(b){
   const c = obj(b.cfg) ? b.cfg : {}, mins = {}, log = {};
-  if (obj(c.mins)) for (const ex of BREATH_EX) if (c.mins[ex.id] != null) mins[ex.id] = int(c.mins[ex.id], BREATH_MIN_LO, BREATH_MIN_HI, BREATH_MIN_DEF);
+  if (obj(c.mins)) for (const ex of BREATH_EX) if (c.mins[ex.id] != null) mins[ex.id] = int(c.mins[ex.id], BREATH_MIN_LO, BREATH_MIN_HI, breathDefMins(ex));
+  // a first-version id that is no longer listed: its minutes go to the exercise that replaced it (unless that has its own)
+  if (obj(c.mins)) for (const [o, n] of Object.entries(BREATH_OLD)) if (c.mins[o] != null && mins[n] == null) mins[n] = int(c.mins[o], BREATH_MIN_LO, BREATH_MIN_HI, breathDefMins(BREATH_BY[n]));
   if (obj(b.log)) for (const d of Object.keys(b.log).filter(isDate).sort().slice(-1500)){ const n = int(b.log[d], 0, 999, 0); if (n > 0) log[d] = n; }
   const days = Object.values(log).reduce((a, n) => a + n, 0);
-  return {cfg: {ex: BREATH_BY[c.ex] ? c.ex : 'sleep', mins, tone: BREATH_TONES.includes(c.tone) ? c.tone : 'sine', scape: BREATH_SCAPES.includes(c.scape) ? c.scape : 'off', vol: int(c.vol, 0, 100, 60), haptic: c.haptic !== false},
-    log, total: Math.max(days, int(b.total, 0, 1e6, 0))};
+  return {cfg: {ex: BREATH_BY[breathNew(c.ex)] ? breathNew(c.ex) : 'sleep', mins, tone: BREATH_TONES.includes(c.tone) ? c.tone : 'sine', scape: BREATH_SCAPES.includes(c.scape) ? c.scape : 'off', vol: int(c.vol, 0, 100, 60), haptic: c.haptic !== false,
+      ...(c.side === 'left' || c.side === 'right' ? {side: c.side} : {})},
+    log, total: Math.max(days, int(b.total, 0, 1e6, 0)),
+    ...(Array.isArray(b.recent) ? {recent: breathIds(b.recent, 3)} : {}), ...(Array.isArray(b.fav) ? {fav: breathIds(b.fav, 60)} : {})};
 }
 // two devices: the newer one's settings; each day keeps the higher count, and so does the total
 function mergeBreath(nw, od){
@@ -10232,8 +10327,6 @@ const ICON = {
   wind:'<path d="M3 9h10a3 3 0 10-3-3"/><path d="M3 14h14.5a3 3 0 11-3 3"/><path d="M3 19h6"/>',
   sliders:'<path d="M4 7h8M18 7h2M4 17h2M12 17h8"/><circle cx="15" cy="7" r="2.6"/><circle cx="9" cy="17" r="2.6"/>',
   vibe:'<rect x="8.5" y="4" width="7" height="16" rx="2"/><path d="M5 9.5v5M2.5 11v2M19 9.5v5M21.5 11v2"/>',
-  brin:'<path d="M12 19V6M6.5 11.5L12 6l5.5 5.5"/>',
-  brout:'<path d="M12 5v13M6.5 12.5L12 18l5.5-5.5"/>',
   brhold:'<circle cx="12" cy="12" r="8.5"/><path d="M10 9v6M14 9v6"/>'
 };
 
@@ -10285,7 +10378,7 @@ function renderHeader(){
     return;
   }
   if (tab === 'breathe'){
-    document.getElementById('top').innerHTML = `<button class="fpill" data-back aria-label="Back to ${TITLES[prevTab] || 'Today'}">${svg('back',20,2.4)} Back</button>` + (breathRun
+    document.getElementById('top').innerHTML = (breathInner() ? `<button class="fpill" data-breath="up" aria-label="Back to ${breathView === 'goal' ? 'Breath' : 'the list'}">${svg('back',20,2.4)} Back</button>` : `<button class="fpill" data-back aria-label="Back to ${TITLES[prevTab] || 'Today'}">${svg('back',20,2.4)} Back</button>`) + (breathRun
       ? `<button class="iconbtn brib" data-breath="stop" aria-label="End the session">${svg('x',20,2.4)}</button>`
       : `<span class="fpill" aria-label="${D.balance} gold"><i class="gdot"></i>${D.balance} G</span>`);
     return;
@@ -11308,9 +11401,46 @@ function renderFocus(){
 /* what the timer is doing right now: idle, focus, paused, short (break) or long (break) */
 function pomoState(){ const r = S.pomo && S.pomo.run; if (!r || r.idle) return 'idle'; if (r.pauseAt) return 'paused'; return r.phase; }
 /* ---------- Breathe page: pick an exercise, the session, the finish ---------- */
-const BREATH_PH = [['in', 'In', 'brin'], ['hold', 'Hold', 'brhold'], ['out', 'Out', 'brout'], ['hold2', 'Hold', 'brhold']];
+const BREATH_VIA = {nose: 'through the nose', mouth: 'through the mouth', left: 'through the left nostril', right: 'through the right nostril'};
+// the step glyphs (geometry from patch_breath2.py: a 380 x 280 box, the nose centred on x = 0)
+let breathGid = 0;
+const BRG = {nose: 'M-33 108L-40 160C-58 176-86 190-86 212C-86 232-70 243-51 243M33 108L40 160C58 176 86 190 86 212C86 232 70 243 51 243M-56 216C-41 216-31 240 0 240C31 240 41 216 56 216', lips: 'M-110 172C-90 146-56 128-31 128C-15 128-8 139 0 139C8 139 15 128 31 128C56 128 90 146 110 172C95 224 50 255 0 255C-50 255-95 224-110 172ZM-110 172L110 172M-99 181C-70 204-36 214 0 214C36 214 70 204 99 181', hold: 'M0 105A80 80 0 1 1 0 265A80 80 0 1 1 0 105ZM-35 152a12 12 0 0 1 12-12h0a12 12 0 0 1 12 12v46a12 12 0 0 1-12 12h0a12 12 0 0 1-12-12zM11 152a12 12 0 0 1 12-12h0a12 12 0 0 1 12 12v46a12 12 0 0 1-12 12h0a12 12 0 0 1-12-12z', single: 'M-30 108L-37 158M-108 256L-64 172C-56 156-40 146-27 156C-16 165-12 186-14 204L-36 250M-15 226C-4 238 8 240 20 232C31 225 40 216 56 216M33 108L40 160C58 176 86 190 86 212C86 232 70 243 51 243',
+  in: ['M180.5 314.1 L175.9 314.7 L171.1 314.9 L166.2 315 L161.2 314.9 L156.2 314.7 L151.1 314.4 L145.9 314 L140.8 313.5 L135.7 312.8 L130.7 312.1 L125.8 311.3 L120.9 310.3 L116.2 309.3 L111.7 308.2 L107.4 306.9 L103.2 305.6 L99.4 304.2 L95.7 302.8 L92.4 301.2 L89.4 299.6 L86.7 298 L84.4 296.3 L82.3 294.7 L80.6 293 L63.4 303 L65.6 307.2 L68.3 311.2 L71.3 314.9 L74.8 318.4 L78.5 321.7 L82.5 324.9 L86.8 327.8 L91.3 330.7 L96 333.4 L100.9 335.9 L105.9 338.4 L111.1 340.7 L116.4 342.9 L121.7 345 L127.2 347 L132.7 348.9 L138.2 350.7 L143.7 352.5 L149.2 354.1 L154.6 355.7 L160 357.2 L165.3 358.7 L170.5 360.2 L175.5 361.9Z', 'M53.9 266.9L95.6 288.9L52.4 314.1Z', 72, 298, 178, 338], out: ['M42 263.3 L43.7 269.7 L45.7 275.9 L48 281.6 L50.7 287 L53.7 292 L57 296.6 L60.5 300.8 L64.2 304.7 L68 308.3 L71.9 311.5 L75.9 314.6 L79.9 317.4 L84 320.1 L88.1 322.6 L92.2 325 L96.3 327.4 L100.4 329.6 L104.4 331.9 L108.5 334.1 L112.4 336.3 L116.3 338.6 L120.1 340.9 L123.9 343.2 L127.5 345.6 L140.5 330.4 L137 326.9 L133.5 323.5 L129.9 320.2 L126.3 317 L122.8 313.9 L119.2 310.8 L115.8 307.8 L112.4 304.8 L109.2 301.8 L106.1 298.9 L103.3 296 L100.6 293.1 L98.1 290.2 L96 287.4 L94 284.6 L92.4 281.8 L91.1 279.1 L90.1 276.5 L89.4 273.9 L88.9 271.3 L88.7 268.8 L88.8 266.2 L89.1 263.5 L90 260.7Z', 'M161.3 361.4L114.7 354.4L147.2 316.4Z', 134, 338, 66, 262]};
+function breathGlyph(st, w){
+  const id = 'brg' + (++breathGid), line = d => `<path d="${d}" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>`;
+  let body;
+  if (st.do === 'hold') body = line(BRG.hold);
+  else {
+    // two-digit seconds push the swooshes out a little so the number sits clear between them
+    const a = BRG[st.do], arr = `<path d="${a[0]}" fill="url(#${id})" transform="translate(${st.s > 9 ? 16 : 0} 0)"/><path d="${a[1]}" fill="currentColor" transform="translate(${st.s > 9 ? 16 : 0} 0)"/>`, mir = x => `<g transform="scale(-1 1)">${x}</g>`;
+    // the tail fades: opaque at the arrowhead, clear at the far end (a mirrored swoosh mirrors its gradient with it)
+    body = `<defs><linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${a[2]}" y1="${a[3]}" x2="${a[4]}" y2="${a[5]}"><stop offset="0" stop-color="currentColor"/><stop offset=".4" stop-color="currentColor" stop-opacity=".75"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></linearGradient></defs>`;
+    if (st.via === 'left' || st.via === 'right'){ const g = line(BRG.single) + arr; body += st.via === 'left' ? g : mir(g); }   // drawn open on your right = the left nostril
+    else body += line(st.via === 'mouth' ? BRG.lips : BRG.nose) + arr + mir(arr);
+  }
+  return `<svg width="${w}" height="${Math.round(w * 280 / 380)}" viewBox="-190 100 380 280" aria-hidden="true">${body}<text x="0" y="372" text-anchor="middle" font-size="80" font-weight="700" fill="currentColor">${st.s}</text></svg>`;
+}
 const BREATH_FILL = {play: '<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>', pause: '<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>', stop: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2.5"/></svg>'};
-const breathChips = ex => `<div class="brchips" role="img" aria-label="${BREATH_PH.map(([k, l], i) => ex.pat[i] ? `${l} ${ex.pat[i]}` : '').filter(Boolean).join(', ')} seconds">${BREATH_PH.map(([k, l, ic], i) => ex.pat[i] ? `<span class="brchip">${svg(ic, 20, 2)}<span>${l} <b>${ex.pat[i]}</b></span></span>` : '').join('')}</div>`;
+// one glyph per step, its seconds inside it; sets add how many times. Sized like the owner's reference card (about 70 % of the
+// screen for three steps); with four steps or a set count the glyphs shrink to share the width, so the row never wraps
+const breathChips = (steps, reps) => `<div class="brchips" role="img" aria-label="${steps.map(st => st.do === 'hold' ? `hold ${st.s}` : `${st.do} ${BREATH_VIA[st.via]} ${st.s}`).join(', ')} seconds${reps ? `, ${reps} times` : ''}">${steps.map(st => `<span class="brchip" style="--n:${steps.length + (reps ? 0.8 : 0)}">${breathGlyph(st, 72)}</span>`).join('')}${reps ? `<span class="brchip brx">× ${reps}</span>` : ''}</div>`;
+const breathMinsOf = ex => int(S.breath && S.breath.cfg && S.breath.cfg.mins && S.breath.cfg.mins[ex.id], BREATH_MIN_LO, BREATH_MIN_HI, breathDefMins(ex));
+// goal first: the home screen (Recent, Favourites, the goals) and one goal's exercises
+function breathHomeHtml(){
+  const b = S.breath || {}, lets = ids => `<div class="brmini">${ids.map(id => { const ex = BREATH_BY[id]; return `<button class="brlet" data-breath="pick:${id}"><b>${ex.name}</b><small>${breathPat(ex)}</small><small>${breathMinsOf(ex)} min</small></button>`; }).join('')}</div>`;
+  const recent = breathIds(b.recent, 3), fav = breathIds(b.fav, 60);
+  return `<section class="space brpage brhome" aria-label="Breath">
+    ${recent.length ? `<h3 class="brh">Recent</h3>${lets(recent)}` : ''}
+    ${fav.length ? `<h3 class="brh">Favourites</h3>${lets(fav)}` : ''}
+    <div class="brgoals">${BREATH_GROUPS.map(([g, label, ic]) => `<button class="brgoal" data-breath="goal:${g}" aria-label="${label}, ${BREATH_EX.filter(x => x.g === g).length} exercises">${svg(ic, 24, ic.startsWith('br') ? 1.5 : 2)}${label}<span>${BREATH_EX.filter(x => x.g === g).length}</span></button>`).join('')}</div>
+  </section>`;
+}
+function breathGoalHtml(){
+  const G = BREATH_GROUPS.find(x => x[0] === breathGoal) || BREATH_GROUPS[0], fav = breathIds(S.breath && S.breath.fav, 60);
+  return `<section class="space brpage brgoalv" aria-label="${G[1]}"><h2 class="ptitle">${G[1]}</h2>
+    <div class="brrows">${BREATH_EX.filter(x => x.g === G[0]).map(ex => `<div class="brline"><button class="brgo" data-breath="pick:${ex.id}"><span>${ex.name}</span><small>${breathPat(ex)}</small><small>${breathMinsOf(ex)} min</small></button><button class="brstar ${fav.includes(ex.id) ? 'on' : ''}" data-breath="fav:${ex.id}" aria-pressed="${fav.includes(ex.id)}" aria-label="Favourite: ${ex.name}">${svg('star', 20, 1.8)}</button></div>`).join('')}</div>
+  </section>`;
+}
 function breathSideBtns(cfg){
   return [BREATH_VIBE ? `<button class="iconbtn brib ${cfg.haptic ? 'on' : ''}" data-breath="hap" aria-pressed="${cfg.haptic}" aria-label="Vibration">${svg('vibe', 21, 2)}</button>` : '<span></span>',
     `<button class="iconbtn brib" data-breath="audio" aria-haspopup="dialog" aria-label="Audio settings">${svg('sliders', 21, 2)}</button>`];
@@ -11319,10 +11449,11 @@ function renderBreath(){
   const cfg = breathCfg(), r = breathRun, [hapBtn, audioBtn] = breathSideBtns(cfg);
   if (r){ const ex = BREATH_BY[r.ex], paused = !!r.pauseAt, C = 2 * Math.PI * 48;
     return `<section class="brstage" id="brStage" aria-label="${ex.name} breathing">
-      <div class="brtop">${breathChips(ex)}</div>
+      <div class="brtop">${breathChips(r.st, r.reps)}</div>
       <div class="brfield"><i class="brring" id="brRing"></i>
         <svg class="brarc" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="48"/><circle id="brArc" cx="50" cy="50" r="48" stroke-dasharray="${C.toFixed(2)}" stroke-dashoffset="${C.toFixed(2)}"/></svg>
-        <div class="brcore"><span id="brLabel" aria-hidden="true"></span></div></div>
+        <div class="brcore"><span id="brLabel" aria-hidden="true"></span></div>
+        <div class="brunder" aria-hidden="true"><span id="brSub"></span></div></div>
       <span class="brsr" id="brSay" aria-live="polite"></span>
       <div class="brbottom"><div class="brctl">${hapBtn}
           <span class="brmid">${paused ? `<button class="iconbtn brib" data-breath="stop" aria-label="Stop">${BREATH_FILL.stop}</button><button class="brstart sm" data-breath="resume" aria-label="Resume">${BREATH_FILL.play}</button>` : `<button class="brstart sm" data-breath="pause" aria-label="Pause">${BREATH_FILL.pause}</button>`}</span>
@@ -11336,11 +11467,13 @@ function renderBreath(){
       <div class="brstats"><div><span>Streak</span><b>${breathStreak()}</b></div><div><span>Total sessions</span><b>${(S.breath && S.breath.total) || 0}</b></div></div>
       <button class="brcont" data-breath="cont">Continue</button>
     </section>`; }
+  if (breathView === 'home') return breathHomeHtml();
+  if (breathView === 'goal') return breathGoalHtml();
   const other = [lofi ? 'Focus music' : '', sleepRun && !sleepRun.paused ? 'Sleep noise' : ''].filter(Boolean).join(' and ');
-  const ed = breathEdit;
+  const ed = breathEdit, deck = breathDeck(), at = deck.findIndex(x => x.id === cfg.ex) + 1;
   return `<section class="space brpage" aria-label="Breath">
-    <div class="brdeck" id="brDeck" aria-label="Exercises">${BREATH_EX.map(ex => `<article class="brcard" aria-label="${ex.name}">${breathChips(ex)}<h2 class="ptitle">${ex.name}</h2><p class="brtext">${ex.text}</p></article>`).join('')}</div>
-    <div class="brdots">${BREATH_EX.map(ex => `<button class="brdot ${ex.id === cfg.ex ? 'on' : ''}" data-breath="ex:${ex.id}" aria-label="${ex.name}" aria-pressed="${ex.id === cfg.ex}"></button>`).join('')}</div>
+    <div class="brdeck" id="brDeck" aria-label="Exercises">${deck.map(ex => `<article class="brcard ${ex.pick ? 'pick' : ''}" aria-label="${ex.name}">${breathChips(breathSteps(ex, cfg.side), ex.reps)}<h2 class="ptitle">${ex.name}</h2><p class="brtext">${ex.text}</p>${ex.pick ? `<div class="brside" role="group" aria-label="Open nostril">${['left', 'right'].map(v => `<button class="${v === cfg.side ? 'on' : ''}" data-breath="side:${v}" aria-pressed="${v === cfg.side}">${v === 'left' ? 'Left' : 'Right'}</button>`).join('')}</div>` : ''}</article>`).join('')}</div>
+    <span class="brcount" aria-label="Exercise ${at} of ${deck.length}">${at} / ${deck.length}</span>
     ${ed == null ? `<div class="brctl">${hapBtn}<button class="brstart" data-breath="start">Start</button>${audioBtn}</div>
     <button class="fpill brmin" data-breath="mins" aria-label="${cfg.mins} minutes. Change">${cfg.mins} min</button>`
     : `<div class="brctl"><button class="iconbtn brib" data-breath="step:-1" ${ed <= BREATH_MIN_LO ? 'disabled' : ''} aria-label="One minute less">−</button><div class="brstart" aria-live="polite"><b>${ed}</b><span>minute${ed === 1 ? '' : 's'}</span></div><button class="iconbtn brib" data-breath="step:1" ${ed >= BREATH_MIN_HI ? 'disabled' : ''} aria-label="One minute more">+</button></div>
@@ -13794,21 +13927,33 @@ function lofiSample(L, kind, m){
 /* ---------- Breathe: a guided breathing session ----------
    The clock is the wall clock: every frame works out where in the pattern we are from timestamps, so a dropped
    frame (or a stalled tab) never puts the ring out of time. Sound is made on the device; nothing is downloaded. */
-var breathRun = null, breathView = 'pick', breathEdit = null, breathDone = null, breathChrome = false;
+var breathRun = null, breathView = 'home', breathGoal = 'calm', breathEdit = null, breathDone = null, breathChrome = false;
 var BREATH_VIBE = typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function';   // iPhone has no vibration for web pages: the button is left out there
 const BREATH_LEAD = 1500, BREATH_LO = 0.36;   // a moment to settle before the first breath; the ring's resting size (the centre disc)
-function breathCfg(){ const c = (S.breath && S.breath.cfg) || {}, ex = BREATH_BY[c.ex] ? c.ex : 'sleep';
-  return {ex, mins: int(c.mins && c.mins[ex], BREATH_MIN_LO, BREATH_MIN_HI, BREATH_MIN_DEF), tone: BREATH_TONES.includes(c.tone) ? c.tone : 'sine', scape: BREATH_SCAPES.includes(c.scape) ? c.scape : 'off', vol: int(c.vol, 0, 100, 60), haptic: c.haptic !== false}; }
+const breathInner = () => !breathRun && (breathView === 'goal' || breathView === 'pick');   // Back steps out a level
+// what the exercise screen swipes through: the goal the current exercise is in
+function breathDeck(){ const ex = BREATH_BY[breathCfg().ex]; return BREATH_EX.filter(x => x.g === ex.g); }
+function breathKeep(k, ids){ if (!obj(S.breath)) S.breath = {cfg: {}, log: {}, total: 0}; S.breath[k] = ids; save(); }
+function breathCfg(){ const c = (S.breath && S.breath.cfg) || {}, ex = BREATH_BY[breathNew(c.ex)] ? breathNew(c.ex) : 'sleep';
+  return {ex, side: c.side === 'right' ? 'right' : 'left', mins: int(c.mins && c.mins[ex], BREATH_MIN_LO, BREATH_MIN_HI, breathDefMins(BREATH_BY[ex])), tone: BREATH_TONES.includes(c.tone) ? c.tone : 'sine', scape: BREATH_SCAPES.includes(c.scape) ? c.scape : 'off', vol: int(c.vol, 0, 100, 60), haptic: c.haptic !== false}; }
 function breathSet(k, v){ if (!obj(S.breath)) S.breath = {cfg: {}, log: {}, total: 0}; if (!obj(S.breath.cfg)) S.breath.cfg = {}; if (!obj(S.breath.cfg.mins)) S.breath.cfg.mins = {};
   if (k === 'mins') S.breath.cfg.mins[breathCfg().ex] = v; else S.breath.cfg[k] = v; save(); }
 // whole breaths only: the session is the number of full cycles nearest to the minutes asked for
-function breathPlan(exId, mins){ const ex = BREATH_BY[exId], ph = BREATH_PH.map(([k], i) => [k, ex.pat[i]]).filter(p => p[1] > 0), cyc = ph.reduce((a, p) => a + p[1], 0) * 1000, n = Math.max(1, Math.round(mins * 60000 / cyc));
-  return {ex: exId, ph, cyc, n, total: n * cyc}; }
+/* st = the steps of one cycle; n = cycles in the session, the whole number nearest the minutes asked for. With sets, a block is
+   `reps` cycles and then `rest` ms: the session runs set, rest, set ... until the time is used, so the last set may be a short one,
+   and a rest is only taken when at least one more cycle fits after it. breaths = inhales over the session; mix = nose and mouth both used. */
+function breathPlan(exId, mins, side){ const ex = BREATH_BY[exId], st = breathSteps(ex, side).filter(x => x.s > 0), cyc = st.reduce((a, x) => a + x.s, 0) * 1000, T = mins * 60000;
+  const reps = int(ex.reps, 0, 999, 0), rest = reps ? int(ex.rest, 0, 600, 15) * 1000 : 0, block = (reps || 1) * cyc + rest;
+  let n = Math.max(1, Math.round(T / cyc)), total = n * cyc;
+  if (reps){ n = 0; total = 0; for (;;){ if (n && n % reps === 0){ if (total + rest + cyc > T) break; total += rest; } else if (n && total + cyc / 2 > T) break; total += cyc; n++; } }
+  return {ex: exId, st, cyc, n, reps, rest, block, sets: reps ? Math.ceil(n / reps) : 0, total, breaths: n * breathInhales(ex), mix: st.some(x => x.via === 'mouth') && st.some(x => x.via && x.via !== 'mouth')}; }
 function breathPos(r, now){ const el = (r.pauseAt || now) - r.t0 - r.pausedMs;
   if (el < 0) return {lead: true, left: r.total};
   if (el >= r.total) return {done: true};
-  const c = el % r.cyc; let acc = 0;
-  for (let i = 0; i < r.ph.length; i++){ const d = r.ph[i][1] * 1000; if (c < acc + d) return {i, k: r.ph[i][0], d, t: c - acc, n: Math.floor(el / r.cyc), left: r.total - el}; acc += d; }
+  const set = Math.floor(el / r.block), w = el - set * r.block, setLen = r.block - r.rest;
+  if (w >= setLen) return {i: -1, k: 'rest', d: r.rest, t: w - setLen, n: set + 'r', set, rep: r.reps, left: r.total - el};   // between sets
+  const rep = Math.floor(w / r.cyc), c = w - rep * r.cyc; let acc = 0;
+  for (let i = 0; i < r.st.length; i++){ const d = r.st[i].s * 1000; if (c < acc + d) return {i, k: r.st[i].k, d, t: c - acc, n: set + '.' + rep, set, rep, left: r.total - el}; acc += d; }
   return {done: true}; }
 function breathStreak(){ const log = (S.breath && S.breath.log) || {}; let d = todayKey(), n = 0; if (!log[d]) d = addDays(d, -1); while (log[d]){ n++; d = addDays(d, -1); } return n; }
 function breathStep(){
@@ -13816,16 +13961,26 @@ function breathStep(){
   const p = breathPos(r, Date.now());
   if (p.done){ breathFinish(); return; }
   const key = p.lead ? 'lead' : p.n + ':' + p.i;
-  if (key !== r.key && !r.pauseAt){ r.key = key; if (!p.lead){ breathCue(p.k, (p.d - p.t) / 1000, p.t / p.d); breathBuzz(p.k); } }
+  if (key !== r.key && !r.pauseAt){ r.key = key; if (!p.lead){ breathCue(p.k === 'rest' ? 'hold2' : p.k, (p.d - p.t) / 1000, p.t / p.d); breathBuzz(p.k); } }
   breathPaint(r, p);
 }
 function breathPaint(r, p){
   const lab = document.getElementById('brLabel'); if (!lab) return;   // the session carries on while you are on another page
-  const hold = p.k === 'hold' || p.k === 'hold2', word = p.lead ? 'Ready' : p.k === 'in' ? 'Inhale' : p.k === 'out' ? 'Exhale' : 'Hold';
-  let txt = word; if (hold){ const rem = Math.ceil((p.d - p.t) / 1000); if (rem < p.d / 1000) txt = String(rem); }   // "Hold", then the seconds left
-  if (lab.textContent !== txt){ lab.textContent = txt;
-    if (lab.dataset.w !== word){ lab.dataset.w = word; lab.classList.remove('swap'); void lab.offsetWidth; lab.classList.add('swap'); const say = document.getElementById('brSay'); if (say) say.textContent = p.lead ? '' : word; } }
-  const x = p.lead ? 0 : p.t / p.d, e = 0.5 - 0.5 * Math.cos(Math.PI * x), f = p.lead ? 0 : p.k === 'in' ? e : p.k === 'out' ? 1 - e : p.k === 'hold' ? 1 : 0;   // how full the breath is, 0 to 1
+  const rest = p.k === 'rest', hold = p.k === 'hold' || p.k === 'hold2', st = p.lead || rest ? null : r.st[p.i];
+  const word = p.lead ? 'Ready' : rest ? 'Rest' : hold ? 'Hold' : st.do === 'in' ? (st.again ? 'Again' : 'Inhale') : 'Exhale';
+  const rem = p.lead ? 0 : Math.ceil((p.d - p.t) / 1000);
+  let txt = word; if ((hold || rest) && rem < p.d / 1000) txt = String(rem);   // "Hold" / "Rest", then the seconds left
+  /* The route is shown by the glyphs in the top card, not in the ring. That card fades out while a session runs (a tap or a
+     pause brings it back), so a single-nostril step keeps a small "left nostril" / "right nostril" under the word. Rep
+     workouts show where you are in the set. A screen reader hears the route with the word. */
+  const one = st && !hold && (st.via === 'left' || st.via === 'right') ? st.via + ' nostril' : '';
+  const sets = !r.reps || p.lead ? '' : rest ? `Set ${p.set + 2} next` : `Set ${p.set + 1} · ${p.rep + 1}/${p.set === r.sets - 1 ? r.n - p.set * r.reps : r.reps}`;
+  const under = [one, sets].filter(Boolean).join(' · '), said = word + (st && !hold ? ', ' + BREATH_VIA[st.via] : '');
+  const sub = document.getElementById('brSub');
+  if (sub && sub.textContent !== under) sub.textContent = under;
+  if (lab.textContent !== txt || lab.dataset.w !== said){ lab.textContent = txt;
+    if (lab.dataset.w !== said){ lab.dataset.w = said; lab.classList.remove('swap'); void lab.offsetWidth; lab.classList.add('swap'); const say = document.getElementById('brSay'); if (say) say.textContent = p.lead ? '' : said; } }
+  const x = p.lead ? 0 : p.t / p.d, e = 0.5 - 0.5 * Math.cos(Math.PI * x), f = st ? st.f0 + (st.f1 - st.f0) * e : 0;   // how full the breath is, 0 to 1 (idle while resting)
   if (motionOK){ const ring = document.getElementById('brRing'); if (ring) ring.style.transform = `scale(${(BREATH_LO + (1 - BREATH_LO) * f).toFixed(4)})`; }
   else { const arc = document.getElementById('brArc'); if (arc) arc.setAttribute('stroke-dashoffset', (2 * Math.PI * 48 * (1 - f)).toFixed(2)); }
   const tm = document.getElementById('brTime'), left = mmss(p.left).padStart(5, '0'); if (tm && tm.textContent !== left) tm.textContent = left;
@@ -13839,9 +13994,9 @@ setInterval(() => { if (breathRun && !breathRun.pauseAt && !recoveryMode){ try {
 function breathRefresh(){ if (tab === 'breathe') render(); else renderHeader(); }
 function breathAfter(){   // after every render: put the exercise strip where it belongs, paint the session at once
   const deck = document.getElementById('brDeck');
-  if (deck){ const i = BREATH_EX.findIndex(x => x.id === breathCfg().ex); deck.scrollLeft = i * deck.clientWidth;
-    let t = 0; deck.addEventListener('scroll', () => { clearTimeout(t); t = setTimeout(() => { if (!deck.isConnected || !deck.clientWidth) return; const j = Math.max(0, Math.min(BREATH_EX.length - 1, Math.round(deck.scrollLeft / deck.clientWidth)));
-      if (BREATH_EX[j].id !== breathCfg().ex){ breathEdit = null; breathSet('ex', BREATH_EX[j].id); render(); } }, 110); }, {passive: true}); }
+  if (deck){ const list = breathDeck(), i = Math.max(0, list.findIndex(x => x.id === breathCfg().ex)); deck.scrollLeft = i * deck.clientWidth;
+    let t = 0; deck.addEventListener('scroll', () => { clearTimeout(t); t = setTimeout(() => { if (!deck.isConnected || !deck.clientWidth) return; const j = Math.max(0, Math.min(list.length - 1, Math.round(deck.scrollLeft / deck.clientWidth)));
+      if (list[j].id !== breathCfg().ex){ breathEdit = null; breathSet('ex', list[j].id); render(); } }, 110); }, {passive: true}); }
   if (breathRun && document.getElementById('brLabel')) breathPaint(breathRun, breathPos(breathRun, Date.now()));
 }
 function breathShow(on, hold){ breathChrome = on; clearTimeout(breathShow.t); document.body.classList.toggle('brshow', tab === 'breathe' && !!breathRun && (on || !!breathRun.pauseAt));
@@ -13849,9 +14004,14 @@ function breathShow(on, hold){ breathChrome = on; clearTimeout(breathShow.t); do
 function breathCmd(cmd){
   const i = cmd.indexOf(':'), k = i < 0 ? cmd : cmd.slice(0, i), v = i < 0 ? '' : cmd.slice(i + 1), cfg = breathCfg();
   if (k === 'ex' && BREATH_BY[v]){ if (breathRun) return; breathEdit = null;
-    const deck = document.getElementById('brDeck'), j = BREATH_EX.findIndex(x => x.id === v);
-    if (deck && motionOK && deck.scrollTo && v !== cfg.ex){ deck.scrollTo({left: j * deck.clientWidth, behavior: 'smooth'}); return; }   // the strip's own scroll handler finishes the change
+    const deck = document.getElementById('brDeck'), j = breathDeck().findIndex(x => x.id === v);
+    if (deck && j >= 0 && motionOK && deck.scrollTo && v !== cfg.ex){ deck.scrollTo({left: j * deck.clientWidth, behavior: 'smooth'}); return; }   // the strip's own scroll handler finishes the change
     breathSet('ex', v); render(); return; }
+  if (k === 'pick' && BREATH_BY[v]){ if (breathRun) return; breathEdit = null; breathDone = null; breathSet('ex', v); breathView = 'pick'; render(); window.scrollTo(0, 0); return; }   // straight there, no sliding past the ones between
+  if (k === 'goal' && BREATH_GROUPS.some(g => g[0] === v)){ if (breathRun) return; breathGoal = v; breathView = 'goal'; render(); window.scrollTo(0, 0); return; }
+  if (k === 'up'){ if (breathRun) return; breathEdit = null; if (breathView === 'pick'){ breathGoal = BREATH_BY[cfg.ex].g; breathView = 'goal'; } else breathView = 'home'; render(); window.scrollTo(0, 0); return; }
+  if (k === 'fav' && BREATH_BY[v]){ const f = breathIds(S.breath && S.breath.fav, 60); breathKeep('fav', f.includes(v) ? f.filter(id => id !== v) : [...f, v]); render(); return; }
+  if (k === 'side' && (v === 'left' || v === 'right')){ if (breathRun) return; if (v !== cfg.side) breathSet('side', v); render(); return; }
   if (k === 'mins'){ breathEdit = cfg.mins; render(); return; }
   if (k === 'step'){ if (breathEdit == null) return; breathEdit = Math.max(BREATH_MIN_LO, Math.min(BREATH_MIN_HI, breathEdit + (v === '1' ? 1 : -1))); render(); return; }
   if (k === 'minsave'){ if (breathEdit != null) breathSet('mins', breathEdit); breathEdit = null; render(); return; }
@@ -13863,10 +14023,11 @@ function breathCmd(cmd){
   if (k === 'start'){ if (breathRun) return;
     // inside the tap: phones only let sound start from a tap
     breathEdit = null; breathDone = null; breathView = 'pick';
-    breathRun = {...breathPlan(cfg.ex, cfg.mins), t0: Date.now() + BREATH_LEAD, pausedMs: 0, pauseAt: 0, key: ''};
+    breathKeep('recent', [cfg.ex, ...breathIds(S.breath && S.breath.recent, 3).filter(id => id !== cfg.ex)].slice(0, 3));   // the last three started
+    breathRun = {...breathPlan(cfg.ex, cfg.mins, cfg.side), t0: Date.now() + BREATH_LEAD, pausedMs: 0, pauseAt: 0, key: ''};
     if (cfg.tone !== 'off' || cfg.scape !== 'off'){ try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch(e){} }   // as Sleep Mode does: plays with the silent switch on
     clearTimeout(breathSample.t); breathGraph(); breathWakeAudio(); breathScape(cfg.scape); breathAwake(true); breathShow(false); render(); breathLoop(); return; }
-  if (!breathRun) { if (k === 'cont'){ breathDone = null; breathView = 'pick'; render(); } return; }
+  if (!breathRun) { if (k === 'cont'){ breathDone = null; breathView = 'home'; render(); } return; }
   if (k === 'pause'){ breathPause(); return; }
   if (k === 'resume'){ const r = breathRun; if (!r.pauseAt) return; r.pausedMs += Date.now() - r.pauseAt; r.pauseAt = 0; r.key = '';
     breathWakeAudio(); breathAwake(true); breathShow(false); breathRefresh(); breathLoop(); return; }
@@ -13882,10 +14043,10 @@ function breathFinish(){
   if (!obj(S.breath)) S.breath = {cfg: {}, log: {}, total: 0}; if (!obj(S.breath.log)) S.breath.log = {};
   const d = todayKey(); S.breath.log[d] = (S.breath.log[d] || 0) + 1; S.breath.total = (S.breath.total || 0) + 1;
   // REWARD HOOK (mock: nothing is granted). A finished session could pay out here: gold, XP, MP or HP, once a day or per
-  // session. That is an economy decision for the owner, so it is left empty. `r.ex`, `r.n` (breaths) and `r.total` (ms) are at hand.
+  // session. That is an economy decision for the owner, so it is left empty. `r.ex`, `r.breaths` and `r.total` (ms) are at hand.
   save();
-  breathDone = {ex: r.ex, breaths: r.n}; breathView = 'done';
-  if (tab === 'breathe') render(); else { renderHeader(); toast(`Breathing done · ${r.n} breaths`); }
+  breathDone = {ex: r.ex, breaths: r.breaths}; breathView = 'done';
+  if (tab === 'breathe') render(); else { renderHeader(); toast(`Breathing done · ${r.breaths} breath${r.breaths === 1 ? '' : 's'}`); }
 }
 function breathBuzz(k){ try { if (BREATH_VIBE && breathCfg().haptic) navigator.vibrate(k === 'end' ? [60, 90, 60] : k === 'in' ? 35 : k === 'out' ? [20, 60, 20] : 12); } catch(e){} }
 // keep the screen on while breathing
