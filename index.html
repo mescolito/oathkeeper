@@ -1087,7 +1087,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '56c43cef29';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'd48a996f0b';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -3740,8 +3740,7 @@ function drawRiffTile(cv, f, A){
    meeting at the hem. The wings are one tone lighter than her body and built in tiers (coverts, secondaries, notched primaries) with a
    lit leading edge; they part at the chest, and through the gap her pale hands hold out the week's card (light-ramp card stock, the
    altar's eye rune). Two narrow pupil-less slits of light deep in the hood. She hovers over a tide pool. 128 x 104 figure layer, loop 60 ticks at 10 fps:
-   a 1 px bob (30 ticks a breath), the wings a tick behind the body and the wing tips two; one blink and a slow glance; her right wing
-   unfurls a little and folds back (ticks 18-34); the card turns over and flashes (ticks 40-54); drips fall from the wing tips into the
+   a 1 px bob (30 ticks a breath) that carries her, wings and hem as one rigid piece; one blink and a slow glance; the card turns over and flashes (ticks 40-54); drips fall from the wing tips into the
    pool, ripples run out; feathers drift down and runes rise. */
 const SIREN_LOOP = 60;
 function drawSirenTile(cv, f, A){
@@ -3763,10 +3762,10 @@ function drawSirenTile(cv, f, A){
   for (let x = 53; x < 76; x += 3) R(G3, x, 82 + yb, 1, 1);
   // ---- the wings: silhouette, then tiers masked to it
   const wing = [[60, 40], [57, 36, 53, 30, 50, 22], [47, 14, 44, 8, 38, 2], [30, 10, 27, 24, 28, 40], [29, 58, 36, 76, 50, 91], [53, 87, 55, 80, 57, 72], [54, 64, 53, 56, 55, 48], [57, 44, 59, 42, 60, 40]];
-  const unf = t >= 18 && t < 34 ? [0, 0.03, 0.07, 0.1, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.11, 0.09, 0.06, 0.03, 0.01, 0][t - 18] : 0;   // her right wing opens a little
+  // the wings never move on their own: they ride the body's bob as one rigid piece with her (no unfurl, no lag)
   const drawWing = (side, dy, dyt) => {
     const W0 = side < 0 ? wing : M(wing), X = pts => side < 0 ? pts : M(pts), S = pts => sh(X(pts), dy);
-    if (side > 0 && unf) Kt.rot(unf, 69, 40 + dy); else Kt.XF = null;
+    Kt.XF = null;
     // primaries hang two ticks behind (their lower half takes dyt)
     const SEN = '#010203'; L(SEN, path(sh(W0, dy)));
     if (dyt !== dy) L(SEN, path(S([[29, 62], [33, 74, 40, 84, 50, 92], [53, 88, 55, 80, 57, 72], [55, 66, 54, 62, 54, 60]].map((p, i) => i ? p.map((v, j) => j % 2 && v > 70 ? v + (dyt - dy) : v) : p))));
@@ -3795,10 +3794,10 @@ function drawSirenTile(cv, f, A){
     for (const [x, y] of [[31, 66], [35, 74], [40, 81], [45, 87]]){ const [qx, qy] = X([[x, y + dyt]])[0]; L(null, ell(qx + (side < 0 ? -1 : 1), qy, 1.3, 1.1)); }
     for (let i = 0; i < buf.length; i++) if (!mask[i]) buf[i] = keep[i];
     Kt.XF = null; };
-  drawWing(-1, yw, yt); drawWing(1, yw, yt);
+  drawWing(-1, yb, yb); drawWing(1, yb, yb);
   // ---- the hood: deep, a soft point, a centre seam, a lit rim; a mantle with a tasselled hem behind the hands
   L(K, path(sh([[52, 44], [55, 40, 58, 39, 64, 39], [70, 39, 73, 40, 76, 44], [74, 48], [70, 46, 58, 46, 54, 48]], yb)));
-  { const hm = bob(t - 2); for (const x of [55, 59, 64, 69, 73]) R(K, x, 46 + yb + (x === 64 ? 1 : 0) + hm, 2, 2); }
+  { const hm = 0; for (const x of [55, 59, 64, 69, 73]) R(K, x, 46 + yb + (x === 64 ? 1 : 0) + hm, 2, 2); }
   L(K, path(sh([[64, 11], [57, 12, 53, 19, 53, 27], [53, 34, 56, 40, 64, 42], [72, 40, 75, 34, 75, 27], [75, 19, 71, 12, 64, 11]], yb)));
   L(K, path(sh([[63, 12], [64, 8, 66, 7, 68, 8], [66, 9, 65, 11, 66, 13]], yb)));                                                      // the hood's soft point
   L(G3, line(sh([[54.5, 28], [54.5, 20, 58, 14, 63, 12.5]], yb))); L(G1, line(sh([[64.5, 13], [64.5, 17]], yb)));
@@ -3820,18 +3819,23 @@ function drawSirenTile(cv, f, A){
     L(K, box(-hw - 1, cy - h / 2 - 1, hw + 1, cy + h / 2 + 1)); L(L3, box(-hw, cy - h / 2, hw, cy + h / 2));
     if (hw > 2){ L(back ? L0 : L1, box(-hw + 1, cy - h / 2 + 1, hw, cy + h / 2)); L(back ? L1 : L0, box(-hw + 2, cy - h / 2 + 2, hw - 1.5, cy + h / 2 - 1.5)); L(back ? L0 : L1, box(-hw + 3, cy - h / 2 + 3, hw - 2.5, cy + h / 2 - 2.5)); }
     if (hw > 5){
-      if (back){ for (let yy = -6; yy <= 6; yy += 4) for (let xx = -4; xx <= 4; xx += 4){ const x = Math.round(cx + xx * hw / 7), y = Math.round(cy + yy); R(L2, x, y - 1, 1, 1); R(L2, x - 1, y, 1, 1); R(L2, x + 1, y, 1, 1); R(L2, x, y + 1, 1, 1); } }
+      // the card's symbols glow in the pop ramp on the flip: the back's lattice while it shows, then the eye rune as the face comes round
+      // (ease in, hold, ease out: the rune gets a 1 px A0 halo, then an A4 core, then A4 ticks; the back's dense lattice only warms A1 -> A2, no halo); at rest they are as before
+      const GL = {51: 1, 52: 2, 53: 3, 54: 3, 55: 3, 56: 2, 57: 1}[t] || 0, GB = {45: 1, 46: 2, 47: 1}[t] || 0, gly = new Map(), put = (x, y, c) => gly.set(x + ',' + y, [x, y, c]);
+      if (back){ const c = GB === 2 ? A[2] : GB ? A[1] : L2; for (let yy = -6; yy <= 6; yy += 4) for (let xx = -4; xx <= 4; xx += 4){ const x = Math.round(cx + xx * hw / 7), y = Math.round(cy + yy); put(x, y - 1, c); put(x - 1, y, c); put(x + 1, y, c); put(x, y + 1, c); } }
       else { const x = Math.round(cx), y = Math.round(cy), q = hw / 7;
-        for (let i = 0; i <= 4; i++){ const dx = Math.round((4 - i) * q), dy = Math.round(i * 1.25); R(A[3], x - dx, y - dy); R(A[3], x + dx, y - dy); R(A[3], x - dx, y + dy); R(A[3], x + dx, y + dy); }
-        R(A[3], x - 1, y, 3, 1); R(A[3], x, y - 1, 1, 3); R(K, x, y, 1, 1); R(A[3], x, y - 8, 1, 1); R(A[3], x, y + 8, 1, 1);
-        for (const [dx, dy] of [[-5, -8], [4, -8], [-5, 8], [4, 8]]) R(L2, x + dx, y + dy, 1, 1); } }
+        for (let i = 0; i <= 4; i++){ const dx = Math.round((4 - i) * q), dy = Math.round(i * 1.25); for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) put(x + sx * dx, y + sy * dy, A[3]); }
+        for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) put(x + dx, y + dy, GL === 3 ? A[4] : A[3]); put(x, y, GL >= 2 ? A[4] : K); put(x, y - 8, GL === 3 ? A[4] : A[3]); put(x, y + 8, GL === 3 ? A[4] : A[3]);
+        for (const [dx, dy] of [[-5, -8], [4, -8], [-5, 8], [4, 8]]) put(x + dx, y + dy, GL >= 2 ? A[2] : GL ? A[1] : L2); }
+      if (!back && GL) for (const [x, y] of gly.values()) for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) if (!gly.has((x + dx) + ',' + (y + dy))) R(A[0], x + dx, y + dy, 1, 1);
+      for (const [x, y, c] of gly.values()) R(c, x, y, 1, 1); }
     if (t >= 52 && t < 57){ const k = t - 52, x = cx, y = cy; for (const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]){ for (let i = 0; i < 2; i++) R(i ? A[2] : A[3], x + dx * (9 + k + i), y + dy * (11 + k + i)); }
       R(P2, x - 11 - k, y - 2, 1, 1); R(P2, x + 11 + k, y + 1, 1, 1); R(P1, x, y - 13 - k, 1, 1); }
     // pale hands at its lower corners
     for (const sd of [-1, 1]){ const hx = cx + sd * 8; L(L3, ell(hx, cy + 8, 2.8, 2.3)); L(P2, ell(hx - sd * 0.8, cy + 7.3, 1.2, 0.8)); R(G5, hx - 2, cy + 10, 5, 1);
       for (let k = 0; k < 3; k++) R(k ? L3 : P2, hx - sd * 2 - (sd < 0 ? 0 : 1), cy + 2 + k * 2, 1, 2); } }
   // ---- drips from the wing tips into the pool
-  for (const [x, ph] of [[51, 0], [77, 11]]){ const u = md(t - ph, 22); if (u < 6) R(u < 3 ? A[2] : A[3], x, 89 + yt + u, 1, u < 3 ? 1 : 2); else if (u < 8){ R(A[3], x - 2, 95, 1, 1); R(A[3], x + 2, 95, 1, 1); R(A[4], x, 94, 1, 1); } }
+  for (const [x, ph] of [[51, 0], [77, 11]]){ const u = md(t - ph, 22); if (u < 6) R(u < 3 ? A[2] : A[3], x, 89 + yb + u, 1, u < 3 ? 1 : 2); else if (u < 8){ R(A[3], x - 2, 95, 1, 1); R(A[3], x + 2, 95, 1, 1); R(A[4], x, 94, 1, 1); } }
   // ---- feathers drifting down, runes rising, a little debris
   for (const [x0, y0, ph, sw] of [[18, -6, 0, 1], [106, -6, 31, -1]]){ const u = md(t + ph, 60), x = x0 + Math.sin(u / 60 * Math.PI * 2) * 4 * sw, y = y0 + u * 1.3;
     if (y > 4 && y < 88){ const a = Math.sin(u / 9) * 0.5; L(G3, ell(x, y, 3.2, 1.3, a)); L(G1, line([[x - 3 * Math.cos(a), y - 3 * Math.sin(a)], [x + 3 * Math.cos(a), y + 3 * Math.sin(a)]], 1)); R(G4, x - 1, y - 1, 1, 1); } }
@@ -10825,15 +10829,35 @@ const HERO_K = 4, HERO_FOOT = 116;   // Today: the card is the 64 x 44 scene gri
 const heroMood = (mood, cheer) => mood === 'sleep' ? 'sleep' : cheer ? 'cheer' : mood === 'sad' || mood === 'hungry' ? 'sad' : '';
 // the smog keeps its place on the 4x grid (its specks, light on the dark panel, are dimmed to a mid grey so the haze does not bury the hero), behind the hero;
 // the Slump is drawn at 1x like the hero, in front, gripping its legs (drawSlumpAt). Riff and the Siren visit on the Battle page instead.
+// Today square (owner: "the main character can take up more space ... square instead of a rectangle"): the card is a boss tile, 128 x 128
+// at full card width like the Battle page's boss canvas, with the same panel. The hero is 1x on it (as big on screen as a boss), its soles
+// HERO_SQ_UP rows above the tile's row 116 so its ground glow sits where the bosses stand. With the Slump on, hero and Slump move left
+// together (the Slump reaches 52 px left of its grip and 84 px right), so the Slump still grips the shins and fits the tile.
+const HERO_SQ_UP = 4, HERO_SQ_SLUMP = 16;
+// the smog, re-laid out for the square: drawSmog's bands and fumes on a 64 x 64 grid (2 tile px a speck, the same on-screen size as before),
+// bands above the head, at the shoulders and the hips, fumes rising from the hero's ground; a dim haze behind the hero
+function heroSmogSq(g, o, gy){
+  const S2 = 64, sm = heroCv('sm', S2, S2), c = sm.getContext('2d'), tier = o.smog, t = o.motion ? o.f : 0; c.clearRect(0, 0, S2, S2); c.fillStyle = '#645e56';
+  const dot = (x, y) => { if (x >= 0 && x < S2 && y >= 0 && y < S2) c.fillRect(x, y, 1, 1); };
+  const bands = [[13, 0], [27, 3], [40, 6]].slice(0, tier), thick = 1 + tier;
+  for (const [y0, ph] of bands) for (let x = 0; x < S2; x++){
+    const sx = x + Math.floor(t / 4) + ph * 5, wav = Math.round(Math.sin(sx * 0.22 + ph) * 1.6 + Math.sin(sx * 0.07) * 1.2);
+    const top = y0 + wav - (((sx * 7) % 5) === 0 ? 1 : 0), bot = y0 + wav + thick + (((sx * 3) % 4) === 0 ? 1 : 0);
+    for (let y = top; y <= bot; y++){ const edge = y === top || y === bot; if (edge ? ((x + y) % 4 === 0) : ((x + y) % 2 === 0)) dot(x, y); } }
+  const vents = [[8, 0], [55, 3], [20, 5], [44, 1]].slice(0, tier + 1);
+  for (const [vx, ph] of vents){ const tall = 4 + tier * 3;
+    for (let i = 0; i < tall; i++){ const y = gy - 1 - i, k = (i + Math.floor((t + ph * 3) / 2)) % 4; if (k === 3) continue;
+      dot(vx + Math.round(Math.sin((i + t * 0.3 + ph) * 0.8) * 1.5), y); } }
+  g.drawImage(sm, 0, 0, 128, 128);
+}
 function drawHeroScene(canvas, o){
-  const K = HERO_K, W = SW * K, H = SH * K; if (canvas.width !== W || canvas.height !== H){ canvas.width = W; canvas.height = H; }
-  const ov = heroCv('ov', SW, SH), g = canvas.getContext('2d'); g.imageSmoothingEnabled = false;
-  const layer = fn => { ctx = ov.getContext('2d'); ctx.imageSmoothingEnabled = false; ctx.clearRect(0, 0, SW, SH); fn(); g.drawImage(ov, 0, 0, W, H); };
-  g.drawImage(heroPanelWide(W, H), 0, 0);
-  if (o.smog) layer(() => { drawSmog(o); ctx.globalCompositeOperation = 'source-in'; ctx.fillStyle = '#645e56'; ctx.fillRect(0, 0, SW, SH); ctx.globalCompositeOperation = 'source-over'; });   // a dim haze, not glare
-  const ho = {lv: o.lv, motion: o.motion, state: heroMood(o.mood, o.cheer)}, ox = W / 2 - 64, oy = (GROUND + 1) * K - 1 - HERO_FOOT - (o.jump ? K : 0);
+  const N = 128; if (canvas.width !== N || canvas.height !== N){ canvas.width = N; canvas.height = N; }
+  const g = canvas.getContext('2d'); g.imageSmoothingEnabled = false; g.fillStyle = PB; g.fillRect(0, 0, N, N); g.drawImage(heroPanel(), 0, 0);
+  const foot = HERO_FOOT - HERO_SQ_UP, ox = o.slump ? -HERO_SQ_SLUMP : 0;
+  if (o.smog) heroSmogSq(g, o, (foot + 1) >> 1);
+  const ho = {lv: o.lv, motion: o.motion, state: heroMood(o.mood, o.cheer)}, oy = -HERO_SQ_UP - (o.jump ? 2 : 0);
   g.drawImage(heroFig(ho), ox, oy); heroMark(g, ho, ox, oy, PW);
-  if (o.slump) drawSlumpAt(g, W / 2, (GROUND + 1) * K - 1, o.motion ? HERO.tick : 0);
+  if (o.slump) drawSlumpAt(g, ox + 64, foot, o.motion ? HERO.tick : 0);
 }
 // Focus and Sleep: the round badge shows the hero on the bosses' dark panel
 function drawHeroBadge(canvas, o){
@@ -11212,7 +11236,7 @@ function renderToday(){
   const myst = D.mystery[D.today];
   return `
   <section class="game" aria-label="Your pet">
-    <canvas id="scene" width="${SW}" height="${SH}" role="img" aria-label="${esc(S.petName)}, your pixel pet"></canvas>
+    <canvas id="scene" width="${heroOn() ? 128 : SW}" height="${heroOn() ? 128 : SH}"${heroOn() ? ' style="aspect-ratio:1"' : ''} role="img" aria-label="${esc(S.petName)}, your pixel pet"></canvas>
     <div class="dlg"><div class="dlg-in">
       <div class="dlg-h"><span>${esc(S.petName)}</span><span>Lv ${lv.level} · ${PET_TITLE(st, petCls())}</span></div>
       <p>${esc(D.statusText)}</p>
