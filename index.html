@@ -298,6 +298,22 @@ html[data-mode="dark"] .trow.done .check{color:var(--inv)}
 .chip-rune{background:var(--blue);color:#171614;border-radius:999px;padding:3px 10px;font-weight:600;font-size:12px}
 .chip-streak{background:var(--yellow);color:#171614;border-radius:999px;padding:3px 10px;font-weight:700;font-size:12px}
 .chips.small{gap:6px}
+.tpop{position:fixed;left:10px;right:10px;top:calc(env(safe-area-inset-top) + 10px);z-index:60;max-width:460px;margin:0 auto;pointer-events:none}
+.tpop[hidden]{display:none}
+.tpcard{pointer-events:auto;width:100%;display:flex;align-items:center;gap:14px;text-align:left;border:0;font:inherit;cursor:pointer;color:#f1ede4;background:rgba(33,30,28,.84);-webkit-backdrop-filter:blur(18px) saturate(1.3);backdrop-filter:blur(18px) saturate(1.3);border-radius:28px;padding:16px 16px 16px 20px;box-shadow:0 12px 40px rgba(0,0,0,.32),inset 0 0 0 1px rgba(255,255,255,.09);animation:tpin .42s cubic-bezier(.2,.9,.25,1.12);touch-action:none}
+.tpcard.out{animation:tpout .26s ease-in forwards}
+.tpcard.still{animation:tpfade .3s ease}.tpcard.still.out{animation:tpfadeout .26s ease forwards}
+@keyframes tpin{from{transform:translateY(calc(-100% - 30px));opacity:.4}to{transform:none;opacity:1}}
+@keyframes tpout{to{transform:translateY(calc(-100% - 30px));opacity:0}}
+@keyframes tpfade{from{opacity:0}to{opacity:1}}@keyframes tpfadeout{to{opacity:0}}
+@media (prefers-reduced-motion: reduce){.tpcard{animation:tpfade .3s ease}.tpcard.out{animation:tpfadeout .26s ease forwards}}
+.tptxt{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.tpk{font-size:11px;letter-spacing:.12em;font-weight:700;text-transform:uppercase;color:var(--pink);display:flex;justify-content:space-between;gap:8px}
+.tpn{color:#a59f92;letter-spacing:.06em}
+.tpt{font-family:'Fraunces',Georgia,serif;font-size:23px;font-weight:500;line-height:1.12;letter-spacing:-.02em;overflow-wrap:anywhere}
+.tps{font-size:14px;color:#cfc9bd;line-height:1.3}
+.tpart{flex:none;width:76px;height:76px;border-radius:18px;image-rendering:pixelated;background:#141312;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.tpico{flex:none;width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--pink);color:#171614;margin-right:4px}
 .chip-siren{border:0;font-family:inherit;font-size:12px;line-height:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:4px;max-width:100%;min-width:0;position:relative;text-align:left}
 .chip-siren::after{content:'';position:absolute;inset:-10px -3px}
 .chip-siren .cst{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
@@ -1092,7 +1108,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'f2108c0688';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '7cac9face1';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -11058,7 +11074,7 @@ let drawerWant = false;
 function openDrawer(){ const d = document.getElementById('drawer'); drawerWant = true; renderDrawer(); d.hidden = false; requestAnimationFrame(() => requestAnimationFrame(() => { if (drawerWant) d.classList.add('open'); })); }
 function closeDrawer(){ const d = document.getElementById('drawer'); drawerWant = false; if (d.hidden) return; d.classList.remove('open'); setTimeout(() => { if (!drawerWant) d.hidden = true; }, 260); }
 // a closed notice stays closed for the day; a mini-boss notice shows for two days, so closing it also holds the day after
-const dismissKeep = (k, v) => v === D.today || (k.startsWith('mini') && k.includes('-') && v === D.yest) || (k === 'siren' && typeof v === 'string' && v >= weekKey(D.today) && v <= D.today);   // a dismissed Siren stays away for the rest of her week
+const dismissKeep = (k, v) => v === D.today || (k.startsWith('mini') && k.includes('-') && v === D.yest) || (k === 'siren' && typeof v === 'string' && v >= weekKey(D.today) && v <= D.today) || (k.startsWith('pop') && typeof v === 'string' && v >= addDays(D.today, -20) && v <= D.today);   // a dismissed Siren stays away for the rest of her week
 const dismissed = k => dismissKeep(k, S.settings.dismissed[k]);
 const notice = (k, html) => `<div class="mystery">${svg('gift',18,2)} <span class="ntext">${html}</span><button class="nclose" data-dismiss="${k}" aria-label="Close">${svg('x',16,2.4)}</button></div>`;
 function vitals(compact){
@@ -11290,6 +11306,79 @@ setInterval(() => {
   for (const tm of timersLive()){ const nx = timerNext(tm, now - 1000); if (nx && nx.at <= now){ due = true; break; } }   // a milestone or goal just passed, on any tab
   if (due) render();
 }, 1000);
+// ---------- Today pop-ups (owner: "notifications can be temporary pop-ups since they are saved in the related section") ----------
+// Today no longer stacks notice cards or the boss card. Each notice is a short pop-up that drops in at the top (a dark frosted card,
+// serif title), stays ~5 s or until tapped (goes to the page that holds it) or swiped up, and is shown once: its key goes into the app's
+// own S.settings.dismissed (a daily notice with today's date, a new creature with its arrival date). Several queue one after another.
+// A new creature that day (a boss cycle, a mini-boss, the Siren, Riff) gets the richer card with its live tile. The info itself stays in
+// its section: Battle (boss, mini-boss, visitors, Slump, last night), Skills, Inventory (runes, Keystones, chests), Shop (toxic air), Timers.
+const POP_MS = 5200;
+let popQ = [], popCur = null, popT = 0;
+const popSeen = (k, v) => S.settings.dismissed[k] === v;
+function popMark(k, v){ S.settings.dismissed = Object.fromEntries(Object.entries(S.settings.dismissed).filter(([kk, vv]) => dismissKeep(kk, vv))); S.settings.dismissed[k] = v; save(); }
+const popCut = (s, n = 92) => { s = String(s || ''); return s.length > n ? s.slice(0, n - 1).trimEnd() + '…' : s; };
+function todayPopList(){
+  const L = [], add = (key, val, o) => { if (DISMISS_KEY.test(key) && !popSeen(key, val)) L.push({key, val, ...o}); }, f = D.cur, today = D.today;
+  // new creatures first, once per arrival
+  if (D.mini){ const mm = D.mini; add('popmini', mm.from, {creature: 'boss', kicker: 'A mini-boss appears', title: mm.m.name, sub: popCut(mm.m.flavor) || `${mm.rem} HP. Runs off ${fmtDow(mm.flees)}.`, go: 'battle'}); }
+  else if (f.status === 'now' && !D.inn){ const st = cycleStart(f.c); if (dayIdx(today) - dayIdx(st) < CYCLE) add('popboss', st, {creature: 'boss', kicker: f.boss.titan ? 'A titan arrives' : f.boss.seasonal ? 'A holiday boss arrives' : 'A new boss arrives', title: f.boss.name, sub: popCut(f.boss.flavor), go: 'battle'}); }
+  if (sirenWaiting()) add('popsiren', weekKey(today), {creature: 'siren', kicker: 'A visitor', title: 'The Siren', sub: 'She holds out a card: a blessing or a curse.', go: 'battle'});
+  if (riffWaiting()) add('popriff', today, {creature: 'riff', kicker: 'A visitor', title: 'Riff', sub: 'Busking today: songs, patterns and scenes.', go: 'battle'});
+  // daily notices
+  const a = D.lastAttack;
+  if (D.lastFaint && D.lastFaint.d === D.yest) add('popnight', today, {icon: 'flame', kicker: 'Last night', title: 'You fainted', sub: `${a ? a.boss : f.boss.name} knocked you out. You lost ${D.lastFaint.loss} G and woke at half HP.`, go: 'battle'});
+  else if (a && a.dmg > 0 && !D.inn) add('popnight', today, {icon: 'flame', kicker: 'Last night', title: `${a.boss} hit you for ${a.dmg} HP`, sub: `${a.missed} missed${a.dodged ? `, ${a.dodged} dodged` : ''}${a.status ? ` · you're ${STATUS[a.status].name.toLowerCase()}` : ''}.`, go: 'battle'});
+  const myst = D.mystery[today]; if (myst) add('myst', today, {icon: 'gift', kicker: 'Daily check-in', title: `+${myst.xp ? myst.xp + ' XP' : myst.gold + ' G'}`, sub: 'A bonus for showing up today.', go: ''});
+  const sl = D.slump; if (sl && !D.inn){ if (sl.on) add('popslump', today, {icon: 'moon', kicker: 'The Slump', title: 'A Slump has hold of you', sub: `Finish something ${SLUMP_BACK} days in a row to lose it.`, go: 'battle'});
+    else if (sl.emptyRun >= SLUMP_DAYS - 1 && !sl.todayActive) add('popslump', today, {icon: 'moon', kicker: 'Careful', title: `${sl.emptyRun} days with nothing finished`, sub: 'Finish one thing today or a Slump attaches tonight.', go: 'battle'}); }
+  const sm = D.smog; if (sm && sm.pts && !D.inn) add('popsmog', today, {icon: 'wave', kicker: 'Toxic air', title: `The air is at ${sm.pts}`, sub: 'Each finished daily or to-do clears 1. The Weather Machine clears it all.', go: 'shop'});
+  if (skillNote()) add('popskill', today, {icon: 'bolt', kicker: 'Skills', title: `${D.points} skill point${D.points === 1 ? '' : 's'} to spend`, sub: 'Learn a new skill or level one up.', go: 'skills'});
+  const tm = timersLive().find(x => x.done && !x.finished); if (tm) add('poptimer', today, {icon: 'timer', kicker: 'Timer goal', title: `${popCut(tm.name, 28)} hit ${tm.goal} days`, sub: 'Keep it going, set a new goal or finish it.', go: 'timer'});
+  const last = D.minis[D.minis.length - 1];
+  if (last && last.on && last.on >= D.yest){ if (last.status === 'won') add('mini-' + last.from, today, {icon: 'star', kicker: 'Victory', title: `You beat the ${last.m.name}!`, sub: `+${last.g} G, +${last.xp} XP and ${miniPrizeTxt(last)}.`, go: 'battle'});
+    else if (last.status === 'ran') add('miniesc-' + last.from, today, {icon: 'star', kicker: 'Escaped', title: `You got away from the ${last.m.name}`, sub: 'Tasks give Keystones again.', go: 'battle'});
+    else if (last.status === 'fled') add('miniran-' + last.from, today, {icon: 'star', kicker: 'It ran off', title: `The ${last.m.name} fled`, sub: `${D.cur.boss.name} arrived.`, go: 'battle'}); }
+  if (inLull() && !D.mini) add('lull', today, {icon: 'star', kicker: 'Victory', title: `${D.cur.boss.name} is defeated!`, sub: `Tasks give Keystones until ${fmtDow(addDays(D.cur.end, 1))}.`, go: 'battle'});
+  const nk = D.altar.keys.length; if (nk) add('popaltar', today, {icon: 'gift', kicker: 'Rune Altar', title: `${nk} Keystone${nk === 1 ? '' : 's'}`, sub: 'Meditate at the altar for a legendary rune.', go: 'inv'});
+  const nc = D.pomo.chests.length; if (nc) add('popchest', today, {icon: 'gift', kicker: 'Focus', title: `${nc} Focus chest${nc === 1 ? '' : 's'} to open`, sub: 'They wait in your inventory.', go: 'inv'});
+  if (D.partial[D.yest]) add('partial', today, {icon: 'check', kicker: 'Partial progress', title: `+${D.partial[D.yest].g} G`, sub: `For ${D.partial[D.yest].n} step${D.partial[D.yest].n === 1 ? '' : 's'} on unfinished tasks yesterday.`, go: ''});
+  if (D.tokens) add('tokens', today, {icon: 'gift', kicker: 'Runes', title: `${D.tokens} free rune${D.tokens === 1 ? '' : 's'}`, sub: 'Waiting in your inventory.', go: 'inv'});
+  return L;
+}
+// called from renderToday (returns nothing to draw): queue what is new, a beat after the page settles
+function todayPopHook(){ clearTimeout(todayPopHook.t); todayPopHook.t = setTimeout(todayPops, 450); return ''; }
+function todayPops(){
+  if (recoveryMode || !D || tab !== 'today') return;
+  for (const p of todayPopList()) if (!(popCur && popCur.key === p.key && popCur.val === p.val) && !popQ.some(q => q.key === p.key && q.val === p.val)) popQ.push(p);
+  if (!popCur) popNext();
+}
+function popEl(){ let el = document.getElementById('tpop'); if (el) return el;
+  el = document.createElement('div'); el.id = 'tpop'; el.className = 'tpop'; el.setAttribute('role', 'status'); el.setAttribute('aria-live', 'polite'); document.body.appendChild(el);
+  let y0 = null; el.addEventListener('pointerdown', e => { y0 = e.clientY; }); el.addEventListener('pointerup', e => { if (y0 != null && e.clientY - y0 < -24){ e.preventDefault(); popClose(); el.dataset.swiped = '1'; setTimeout(() => delete el.dataset.swiped, 400); } y0 = null; });
+  return el; }
+function popNext(){
+  clearTimeout(popT); popCur = null;
+  const aw = document.getElementById('award'), busy = tab !== 'today' || (aw && !aw.hidden) || (document.getElementById('qm') && !document.getElementById('qm').hidden) || (document.getElementById('sheet') && !document.getElementById('sheet').hidden);
+  if (!popQ.length) return;
+  if (busy){ popT = setTimeout(popNext, 900); return; }   // only on Today, and after a level-up dialog or an open sheet
+  const p = popCur = popQ.shift(), el = popEl(), more = popQ.length;
+  popMark(p.key, p.val);   // shown = seen (kept across a reload; a new day or a new arrival re-arms it)
+  const art = p.creature === 'boss' ? `<canvas id="bossMiniCv" class="tpart" width="128" height="128" aria-hidden="true"></canvas>`
+    : p.creature ? `<canvas class="tpart visitorcv" data-visitor="${p.creature}" width="128" height="128" aria-hidden="true"></canvas>` : `<span class="tpico" aria-hidden="true">${svg(p.icon || 'star', 22, 2.2)}</span>`;
+  el.innerHTML = `<button class="tpcard ${p.creature ? 'creature' : ''} ${motionOK ? '' : 'still'}" data-popgo="${p.go || ''}" aria-label="${esc(p.title)}. ${esc(p.sub)}${p.go ? '. Open' : ''}">
+    <span class="tptxt"><span class="tpk">${esc(p.kicker)}${more ? `<span class="tpn">+${more} more</span>` : ''}</span><span class="tpt">${esc(p.title)}</span><span class="tps">${esc(p.sub)}</span></span>${art}</button>`;
+  el.hidden = false;
+  if (p.creature && p.creature !== 'boss'){ const c = el.querySelector('canvas'); drawVisitorTile(c, p.creature, motionOK ? visTick : 0); }
+  if (p.creature === 'boss') drawNewBoss(true);
+  popT = setTimeout(popClose, POP_MS);
+}
+function popClose(){ const el = document.getElementById('tpop'); clearTimeout(popT); if (!el || !popCur){ popCur = null; return; }
+  const card = el.querySelector('.tpcard'); if (card) card.classList.add('out');
+  popT = setTimeout(() => { el.hidden = true; el.innerHTML = ''; popCur = null; popT = setTimeout(popNext, 250); }, 260); }
+function popGo(to){ popClose(); if (!to) return;
+  if (to === 'timer'){ tab = 'today'; todayTab = 'timer'; try { localStorage.setItem(TODAY_TAB_KEY, 'timer'); } catch(e){} }
+  else { if (PAGE_TABS.includes(to) && !PAGE_TABS.includes(tab)) prevTab = tab; tab = to; }
+  render(); window.scrollTo(0, 0); }
 function renderToday(){
   const k = vday === 'today' ? D.today : D.yest;
   // an archived task that's already done for this day has nothing left to do, so it leaves the list right away
@@ -11313,23 +11402,7 @@ function renderToday(){
     </div></div>
   </section>
   ${vitals()}
-  ${myst && !dismissed('myst') ? notice('myst', `Daily check-in bonus: <b>+${myst.xp ? myst.xp + ' XP' : myst.gold + ' G'}</b>`) : ''}
-  ${slumpNote()}
-  ${visitorLine()}
-  ${smogNote()}
-  ${skillNote()}
-  ${timerAskNote()}
-  ${miniNote()}
-  ${lullNote()}
-  ${altarCard()}
-  ${chestCard()}
-  ${D.partial[D.yest] && !dismissed('partial') ? notice('partial', `Partial progress yesterday: <b>+${D.partial[D.yest].g} G</b> for ${D.partial[D.yest].n} step${D.partial[D.yest].n === 1 ? '' : 's'} on unfinished tasks`) : ''}
-  ${D.tokens && !dismissed('tokens') ? notice('tokens', `${D.tokens} free rune${D.tokens===1?'':'s'} waiting in your inventory`) : ''}
-  ${S.settings.collapse.boss ? `<div class="mini assistmini"><button class="minimain" data-tab="battle"><canvas id="bossMiniCv" width="128" height="128" aria-hidden="true"></canvas><span><b>${esc(todayFoe().foe.name)}</b><span class="small">${D.mini ? `${D.mini.rem}/${D.mini.hp} HP` : D.cur.status === 'now' ? `${D.cur.rem}/${D.cur.hp} HP` : esc(a.k)}</span></span></button><button class="minitog" data-collapse="boss" aria-expanded="false" aria-label="Show the boss card">${svg('back',16,2.6)}</button></div>`
-  : `<div class="assistwrap"><button class="assist" id="bossmini" data-tab="battle">
-    <span><span class="k">${esc(a.k)}</span><p>${esc(a.p)}</p><span class="pillbtn">${esc(a.cta)}</span></span>
-    <canvas id="bossMiniCv" width="128" height="128" aria-hidden="true"></canvas>
-  </button><button class="cardtog" data-collapse="boss" aria-expanded="true" aria-label="Collapse the boss card">${svg('back',16,2.6)}</button></div>`}
+  ${todayPopHook()}
   <div class="tdtabs" role="tablist" aria-label="Which tasks"><button role="tab" class="tdtab ${todayTab === 'day' ? 'on' : ''}" data-todaytab="day" aria-selected="${todayTab === 'day'}">Dailies</button><button role="tab" class="tdtab ${todayTab === 'week' ? 'on' : ''}" data-todaytab="week" aria-selected="${todayTab === 'week'}">Habits</button><button role="tab" class="tdtab ${todayTab === 'timer' ? 'on' : ''}" data-todaytab="timer" aria-selected="${todayTab === 'timer'}">Timers</button></div>
   ${todayTab === 'timer' ? `<div class="row between"><span class="muted small" style="white-space:nowrap">${timersLive().filter(t => !t.done || !t.finished).length} running</span><div class="seg gone" aria-hidden="true"><button tabindex="-1" data-vday="today" class="on">Today</button><button tabindex="-1" data-vday="yest">Yesterday</button></div></div>${timersView()}` : `<div class="row between"><span class="muted small" style="white-space:nowrap">${todayTab === 'day' ? `${doneD} of ${dueD.length} done` : `${weekLeft} left · ${wkRange}`}</span>
     <div class="seg" role="group" aria-label="Which day to log"><button data-vday="today" class="${vday==='today'?'on':''}">Today</button><button data-vday="yest" class="${vday==='yest'?'on':''}">Yesterday</button></div></div>
@@ -13420,6 +13493,7 @@ function onClick(e){
   if (el.dataset.clearchecked){ const L = S.todos.lists.find(x => x.id === el.dataset.clearchecked); if (!L || L.kind !== 'plain') return; const n = L.items.filter(it => it.doneOn).length; L.items = L.items.filter(it => !it.doneOn); save(); render(); toast(`Cleared ${n} checked item${n === 1 ? '' : 's'}`); return; }
   if (el.dataset.delitem){ const [lid, iid] = el.dataset.delitem.split('|'); const L = S.todos.lists.find(x => x.id === lid); if (!L) return; const it = L.items.find(x => x.id === iid); if (!it || (it.doneOn && L.kind !== 'plain')) return; L.items = L.items.filter(x => x.id !== iid); save(); render(); return; }
   if (el.dataset.collapse){ const k = el.dataset.collapse; if (k !== 'vitals' && k !== 'boss') return; S.settings.collapse[k] = !S.settings.collapse[k]; save(); render(); return; }
+  if ('popgo' in el.dataset && el.closest('#tpop')){ if (!el.closest('#tpop').dataset.swiped) popGo(el.dataset.popgo); return; }
   if (el.dataset.dismiss){ const k = el.dataset.dismiss; if (!DISMISS_KEY.test(k)) return; S.settings.dismissed = Object.fromEntries(Object.entries(S.settings.dismissed).filter(([kk, v]) => dismissKeep(kk, v))); S.settings.dismissed[k] = D.today; save(); render(); return; }
   if (el.dataset.bsec){ battleSec = ['inn','info'].includes(el.dataset.bsec) ? el.dataset.bsec : 'skills'; render(); return; }
   if (el.dataset.inn){
