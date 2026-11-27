@@ -57,6 +57,9 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block;width
 .dlg-in{border:1px solid #f1eee4;padding:9px 11px;color:#f1eee4;font-family:var(--pixel);font-size:11px;line-height:1.5;display:flex;flex-direction:column;gap:6px}
 .dlg-h{display:flex;justify-content:space-between;gap:10px;text-transform:uppercase;font-size:12px}
 .dlg-name{color:#fff;font-weight:700}
+.vclose{border:0;background:rgba(255,255,255,.12);color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;margin:-7px -6px -7px 0}
+.vline{display:flex;align-items:center;gap:10px;width:100%;text-align:left;cursor:pointer;font:inherit;color:inherit}
+.vline .vgo{margin-left:auto;font-size:22px;line-height:1;opacity:.55}
 .dlg p{color:#9b968c}
 .dlg-won{color:#eeb7d8;font-weight:700}
 .dlg p{margin:0}
@@ -538,7 +541,7 @@ body.focusmode.sleepmode,body.focusmode.sleepmode[data-pomo]{--g1:#1d2347;--g2:#
 .shopfront{margin:0 0 14px;border-radius:18px;overflow:hidden;background:#141312;line-height:0}
 .shopfront canvas{width:100%;height:auto;image-rendering:pixelated;display:block}
 .riffhero{display:flex;align-items:center;gap:16px;margin:4px 0 6px}
-#riffCv{width:92px;height:88px;image-rendering:pixelated;background:#141312;border-radius:22px;flex:none}
+#riffCv{width:96px;height:96px;image-rendering:pixelated;background:#141312;border-radius:22px;flex:none}
 .riffhero b{font-family:'Fraunces',Georgia,serif;font-size:26px;font-weight:500;display:block}
 .riffhero span{color:var(--muted);font-size:14px;line-height:1.4}
 .riffh{font-size:18px;margin:20px 0 10px}
@@ -1084,7 +1087,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '0a0e4ca8f9';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'ed4e2c4e00';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -3550,66 +3553,377 @@ function drawHat(hat, cx, top, rx, ry, f, motion){
   if (H[hat]) shape(H[hat][0], H[hat][1]);
 }
 function drawScene(canvas, o){
-  ctx = canvas.getContext('2d'); ctx.imageSmoothingEnabled = false;
+  // the Slump is drawn at the hero's fine 1x pixels: while it is on, the scene is painted on its 64 x 44 grid off-screen and blown up
+  // 4x on the card (pixelated, so it looks the same), and the Slump goes on top at the pet's feet
+  const vis = !o.noPet && !!o.slump;
+  if (vis || canvas.id === 'scene'){ const w = vis ? SW * 4 : SW, h = vis ? SH * 4 : SH; if (canvas.width !== w || canvas.height !== h){ canvas.width = w; canvas.height = h; } }
+  if (vis && !NPC.grid){ NPC.grid = document.createElement('canvas'); NPC.grid.width = SW; NPC.grid.height = SH; }
+  ctx = (vis ? NPC.grid : canvas).getContext('2d'); ctx.imageSmoothingEnabled = false;
   const wr = WREATHS.includes(o.bg); if (wr && !o.noPet) o = centerPet(o);
-  const paper = drawBg(o.bg, o.f, o.motion, o.night != null ? o.night : isNightNow()); if (!o.noPet) clearAroundPet(o, paper, wr ? SH : 38); if (o.smog) drawSmog(o); if (!o.noPet){ drawPet(o); if (o.slump) drawSlump(o); } if (o.siren) drawSiren(o); if (o.riff) drawRiff(o);
+  const paper = drawBg(o.bg, o.f, o.motion, o.night != null ? o.night : isNightNow()); if (!o.noPet) clearAroundPet(o, paper, wr ? SH : 38); if (o.smog) drawSmog(o); if (!o.noPet) drawPet(o);
+  if (vis){ const g = canvas.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(NPC.grid, 0, 0, canvas.width, canvas.height);
+    drawSlumpAt(g, (o.cx != null ? o.cx : 32) * 4 + 2, ((o.ground != null ? o.ground : GROUND) + 1) * 4 - 1, o.motion ? o.f : 0); }
 }
-/* the Siren: a winged figure with pink hair and a pink flame, bobbing in the sky with flapping wings.
-   Drawn cream with a black outline so she reads over a light or a dark sky. */
-const SIREN_UP = [
-  "#.............#..",
-  "##...#...#...##..",
-  "###..#ppp#..###..",
-  ".###pp###pp###...",
-  ".####p###p####...",
-  "..####p#p####....",
-  "..#####p#####.p..",
-  "...###.###.###pp.",
-  "....#..###..#.#p.",
-  "......#####...#..",
-  ".......###.......",
-  ".......###.......",
-  "........#........",
-  "........##.......",
-  ".........#.......",
-  "........#........"];
-const SIREN_DOWN = [
-  ".................",
-  ".....#...#.......",
-  ".....#ppp#.......",
-  "....pp###pp......",
-  ".....p###p.......",
-  "..#...p#p...#....",
-  ".####.ppp.####p..",
-  "########.#####pp.",
-  "#####.#####.#.#p.",
-  "###...#####...#..",
-  "##.....###.......",
-  "#......###.......",
-  "........#........",
-  "........##.......",
-  ".........#.......",
-  "........#........"];
-function drawSiren(o){
-  const t = o.motion ? o.f : 0, art = Math.floor(t / 5) % 2 === 0 ? SIREN_UP : SIREN_DOWN;
-  const ox = 45, oy = 4 + Math.round(Math.sin(t * 0.15) * 1.5), on = (x, y) => art[y] && art[y][x] && art[y][x] !== '.';
-  // black outline first, then the figure
-  for (let y = -1; y <= art.length; y++) for (let x = -1; x <= 17; x++){ if (on(x, y)) continue; if (on(x-1,y) || on(x+1,y) || on(x,y-1) || on(x,y+1)) B_(ox + x, oy + y); }
-  const fl = Math.floor(t / 3) % 2;
-  art.forEach((r, y) => [...r].forEach((c, x) => { if (c === '#') W_(ox + x, oy + y); else if (c === 'p') px(ox + x, oy + y - (fl && x > 12 ? 1 : 0), 1, 1, '#eeb7d8'); }));
+/* ---------- the visitors (Riff, the Siren, the Slump) in the boss style ----------
+   Drawn shape-first at the hero's own 1x pixels (the Today card is the 64 x 44 scene grid drawn 4x), in the boss palette:
+   a near-black body, a few dark greys, a thin lit rim, one light-object ramp for props, and the Pop colour only on the eyes,
+   the signature prop and the glow on the ground. Each frame is drawn once per Pop colour and cached. */
+const NPC_C = {K: '#121110', G1: '#211f1d', G2: '#2e2a27', G3: '#3f3a36', G4: '#57514b', G5: '#756e66', N: '#1a1816',
+  L0: '#35312d', L1: '#4a4540', L2: '#615b54', L3: '#8e867b', PALE: '#c9c2b6', PANEL: '#2f2b28'};
+function npcKit(W, H){
+  const key = W + 'x' + H; npcKit.k = npcKit.k || {}; let K = npcKit.k[key];
+  if (!K){
+    const sc = document.createElement('canvas'); sc.width = W; sc.height = H; const sx = sc.getContext('2d', {willReadFrequently: true});
+    K = npcKit.k[key] = {W, H, buf: new Array(W * H).fill(null), XF: null};
+    const E = {x0: 0, y0: 0, x1: 0, y1: 0, lw: 1}, ext = (x, y, r = 0) => { if (x - r < E.x0) E.x0 = x - r; if (x + r > E.x1) E.x1 = x + r; if (y - r < E.y0) E.y0 = y - r; if (y + r > E.y1) E.y1 = y + r; };
+    const c = { set lineWidth(v){ if (v > E.lw) E.lw = v; sx.lineWidth = v; }, get lineWidth(){ return sx.lineWidth; },
+      moveTo(x, y){ ext(x, y); sx.moveTo(x, y); }, lineTo(x, y){ ext(x, y); sx.lineTo(x, y); },
+      quadraticCurveTo(a, b, x, y){ ext(a, b); ext(x, y); sx.quadraticCurveTo(a, b, x, y); },
+      bezierCurveTo(a, b, e, g, x, y){ ext(a, b); ext(e, g); ext(x, y); sx.bezierCurveTo(a, b, e, g, x, y); },
+      ellipse(x, y, rx, ry, ...r){ ext(x, y, Math.max(rx, ry)); sx.ellipse(x, y, rx, ry, ...r); },
+      arc(x, y, r, ...a){ ext(x, y, r); sx.arc(x, y, r, ...a); },
+      rect(x, y, w, h){ ext(x, y); ext(x + w, y + h); sx.rect(x, y, w, h); },
+      closePath(){ sx.closePath(); }, fill(){ sx.fill(); }, stroke(){ sx.stroke(); } };
+    let prev = null;
+    // one smooth shape, kept in one flat colour where it covers the pixel (alpha >= 120); reads back only the shape's box
+    K.L = (color, fn, th = 120) => { const buf = K.buf;
+      sx.setTransform(1, 0, 0, 1, 0, 0); if (prev) sx.clearRect(prev[0], prev[1], prev[2], prev[3]); else sx.clearRect(0, 0, W, H);
+      const xf = K.XF; if (xf) sx.setTransform(xf[0], xf[1], xf[2], xf[3], xf[4], xf[5]);
+      sx.fillStyle = '#fff'; sx.strokeStyle = '#fff'; sx.lineCap = 'round'; sx.lineJoin = 'round'; sx.lineWidth = 1;
+      E.x0 = Infinity; E.y0 = Infinity; E.x1 = -Infinity; E.y1 = -Infinity; E.lw = 1;
+      sx.beginPath(); fn(c);
+      if (!isFinite(E.x0)){ prev = null; return; }
+      let ax = E.x0, ay = E.y0, bx = E.x1, by = E.y1, pd = E.lw / 2 + 2;
+      if (xf){ const xs = [xf[0] * ax + xf[2] * ay, xf[0] * bx + xf[2] * ay, xf[0] * ax + xf[2] * by, xf[0] * bx + xf[2] * by], ys = [xf[1] * ax + xf[3] * ay, xf[1] * bx + xf[3] * ay, xf[1] * ax + xf[3] * by, xf[1] * bx + xf[3] * by];
+        ax = Math.min(...xs) + xf[4]; bx = Math.max(...xs) + xf[4]; ay = Math.min(...ys) + xf[5]; by = Math.max(...ys) + xf[5]; pd = E.lw / 2 * Math.max(1, Math.hypot(xf[0], xf[1]), Math.hypot(xf[2], xf[3])) + 2; }
+      const x0 = Math.max(0, Math.floor(ax - pd)), y0 = Math.max(0, Math.floor(ay - pd)), x1 = Math.min(W, Math.ceil(bx + pd)), y1 = Math.min(H, Math.ceil(by + pd));
+      const w = x1 - x0, h = y1 - y0; if (w <= 0 || h <= 0){ prev = null; return; }
+      prev = [x0, y0, w, h];
+      const d = sx.getImageData(x0, y0, w, h).data;
+      for (let yy = 0; yy < h; yy++){ const row = (y0 + yy) * W + x0, ri = yy * w * 4 + 3; for (let xx = 0; xx < w; xx++) if (d[ri + xx * 4] >= th) buf[row + xx] = color; } };
+    K.R = (col, x, y, w = 1, h = 1) => { x = Math.round(x); y = Math.round(y); for (let yy = Math.max(0, y); yy < Math.min(H, y + h); yy++) for (let xx = Math.max(0, x); xx < Math.min(W, x + w); xx++) K.buf[yy * W + xx] = col; };
+    K.get = (x, y) => (x < 0 || y < 0 || x >= W || y >= H) ? null : K.buf[y * W + x];
+    K.ell = (x, y, rx, ry, rot = 0) => cc => { cc.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); cc.fill(); };
+    K.path = pts => cc => { cc.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? cc.lineTo(...p) : p.length === 4 ? cc.quadraticCurveTo(...p) : cc.bezierCurveTo(...p); cc.closePath(); cc.fill(); };
+    K.line = (pts, w = 1) => cc => { cc.lineWidth = w; cc.moveTo(...pts[0]); for (const p of pts.slice(1)) p.length === 2 ? cc.lineTo(...p) : p.length === 4 ? cc.quadraticCurveTo(...p) : cc.bezierCurveTo(...p); cc.stroke(); };
+    K.ring = (x, y, r, w = 1) => cc => { cc.lineWidth = w; cc.arc(x, y, r, 0, Math.PI * 2); cc.stroke(); };
+    // a stroke whose width runs from w0 to w1 along a cubic bezier [x0,y0, c1x,c1y, c2x,c2y, x1,y1]
+    K.bz = (p, t) => { const u = 1 - t; return [u*u*u*p[0] + 3*u*u*t*p[2] + 3*u*t*t*p[4] + t*t*t*p[6], u*u*u*p[1] + 3*u*u*t*p[3] + 3*u*t*t*p[5] + t*t*t*p[7]]; };
+    K.taper = (p, w0, w1, n = 24) => cc => { for (let i = 0; i <= n; i++){ const t = i / n, [x, y] = K.bz(p, t), r = Math.max(0.35, (w0 + (w1 - w0) * t) / 2); cc.moveTo(x + r, y); cc.arc(x, y, r, 0, Math.PI * 2); } cc.fill(); };
+    K.rot = (a, cx, cy) => { const co = Math.cos(a), si = Math.sin(a); K.XF = [co, si, -si, co, cx - co * cx + si * cy, cy - si * cx - co * cy]; };
+    // a thin lit rim: body pixels (of the given colours) with open air on the lit side take the rim colour
+    K.rim = (cols, col, dx = -1, dy = -1, col2) => { const b = K.buf.slice(), set = new Set(cols), g = (x, y) => (x < 0 || y < 0 || x >= W || y >= H) ? null : b[y * W + x];
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++){ const v = b[y * W + x]; if (!set.has(v)) continue;
+        const a = dx && !g(x + dx, y), u = dy && !g(x, y + dy); if (a && u && col2) K.buf[y * W + x] = col2; else if (a || u) K.buf[y * W + x] = col; } };
+    // ordered-dither a soft patch of one colour (the vignette's formula): solid inside, fading out by r = 1
+    K.glow = (col, cx, cy, rx, ry, solid = 0.4) => { for (let y = Math.floor(cy - ry); y <= cy + ry; y++) for (let x = Math.floor(cx - rx); x <= cx + rx; x++){
+      if (x < 0 || y < 0 || x >= W || y >= H) continue; const r = Math.hypot((x + 0.5 - cx) / rx, (y + 0.5 - cy) / ry), u = (r - solid) / (1 - solid);
+      if (r <= 1 && (u <= 0 || (1 - u) * 64 > BAY8[y & 7][x & 7])) K.buf[y * W + x] = col; } };
+    // a 1px outline in one colour round everything drawn so far (the cute visitor only)
+    K.outline = col => { const b = K.buf.slice(); for (let y = 0; y < H; y++) for (let x = 0; x < W; x++){ if (b[y * W + x]) continue;
+      if ((x > 0 && b[y * W + x - 1]) || (x < W - 1 && b[y * W + x + 1]) || (y > 0 && b[(y - 1) * W + x]) || (y < H - 1 && b[(y + 1) * W + x])) K.buf[y * W + x] = col; } };
+    // a hard-banded pool (no dither): nested ellipses from the outer band in, one colour each
+    K.pool = (cx, cy, bands) => { for (const [col, rx, ry] of bands) K.L(col, K.ell(cx, cy, rx, ry)); };
+    K.out = (cv, dx = 0) => { const g = cv.getContext('2d'), id = g.createImageData(W, H), d = new Uint32Array(id.data.buffer), m = new Map();
+      for (let i = 0; i < W * H; i++){ const col = K.buf[i]; if (!col) continue; let v = m.get(col); if (v === undefined){ const n = parseInt(col.slice(1), 16); v = (0xff000000 | ((n & 0xff) << 16) | (n & 0xff00) | ((n >> 16) & 0xff)) >>> 0; m.set(col, v); } d[i] = v; }
+      g.putImageData(id, dx, 0); };
+  }
+  K.buf.fill(null); K.XF = null; return K;
 }
-/* Riff: a floppy-eared dog strumming a pink guitar (two frames: strumming paw up, then down) */
-const RIFF_UP = ['.....#######........', '....#########.......', '.##.#########.##....', '###.##.###.##.###...', '###.#########.###...', '###.###...###.###...', '.##..###.###..##....', '.##...#####...##....', '.....#######........', '....#########.......', '..ppp#########......', '.pppp#.pp######..p.p', '.pp.pppppppppppppppp', '.ppppp.pp######..p.p', '..ppp.########......', '....#########.......', '....###...###.......'];
-const RIFF_DOWN = ['.....#######........', '....#########.......', '.##.#########.##....', '###.##.###.##.###...', '###.#########.###...', '###.###...###.###...', '.##..###.###..##....', '.##...#####...##....', '.....#######........', '....#########.......', '..ppp.########......', '.ppppp.pp######..p.p', '.pp.pppppppppppppppp', '.pppp#.pp######..p.p', '..ppp#########......', '....#########.......', '....###...###.......'];
-function drawRiffAt(ox, oy, t){
-  const art = Math.floor(t / 3) % 2 ? RIFF_DOWN : RIFF_UP, on = (x, y) => art[y] && art[y][x] && art[y][x] !== '.';
-  for (let y = -1; y <= art.length; y++) for (let x = -1; x <= 20; x++){ if (on(x, y)) continue; if (on(x-1,y) || on(x+1,y) || on(x,y-1) || on(x,y+1)) B_(ox + x, oy + y); }
-  art.forEach((r, y) => [...r].forEach((c, x) => { if (c === '#') W_(ox + x, oy + y); else if (c === 'p') px(ox + x, oy + y, 1, 1, '#eeb7d8'); }));
-  // a little pink note drifting up off the guitar
-  const k = t % 16, nx = ox + 15 + (k > 8 ? 1 : 0), ny = oy + 7 - Math.floor(k / 2);
-  if (k < 14){ const pk = (x, y) => { B_(x - 1, y); B_(x + 1, y); px(x, y, 1, 1, '#eeb7d8'); }; for (let i = 0; i < 3; i++) pk(nx + 1, ny + i); pk(nx, ny + 2); px(nx + 2, ny, 1, 1, '#eeb7d8'); }
+/* Riff (visitor tile, boss scale): a wandering minstrel hound on his hind legs. A deep travelling hood with his long floppy ears out
+   through slits, a dark face with a light muzzle and a black nose, kind heavy-lidded eyes in the hood's shadow; a cloak with lined
+   front edges and a stitched hem, a strap and a belt with a coin pouch, a lute across his chest (light-object ramp: lit rim, purfling,
+   carved rosette that glows, bridge, four strings, frets, a bent-back pegbox with pegs); a tail wagging out behind. He stands in a ring
+   of glowing coins and notes. 128 x 104 figure layer, loop 40 ticks at 10 fps: a 1 px bob held 20 ticks, ears a tick behind and the hem
+   two; he strums on ticks 4 and 24 (the paw sweeps, the strings shiver, the ears flop, a note pops out of the rosette and rises);
+   the tail wags; one blink and a glance; coins orbit the ring; a loose coin spins in the air. */
+const RIFF_LOOP = 40;
+function drawRiffTile(cv, f, A){
+  const C = NPC_C, Kt = npcKit(128, 104), {L, R, ell, path, line} = Kt, buf = Kt.buf;
+  const K = C.K, G1 = C.G1, G2 = C.G2, G3 = C.G3, G4 = C.G4, G5 = C.G5, L0 = C.L0, L1 = C.L1, L2 = C.L2, L3 = C.L3, P1 = '#8f877c', P2 = C.PALE;
+  const md = (u, n) => ((u % n) + n) % n, t = md(f, RIFF_LOOP);
+  const bob = u => md(u, 40) >= 20 ? 1 : 0, yb = bob(t), ye = bob(t - 1), yh = bob(t - 2);
+  const sh = (pts, dy) => pts.map(p => p.map((v, i) => i % 2 ? v + dy : v)), M = pts => pts.map(p => p.map((v, i) => i % 2 ? v : 128 - v));
+  const arcS = (x, y, rx, ry, a0, a1, w = 1) => cc => { cc.lineWidth = w; cc.ellipse(x, y, rx, ry, 0, a0, a1); cc.stroke(); };
+  const sb = [4, 24].map(b => md(t - b, 40)).find(u => u < 6), strum = sb === undefined ? -1 : sb;          // ticks since a strum (0..5) or -1
+  const sp = [-2, 1, 3, 2, 1, 0][strum] || 0, flop = strum >= 1 && strum <= 3 ? 1 : 0, shiver = strum >= 0 && strum <= 2;
+  // ---- the ring of coins and notes, a soft glow inside it
+  Kt.pool(64, 93, [[A[0], 32, 5]]); L(A[1], arcS(64, 93.5, 18, 2.6, Math.PI * 0.15, Math.PI * 0.85));
+  L(A[1], arcS(64, 93, 38, 6.4, 0, Math.PI * 2, 2)); L(A[2], arcS(64, 93, 38, 6.4, Math.PI * 0.12, Math.PI * 0.88, 1)); L(A[0], arcS(64, 93, 38, 6.4, Math.PI * 1.1, Math.PI * 1.9, 1));
+  for (let i = 0; i < 9; i++){ const a = (i + t / 40) / 9 * Math.PI * 2, x = 64 + Math.cos(a) * 38, y = 93 + Math.sin(a) * 6.4, fr = Math.sin(a) > 0;
+    if (i % 3 === 2){ const c = fr ? A[3] : A[2]; R(c, x - 1, y - 2, 2, 2); R(c, x, y - 6, 1, 5); R(c, x + 1, y - 5, 1, 1); R(c, x + 2, y - 4, 1, 1); }          // a note standing in the ring
+    else { L(fr ? A[3] : A[2], ell(x, y - 0.6, 2.3, 1.5)); R(fr ? A[2] : A[1], Math.round(x) - 1, Math.round(y), 2, 1); R(A[1], Math.round(x), Math.round(y - 1), 1, 1); if (fr) R(A[4], Math.round(x) - 2, Math.round(y - 1), 1, 1); } }
+  // ---- legs and paws, planted apart
+  for (const s of [-1, 1]){ L(K, line([[64 + s * 5, 70], [64 + s * 7, 86]], 6)); L(G1, line([[64 + s * 3.5, 74], [64 + s * 5, 84]], 1));
+    L(K, ell(64 + s * 8, 88, 4.4, 2.8)); for (const d of [-1.5, 0.5, 2.5]) R(G3, 64 + s * 8 + d * s - (s > 0 ? 1 : 0), 86, 1, 2); }
+  // ---- cloak: two flaps from the shoulders, lined front edges, folds, a stitched hem two ticks behind
+  const flapL = [[50, 34], [44, 40, 42, 52, 40, 64], [38, 72, 36, 78, 35, 82 + yh], [42, 80 + yh, 48, 78 + yh, 54, 76 + yh], [56, 60, 58, 46, 60, 38]];
+  const flapR = [[78, 34], [86, 42, 88, 54, 92, 64], [95, 70, 98, 74, 101, 77 + yh], [93, 78 + yh, 84, 77 + yh, 76, 75 + yh], [72, 60, 70, 46, 68, 38]];
+  L(K, path(sh(flapL, yb))); L(K, path(sh(flapR, yb)));
+  L(G1, path(sh([[54, 76 + yh], [56, 60, 58, 46, 60, 38], [57, 48, 54, 62, 51, 77 + yh]], yb))); L(G1, path(sh([[76, 75 + yh], [72, 60, 70, 46, 68, 38], [72, 48, 76, 62, 80, 76 + yh]], yb)));
+  L(G3, line(sh([[58.5, 44], [56, 56, 54, 66, 53, 75 + yh]], yb)));                                                   // lit front edge of the lining
+  L(G1, path(sh([[84, 44], [88, 54, 92, 64, 97, 73 + yh], [94, 72 + yh], [90, 64, 86, 54, 82, 46]], yb)));          // shadow side
+  L(G3, line(sh([[47, 40], [43, 50, 41, 62, 38.5, 74]], yb)));                                                        // lit outer edge
+  for (const pts of [[[46, 50], [45, 62, 43, 70, 41, 78]], [[51, 52], [50, 62, 49, 70, 47, 77]], [[82, 52], [84, 62, 86, 68, 88, 75]]]) L(G1, line(sh(pts, yb)));
+  L(G1, line(sh([[37, 79 + yh], [44, 77 + yh], [52, 74.5 + yh]], yb))); L(G1, line(sh([[78, 73.5 + yh], [88, 75 + yh], [98, 75.5 + yh]], yb)));
+  for (let x = 39; x < 52; x += 3) R(G3, x, 77 + yh + yb - (x - 39) * 0.2, 1, 1); for (let x = 80; x < 97; x += 3) R(G3, x, 74 + yh + yb + (x - 80) * 0.08, 1, 1);
+  L(null, path(sh([[42, 81 + yh], [44, 78.5 + yh], [46, 80.5 + yh]], yb))); L(null, path(sh([[90, 77.5 + yh], [92, 75.6 + yh], [94, 77.4 + yh]], yb)));   // ragged hem notches
+  // ---- tail, wagging out from under the cloak (tapered, a lit edge, a tufted tip)
+  { const w = [0, 1, 2, 2, 1, 0, -1, -1][md(t, 8)], tx = 108 + w, ty = 60 - Math.abs(w) * 0.5 + yh;
+    L(K, Kt.taper([90, 79 + yh, 101, 80 + yh, 108 + w * 0.4, 72 + yh, tx, ty], 4.6, 2.4)); L(G3, line([[96, 78 + yh], [103, 77 + yh, 107 + w * 0.4, 71 + yh, tx - 0.8, ty + 2]], 1));
+    L(K, ell(tx, ty - 1.5, 2.2, 3, 0.25)); R(G3, tx - 1, ty - 3, 1, 2); R(K, tx + 1, ty - 5, 1, 1); R(K, tx - 2, ty - 4, 1, 1); }
+  // ---- tunic, belt and coin pouch
+  L(K, path(sh([[55, 40], [73, 40], [74, 56, 74, 66, 73, 74], [55, 74], [54, 66, 54, 56, 55, 40]], yb)));
+  L(G1, path(sh([[58, 44], [70, 44], [69, 58, 67, 66, 66, 71], [62, 71], [61, 66, 59, 58, 58, 44]], yb)));
+  for (let y = 46; y < 68; y += 4){ R(G3, 62, y + yb, 1, 1); R(G3, 65, y + 1 + yb, 1, 1); R(G4, 63, y + 2 + yb, 2, 1); }       // laces
+  L(G3, path(sh([[55, 69], [73, 69], [73, 72], [55, 72]], yb))); L(L1, path(sh([[62, 68.5], [66, 68.5], [66, 72.5], [62, 72.5]], yb))); R(L3, 62, 68 + yb, 1, 4); R(K, 63, 70 + yb, 2, 1);
+  L(L1, Kt.path(sh([[73, 71], [79, 71], [80, 74, 80, 77, 77, 79], [75, 79], [73, 77, 72, 74, 73, 71]], yb))); L(L0, path(sh([[72.5, 71], [79.5, 71], [79, 73.5], [73, 73.5]], yb))); R(L3, 73, 71 + yb, 1, 6); R(L2, 76, 75 + yb, 1, 1);
+  // ---- the lute strap, over his shoulder (light-object ramp, stitched)
+  L(K, line(sh([[50, 38], [60, 50, 70, 62, 78, 70]], yb), 4)); L(L0, line(sh([[50, 38], [60, 50, 70, 62, 78, 70]], yb), 2.4));
+  for (let i = 1; i < 9; i++){ const u = i / 9, x = 50 + u * 28, y = 38 + u * 32 + Math.sin(u * Math.PI) * -1.5; R(L2, x, y + yb, 1, 1); } L(L3, line(sh([[50, 37], [55, 42]], yb)));
+  // ---- hood
+  L(K, path(sh([[64, 4], [70, 5, 79, 10, 80, 22], [81, 30, 80, 36, 76, 40], [52, 40], [48, 36, 47, 30, 48, 22], [49, 10, 58, 5, 64, 4]], yb)));
+  L(K, path(sh([[62, 5], [65, 2, 69, 2, 71, 4], [69, 4.5, 67, 5, 66, 7]], yb)));                                         // the hood's tip, tipped over
+  L(G3, line(sh([[50, 24], [50, 14, 56, 8, 63, 5.5]], yb))); R(G4, 56, 9 + yb, 2, 1);
+  L(G1, line(sh([[64.5, 6], [64.5, 13]], yb))); L(G1, line(sh([[77.5, 14], [79, 22, 79, 30, 76.5, 37]], yb)));
+  L(G1, ell(64, 26 + yb, 11, 11)); L(G3, arcS(64, 26 + yb, 10.4, 10.4, Math.PI * 0.95, Math.PI * 1.45));
+  for (const s of [-1, 1]){ L(K, ell(64 + s * 11, 16 + yb, 2.2, 1.6)); }                                                 // ear slits
+  // ---- face: dark head, cheek tufts, light muzzle, black nose
+  L(K, ell(64, 25 + yb, 8.5, 8.5)); L(K, ell(64, 31 + yb, 7, 5));
+  L(G1, line(sh([[58, 20.5], [60, 19.5, 62, 20]], yb))); L(G1, line(sh([[66, 20], [68, 19.5, 70, 20.5]], yb)));          // brows
+  L(K, ell(64, 33 + yb, 7.5, 6));
+  L(G3, path(sh([[62.6, 17], [65.4, 17], [66, 21, 67, 24, 68.5, 26.5], [59.5, 26.5], [61, 24, 62, 21, 62.6, 17]], yb)));                       // the blaze up the forehead
+  L(G3, path(sh([[60, 25.5], [68, 25.5], [70, 28, 72, 31, 72.5, 34.5], [73.5, 37, 72.5, 39.5, 70, 39.5], [68, 40.5, 66, 41, 64, 41], [62, 41, 60, 40.5, 58, 39.5], [55.5, 39.5, 54.5, 37, 55.5, 34.5], [56, 31, 58, 28, 60, 25.5]], yb)));   // muzzle with jowls
+  L(G4, line(sh([[63, 18], [62.5, 22, 61, 25, 59.5, 28]], yb))); L(G4, line(sh([[57.5, 31], [58.5, 28.5]], yb))); L(G1, line(sh([[57, 39], [61, 40.6, 67, 40.6, 71, 39]], yb)));
+  L(K, path(sh([[60, 28.5], [68, 28.5], [67.5, 31, 66, 32.5, 64, 32.5], [62, 32.5, 60.5, 31, 60, 28.5]], yb))); R(G5, 61, 29 + yb, 2, 1);
+  R(K, 64, 33 + yb, 1, 2); R(K, 61, 35 + yb, 3, 1); R(K, 65, 35 + yb, 3, 1); R(K, 60, 34 + yb, 1, 1); R(K, 68, 34 + yb, 1, 1); R(G1, 63, 36 + yb, 3, 1);
+  // kind, heavy-lidded eyes under the hood's shadow: halo, iris, inner light, catchlight on the lit side, body-black pupil
+  { const blink = t === 13 || t === 14, gl = t >= 30 && t < 36 ? 1 : 0, ey = 23 + yb;
+    for (const [ex, s] of [[58, -1], [66, 1]]){
+      if (blink){ R(A[0], ex, ey, 5, 1); R(A[1], ex + 1, ey, 3, 1); continue; }
+      R(A[0], ex - (s < 0 ? 1 : 0), ey + (s < 0 ? 1 : 0), 1, 1); R(A[0], ex + 5 - (s > 0 ? 0 : 0), ey + (s > 0 ? 1 : 0), 1, 1);
+      R(A[2], ex, ey, 5, 1); R(A[3], ex + 2, ey, 2, 1); R(K, ex + 2 + gl, ey, 1, 1); R(A[4], ex + 1, ey, 1, 1);
+      R(A[0], ex + 1, ey + 1, 3, 1); R(A[2], ex + 2, ey + 1, 1, 1); } }
+  // ---- long floppy ears, out through the slits, one tone lighter; they flop on the strum, a tick behind
+  for (const s of [-1, 1]){ const o = flop * s, y = ye + yb * 0;
+    const E = [[64 + s * 12, 15], [64 + s * 18, 16, 64 + s * 21 + o, 24, 64 + s * 21 + o, 34], [64 + s * 21 + o, 41, 64 + s * 19 + o, 45, 64 + s * 16 + o, 45], [64 + s * 13 + o * 0.5, 45, 64 + s * 12, 40, 64 + s * 12, 34], [64 + s * 12, 26, 64 + s * 11, 20, 64 + s * 10, 17]];
+    L(G3, path(sh(E, ye))); L(G1, line(sh([[64 + s * 15, 22], [64 + s * 16, 30, 64 + s * 16 + o * 0.5, 38, 64 + s * 15 + o, 43]], ye)));
+    L(s < 0 ? G4 : G1, line(sh([[64 + s * 19.6, 22], [64 + s * 20.4 + o * 0.5, 28, 64 + s * 20.4 + o, 36, 64 + s * 19.6 + o, 42]], ye)));
+    R(G1, 64 + s * 18 + o - (s > 0 ? 1 : 0), 44 + ye, 1, 1); R(K, 64 + s * 11 - (s > 0 ? 1 : 0), 15 + ye, 2, 2); }
+  // ---- the lute (light-object ramp), slung across
+  { const bx = 60, by = 62 + yb, a = -0.72, ca = Math.cos(a), sa = Math.sin(a), len = 30, nx = bx + ca * len, ny = by + sa * len, P = (u, v) => [bx + ca * u - sa * v, by + sa * u + ca * v];
+    L(K, line([[bx, by], [nx, ny]], 5)); L(L0, line([[bx, by], [nx, ny]], 3)); L(L1, line([P(10, -1), P(len, -1)], 1));
+    for (let u = 13; u < len - 1; u += 3.2){ const [x, y] = P(u, 0.6); R(L2, x, y, 1, 1); }
+    const pa = a + 1.2, qx = nx + Math.cos(pa) * 6, qy = ny + Math.sin(pa) * 6;
+    L(K, line([[nx, ny], [qx, qy]], 4)); L(L1, line([[nx, ny], [qx, qy]], 2));
+    for (let k = 1; k <= 3; k++){ const u = k / 4, x = nx + (qx - nx) * u, y = ny + (qy - ny) * u; R(L3, x - Math.sin(pa) * 2, y + Math.cos(pa) * 2); R(L3, x + Math.sin(pa) * 2, y - Math.cos(pa) * 2); }
+    const pear = [[8, 0], [8, -8, -2, -12, -10, -10], [-16, -8, -18, 0, -18, 0], [-18, 0, -16, 8, -10, 10], [-2, 12, 8, 8, 8, 0]];
+    const T = (k, pts) => pts.map(p => { const o = []; for (let i = 0; i < p.length; i += 2){ const [x, y] = P(p[i] * k, p[i + 1] * k); o.push(x, y); } return o; });
+    const bez = pts => cc => { cc.moveTo(...pts[0]); for (const p of pts.slice(1)) cc.bezierCurveTo(...p); cc.closePath(); cc.fill(); };
+    L(K, bez(T(1.13, pear))); L(L0, bez(T(1.0, pear))); L(L1, bez(T(0.86, pear)));
+    L(L3, line([P(5, -6.6), P(-2, -9.6), P(-10, -8.6), P(-15.5, -4)], 1)); L(L2, line([P(4, 5.6), P(-3, 8.6), P(-11, 7.6), P(-15, 3)], 1));   // lit rim, purfling
+    const [hx, hy] = P(-6, 0); L(K, ell(hx, hy, 3.3, 3.3)); L(A[3], arcS(hx, hy, 2.7, 2.7, 0, Math.PI * 2));
+    R(A[3], hx - 1, hy - 0.5, 1, 1); R(A[3], hx + 0.6, hy - 0.5, 1, 1); R(A[3], hx - 0.2, hy - 1.6, 1, 1); R(A[3], hx - 0.2, hy + 0.8, 1, 1);      // carved rosette
+    const [brx, bry] = P(-13, 0); L(L0, line([P(-13, -3.4), P(-13, 3.4)], 2)); R(L3, brx - 1, bry - 2, 1, 1);
+    for (const v of [-1.5, -0.5, 0.5, 1.5]){ const d = shiver && Math.abs(v) < 1 ? (strum % 2 ? 0.6 : -0.6) : 0; L(shiver && Math.abs(v) < 1 ? L2 : L3, line([P(-13, v), P(-4, v + d), P(len, v * 0.5)], 1)); } }
+  // ---- paws: one on the neck, one strumming
+  L(K, line(sh([[73, 42], [79, 47]], yb), 4)); L(G3, line(sh([[73, 41], [78, 45]], yb), 1)); L(K, ell(80, 48 + yb, 3, 2.6)); R(G3, 79, 46 + yb, 1, 2); R(G3, 81, 46 + yb, 1, 2);
+  L(K, line(sh([[54, 46], [56, 55 + sp]], yb), 4.6)); L(G3, line(sh([[53, 47], [54.5, 54 + sp]], yb), 1)); L(K, ell(57, 57.5 + sp + yb, 3.4, 2.8)); R(G3, 56, 55 + sp + yb, 1, 2); R(G3, 58, 55 + sp + yb, 1, 2);
+  // ---- notes: one pops out of the rosette on each strum and rises; a few drift; a loose coin spins in the air
+  for (const b of [4, 24]){ const u = md(t - b, 40); if (u < 22){ const x = 50 - u * 0.9 + Math.sin(u / 3) * 1.5, y = 58 - u * 2.1, c = u < 8 ? P2 : P1; if (y > 2){ R(c, x, y + 4, 2, 2); R(c, x + 1, y, 1, 5); R(c, x + 2, y + 1, 1, 1); R(c, x + 3, y + 2, 1, 1); } } }
+  for (const [x, y0, ph, c] of [[100, 40, 0, P1], [106, 22, 13, P2], [24, 30, 27, P1], [96, 8, 33, P1]]){ const u = md(t + ph, 40), y = y0 - u * 0.5; if (u < 34){ R(c, x, y + 4, 2, 2); R(c, x + 1, y, 1, 5); R(c, x + 2, y + 1, 1, 1); } }
+  { const cx = 22, cy = 52 + (md(t, 40) < 20 ? 0 : 1), w = [2, 1, 0, 1][md(t >> 1, 4)]; L(L3, ell(cx, cy, w + 0.6, 2)); if (w) R(P2, cx - w, cy - 1, 1, 1); R(L2, cx, cy + 1, 1, 1); }
+  for (const [x, y] of [[18, 72], [114, 78], [30, 16]]) R(K, x, y + yh, 2, 2);
+  Kt.out(cv);
 }
-function drawRiff(o){ drawRiffAt(1, GROUND - 16, o.motion ? o.f : 0); }
+/* The Siren (visitor tile, boss scale): wings folded round her like a cloak, wrist peaks high above a deep hood, the long primaries
+   meeting at the hem. The wings are one tone lighter than her body and built in tiers (coverts, secondaries, notched primaries) with a
+   lit leading edge; they part at the chest, and through the gap her pale hands hold out the week's card (light-ramp card stock, the
+   altar's eye rune). Two narrow pupil-less slits of light deep in the hood. She hovers over a tide pool. 128 x 104 figure layer, loop 60 ticks at 10 fps:
+   a 1 px bob (30 ticks a breath), the wings a tick behind the body and the wing tips two; one blink and a slow glance; her right wing
+   unfurls a little and folds back (ticks 18-34); the card turns over and flashes (ticks 40-54); drips fall from the wing tips into the
+   pool, ripples run out; feathers drift down and runes rise. */
+const SIREN_LOOP = 60;
+function drawSirenTile(cv, f, A){
+  const C = NPC_C, Kt = npcKit(128, 104), {L, R, ell, path, line} = Kt, buf = Kt.buf;
+  const K = C.K, G1 = C.G1, G2 = C.G2, G3 = C.G3, G4 = C.G4, G5 = C.G5, L0 = C.L0, L1 = C.L1, L2 = C.L2, L3 = C.L3, P1 = '#8f877c', P2 = C.PALE;
+  const md = (t, n) => ((t % n) + n) % n, t = md(f, SIREN_LOOP);
+  const bob = u => md(u, 30) >= 15 ? 1 : 0, yb = bob(t), yw = bob(t - 1), yt = bob(t - 2);
+  const M = pts => pts.map(p => p.map((v, i) => i % 2 ? v : 128 - v)), sh = (pts, dy) => pts.map(p => p.map((v, i) => i % 2 ? v + dy : v));
+  const arcS = (x, y, rx, ry, a0, a1, w = 1) => cc => { cc.lineWidth = w; cc.ellipse(x, y, rx, ry, 0, a0, a1); cc.stroke(); };
+  // ---- the tide pool: hard bands, ripples running out, drips landing
+  Kt.pool(64, 97, [[A[0], 34, 4.6], [A[1], 28, 3.6], [A[2], 19, 2.4], [A[3], 9, 1.2]]); R(A[4], 62, 96, 3, 1);
+  for (const ph of [0, 20, 40]){ const u = md(t - ph, 60) / 60, rx = 6 + u * 36, ry = 0.9 + u * 4.6; if (u > 0.92) continue;
+    L(rx < 18 ? A[1] : rx < 27 ? A[0] : rx < 33 ? A[1] : A[0], arcS(64, 97, rx, ry, Math.PI * 0.08, Math.PI * 0.92)); L(rx < 18 ? A[1] : A[0], arcS(64, 97, rx, ry, Math.PI * 1.25, Math.PI * 1.75)); }
+  for (const [x, y] of [[29, 99], [99, 98], [35, 101], [92, 101], [24, 97]]) R(A[0], x, y, 2, 1);
+  // ---- the robe behind the gap (hem between the wing tips)
+  L(K, path(sh([[56, 40], [72, 40], [75, 60, 77, 74, 78, 84], [74, 87], [70, 84], [67, 88], [64, 85], [61, 88], [58, 84], [54, 87], [50, 84], [51, 74, 53, 60, 56, 40]], yb)));
+  L(G1, line(sh([[50.5, 83], [56, 85], [64, 84.5], [72, 85], [77.5, 83]], yb)));
+  for (const x of [58, 63, 69]) L(G1, line(sh([[x, 62], [x - 0.5, 72, x - 1, 80]], yb)));
+  for (let x = 53; x < 76; x += 3) R(G3, x, 82 + yb, 1, 1);
+  // ---- the wings: silhouette, then tiers masked to it
+  const wing = [[60, 40], [57, 36, 53, 30, 50, 22], [47, 14, 44, 8, 38, 2], [30, 10, 27, 24, 28, 40], [29, 58, 36, 76, 50, 91], [53, 87, 55, 80, 57, 72], [54, 64, 53, 56, 55, 48], [57, 44, 59, 42, 60, 40]];
+  const unf = t >= 18 && t < 34 ? [0, 0.03, 0.07, 0.1, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.11, 0.09, 0.06, 0.03, 0.01, 0][t - 18] : 0;   // her right wing opens a little
+  const drawWing = (side, dy, dyt) => {
+    const W0 = side < 0 ? wing : M(wing), X = pts => side < 0 ? pts : M(pts), S = pts => sh(X(pts), dy);
+    if (side > 0 && unf) Kt.rot(unf, 69, 40 + dy); else Kt.XF = null;
+    // primaries hang two ticks behind (their lower half takes dyt)
+    const SEN = '#010203'; L(SEN, path(sh(W0, dy)));
+    if (dyt !== dy) L(SEN, path(S([[29, 62], [33, 74, 40, 84, 50, 92], [53, 88, 55, 80, 57, 72], [55, 66, 54, 62, 54, 60]].map((p, i) => i ? p.map((v, j) => j % 2 && v > 70 ? v + (dyt - dy) : v) : p))));
+    const mask = new Uint8Array(buf.length); for (let i = 0; i < buf.length; i++) if (buf[i] === SEN){ mask[i] = 1; buf[i] = G1; }
+    const keep = buf.slice(), Lw = (col, fn) => L(col, fn);
+    // the arm: a band one tone lighter along the leading edge, then two rows of rounded feather tips (coverts, secondaries)
+    Lw(G2, path(S([[38, 3], [31, 10, 28.6, 24, 29, 40], [31, 40], [31, 26, 33, 15, 39, 7], [44, 12, 48, 18, 50, 24], [48, 17, 44, 10, 38, 3]])));
+    Lw(K, line(S([[31.5, 40], [31.5, 26, 34, 15, 39.5, 7.5], [44, 12, 48, 18, 50.5, 25]]), 1)); Lw(G3, line(S([[32.5, 38], [32.5, 26, 35, 17, 39.5, 9.5]]), 1));
+    for (const [row, rr, n] of [[[[30, 31], [58, 40]], 3.4, 6], [[[29, 46], [57, 54]], 4.6, 5]]){ const [[x0, y0], [x1, y1]] = row;
+      for (let i = 0; i < n; i++){ const u = (i + 0.5) / n, [qx, qy] = X([[x0 + (x1 - x0) * u, y0 + (y1 - y0) * u + dy]])[0];
+        Lw(K, arcS(qx, qy, rr, rr * 0.75, Math.PI * 0.02, Math.PI * 0.98)); Lw(G3, line([[qx - side * rr * 0.45 - 0.4, qy - 1.2], [qx - side * rr * 0.45 + 0.9, qy - 1.2]], 1)); } }
+    for (let i = 0; i < 4; i++){ const u = (i + 0.5) / 4, [qx, qy] = X([[35 + 15 * u, 19 + 8 * u + dy]])[0]; Lw(K, arcS(qx, qy, 2.4, 1.8, Math.PI * 0.05, Math.PI * 0.95)); }
+    { const [wx, wy] = X([[38, 5 + dy]])[0]; Lw(G5, line([[wx - side * 1, wy + 1], [wx + side * 0.5, wy - 1]], 1)); }
+    for (let i = 0; i < 4; i += 2){ const a0 = 31 + i * 5.4, b0 = 38 + i * 3.2, a1 = 31 + (i + 1) * 5.4, b1 = 38 + (i + 1) * 3.2;
+      Lw(K, path(S([[a0, 55], [a0 + 1, 72, b0, 84 + i * 1.6 + (dyt - dy)], [b1, 84 + (i + 1) * 1.6 + (dyt - dy)], [a1 + 1, 72, a1, 55]]))); }
+    // primaries: long feathers with dark separations and lit shafts, running to the tips
+    for (let i = 0; i < 5; i++){ const x0 = 31 + i * 5.4, y0 = 55, x1 = 38 + i * 3.2, y1 = 84 + i * 1.6, d = y1 > 70 ? dyt : dy;
+      Lw(K, line(S([[x0, y0], [x0 + 1, (y0 + y1) / 2 + 2, x1, y1 + (dyt - dy)]]), 1));
+      if (i < 4) Lw(G3, line(S([[x0 + 2.6, y0 + 4], [x0 + 3.4, (y0 + y1) / 2 + 3, x1 + 2, y1 - 3 + (dyt - dy)]]), 1)); }
+    Lw(K, line(S([[29, 55], [36, 57, 46, 57, 56, 54]]), 1));
+    // the edge nearest the gap is in shadow; the leading edge is lit (the far wing only catches a thin edge)
+    Lw(K, line(S([[59.5, 41], [56, 46, 54, 54, 55, 62], [56, 68, 56, 74, 55, 80]]), 2));
+    if (side < 0){ Lw(G4, line(S([[29.5, 40], [29, 26, 32, 13, 38.5, 4]]), 1)); Lw(G3, line(S([[30, 44], [31, 58, 36, 72, 44, 84]]), 1)); Lw(G5, line(S([[35, 7], [37, 4.5]]), 1)); }
+    else { Lw(K, line(S([[30, 40], [29.5, 54, 33, 68, 40, 80]]), 2)); Lw(G3, line(S([[38.5, 4], [33, 10, 30, 20, 29.6, 30]]), 1)); }
+    // notches between primary tips break the outer edge
+    for (const [x, y] of [[31, 66], [35, 74], [40, 81], [45, 87]]){ const [qx, qy] = X([[x, y + dyt]])[0]; L(null, ell(qx + (side < 0 ? -1 : 1), qy, 1.3, 1.1)); }
+    for (let i = 0; i < buf.length; i++) if (!mask[i]) buf[i] = keep[i];
+    Kt.XF = null; };
+  drawWing(-1, yw, yt); drawWing(1, yw, yt);
+  // ---- the hood: deep, a soft point, a centre seam, a lit rim; a mantle with a tasselled hem behind the hands
+  L(K, path(sh([[52, 44], [55, 40, 58, 39, 64, 39], [70, 39, 73, 40, 76, 44], [74, 48], [70, 46, 58, 46, 54, 48]], yb)));
+  { const hm = bob(t - 2); for (const x of [55, 59, 64, 69, 73]) R(K, x, 46 + yb + (x === 64 ? 1 : 0) + hm, 2, 2); }
+  L(K, path(sh([[64, 11], [57, 12, 53, 19, 53, 27], [53, 34, 56, 40, 64, 42], [72, 40, 75, 34, 75, 27], [75, 19, 71, 12, 64, 11]], yb)));
+  L(K, path(sh([[63, 12], [64, 8, 66, 7, 68, 8], [66, 9, 65, 11, 66, 13]], yb)));                                                      // the hood's soft point
+  L(G3, line(sh([[54.5, 28], [54.5, 20, 58, 14, 63, 12.5]], yb))); L(G1, line(sh([[64.5, 13], [64.5, 17]], yb)));
+  L(G1, line(sh([[72.5, 19], [74, 25, 74, 32, 71, 38]], yb)));
+  L(G2, path(sh([[64, 18], [69, 18, 71, 22, 70, 27], [69, 32, 66, 35, 64, 36], [62, 35, 59, 32, 58, 27], [57, 22, 59, 18, 64, 18]], yb)));
+  L(G1, path(sh([[57.6, 26], [58, 20, 61, 18, 64, 18], [67, 18, 70, 20, 70.4, 26], [67, 23.5, 61, 23.5, 57.6, 26]], yb)));
+  L(G1, path(sh([[64, 36], [61, 35, 59, 33, 58.5, 31], [61, 32.5, 67, 32.5, 69.5, 31], [69, 33, 67, 35, 64, 36]], yb)));
+  // narrow veiled slits of solid light (no pupils): halo edge, iris fill, inner light, a catchlight on the lit side; one blink, a slow glance
+  { const blink = t === 9 || t === 10, gl = t >= 24 && t < 32 ? -1 : t >= 32 && t < 38 ? 1 : 0, ey = 26 + yb;
+    for (const ex of [59, 66]){ if (blink){ R(A[0], ex, ey, 4, 1); R(A[1], ex + 1, ey, 2, 1); continue; }
+      R(A[0], ex, ey - 1, 4, 1); R(A[0], ex - 1, ey, 6, 1); R(A[0], ex, ey + 1, 4, 1);
+      R(A[2], ex, ey, 4, 1); R(A[3], ex + 1, ey, 2, 1); R(A[4], ex + 1 + gl, ey, 1, 1);   // solid light, no pupil: the glance moves the brightest pixel
+      R(G1, ex - 1, ey - 1, 1, 1); R(G1, ex + 4, ey - 1, 1, 1); } }
+  // shell clasp
+  L(L1, ell(64, 43 + yb, 2.6, 1.9)); R(L3, 63, 42 + yb, 2, 1); R(L0, 64, 44 + yb, 1, 1);
+  // ---- the card: turns over (ticks 40-52) and flashes (52-56); light-ramp card stock, lit rim, the eye rune
+  { const cx = 64, cy = 55 + yb, w = 14, h = 19, ph = t >= 40 && t < 52 ? (t - 40) / 12 : 0, s = Math.cos(ph * Math.PI * 2), back = s < 0, hw = Math.max(0.6, Math.abs(s) * w / 2);
+    const box = (x0, y0, x1, y1) => path([[cx + x0, y0], [cx + x1, y0], [cx + x1, y1], [cx + x0, y1]]);
+    L(K, box(-hw - 1, cy - h / 2 - 1, hw + 1, cy + h / 2 + 1)); L(L3, box(-hw, cy - h / 2, hw, cy + h / 2));
+    if (hw > 2){ L(back ? L0 : L1, box(-hw + 1, cy - h / 2 + 1, hw, cy + h / 2)); L(back ? L1 : L0, box(-hw + 2, cy - h / 2 + 2, hw - 1.5, cy + h / 2 - 1.5)); L(back ? L0 : L1, box(-hw + 3, cy - h / 2 + 3, hw - 2.5, cy + h / 2 - 2.5)); }
+    if (hw > 5){
+      if (back){ for (let yy = -6; yy <= 6; yy += 4) for (let xx = -4; xx <= 4; xx += 4){ const x = Math.round(cx + xx * hw / 7), y = Math.round(cy + yy); R(L2, x, y - 1, 1, 1); R(L2, x - 1, y, 1, 1); R(L2, x + 1, y, 1, 1); R(L2, x, y + 1, 1, 1); } }
+      else { const x = Math.round(cx), y = Math.round(cy), q = hw / 7;
+        for (let i = 0; i <= 4; i++){ const dx = Math.round((4 - i) * q), dy = Math.round(i * 1.25); R(A[3], x - dx, y - dy); R(A[3], x + dx, y - dy); R(A[3], x - dx, y + dy); R(A[3], x + dx, y + dy); }
+        R(A[3], x - 1, y, 3, 1); R(A[3], x, y - 1, 1, 3); R(K, x, y, 1, 1); R(A[3], x, y - 8, 1, 1); R(A[3], x, y + 8, 1, 1);
+        for (const [dx, dy] of [[-5, -8], [4, -8], [-5, 8], [4, 8]]) R(L2, x + dx, y + dy, 1, 1); } }
+    if (t >= 52 && t < 57){ const k = t - 52, x = cx, y = cy; for (const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]){ for (let i = 0; i < 2; i++) R(i ? A[2] : A[3], x + dx * (9 + k + i), y + dy * (11 + k + i)); }
+      R(P2, x - 11 - k, y - 2, 1, 1); R(P2, x + 11 + k, y + 1, 1, 1); R(P1, x, y - 13 - k, 1, 1); }
+    // pale hands at its lower corners
+    for (const sd of [-1, 1]){ const hx = cx + sd * 8; L(L3, ell(hx, cy + 8, 2.8, 2.3)); L(P2, ell(hx - sd * 0.8, cy + 7.3, 1.2, 0.8)); R(G5, hx - 2, cy + 10, 5, 1);
+      for (let k = 0; k < 3; k++) R(k ? L3 : P2, hx - sd * 2 - (sd < 0 ? 0 : 1), cy + 2 + k * 2, 1, 2); } }
+  // ---- drips from the wing tips into the pool
+  for (const [x, ph] of [[51, 0], [77, 11]]){ const u = md(t - ph, 22); if (u < 6) R(u < 3 ? A[2] : A[3], x, 89 + yt + u, 1, u < 3 ? 1 : 2); else if (u < 8){ R(A[3], x - 2, 95, 1, 1); R(A[3], x + 2, 95, 1, 1); R(A[4], x, 94, 1, 1); } }
+  // ---- feathers drifting down, runes rising, a little debris
+  for (const [x0, y0, ph, sw] of [[18, -6, 0, 1], [106, -6, 31, -1]]){ const u = md(t + ph, 60), x = x0 + Math.sin(u / 60 * Math.PI * 2) * 4 * sw, y = y0 + u * 1.3;
+    if (y > 4 && y < 88){ const a = Math.sin(u / 9) * 0.5; L(G3, ell(x, y, 3.2, 1.3, a)); L(G1, line([[x - 3 * Math.cos(a), y - 3 * Math.sin(a)], [x + 3 * Math.cos(a), y + 3 * Math.sin(a)]], 1)); R(G4, x - 1, y - 1, 1, 1); } }
+  const RUNE = [[[0, -1], [-1, 0], [1, 0], [0, 1]], [[0, 0], [2, 0], [1, -1]], [[0, 0], [1, 1], [2, 0], [1, -1]]];
+  for (const [x, y0, g, ph, col] of [[16, 70, 0, 0, P1], [110, 64, 1, 17, P2], [22, 40, 2, 34, P1], [104, 30, 0, 45, P1], [12, 22, 1, 8, P2]]){ const u = md(t + ph, 60), y = y0 - u * 0.6; if (u < 50) for (const [dx, dy] of RUNE[g]) R(col, x + dx, y + dy, 1, 1); }
+  for (const [x, y] of [[24, 86], [104, 84], [20, 50], [109, 46]]) R(K, x, y + (md(t, 30) >= 15 ? 0 : 1), 2, 2);
+  Kt.out(cv);
+}
+/* The Slump (Today, at the hero's feet): a black tar thing that has hold of the hero. A slumped mound squats beside the legs; one heavy
+   arm arches over and hooks the near shin with three blunt drooping claws; the other lies slack along the floor past the feet and melts
+   into the spill. A swallowed alarm clock is half sunk in it. One heavy-lidded hero eye and three small ones. Drawn like a boss: body
+   #121110, no outline, a 1 px rim on top, ripple arcs and wet glints, glow seeping out under the spill edge in hard bands.
+   150 x 60, the hero's soles on row 52 and its centre at x 52. Loop 56 ticks at 10 fps: the mound breathes 1 px; once a loop the arm
+   gropes forward and slaps down, a ripple ring runs out over the floor and the eyes snap open one after another. */
+const SLUMP_W = 150, SLUMP_H = 60, SLUMP_LOOP = 56, SLUMP_HX = 52, SLUMP_G = 52;
+function drawSlumpNpc(cv, f, A){
+  const C = NPC_C, Kt = npcKit(SLUMP_W, SLUMP_H), {L, R, ell, path, line, taper} = Kt, TAU = Math.PI * 2;
+  const K = C.K, P1 = '#8f877c', P2 = '#c9c2b6', g = SLUMP_G, hx = SLUMP_HX, t = ((f % SLUMP_LOOP) + SLUMP_LOOP) % SLUMP_LOOP;
+  const br = t >= 28 ? 1 : 0, brA = ((t + 54) % 56) >= 28 ? 1 : 0;                 // the mound's breath, the arm a couple of ticks behind
+  const grope = t >= 30 && t < 40 ? Math.min(4, (t - 30) >> 1) : 0, slap = t >= 40 && t < 44 ? 3 - (t - 40) : 0;   // reach forward, then slap down
+  const ring = t >= 40 && t < 50 ? t - 40 : -1;
+  // ---- the glow seeping out under the spill: a 1 px A0 rim along its lower edge, A1/A2 only at the runnel tips and under the hero eye
+  L(A[0], ell(76, g + 2.2, 45, 4.2)); L(K, ell(76, g + 1, 44, 4));
+  for (const [x, w] of [[32, 4], [118, 6]]) { R(A[1], x, g + 3, w, 1); R(A[2], x + 1, g + 4, w - 2, 1); }
+  R(A[1], 93, g + 3, 10, 1); R(A[2], 96, g + 4, 4, 1);
+  if (ring >= 0){ const rx = 54 + ring * 2.2; L(A[1], c => { c.lineWidth = 1; c.ellipse(64, g + 3, rx, 3.4 + ring * 0.3, 0, 0.05 * Math.PI, 0.95 * Math.PI); c.stroke(); }); }
+  // ---- the spill and its runners
+  L(K, ell(76, g, 46, 5.4));
+  L(K, taper([36, g + 1, 33, g + 2, 31, g + 2, 29, g + 3], 3.4, 1.2)); L(K, taper([118, g + 1, 122, g + 2, 125, g + 3, 128, g + 3], 3.2, 1.2));
+  // ---- the slack arm, lying along the floor to the left past the feet, its tip melting into the spill
+  L(K, taper([82, g - 6, 64, g - 4, 48, g - 2, 34, g - 1], 7, 3));
+  // ---- the mound: slumped beside the legs, lumpy, sagging to the right, breathing
+  const my = -br;
+  L(K, path([[76, g - 2], [77, g - 19 + my], [81, g - 33 + my], [91, g - 42 + my], [102, g - 41 + my], [110, g - 34 + my], [116, g - 24 + my], [120, g - 14], [124, g - 5], [124, g - 1]]));
+  L(K, ell(108, g - 11, 14, 11)); L(K, ell(98, g - 5, 24, 6));
+  // ---- the raised arm: up from the mound's shoulder, arching left over the hero's near shin, three claws hanging in front of it
+  const ax = hx + 6 - grope, ay = g - 20 + slap + (brA ? -1 : 0);
+  L(K, taper([85, g - 32 + my, 78, g - 40 + my, ax + 12, ay - 9, ax + 2, ay - 1], 7, 6));
+  L(K, ell(ax + 1, ay, 4.4, 3.4));
+  for (const [dx, l] of [[-3, 6], [0, 8], [3, 6.5]]) L(K, taper([ax + dx, ay + 1, ax + dx - 0.4, ay + l * 0.5, ax + dx - 0.6, ay + l * 0.8, ax + dx - 0.4, ay + l], 2.6, 1.6));
+  // ---- the swallowed alarm clock, half sunk by the mound's foot, the tar lapping over its lower third
+  { const cx = 126, cy = g - 8;
+    R(C.L2, cx - 7, cy - 9, 4, 3); R(C.L3, cx - 7, cy - 9, 3, 1); R(C.L2, cx + 4, cy - 9, 4, 3); R(C.L3, cx + 4, cy - 9, 3, 1); R(C.L1, cx - 1, cy - 9, 3, 2);   // bells and the hammer
+    L(C.L0, ell(cx + 1, cy + 1, 8, 8)); L(C.L1, ell(cx, cy, 7, 7)); L(C.L3, ell(cx - 0.4, cy - 0.4, 5.4, 5.4)); L(C.L2, c => { c.lineWidth = 0.9; c.arc(cx, cy, 5.8, Math.PI * 0.1, Math.PI * 0.9); c.stroke(); });
+    R(C.L1, cx, cy - 4, 1, 1); R(C.L1, cx + 4, cy, 1, 1); R(C.L1, cx - 4, cy, 1, 1); R(K, cx, cy - 3, 1, 4); R(K, cx, cy, 3, 1); R(C.PALE, cx - 3, cy - 3);   // face: ticks, hands
+    L(K, path([[cx - 9, cy + 2], [cx - 5, cy + 1], [cx, cy + 3], [cx + 5, cy + 1], [cx + 9, cy + 2], [cx + 9, g + 2], [cx - 9, g + 2]])); }
+  Kt.rim([K], C.G3, 0, -1); for (let x = 0; x < SLUMP_W; x++) for (let y = g - 4; y < SLUMP_H; y++) if (Kt.buf[y * SLUMP_W + x] === C.G3) Kt.buf[y * SLUMP_W + x] = K;   // rim on the mound and arms only, not the spill
+  R(C.G4, 91, g - 40 + my, 3, 1); R(C.G4, 79, g - 40 + my, 2, 1); R(C.G4, ax + 6, ay - 6);       // hot spots
+  // ---- ripple arcs on the spill near its edge, wet glints on the mound, a fold where the mound meets the floor
+  for (const [rx, ry, a0, a1] of [[46, 3.2, 0.12, 0.42], [42, 2.4, 0.55, 0.88], [36, 1.8, 0.15, 0.35], [40, 3, 0.62, 0.9], [30, 2.2, 0.4, 0.7], [24, 1.4, 0.1, 0.3]]) L(C.G2, c => { c.lineWidth = 0.8; c.ellipse(76, g, rx, ry, 0, a0 * Math.PI, a1 * Math.PI); c.stroke(); });
+  R(C.G4, 97, g - 36 + my, 2, 1); R(C.G4, 110, g - 26 + my); R(C.G4, 103, g - 17 + my);
+  L(C.G2, line([[81, g - 28 + my], [83, g - 17 + my], [87, g - 8]], 0.8)); L(C.G1, line([[106, g - 37 + my], [112, g - 27 + my]], 0.8)); L(C.G2, line([[60, g - 3], [44, g - 1]], 0.8));
+  L(C.G1, line([[ax + 8, ay - 9], [ax + 18, ay - 15]], 0.8));
+  // drip runs down the mound and arm (the texture motif): short vertical 1 px runs, jittered, only well inside the tar
+  { const b = Kt.buf, isK = (x, y) => x >= 0 && y >= 0 && x < SLUMP_W && y < SLUMP_H && b[y * SLUMP_W + x] === K;
+    for (let cx = 1; cx < SLUMP_W; cx += 2) for (let cy = 1; cy < g - 2; cy += 3){ const h = (cx * 2654435761 ^ cy * 40503) >>> 0, x = cx + (h % 2), y0 = cy + ((h >> 4) % 3), len = 2 + ((h >> 8) % 4);
+      let ok = isK(x, y0 - 1) && isK(x, y0 + len); for (let k = 0; k < len; k++) if (!isK(x, y0 + k) || !isK(x - 1, y0 + k) || !isK(x + 1, y0 + k)) ok = false;
+      if (!ok) continue; for (let k = 0; k < len; k++) b[(y0 + k) * SLUMP_W + x] = k < 2 ? C.G2 : C.G1; } }
+  // tar flecks and a droplet or two in the air round the claws
+  for (const [x, y, ph] of [[ax - 8, ay + 7, 0], [ax + 6, ay - 18, 7], [118, g - 36, 14], [64, g - 30, 21], [132, g - 22, 4]]){ const a = (t + ph) % 28; if (a < 20){ const yy = y + (a >> 2); R(K, x, yy, 2, 2); R('#8f877c', x, yy, 2, 1); } }
+  // ---- eyes: one heavy-lidded hero eye on the mound, three small ones; out of step, snapping open one after another after the slap
+  const open = (k, base) => (t >= 42 + k * 2 && t < 52) ? 2 : ((t + base) % 56) < 40 ? 1 : 0;
+  { const ex = 98, ey = g - 23 + my, o = open(0, 0);
+    R(K, ex - 4, ey - 2, 9, 1);
+    if (o){ R(A[0], ex - 4, ey, 1, 1); R(A[0], ex + 4, ey, 1, 1); R(A[2], ex - 3, ey - (o > 1 ? 1 : 0), 7, o > 1 ? 3 : 2); R(A[3], ex - 2, ey, 5, 1); R(A[4], ex - 2, ey - (o > 1 ? 1 : 0)); R(K, ex, ey - (o > 1 ? 1 : 0), 1, o > 1 ? 3 : 2); R(C.G3, ex - 4, ey - 1, 9, 1); }
+    else R(C.G3, ex - 3, ey, 7, 1); }
+  for (const [k, ex, ey, base] of [[1, 86, g - 12, 9], [2, 110, g - 31 + my, 23], [3, 38, g - 3, 31]]){ const o = open(k, base);
+    if (o){ R(A[0], ex - 1, ey, 1, 1); R(A[0], ex + 3, ey, 1, 1); R(A[2], ex, ey - (o > 1 ? 1 : 0), 3, 2); R(A[3], ex + 1, ey); } else R(C.G3, ex, ey, 3, 1); }
+  // ---- bubbles: swell over three ticks, pop into a four-pixel star
+  for (const [bx, by, ph] of [[60, g - 2, 0], [100, g - 4, 19], [86, g - 1, 37]]){ const a = (t + ph) % 56;
+    if (a < 3){ const r = a + 1; L(P1, Kt.ring(bx, by - r, r, 0.8)); R(P2, bx - 1, by - r - r); }
+    else if (a === 3){ R(P1, bx - 2, by - 4); R(P1, bx + 2, by - 4); R(P1, bx, by - 6); R(P2, bx, by - 2); } }
+  Kt.out(cv);
+}
+// Riff and the Siren visit on the Battle page, each on a full boss tile (the bosses' dark dithered panel, the figure layer 13 px down);
+// the Slump stays on Today, at the hero's feet. Every frame is drawn once per Pop colour and cached.
+const NPC = {cache: new Map(), pop: null, grid: null};
+const NPC_TILE = {riff: [(c, f, A) => drawRiffTile(c, f, A), RIFF_LOOP], siren: [(c, f, A) => drawSirenTile(c, f, A), SIREN_LOOP]};
+function npcFrame(key, w, h, draw){
+  const acc = popId(); if (NPC.pop !== acc){ NPC.cache.clear(); NPC.pop = acc; }
+  let c = NPC.cache.get(key); if (!c){ c = document.createElement('canvas'); c.width = w; c.height = h; draw(c, POP_RAMPS[acc] || POP_RAMPS.blush); NPC.cache.set(key, c); }
+  return c;
+}
+// a visitor's boss tile (128 x 128): t = the 10 fps tick, 0 with Reduce Motion
+function drawVisitorTile(cv, kind, t){
+  const V = NPC_TILE[kind]; if (!V) return; const k = ((t % V[1]) + V[1]) % V[1];
+  const tile = npcFrame(kind + k, 128, 128, (c, A) => { const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.fillStyle = PB; g.fillRect(0, 0, 128, 128); g.drawImage(heroPanel(), 0, 0);
+    const l = document.createElement('canvas'); l.width = 128; l.height = 104; V[0](l, k, A); g.drawImage(l, 0, 13); });
+  const g = cv.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(tile, 0, 0, cv.width, cv.height);
+}
+// the Slump on a Today card drawn 4x (g): sx = the hero's centre and gy = its soles, in the card's 1x pixels
+function drawSlumpAt(g, sx, gy, t){ const k = ((t % SLUMP_LOOP) + SLUMP_LOOP) % SLUMP_LOOP; g.drawImage(npcFrame('slump' + k, SLUMP_W, SLUMP_H, (c, A) => drawSlumpNpc(c, k, A)), Math.round(sx) - SLUMP_HX, gy - SLUMP_G); }
 /* toxic air: drifting bands of dithered haze across the sky and fumes curling up from the ground; thicker as the points build (tier 1–3) */
 function drawSmog(o){
   const tier = o.smog, t = o.motion ? o.f : 0, gap = [0, 7, 5, 3][tier];
@@ -3627,27 +3941,6 @@ function drawSmog(o){
   for (const [vx, ph] of vents){ const tall = 4 + tier * 3;
     for (let i = 0; i < tall; i++){ const y = GROUND - 1 - i, k = (i + Math.floor((t + ph * 3) / 2)) % 4; if (k === 3) continue;
       dot(vx + Math.round(Math.sin((i + t * 0.3 + ph) * 0.8) * 1.5), y); } }
-}
-/* the Slump: a wobbly amoeba glued around the pet's feet, with drips climbing its sides and two sleepy eyes */
-function drawSlump(o){
-  const cx = o.cx != null ? o.cx : 32, g = o.ground != null ? o.ground : GROUND, t = o.motion ? o.f : 0;
-  const rx = 16, ry = o.stage === 2 ? 4 : 3, m = new Set(), key = (x, y) => x + "," + y;
-  for (let y = -ry; y <= 1; y++) for (let x = -rx - 2; x <= rx + 2; x++){
-    const wob = 1 + 0.1 * Math.sin(x * 0.55 + t * 0.35) + 0.05 * Math.sin(x * 1.3 - t * 0.2);
-    if ((x * x) / (rx * rx * wob * wob) + (y * y) / (ry * ry) <= 1) m.add(key(cx + x, g + y));
-  }
-  // drips that creep up both sides of the pet
-  for (const [dx, hgt, ph] of [[-13, 5, 0], [11, 4, 2]]){ const hh = hgt + Math.round(Math.sin((t + ph) * 0.25)); for (let i = 0; i < hh; i++){ const w = i < hh - 1 ? 3 : 2; for (let k = 0; k < w; k++) m.add(key(cx + dx + k, g - ry + 1 - i)); } }
-  const has = (x, y) => m.has(key(x, y));
-  // a black rim so the goo reads against the pet and the grass, then a dithered gray body with drifting bubbles
-  for (const k of m){ const [x, y] = k.split(',').map(Number); for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (!has(x+dx, y+dy)) B_(x+dx, y+dy); }
-  for (const k of m){ const [x, y] = k.split(',').map(Number);
-    const edge = !has(x+1,y) || !has(x-1,y) || !has(x,y-1) || !has(x,y+1);
-    const bub = ((x * 5 + y * 7 + Math.floor(t / 4)) % 17) === 0;
-    if (edge || bub || (x + y) % 2 === 0) W_(x, y); else B_(x, y); }
-  // sleepy eyes and a droopy mouth, cut out in black
-  for (const ex of [cx - 7, cx + 5]){ B_(ex - 1, g - 2, 5, 2); W_(ex, g - 2, 3, 1); }
-  B_(cx - 2, g, 5, 2); W_(cx - 1, g, 3, 1);
 }
 
 function drawPetIcon(canvas, o){
@@ -10448,8 +10741,8 @@ function heroPanelWide(W, H){
 }
 const HERO_K = 4, HERO_FOOT = 116;   // Today: the card is the 64 x 44 scene grid drawn 4x; the figure is 1x, its soles (row 116 of the tile) on the old ground line
 const heroMood = (mood, cheer) => mood === 'sleep' ? 'sleep' : cheer ? 'cheer' : mood === 'sad' || mood === 'hungry' ? 'sad' : '';
-// the Siren, Riff, the smog and the Slump keep their places on the 4x grid; they draw with a black outline / light ink, so they read on the panel
-// (the smog's specks, light on the dark panel, are dimmed to a mid grey so the haze does not bury the hero). Smog behind the hero, the rest in front, as before.
+// the smog keeps its place on the 4x grid (its specks, light on the dark panel, are dimmed to a mid grey so the haze does not bury the hero), behind the hero;
+// the Slump is drawn at 1x like the hero, in front, gripping its legs (drawSlumpAt). Riff and the Siren visit on the Battle page instead.
 function drawHeroScene(canvas, o){
   const K = HERO_K, W = SW * K, H = SH * K; if (canvas.width !== W || canvas.height !== H){ canvas.width = W; canvas.height = H; }
   const ov = heroCv('ov', SW, SH), g = canvas.getContext('2d'); g.imageSmoothingEnabled = false;
@@ -10458,7 +10751,7 @@ function drawHeroScene(canvas, o){
   if (o.smog) layer(() => { drawSmog(o); ctx.globalCompositeOperation = 'source-in'; ctx.fillStyle = '#645e56'; ctx.fillRect(0, 0, SW, SH); ctx.globalCompositeOperation = 'source-over'; });   // a dim haze, not glare
   const ho = {lv: o.lv, motion: o.motion, state: heroMood(o.mood, o.cheer)}, ox = W / 2 - 64, oy = (GROUND + 1) * K - 1 - HERO_FOOT - (o.jump ? K : 0);
   g.drawImage(heroFig(ho), ox, oy); heroMark(g, ho, ox, oy, PW);
-  if (o.slump || o.siren || o.riff) layer(() => { if (o.slump) drawSlump({f: o.f, motion: o.motion, stage: 2}); if (o.siren) drawSiren(o); if (o.riff) drawRiff(o); });
+  if (o.slump) drawSlumpAt(g, W / 2, (GROUND + 1) * K - 1, o.motion ? HERO.tick : 0);
 }
 // Focus and Sleep: the round badge shows the hero on the bosses' dark panel
 function drawHeroBadge(canvas, o){
@@ -10606,7 +10899,7 @@ let drawerWant = false;
 function openDrawer(){ const d = document.getElementById('drawer'); drawerWant = true; renderDrawer(); d.hidden = false; requestAnimationFrame(() => requestAnimationFrame(() => { if (drawerWant) d.classList.add('open'); })); }
 function closeDrawer(){ const d = document.getElementById('drawer'); drawerWant = false; if (d.hidden) return; d.classList.remove('open'); setTimeout(() => { if (!drawerWant) d.hidden = true; }, 260); }
 // a closed notice stays closed for the day; a mini-boss notice shows for two days, so closing it also holds the day after
-const dismissKeep = (k, v) => v === D.today || (k.startsWith('mini') && k.includes('-') && v === D.yest);
+const dismissKeep = (k, v) => v === D.today || (k.startsWith('mini') && k.includes('-') && v === D.yest) || (k === 'siren' && typeof v === 'string' && v >= weekKey(D.today) && v <= D.today);   // a dismissed Siren stays away for the rest of her week
 const dismissed = k => dismissKeep(k, S.settings.dismissed[k]);
 const notice = (k, html) => `<div class="mystery">${svg('gift',18,2)} <span class="ntext">${html}</span><button class="nclose" data-dismiss="${k}" aria-label="Close">${svg('x',16,2.4)}</button></div>`;
 function vitals(compact){
@@ -10846,8 +11139,7 @@ function renderToday(){
   ${vitals()}
   ${myst && !dismissed('myst') ? notice('myst', `Daily check-in bonus: <b>+${myst.xp ? myst.xp + ' XP' : myst.gold + ' G'}</b>`) : ''}
   ${slumpNote()}
-  ${sirenNote()}
-  ${riffHere() ? `<div class="mystery riffnote">${svg('music',18,2)} <span class="ntext"><b>Riff is in town with his guitar.</b> Songs and new looks, today only.</span><button class="btn sm primary" data-tab="riff" style="margin-left:26px">Visit Riff</button></div>` : ''}
+  ${visitorLine()}
   ${smogNote()}
   ${skillNote()}
   ${timerAskNote()}
@@ -10993,7 +11285,32 @@ function slumpNote(){
   if (last && last.d === D.yest) ate = last.g ? ` Last night it ate <b>${last.g} G</b>.` : last.hp ? ` Last night it drained <b>${last.hp} HP</b>.` : last.pending ? ` It's chewing on your <b>${esc(nm(last.item))}</b>: log yesterday's tasks to save it.` : ` Last night it ate your <b>${esc(nm(last.item))}</b>.`;
   return `<div class="mystery slumpnote on">${svg('moon',18,2)} <span class="ntext"><b>Slump attached.</b>${ate} Finish something ${SLUMP_BACK} days in a row to lose it: <b>${Math.min(n, SLUMP_BACK)}/${SLUMP_BACK}</b>.</span></div>`;
 }
-function renderBattle(){
+// ---------- visitors: Riff and the Siren wait at the top of the Battle page, each on a boss-size tile, until resolved or dismissed ----------
+let visTick = 0;   // the visitors' own 10 fps frame counter
+const sirenWaiting = () => !!sirenPending() && !dismissed('siren');
+const riffWaiting = () => riffHere() && !dismissed('riff');
+const visitorWaiting = () => sirenWaiting() || riffWaiting();
+const vclose = (k, who) => `<button class="vclose" data-dismiss="${k}" aria-label="Dismiss ${who}">${svg('x', 16, 2.4)}</button>`;
+function visitorPanel(){
+  let out = '';
+  if (!dismissed('siren')){ const sn = sirenNote(); if (sn) out += `
+  <section class="game boss visitor" aria-label="The Siren">
+    <canvas class="visitorcv" data-visitor="siren" width="128" height="128" role="img" aria-label="The Siren, wings folded, holding out a card"></canvas>
+    <div class="dlg"><div class="dlg-in"><div class="dlg-h"><span class="dlg-name">The Siren</span>${vclose('siren', 'the Siren')}</div><p>${sirenPending() ? 'She hangs over the water and holds out a card. A blessing or a curse.' : 'Her card is drawn. She watches until the week is out.'}</p></div></div>
+  </section>${sn}`; }
+  if (riffWaiting()) out += `
+  <section class="game boss visitor" aria-label="Riff">
+    <canvas class="visitorcv" data-visitor="riff" width="128" height="128" role="img" aria-label="Riff the hound, hooded, playing a lute"></canvas>
+    <div class="dlg"><div class="dlg-in"><div class="dlg-h"><span class="dlg-name">Riff</span>${vclose('riff', 'Riff')}</div><p>A hooded hound with a lute, busking in a ring of coins. Songs, patterns and scenes, today only.</p></div></div>
+  </section>
+  <div class="mystery riffnote">${svg('music',18,2)} <span class="ntext"><b>Riff is in town with his lute.</b> Songs and new looks, today only.</span><button class="btn sm primary" data-tab="riff" style="margin-left:26px">Visit Riff</button></div>`;
+  return out;
+}
+// Today keeps one short tap-through line while a visitor waits (the dot on the Battle tab is easy to miss, and the Siren's offer ends with her week)
+function visitorLine(){ const s = sirenWaiting(), r = riffWaiting(); if (!s && !r) return '';
+  return `<button class="card vline" data-tab="battle">${svg(s ? 'flame' : 'music', 18, 2)}<span><b>${s && r ? 'The Siren and Riff are' : s ? 'The Siren is' : 'Riff is'} waiting on the Battle page.</b></span><span class="vgo" aria-hidden="true">›</span></button>`; }
+function renderBattle(){ return visitorPanel() + renderBattleMain(); }
+function renderBattleMain(){
   const f = D.cur, b = f.boss, daysLeft = dayIdx(f.end) - dayIdx(D.today) + 1, C = D.C;
   const hits = Object.entries(f.hits).sort((a,b) => b[1]-a[1]).slice(0,5);
   const upcoming = []; for (let c = f.c+1; c <= f.c+4; c++) upcoming.push({c, boss: D.nextRite || bossFor(c), start:cycleStart(c)});
@@ -11206,7 +11523,7 @@ function riffShopCard(){
 }
 function renderRiff(){
   const here = riffHere();
-  const hero = `<div class="riffhero"><canvas id="riffCv" width="24" height="22" role="img" aria-label="Riff the dog playing guitar"></canvas><div><b>Riff</b><span>${here ? 'Plays every other Sunday when your pet’s in a good mood.' : `Riff has moved on. Next visit ${fmtShort(riffNext(addDays(D.today, 1)))}.`}</span></div></div>`;
+  const hero = `<div class="riffhero"><canvas id="riffCv" width="128" height="128" role="img" aria-label="Riff the hound playing a lute"></canvas><div><b>Riff</b><span>${here ? 'Plays every other Sunday when your pet’s in a good mood.' : `Riff has moved on. Next visit ${fmtShort(riffNext(addDays(D.today, 1)))}.`}</span></div></div>`;
   if (!here) return hero;
   const songs = Object.entries(LOFI_STYLES).filter(([, st]) => st.price).map(([k, st]) => { const own = songOwned(k), prev = lofiPrev && lofiPrev.style === k;
     return `<div class="riffsong"><span><b>${esc(st.label)}</b><span class="small muted">${esc(st.note)}</span></span><span class="row" style="gap:6px"><button class="btn sm" data-songprev="${k}" aria-pressed="${!!prev}">${prev ? 'Stop' : 'Listen'}</button>${own ? '<span class="ownedtag">Owned</span>' : `<button class="btn sm gold" data-songbuy="${k}" ${D.balance >= st.price ? '' : 'disabled'}>${st.price} G</button>`}</span></div>`; }).join('');
@@ -11966,6 +12283,7 @@ function renderInner(){
   if (tab === 'stats' || tab === 'skills'){ sheetMode = 'stats'; statsSec = tab; } else if (tab === 'inv') sheetMode = 'inv'; else if (sheetMode === 'stats' || sheetMode === 'inv') sheetMode = null;
   v.innerHTML = tab === 'today' ? renderToday() : tab === 'battle' ? renderBattle() : tab === 'todo' ? renderTodo() : tab === 'shop' ? renderShop() : tab === 'focus' ? renderFocus() : tab === 'sleep' ? renderSleep() : tab === 'breathe' ? renderBreath() : tab === 'stats' || tab === 'skills' ? `<div class="pagewrap">${renderStatsPanel(tab)}</div>` : tab === 'inv' ? `<div class="pagewrap">${renderInventory()}</div>` : tab === 'riff' ? `<div class="pagewrap">${renderRiff()}</div>` : tab === 'beasts' ? `<div class="pagewrap">${renderBeasts()}</div>` : renderSettings();
   document.querySelectorAll('#tabs button[data-tab]').forEach(b => b.setAttribute('aria-current', b.dataset.tab === tab ? 'page' : 'false'));
+  { const bt = document.querySelector('#tabs button[data-tab="battle"]'), w = !recoveryMode && D && visitorWaiting(); if (bt){ bt.classList.toggle('badge', !!w && tab !== 'battle'); bt.setAttribute('aria-label', w ? 'Battle, a visitor is waiting' : 'Battle'); } }
   centerTabs(v);
   breathAfter();
   drawIcons(v);
@@ -11993,7 +12311,7 @@ function drawIcons(root){
 function draw(heroOnly){   // heroOnly: just the canvases the new hero is on (its own 10 fps step)
   const now = Date.now();
   const sc = document.getElementById('scene');
-  if (sc){ const so = {siren: !!sirenPending(), riff: riffHere() && !D.inn, smog: D.inn || !D.smog.pts ? 0 : D.smog.pts >= 9 ? 3 : D.smog.pts >= 4 ? 2 : 1, slump: D.slump && D.slump.on, bg: D.inn ? 'inn' : S.equip.bg, color:S.equip.color, hat:S.equip.hat, gear:S.gear, stage:stage(D.lv.level), cls: petCls(), mood: now < jumpUntil ? 'happy' : D.mood, f:frame, motion:motionOK, jump: now < jumpUntil && (Math.floor(now/120)%2===0)};
+  if (sc){ const so = {smog: D.inn || !D.smog.pts ? 0 : D.smog.pts >= 9 ? 3 : D.smog.pts >= 4 ? 2 : 1, slump: D.slump && D.slump.on, bg: D.inn ? 'inn' : S.equip.bg, color:S.equip.color, hat:S.equip.hat, gear:S.gear, stage:stage(D.lv.level), cls: petCls(), mood: now < jumpUntil ? 'happy' : D.mood, f:frame, motion:motionOK, jump: now < jumpUntil && (Math.floor(now/120)%2===0)};
     if (heroOn()) drawHeroScene(sc, Object.assign(so, {lv: D.lv.level, cheer: now < jumpUntil})); else drawScene(sc, so); }
   if (heroOnly === true){ const hs = document.getElementById('spaceCv'), hn = document.getElementById('nightCv'); if (hs) drawSpace(hs); if (hn) drawNight(hn); return; }
   const hurt = now < hurtUntil && Math.floor(now/90)%2 === 0;
@@ -12005,7 +12323,8 @@ function draw(heroOnly){   // heroOnly: just the canvases the new hero is on (it
   const sp = document.getElementById('spaceCv'); if (sp) drawSpace(sp);
   const nc = document.getElementById('nightCv'); if (nc) drawNight(nc);
   const shc = document.getElementById('shopCv'); if (shc) drawShopFront(shc, motionOK ? frame : 0);
-  const rc = document.getElementById('riffCv'); if (rc){ ctx = rc.getContext('2d'); ctx.imageSmoothingEnabled = false; ctx.clearRect(0, 0, rc.width, rc.height); drawRiffAt(2, 3, motionOK ? frame : 0); }
+  const rc = document.getElementById('riffCv'); if (rc) drawVisitorTile(rc, 'riff', motionOK ? visTick : 0);
+  document.querySelectorAll('canvas.visitorcv').forEach(c => drawVisitorTile(c, c.dataset.visitor, motionOK ? visTick : 0));
 }
 setInterval(() => { frame++; if (motionOK || Date.now() < jumpUntil + 200 || Date.now() < hurtUntil + 200) draw(); }, 140);
 // redrawn bosses animate at exactly 10 fps (their frames are designed at 100 ms), so they step one frame per tick and loop cleanly
@@ -12018,7 +12337,10 @@ function drawNewBoss(still){ if (recoveryMode || !D) return; const foe = D.mini 
 // the new hero's idle steps on the same 100 ms clock; it holds still with Reduce Motion on or while the page is hidden
 function heroStep(){ if (recoveryMode || !D || !heroOn() || !motionOK || document.hidden) return; HERO.tick++;
   if (document.getElementById('scene') || document.getElementById('spaceCv') || document.getElementById('nightCv')) draw(true); }
-setInterval(() => { drawNewBoss(); heroStep(); }, 100);
+// the visitors' tiles step on the same 100 ms clock; they hold still with Reduce Motion on or while the page is hidden
+function visitorStep(){ if (recoveryMode || !D || !motionOK || document.hidden) return; const cs = document.querySelectorAll('canvas.visitorcv, #riffCv'); if (!cs.length) return;
+  visTick++; cs.forEach(c => drawVisitorTile(c, c.id === 'riffCv' ? 'riff' : c.dataset.visitor, visTick)); }
+setInterval(() => { drawNewBoss(); heroStep(); visitorStep(); }, 100);
 setInterval(() => { if (recoveryMode || !D) return; let nd; try { nd = derive(); } catch(e){ render(); return; } if (nd.today !== D.today || nd.mood !== D.mood) render(); }, 60000);
 function floatAt(x, y, html){
   // keep it on screen; a zero rect means the button was re-rendered away, so use the middle
