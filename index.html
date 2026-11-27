@@ -1108,7 +1108,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '7cac9face1';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '7971dbc26c';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1492,33 +1492,33 @@ const RUNE_SLOTS = 3;
 const LEGACY_SLOT = {shield:'weapon'};   // the Tower Shield used to sit in the weapon hand
 const gearSlotOk = (id, sl) => !!GEAR_BY[id] && (GEAR_BY[id].slot === sl || LEGACY_SLOT[id] === sl);
 const BOSSES = [
-  {id:'kraken', name:'Couch Kraken',  weak:['STA'],      shape:'kraken', atk:6, beaten:'Untangled from the sofa, it slinks back under the cushions. The remote is yours again.', flavor:'Wraps the sofa in tentacles and whispers "one more episode."', drop:'hood'},
-  {id:'gremlin',name:'Knee Gremlin',  weak:['ARM'],      shape:'gremlin',atk:6, beaten:'Knees braced, joints warm. It skitters off to find someone who skips warm-ups.', flavor:'Chews on unprotected joints. Hates prehab.', drop:'horns'},
-  {id:'hunch',  name:'The Hunch',     weak:['MOB'],      shape:'hunch',  atk:6, beaten:'Shoulders back, head up. It shrinks into a dust bunny behind your monitor.', flavor:'Curls your spine toward the screen, one scroll at a time.', drop:'halo'},
-  {id:'golem',  name:'Laundry Golem', weak:['HRT'],      shape:'golem',  atk:6, beaten:'Folded, sorted and put away. Nothing left but a single lonely sock.', flavor:'Built from every shirt you meant to fold.', drop:'basket'},
-  {id:'sloth',  name:'Iron Sloth',    weak:['MGT'],      shape:'sloth',  atk:6, beaten:"You out-lifted it. It naps on the bench and won't bother you until next time.", flavor:'Heavy, slow, and only moves when you lift.', drop:'helm'},
-  {id:'wraith', name:'Riptide Wraith',weak:['STA','MOB'],shape:'wraith', atk:6, beaten:'You paddled past it and caught the set. It sinks back under the break.', flavor:'Drags tired paddlers out past the break.', drop:'fin'},
-  {id:'deadweight', name:'Dead Weight', weak:['MGT','STA'], shape:'deadweight', atk:6, beaten:'Chin over the bar. It drops to the floor and stays there.', flavor:'Hangs off your pull-ups and drags them back down.', drop:'padlock'}
+  {id:'kraken', name:'Couch Kraken',  weak:['STA'],      shape:'kraken', atk:6, beaten:'It sags into the cushions, tentacles limp. The remote is yours again.', flavor:'Wraps the sofa in tentacles and whispers "one more episode."', drop:'hood'},
+  {id:'gremlin',name:'Knee Gremlin',  weak:['ARM'],      shape:'gremlin',atk:6, beaten:'The hinge stops grinding and slumps between the bones. Your knees swing free.', flavor:'Chews on unprotected joints. Hates prehab.', drop:'horns'},
+  {id:'hunch',  name:'The Hunch',     weak:['MOB'],      shape:'hunch',  atk:6, beaten:'It folds flat on the floor, its phone face-down and dark. Shoulders back, head up.', flavor:'Curls your spine toward the screen, one scroll at a time.', drop:'halo'},
+  {id:'golem',  name:'Laundry Golem', weak:['HRT'],      shape:'golem',  atk:6, beaten:'It collapses into a heap of folded laundry, hanger and all.', flavor:'Built from every shirt you meant to fold.', drop:'basket'},
+  {id:'sloth',  name:'Iron Sloth',    weak:['MGT'],      shape:'sloth',  atk:6, beaten:'It thuds onto the mat and stays down. You out-lifted it.', flavor:'Heavy, slow, and only moves when you lift.', drop:'helm'},
+  {id:'wraith', name:'Riptide Wraith',weak:['STA','MOB'],shape:'wraith', atk:6, beaten:'It goes slack across the current. You caught the set.', flavor:'Drags tired paddlers out past the break.', drop:'fin'},
+  {id:'deadweight', name:'Dead Weight', weak:['MGT','STA'], shape:'deadweight', atk:6, beaten:'It drops off the bar into a heap of chain. Chin over the bar.', flavor:'Hangs off your pull-ups and drags them back down.', drop:'padlock'}
 ];
 const TITANS = [
-  {id:'doldrums', name:'The Doldrums', weak:SK.slice(), shape:'titan', titan:true, atk:10, status:'para', beaten:'The wind picks up again. Your plans have somewhere to go.', flavor:'Titan of flat days and skipped plans. Miss two dailies and it paralyzes you.', drop:'tidecrown', drop2:'anchor'},
-  {id:'undertow', name:'The Undertow', weak:SK.slice(), shape:'eel', titan:true, atk:10, status:'poison', beaten:'You kicked free and swam to shore. It sinks back into the deep, beaten.', flavor:'A drowned giant that drags at your ankles. Miss two dailies and it poisons you.', drop:'fang'},
-  {id:'colossus', name:'The Fog Colossus', weak:SK.slice(), shape:'giant', titan:true, atk:11, status:'para', beaten:'The fog burns off. Every day has its edges again.', flavor:'A wall of fog that turns days into blur. Miss two dailies and it paralyzes you.', drop:'cloak'}
+  {id:'doldrums', name:'The Doldrums', weak:SK.slice(), shape:'titan', titan:true, atk:10, status:'para', beaten:'It keels over under its slack sail. The weathervane spins: the wind is back.', flavor:'Titan of flat days and skipped plans. Miss two dailies and it paralyzes you.', drop:'tidecrown', drop2:'anchor'},
+  {id:'undertow', name:'The Undertow', weak:SK.slice(), shape:'eel', titan:true, atk:10, status:'poison', beaten:'The drowned king sinks to the seabed, crown askew. You swam to shore.', flavor:'A drowned giant that drags at your ankles. Miss two dailies and it poisons you.', drop:'fang'},
+  {id:'colossus', name:'The Fog Colossus', weak:SK.slice(), shape:'giant', titan:true, atk:11, status:'para', beaten:'Its lantern gutters out and the cloud sinks low. Every day has its edges again.', flavor:'A wall of fog that turns days into blur. Miss two dailies and it paralyzes you.', drop:'cloak'}
 ];
 const TITAN = TITANS[0];
 const SEASONAL = [
-  {id:'pumpkin',  name:'The Pumpkin Wraith', when:'10-31', weak:['MOB','HRT'], shape:'pumpkin', atk:8, seasonal:true, beaten:'Smashed into pie filling. The chores got done after all.', flavor:'A Halloween haunt that feeds on skipped chores.', drop:'jackhat'},
-  {id:'gobbler',  name:'The Gobbler',        when:'thanks', weak:['STA','MGT'], shape:'turkey',  atk:8, seasonal:true, beaten:'Full, tired and defeated. You trained right through the second helping.', flavor:'Thanksgiving glutton. Out-train the second helping.', drop:'pilgrim'},
-  {id:'krampus',  name:'Krampus',            when:'12-25', weak:['ARM','HRT'], shape:'krampus', atk:9, seasonal:true, beaten:'Sent back to the shadows with a lump of coal of his own.', flavor:'Christmas shadow that punishes the slackers.', drop:'santa'},
-  {id:'fathertime', name:'Father Time',      when:'01-01', weak:SK.slice(),   shape:'hourglass', atk:9, seasonal:true, beaten:'Your resolutions made it past January. He tips his hourglass to you.', flavor:'New Year’s keeper of broken resolutions.', drop:'party'},
-  {id:'heartbreak', name:'The Heartbreaker', when:'02-14', weak:['MOB','STA'], shape:'heart',   atk:8, seasonal:true, beaten:'You showed up for yourself. Its arrows clatter to the floor.', flavor:'Valentine’s menace. Show up for yourself.', drop:'heartband'}
+  {id:'pumpkin',  name:'The Pumpkin Wraith', when:'10-31', weak:['MOB','HRT'], shape:'pumpkin', atk:8, seasonal:true, beaten:'The scarecrow topples off its broom, its grin gone dark. The chores got done after all.', flavor:'A Halloween haunt that feeds on skipped chores.', drop:'jackhat'},
+  {id:'gobbler',  name:'The Gobbler',        when:'thanks', weak:['STA','MGT'], shape:'turkey',  atk:8, seasonal:true, beaten:'It flops over in a fan of dull blades. You trained right through the second helping.', flavor:'Thanksgiving glutton. Out-train the second helping.', drop:'pilgrim'},
+  {id:'krampus',  name:'Krampus',            when:'12-25', weak:['ARM','HRT'], shape:'krampus', atk:9, seasonal:true, beaten:'It slumps under its basket, bell silent. A lump of coal for him this year.', flavor:'Christmas shadow that punishes the slackers.', drop:'santa'},
+  {id:'fathertime', name:'Father Time',      when:'01-01', weak:SK.slice(),   shape:'hourglass', atk:9, seasonal:true, beaten:'He sinks down in his arch, the sand stopped. Your resolutions made it past January.', flavor:'New Year’s keeper of broken resolutions.', drop:'party'},
+  {id:'heartbreak', name:'The Heartbreaker', when:'02-14', weak:['MOB','STA'], shape:'heart',   atk:8, seasonal:true, beaten:'Both halves fall still, crosshairs dark. You showed up for yourself.', flavor:'Valentine’s menace. Show up for yourself.', drop:'heartband'}
 ];
 /* Rites of passage: the bosses you must face. They show up when your level reaches their range and stay, fight after fight, until beaten. Nothing (not even a holiday) can bump them. */
 const RITES = [
-  {id:'hydra',     name:'The Hydra of Someday', levels:[30,35], weak:['MGT','HRT'], shape:'hydra', rite:true, atk:14, status:'para', beaten:'Every someday became today. No heads left to grow back.', flavor:'Cut off one "later" and two more grow back. A rite of passage for level 30.', drop:'hydracrown'},
-  {id:'burnout',   name:'The Burnout',          levels:[55,60], weak:['STA','MOB'], shape:'candle', rite:true, atk:18, status:'poison', beaten:"Rested and steady, you snuffed it out. The candle can't burn you again.", flavor:'A melted giant that lives on overwork. Rest is the only blade that cuts it. A rite of passage for level 55.', drop:'emberhelm'},
-  {id:'maw',       name:'The Maw of Routine',   levels:[75,80], weak:['MOB','HRT'], shape:'maw', rite:true, atk:21, status:'para', beaten:'You broke the loop. The wheel grinds to a stop with nothing left to swallow.', flavor:'A wheel of teeth that swallows your days whole, each one the same as the last. A rite of passage for level 75.', drop:'mawcrown'},
-  {id:'leviathan', name:'Leviathan, the Last Tide', levels:[95,100], weak:SK.slice(), shape:'leviathan', rite:true, final:true, atk:25, status:'poison', beaten:'The last tide breaks against you and pulls back for good. Every oath kept.', flavor:'The tide that swallows every habit you ever built. Too big to see all at once. The final boss.', drop:'abysscrown'}
+  {id:'hydra',     name:'The Hydra of Someday', levels:[30,35], weak:['MGT','HRT'], shape:'hydra', rite:true, atk:14, status:'para', beaten:"Every head droops and the dial's hand stops. Someday became today.", flavor:'Cut off one "later" and two more grow back. A rite of passage for level 30.', drop:'hydracrown'},
+  {id:'burnout',   name:'The Burnout',          levels:[55,60], weak:['STA','MOB'], shape:'candle', rite:true, atk:18, status:'poison', beaten:'The coals go dark and the wax giant settles into a puddle. Rested and steady, you snuffed it out.', flavor:'A melted giant that lives on overwork. Rest is the only blade that cuts it. A rite of passage for level 55.', drop:'emberhelm'},
+  {id:'maw',       name:'The Maw of Routine',   levels:[75,80], weak:['MOB','HRT'], shape:'maw', rite:true, atk:21, status:'para', beaten:'The wheel grinds to a stop and its eyes close one by one. You broke the loop.', flavor:'A wheel of teeth that swallows your days whole, each one the same as the last. A rite of passage for level 75.', drop:'mawcrown'},
+  {id:'leviathan', name:'Leviathan, the Last Tide', levels:[95,100], weak:SK.slice(), shape:'leviathan', rite:true, final:true, atk:25, status:'poison', beaten:'The black sun dims and the tide falls flat. Every oath kept.', flavor:'The tide that swallows every habit you ever built. Too big to see all at once. The final boss.', drop:'abysscrown'}
 ];
 const ALL_BOSSES = [...BOSSES, ...TITANS, ...SEASONAL, ...RITES];
 /* Mini-bosses: after a boss is beaten early, each day that starts with no boss or mini-boss live has a 1 in 5 chance of one.
@@ -1529,16 +1529,16 @@ const MINI_ODDS = 0.2, MINI_CHEST0 = 10000000000;
 // running away from a mini-boss: one try a day; 1 in 20, 1 in 10 with a Rune of Agility active, 80% with an Agility Potion
 const RUN_ODDS = 0.05, RUN_RUNE = 0.1, RUN_POT = 0.8, RUN_STEAL = 0.05;   // getting away with neither costs 5% of your gold
 const MINIS = [
-  {id:'tabgob',  name:'Tab Goblin',        days:1, weak:['HRT','MOB'], shape:'tabgob',  flavor:'Opens one more tab every time you look away.', beaten:'Every tab closed. It scurries off clutching a single bookmark.'},
-  {id:'scroll',  name:'Doomscroll Imp',    days:1, weak:['HRT','STA'], shape:'imp',     flavor:'Keeps your thumb flicking. Just one more post.', beaten:'Its phone hits 1%. It flaps off to find a charger.'},
-  {id:'drudge',  name:'Drudge Ghoul',      days:1, weak:['HRT','MGT'], shape:'ghoul',   flavor:'Drags a chain of chores behind it and hands you the same one again.', beaten:'It drops its chain of busywork and rattles off.'},
-  {id:'snooze',  name:'Snooze Kobold',     days:2, weak:['STA','HRT'], shape:'kobold',  flavor:'Hits snooze for you. Nine times.', beaten:'Wide awake now. It shuffles off in its nightcap, yawning.'},
-  {id:'humdrum', name:'Humdrum Hobgoblin', days:2, weak:['MOB','HRT'], shape:'hobgob',  flavor:'Hums one flat note until every day sounds the same.', beaten:'It loses the tune and wanders off, muttering.'},
-  {id:'fogre',   name:'Brain-Fog Ogre',    days:2, weak:['ARM','HRT'], shape:'ogre',    flavor:'Breathes a grey haze that makes simple things feel heavy.', beaten:'The haze lifts. It lumbers off coughing up the last of the fog.'},
-  {id:'tedium',  name:'Tedium Troll',      days:3, weak:['MGT','HRT'], shape:'troll',   flavor:'Squats on the bridge between you and anything interesting.', beaten:'Off the bridge at last. It sulks back under it.'},
-  {id:'rut',     name:'Rut Troll',         days:3, weak:['STA','ARM'], shape:'ruttroll',flavor:'Digs the same groove deeper every day and dares you to climb out.', beaten:'You climbed out. It keeps digging somewhere else.'},
+  {id:'tabgob',  name:'Tab Goblin',        days:1, weak:['HRT','MOB'], shape:'tabgob',  flavor:'Opens one more tab every time you look away.', beaten:'The tabs collapse in a pile, its eye gone flat. Every tab closed.'},
+  {id:'scroll',  name:'Doomscroll Imp',    days:1, weak:['HRT','STA'], shape:'imp',     flavor:'Keeps your thumb flicking. Just one more post.', beaten:"The feed keels over, its tab knocked loose and its thumb gone still. Screen time's up."},
+  {id:'drudge',  name:'Drudge Ghoul',      days:1, weak:['HRT','MGT'], shape:'ghoul',   flavor:'Drags a chain of chores behind it and hands you the same one again.', beaten:'The chain goes slack and the mask clatters down. Same chore, finally done.'},
+  {id:'snooze',  name:'Snooze Kobold',     days:2, weak:['STA','HRT'], shape:'kobold',  flavor:'Hits snooze for you. Nine times.', beaten:"The orb rolls over, every snooze button pressed. It's out cold so you don't have to be."},
+  {id:'humdrum', name:'Humdrum Hobgoblin', days:2, weak:['MOB','HRT'], shape:'hobgob',  flavor:'Hums one flat note until every day sounds the same.', beaten:'The fork falls flat with one last off-key twang. The days sound different again.'},
+  {id:'fogre',   name:'Brain-Fog Ogre',    days:2, weak:['ARM','HRT'], shape:'ogre',    flavor:'Breathes a grey haze that makes simple things feel heavy.', beaten:"Its eye fades and the robe slumps into a thin grey puddle. Your head's clear."},
+  {id:'tedium',  name:'Tedium Troll',      days:3, weak:['MGT','HRT'], shape:'troll',   flavor:'Squats on the bridge between you and anything interesting.', beaten:'The arch crashes down, gate and all. The way through is open.'},
+  {id:'rut',     name:'Rut Troll',         days:3, weak:['STA','ARM'], shape:'ruttroll',flavor:'Digs the same groove deeper every day and dares you to climb out.', beaten:'The screw tips over in its own groove. You climbed out.'},
   // added later: only days on or after `from` can roll these, so earlier days keep the mini-boss they had
-  {id:'monotone', name:'The Monotone',     days:2, weak:['MOB','STA'], shape:'humbar',  from:'2026-11-26', flavor:'One dead-level line that marches in place and never rises or falls.', beaten:'The line finally breaks. Something like a melody leaks out.'},
+  {id:'monotone', name:'The Monotone',     days:2, weak:['MOB','STA'], shape:'humbar',  from:'2026-11-26', flavor:'One dead-level line that marches in place and never rises or falls.', beaten:'The bar buckles and its legs give out. Something like a melody leaks out.'},
   {id:'lockout',  name:'The Lockout',      days:3, weak:['HRT','ARM'], shape:'keyhole', from:'2026-11-26', flavor:'A locked door with nothing behind it but an eye, watching you try every key.', beaten:'It topples. There was never a lock, only the looking.'}
 ];
 const MINI_BY = Object.fromEntries(MINIS.map(m => [m.id, m]));
