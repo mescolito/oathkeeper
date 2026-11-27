@@ -1079,7 +1079,8 @@ html[data-mode="dark"] .edpill:not(.primary){background:var(--track)}
 .edmore[open] > summary::after{transform:rotate(-90deg)}
 .edmore[open]{padding-bottom:12px;display:flex;flex-direction:column;gap:10px}
 /* page header: date sits under the title (keeps the title and pills where they were) */
-.ttlblk{position:relative;padding-top:16.2px}.ttlblk .eyebrow{position:absolute;left:0;top:100%;margin-top:1px;white-space:nowrap}
+.ttlblk{position:relative;padding-top:16.2px}.ttlblk .eyebrow{position:absolute;left:0;top:100%;margin-top:7px;white-space:nowrap}
+.top:has(.ttlblk){margin-bottom:6px}
 </style>
 </head>
 <body>
@@ -1110,7 +1111,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '84ce9f6250';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '671959452a';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
