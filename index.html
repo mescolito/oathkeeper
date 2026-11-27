@@ -1092,7 +1092,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '29f247d38a';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'c32ed4d643';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -10824,11 +10824,26 @@ function heroFig(o){
     HERO.pxKey = key; }
   return pc;
 }
-// a state mark (z or pause) beside the head, 3 px to a mark pixel, drawn into g with the figure's top-left at (ox, oy)
+// a state mark beside the head, drawn into g with the figure's top-left at (ox, oy): asleep, small thin Zs (heroZzz); paused, the pause mark (3 px to a mark pixel)
 function heroMark(g, o, ox, oy, ink){
-  const rects = o.state === 'sleep' ? HERO_Z : o.state === 'paused' ? HERO_PAUSE : null; if (!rects) return;
-  const [top, right] = heroHeadBox(o.lv), k = 3, x0 = ox + right + 6, y0 = oy + Math.max(2, top - 4) + (o.state === 'sleep' && o.motion ? -3 * (Math.floor(HERO.tick / 8) % 2) : 0);
+  if (o.state === 'sleep') return heroZzz(g, o, ox, oy);
+  const rects = o.state === 'paused' ? HERO_PAUSE : null; if (!rects) return;
+  const [top, right] = heroHeadBox(o.lv), k = 3, x0 = ox + right + 6, y0 = oy + Math.max(2, top - 4);
   g.fillStyle = ink; for (const [x, y, w, h] of rects) g.fillRect(x0 + x * k, y0 + y * k, w * k, h * k);
+}
+// the sleeping hero (owner: "the Zs are too thick"): three small pixel Zs in 1 px strokes (top bar, diagonal, bottom bar), 4 to 7 px wide,
+// drifting up and to the side from the head, growing as they rise and fading from pale to particle grey to dark grey, on a slow 5.4 s loop;
+// with Reduce Motion they hold still at three steps of the path
+const HERO_ZZZ = 54;
+function heroZzz(g, o, ox, oy){
+  const [top, right] = heroHeadBox(o.lv), hx = ox + right + 2, hy = oy + Math.max(18, top + 4);
+  for (let i = 0; i < 3; i++){
+    const p = o.motion ? (HERO.tick / HERO_ZZZ + i / 3) % 1 : [0.1, 0.43, 0.76][i]; if (p > 0.94) continue;
+    const w = 4 + Math.round(p * 3), h = Math.min(w, 6), x = Math.round(hx + p * 13 + Math.sin(p * Math.PI * 2) * 1.5), y = Math.round(hy - p * 18);
+    g.fillStyle = p < 0.4 ? '#c9c2b6' : p < 0.72 ? '#8f877c' : '#57514b';
+    g.fillRect(x, y, w, 1); g.fillRect(x, y + h - 1, w, 1);
+    for (let r = 1; r < h - 1; r++) g.fillRect(x + Math.round((w - 1) * (1 - r / (h - 1))), y + r, 1, 1);
+  }
 }
 // Today (stage 3b, owner: "a background like the monsters, that dithered style, not the tamagotchi bg"): no pet scenery. The hero stands on the
 // bosses' dark dithered panel (the boss tile's formula, stretched to fill the card at 1x), in both themes as the boss tiles are.
@@ -11036,20 +11051,23 @@ function vitals(compact){
     <div class="vrow"><span class="vlbl">XP</span>${bar(100*lv.into/lv.need, 'var(--yellow)', 'vbar')}<span class="vnum"><b>${lv.into}</b>/${lv.need}</span></div>
     <div class="vrow"><span class="vlbl">MP</span>${bar(100*D.mp/C.maxMP, 'var(--blue)', 'vbar')}<span class="vnum"><b>${D.mp}</b>/${C.maxMP}</span></div>
     ${!compact && (st || runes || D.streak || sp) ? `<div class="chips small">${D.streak ? `<span class="chip-streak">${D.streak}-day streak</span>` : ''}${sp}${st}${runes}</div>` : ''}
-  </section>${!compact && sp && sirenPillOpen ? sirenNote() : ''}`;
+  </section>`;
 }
-// the Siren's card while it is in force this week: a pill in the vitals row, styled like the streak chip (a curse like a status chip);
-// tap it for her note. Read-only (S.siren, the task, the to-do); sirenPillOpen is screen state, never saved.
-let sirenPillOpen = false;
+// the Siren's card while it is in force this week: a short pill in the vitals row (the streak chip's style; a curse the status chip's);
+// tap it, like a task, for the half sheet with what it does, when it ends and her note. Read-only: S.siren, the task, the to-do.
+function sirenCard(){
+  const wk = weekKey(D.today), x = sirenOf(wk); if (!x || !x.drawn) return null;
+  const s3 = fmtDow(addDays(wk, 6)).split(',')[0], day = ({Mon: 'Monday', Tue: 'Tuesday', Wed: 'Wednesday', Thu: 'Thursday', Fri: 'Friday', Sat: 'Saturday', Sun: 'Sunday'})[s3] || s3;
+  const note = 'Her card is drawn. She watches until the week is out.';
+  if (x.res === 'bless'){ const t = D.T[x.tid]; if (!t) return null; return {bless: true, title: "Siren's blessing", what: `${t.name} pays 2×`, when: `Until ${day}`, note}; }
+  if (x.kind === 'daily'){ const t = D.T[x.tid]; if (!t) return null; return {bless: false, title: "Siren's curse", what: `Missing ${t.name} hits 2×`, when: `Until ${day}`, note}; }
+  const L = S.todos.lists.find(l => l.id === x.lid), it = L && L.items.find(i => i.id === x.iid); if (!it || it.doneOn) return null;
+  return {bless: false, title: "Siren's curse", what: `Finish ${it.text}, or lose 15% HP and 10% gold`, when: `By ${day} night`, note};
+}
 function sirenPill(){
-  const wk = weekKey(D.today), x = sirenOf(wk); if (!x || !x.drawn) return '';
-  const sun = fmtDow(addDays(wk, 6)).split(',')[0], cut = s => s.length > 20 ? s.slice(0, 19).trimEnd() + '…' : s;
-  let txt, end = `until ${sun}`, cls;
-  if (x.res === 'bless'){ const t = D.T[x.tid]; if (!t) return ''; txt = `Siren's blessing · 2× ${cut(t.name)}`; cls = 'chip-streak'; }
-  else if (x.kind === 'daily'){ const t = D.T[x.tid]; if (!t) return ''; txt = `Siren's curse · 2× hits for missing ${cut(t.name)}`; cls = 'chip-status'; }
-  else { const L = S.todos.lists.find(l => l.id === x.lid), it = L && L.items.find(i => i.id === x.iid); if (!it || it.doneOn) return ''; txt = `Siren's curse · finish ${cut(it.text)}`; end = `by ${sun}`; cls = 'chip-status'; }
-  sirenFlip = false;   // her note card no longer follows the draw: the pill carries it (tap for the note)
-  return `<button class="${cls} chip-siren" data-sirenpill aria-expanded="${sirenPillOpen}" aria-label="${esc(txt)}, ${end}. ${sirenPillOpen ? 'Hide' : 'Show'} details">${svg(x.res === 'bless' ? 'star' : 'flame', 12, 2.6)}<span class="cst">${esc(txt)}</span><span class="cse">· ${end}</span></button>`;
+  const c = sirenCard(); if (!c) return '';
+  sirenFlip = false;   // her note card no longer follows the draw: the pill and its sheet carry it
+  return `<button class="${c.bless ? 'chip-streak' : 'chip-status'} chip-siren" data-sirenpill aria-haspopup="menu" aria-label="${esc(c.title)}: ${esc(c.what)}, ${esc(c.when.toLowerCase())}. Show details">${svg(c.bless ? 'star' : 'flame', 12, 2.6)}<span class="cst">${esc(c.title)}</span></button>`;
 }
 function taskRow(t, k){
   const isPool = !!(t.pool && t.pool.length);
@@ -12913,6 +12931,8 @@ function renderQuick(){
     const acts = [...tmp.querySelectorAll('button')].map(b => { b.className = 'qmitem' + (b.dataset.sell ? ' danger' : ''); b.setAttribute('role', 'menuitem'); b.innerHTML = svg(ic(b), 19, 2) + `<span>${esc(b.textContent.trim())}</span>`; return b.outerHTML; }).join('');
     const secs = x.detail.secs.filter(Boolean);
     html = `<div class="qmhead">${esc(x.detail.title)}</div>` + (secs.length ? `<div class="qmsecs">${secs.map(v => `<div class="qmsec">${v}</div>`).join('')}</div>` : '') + acts; }
+  else if (qmCtx.kind === 'siren'){ const c = sirenCard(); if (!c){ qmCtx = null; qm.hidden = true; return; }   // her card: title, then what / when / her note between the sheet's dividers (no actions)
+    html = `<div class="qmhead">${svg(c.bless ? 'star' : 'flame', 18, 2.2)} ${esc(c.title)}</div><div class="qmsecs">${[`<span class="qminfo">${esc(c.what)}</span>`, esc(c.when), `<span class="qmnotetxt">${esc(c.note)}</span>`].map(v => `<div class="qmsec">${v}</div>`).join('')}</div>`; }
   else if (qmCtx.kind === 't'){ const t = S.tasks.find(x => x.id === qmCtx.id);
     html = qmTop(t.name, t.note, '', qmCtx.meta) + `${item('copy', 'copy', 'Make a copy')}${item('edit', 'pencil', 'Edit task')}${item('del', 'trash', qmCtx.del ? 'Tap again to delete' : 'Delete task', 'danger')}`; }
   else if (qmCtx.kind === 'm'){ const tm = timersLive().find(x => x.id === qmCtx.id), cost = Math.min(TIMER_RESET_G, Math.max(0, D.balance));
@@ -13256,7 +13276,7 @@ function onClick(e){
   if (el.dataset.qadd){ openQuickAdd(el.dataset.qadd); return; }
   if ('newtimer' in el.dataset){ openTimerEditor(null); return; }
   // the Siren's card: wave her off, or draw for a 50/50 blessing or curse (picked from this week's seed, so it can't be rerolled)
-  if ('sirenpill' in el.dataset){ sirenPillOpen = !sirenPillOpen; render(); return; }
+  if ('sirenpill' in el.dataset){ if (!sirenCard()) return; qmCtx = {kind: 'siren'}; renderQuick(); return; }   // the same half sheet a task opens
   if (el.dataset.siren){ const wk = sirenPending(); if (!wk) return; const now = Date.now(), day = sirenDayOf(wk);
     if (el.dataset.siren === 'off'){ const g = sirenOffPrice(D.lv.level); if (D.balance < g){ toast(`Waving her off costs ${g} G`); return; }
       S.siren.push({wk, day, declined: now}); S.buys.push({kind: 'sirenoff', id: 'siren', ts: now, g, date: D.today}); save(); render(); toast(`She takes ${g} G and flies off.`); return; }
