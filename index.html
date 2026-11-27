@@ -298,6 +298,11 @@ html[data-mode="dark"] .trow.done .check{color:var(--inv)}
 .chip-rune{background:var(--blue);color:#171614;border-radius:999px;padding:3px 10px;font-weight:600;font-size:12px}
 .chip-streak{background:var(--yellow);color:#171614;border-radius:999px;padding:3px 10px;font-weight:700;font-size:12px}
 .chips.small{gap:6px}
+.chip-siren{border:0;font-family:inherit;font-size:12px;line-height:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:4px;max-width:100%;min-width:0;position:relative;text-align:left}
+.chip-siren::after{content:'';position:absolute;inset:-10px -3px}
+.chip-siren .cst{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.chip-siren svg,.chip-siren .cse{flex:none}
+.bdiv{height:1px;background:var(--line);margin:6px 0;flex:none}
 .mystery{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--yellow);color:#171614;border-radius:18px;padding:10px 14px;font-size:14px}
 .weathercard{display:flex;align-items:center;gap:12px;padding:12px 14px}
 .weathercard .tbody{flex:1;display:flex;flex-direction:column;min-width:0}
@@ -1087,7 +1092,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'd48a996f0b';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '29f247d38a';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -9486,33 +9491,43 @@ function drawScrollLoop(cv, f, accent){
 
   const cx = 54, R = 14, HW = 8, GY = 96;                                                             // ribbon centre-line radius, half width; ground line
 
-  // ================================================================== BEATEN: the loop has snapped at the slot and hangs open like a limp belt
+  // ================================================================== BEATEN: the loop has keeled over onto its side and gone slack, its top strand gone a little slack;
+  // its lit tab has popped off onto the floor and the thumb hangs limp over the front
   if (D){
-    const sw = Math.round(Math.sin(TAU * P));                                                         // the drooping end sways a pixel
-    drawScrollLoop.deadHead = [cx - 12, 17];
-    L(G3, ell(cx + 8, GY - 1, 40, 3.4)); L(G1, ell(cx + 6, GY - 1, 31, 2));                            // the pool gone grey
-    px(cx - 20, GY + 3, G3, 2, 1); px(cx + 40, GY + 3, G3); px(cx + 12, GY + 4, G3, 2, 1);
-    // the belt: one end still hooked over and drooping, the other fallen flat along the ground
-    const belt = [[cx + 3 + sw, 49], [cx + 4 + sw * 0.5, 29, cx - 9, 29], [cx - 22, 30, cx - 20, 52], [cx - 18.6, 70], [cx - 17, 87, cx - 2, 86.4], [cx + 18, 86.4], [cx + 28, 85.4, cx + 37, 87.4]];
-    L(K, strokeP(belt, 15));
-    L(K, rect(cx + 37, 81, 8, 12)); for (const [x, y, w, h] of [[cx + 44, 80, 2, 3], [cx + 43, 84, 3, 2], [cx + 44, 90, 2, 3], [cx + 43, 87, 1, 2]]) px(x, y, null, w, h);   // the torn far end, ragged
-    for (const [x, y, w, h] of [[cx - 4 + sw, 54, 3, 4], [cx + 3 + sw, 55, 2, 3], [cx + 8 + sw, 53, 3, 4]]) px(x, y, null, w, h);                                             // and the torn near end
-    px(cx - 1 + sw, 59, K, 2, 2); px(cx + 6 + sw, 61, K); px(cx + 48, 86, K, 2, 2); px(cx + 51, 90, K);                                                                         // scraps
-    L(G3, strokeP([[cx - 2 + sw, 46], [cx - 1, 35, cx - 9, 35.6], [cx - 15, 36, cx - 14, 52], [cx - 12.4, 68], [cx - 11, 79.6, cx - 2, 80]], 1));                               // the inner lip
-    L(G3, c => { c.lineWidth = 1; c.arc(cx - 9, 44, 21.6, Math.PI * 1.1, Math.PI * 1.42); c.stroke(); });                                                                      // one lit curve on the bend
-    // the cells, still ruled; every eye shut, one knocked out
-    for (const [x0, y0, x1, y1] of [[cx - 26, 50, cx - 14, 51], [cx - 25, 63, cx - 13, 64], [cx - 24, 76, cx - 12, 75], [cx + 4, 80, cx + 4, 92], [cx + 20, 80, cx + 20, 92], [cx + 34, 80, cx + 34, 92]]) L(G1, strokeP([[x0, y0], [x1, y1]], 1));
-    XEYE(cx - 19, 41);
-    for (const [x, y] of [[cx - 19.4, 57], [cx - 18.4, 70]]){ px(x - 3, y, G4, 7, 2); px(x - 3, y + 2, G3, 1, 1); px(x + 3, y + 2, G3, 1, 1); px(x, y + 2, G3, 1, 1); }      // shut lids on the standing strand
-    for (const [x, y] of [[cx - 5, 86], [cx + 12, 86]]){ px(x, y - 3, G4, 1, 6); px(x + 1, y - 2, G4, 1, 4); }                                                  // and along the fallen one
-    // the dead slot: two dark halves of the gate, one on each torn end
-    px(cx - 2 + sw, 43, G3, 6, 2); px(cx - 1 + sw, 45, G1, 4, 6); px(cx + 38, 82, G3, 2, 10); px(cx + 40, 84, G1, 2, 6);
-    // the thumb, gone limp off the fallen strand
-    const B = [cx + 22, 82], Kn = [cx + 31, 68], T = [cx + 45, 84];
-    L(K, path([[B[0] - 5, B[1]], [Kn[0] - 4, Kn[1] - 1], [Kn[0] + 4, Kn[1] + 2], [B[0] + 6, B[1] + 2]])); L(K, ell(Kn[0], Kn[1], 4.6, 4.6)); L(K, strokeP([Kn, [T[0] - 1, T[1] - 1]], 7.6)); L(K, ell(T[0], T[1], 4.4, 4.4));
-    L(G3, strokeP([[Kn[0] - 3, Kn[1] - 3], [Kn[0] + 1, Kn[1] - 4]], 1)); L(G3, strokeP([[Kn[0] - 1, Kn[1] - 0.6], [Kn[0] + 2.4, Kn[1] - 1.6]], 1));
-    L(F1, path([[T[0] - 3.4, T[1] - 5.6], [T[0] + 1.6, T[1] - 5.6], [T[0] + 4.4, T[1] - 0.4], [T[0] + 3, T[1] + 2.4], [T[0] - 0.4, T[1] + 1]])); L(G4, strokeP([[T[0] - 1.6, T[1] - 4.4], [T[0] + 1.4, T[1] + 0.4]], 1));   // the nail, dull
-    for (const [x, y, l] of [[cx - 30, 60, 3], [cx - 9, 58, 2]]) px(x, y, K, 1, l);
+    drawScrollLoop.deadHead = [50, 50];
+    const S = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < W && y < H) buf[y * W + x] = c; };
+    const bz = (p0, p1, p2, p3) => t => { const u = 1 - t; return [u * u * u * p0[0] + 3 * u * u * t * p1[0] + 3 * u * t * t * p2[0] + t * t * t * p3[0], u * u * u * p0[1] + 3 * u * u * t * p1[1] + 3 * u * t * t * p2[1] + t * t * t * p3[1]]; };
+    // the centre-line of the slack band: top strand (sagging), right end, bottom strand, left end
+    const segs = [bz([34, 65], [50, 67.5], [66, 67.5], [82, 65]), bz([82, 65], [96, 65], [96, 88], [82, 88]), bz([82, 88], [66, 88], [50, 88], [34, 88]), bz([34, 88], [19.4, 88], [19.4, 65], [34, 65])];
+    const cl = []; segs.forEach((g, i) => { for (let k = 0; k < 40; k++) cl.push(g(k / 40)); });
+    const at = s => { const i = Math.round(((s % 1) + 1) % 1 * cl.length) % cl.length, a = cl[(i + cl.length - 1) % cl.length], b = cl[(i + 1) % cl.length]; return [cl[i], Math.atan2(b[1] - a[1], b[0] - a[0])]; };
+    const ring = (w, col) => L(col, c => { c.lineWidth = w; c.moveTo(...cl[0]); for (const p of cl.slice(1)) c.lineTo(...p); c.closePath(); c.stroke(); });
+    L(G3, ell(60, GY - 1, 44, 3)); L(G1, ell(60, GY - 1, 34, 2));                                   // the pool gone grey
+    ring(15, K);
+    // a lit curve on the upper shoulder, and the inner lip where the band has a thickness
+    for (let s = 0.84; s < 0.99; s += 0.004){ const [[x, y], a] = at(s); S(x - Math.sin(a) * 6.6, y + Math.cos(a) * 6.6, G3); }
+    for (const [s0, s1] of [[0.9, 1.0], [0.0, 0.08], [0.33, 0.42]]) for (let s = s0; s < s1; s += 0.004){ const [[x, y], a] = at(s); S(x + Math.sin(a) * 6.4, y - Math.cos(a) * 6.4, G3); }
+    // cell rules, still ruled
+    for (let k = 0; k < 11; k++){ const [[x, y], a] = at((k + 0.5) / 11), nx = -Math.sin(a), ny = Math.cos(a); L(k > 4 && k < 8 ? G1 : G3, strokeP([[x + nx * 6.4, y + ny * 6.4], [x - nx * 6.4, y - ny * 6.4]], 1)); }
+    // every eye put out: the top ones X'd, the ones round the ends shut, the bottom ones dark
+    for (const k of [0, 1, 2, 3]){ const [[x, y]] = at(k / 11); L(G2, tile(x, y, 4.6, 0)); L(K, tile(x, y, 3.4, 0)); XEYE(x, y); }
+    for (const k of [4, 10]){ const [[x, y], a] = at(k / 11), c = Math.cos(a + Math.PI / 2), s = Math.sin(a + Math.PI / 2); for (let j = -3; j <= 3; j++){ S(x + c * j, y + s * j, G4); S(x + c * j + Math.cos(a) * 1, y + s * j + Math.sin(a) * 1, G4); } }
+    for (const k of [5, 6, 7, 8, 9]){ const [[x, y]] = at(k / 11); px(x - 1, y - 1, G2, 2, 2); }
+    // the tab, popped off and lying face-down on the floor, its light gone
+    { const gx = 9, gy = 89; L(K, path([[gx, gy + 1], [gx + 12, gy - 1], [gx + 13, gy + 6], [gx + 1, gy + 7]])); L(G3, strokeP([[gx, gy + 1], [gx + 12, gy - 1]], 1)); px(gx + 3, gy + 2, G1, 7, 3); px(gx + 5, gy + 3, G2, 3, 1); }
+    // the thumb: slumped over the top strand, hanging down the front with its nail to the floor
+    { const B = [70, 66], Kn = [79, 58], T = [86, 77], l2 = Math.hypot(T[0] - Kn[0], T[1] - Kn[1]);
+      const u = [(T[0] - Kn[0]) / l2, (T[1] - Kn[1]) / l2], n = [-u[1], u[0]], Q = (al, ac) => [T[0] + u[0] * al + n[0] * ac, T[1] + u[1] * al + n[1] * ac];
+      onMass(G3, strokeP([B, Kn, T], 11));                                                                                                             // a lit rim where it lies over the band
+      L(K, ell(B[0], B[1], 5.6, 5)); L(K, strokeP([B, Kn], 9)); L(K, ell(Kn[0], Kn[1], 5, 5)); L(K, strokeP([Kn, T], 7.6)); L(K, ell(T[0], T[1], 3.8, 3.8));
+      L(G3, strokeP([[Kn[0] - 2, Kn[1] - 4.4], [Kn[0] + 2.6, Kn[1] - 3.6]], 1)); L(G3, strokeP([[Kn[0] - 0.4, Kn[1] - 2], [Kn[0] + 2.6, Kn[1] - 1.2]], 1));   // creases over the knuckle
+      L(G3, strokeP([[B[0] - 2, B[1] - 4.6], [Kn[0] - 3, Kn[1] - 3.6]], 1));                                                                                // a lit edge along the first joint
+      L(G2, strokeP([Q(-15, 3), Q(-8, 3.2)], 1));                                                                                                           // and down the hanging one
+      // the nail: a dull plate with a cuticle, the one light thing on it
+      L(F1, path([Q(-9, -3.4), Q(-9, 3.4), Q(-2.4, 3.6), Q(0.2, 2), Q(0.2, -2), Q(-2.4, -3.6)]));
+      L(F2, path([Q(-8, -2.6), Q(-8, 2.6), Q(-2.6, 2.7), Q(-0.8, 1.4), Q(-0.8, -1.4), Q(-2.6, -2.7)]));
+      L(F3, path([Q(-7, 0.4), Q(-7, 2.4), Q(-2.4, 2.4), Q(-1.2, 1.2), Q(-2.4, 0.4)])); }
+    for (const [x, y, w] of [[104, 94, 2], [110, 95, 1], [27, 97, 1]]) px(x, y, K, w, 1);
     const ctx0 = cv.getContext('2d'); ctx0.clearRect(0, 0, W, H); blitBuf(ctx0, buf, W, H); return;
   }
 
@@ -10545,7 +10560,7 @@ const NEW_ART = {
   ruttroll: Object.assign((cv, f, acc, dead) => { drawRut.dead = dead; drawRut(cv, f, acc); }, {ownDead: true, starY: 6, starX: 82, starRX: 12, starRY: 3}),
   tabgob: Object.assign((cv, f, acc, dead) => { drawTab.dead = dead; drawTab(cv, f, acc); }, {ownDead: true, starY: 40, starX: 66, starRX: 12, starRY: 3}),
   ghoul: Object.assign((cv, f, acc, dead) => { drawDrudge.dead = dead; drawDrudge(cv, f, acc); }, {ownDead: true, starY: 47, starX: 58, starRX: 12, starRY: 3}),
-  imp: Object.assign((cv, f, acc, dead) => { drawScrollLoop.dead = dead; drawScrollLoop(cv, f, acc); }, {ownDead: true, starY: 17, starX: 42, starRX: 12, starRY: 3}),
+  imp: Object.assign((cv, f, acc, dead) => { drawScrollLoop.dead = dead; drawScrollLoop(cv, f, acc); }, {ownDead: true, starY: 50, starX: 50, starRX: 13, starRY: 3}),
   hobgob: Object.assign((cv, f, acc, dead) => { drawHumFork.dead = dead; drawHumFork(cv, f, acc); }, {ownDead: true, starY: 4, starX: 78, starRX: 12, starRY: 3}),
   humbar: Object.assign((cv, f, acc, dead) => { drawHumBar.dead = dead; drawHumBar(cv, f, acc); }, {ownDead: true, starY: 31, starX: 64, starRX: 12, starRY: 3}),
   troll: Object.assign((cv, f, acc, dead) => { drawArch.dead = dead; drawArch(cv, f, acc); }, {ownDead: true, starY: 56, starX: 42, starRX: 12, starRY: 3}),
@@ -11013,14 +11028,28 @@ function vitals(compact){
   const st = Object.keys(D.status).map(k => `<span class="chip-status" title="${esc(STATUS[k].text)}">${esc(STATUS[k].name)} · ${D.status[k].left}d</span>`).join('');
   const runes = D.activeRunes.map(r => `<span class="chip-rune">${esc(runeName(RUNE_BY[r.id]))} · ${dayIdx(runeUntil(r)) - dayIdx(D.today) + 1}d</span>`).join('')
     + D.activeBuffs.map(u => `<span class="chip-rune chip-buff">${esc(SKILL_BY[u.id].name)} +${Object.values(u.buff.st)[0]} ${esc(STATS[Object.keys(u.buff.st)[0]].abbr)} · ${dayIdx(buffUntil(u)) - dayIdx(D.today) + 1}d</span>`).join('');
+  const sp = compact ? '' : sirenPill();
   if (S.settings.collapse.vitals) return `<div class="mini vmini"><button class="minimain" data-collapse="vitals" aria-expanded="false" aria-label="Show HP, XP and MP">
     <span class="vm"><i>HP</i>${bar(100*D.hp/C.maxHP, 'var(--hpc)', 'vbar')}</span><span class="vm"><i>XP</i>${bar(100*lv.into/lv.need, 'var(--yellow)', 'vbar')}</span><span class="vm"><i>MP</i>${bar(100*D.mp/C.maxMP, 'var(--blue)', 'vbar')}</span></button><button class="minitog" data-collapse="vitals" aria-expanded="false" aria-label="Show HP, XP and MP">${svg('back',16,2.6)}</button></div>`;
   return `<section class="card vitals" aria-label="Your vitals"><button class="cardtog" data-collapse="vitals" aria-expanded="true" aria-label="Collapse HP, XP and MP">${svg('back',16,2.6)}</button>
     <div class="vrow"><span class="vlbl">HP</span>${bar(100*D.hp/C.maxHP, 'var(--hpc)', 'vbar')}<span class="vnum"><b>${D.hp}</b>/${C.maxHP}</span></div>
     <div class="vrow"><span class="vlbl">XP</span>${bar(100*lv.into/lv.need, 'var(--yellow)', 'vbar')}<span class="vnum"><b>${lv.into}</b>/${lv.need}</span></div>
     <div class="vrow"><span class="vlbl">MP</span>${bar(100*D.mp/C.maxMP, 'var(--blue)', 'vbar')}<span class="vnum"><b>${D.mp}</b>/${C.maxMP}</span></div>
-    ${!compact && (st || runes || D.streak) ? `<div class="chips small">${D.streak ? `<span class="chip-streak">${D.streak}-day streak</span>` : ''}${st}${runes}</div>` : ''}
-  </section>`;
+    ${!compact && (st || runes || D.streak || sp) ? `<div class="chips small">${D.streak ? `<span class="chip-streak">${D.streak}-day streak</span>` : ''}${sp}${st}${runes}</div>` : ''}
+  </section>${!compact && sp && sirenPillOpen ? sirenNote() : ''}`;
+}
+// the Siren's card while it is in force this week: a pill in the vitals row, styled like the streak chip (a curse like a status chip);
+// tap it for her note. Read-only (S.siren, the task, the to-do); sirenPillOpen is screen state, never saved.
+let sirenPillOpen = false;
+function sirenPill(){
+  const wk = weekKey(D.today), x = sirenOf(wk); if (!x || !x.drawn) return '';
+  const sun = fmtDow(addDays(wk, 6)).split(',')[0], cut = s => s.length > 20 ? s.slice(0, 19).trimEnd() + '…' : s;
+  let txt, end = `until ${sun}`, cls;
+  if (x.res === 'bless'){ const t = D.T[x.tid]; if (!t) return ''; txt = `Siren's blessing · 2× ${cut(t.name)}`; cls = 'chip-streak'; }
+  else if (x.kind === 'daily'){ const t = D.T[x.tid]; if (!t) return ''; txt = `Siren's curse · 2× hits for missing ${cut(t.name)}`; cls = 'chip-status'; }
+  else { const L = S.todos.lists.find(l => l.id === x.lid), it = L && L.items.find(i => i.id === x.iid); if (!it || it.doneOn) return ''; txt = `Siren's curse · finish ${cut(it.text)}`; end = `by ${sun}`; cls = 'chip-status'; }
+  sirenFlip = false;   // her note card no longer follows the draw: the pill carries it (tap for the note)
+  return `<button class="${cls} chip-siren" data-sirenpill aria-expanded="${sirenPillOpen}" aria-label="${esc(txt)}, ${end}. ${sirenPillOpen ? 'Hide' : 'Show'} details">${svg(x.res === 'bless' ? 'star' : 'flame', 12, 2.6)}<span class="cst">${esc(txt)}</span><span class="cse">· ${end}</span></button>`;
 }
 function taskRow(t, k){
   const isPool = !!(t.pool && t.pool.length);
@@ -11399,7 +11428,8 @@ const visitorWaiting = () => sirenWaiting() || riffWaiting();
 const vclose = (k, who) => `<button class="vclose" data-dismiss="${k}" aria-label="Dismiss ${who}">${svg('x', 16, 2.4)}</button>`;
 function visitorPanel(){
   let out = '';
-  if (!dismissed('siren')){ const sn = sirenNote(); if (sn) out += `
+  // once drawn, waved off or dismissed she leaves Battle (her card lives on as the pill in the vitals)
+  if (sirenWaiting()){ const sn = sirenNote(); if (sn) out += `
   <section class="game boss visitor" aria-label="The Siren">
     <canvas class="visitorcv" data-visitor="siren" width="128" height="128" role="img" aria-label="The Siren, wings folded, holding out a card"></canvas>
     <div class="dlg"><div class="dlg-in"><div class="dlg-h"><span class="dlg-name">The Siren</span>${vclose('siren', 'the Siren')}</div><p>${sirenPending() ? 'She hangs over the water and holds out a card. A blessing or a curse.' : 'Her card is drawn. She watches until the week is out.'}</p></div></div>
@@ -11424,6 +11454,7 @@ function renderBattleMain(){
   const tag = bb => bb.final ? 'Final' : bb.rite ? 'Rite' : bb.seasonal ? 'Holiday' : bb.titan ? 'Titan' : 'Next';
   const a = D.lastAttack;
   const battleBottom = () => `
+  <div class="bdiv" role="separator" aria-label="Your side"></div>
   ${slumpNote()}
   ${a ? `<div class="card attack"><b>Last night</b><span>${a.shield ? `The Slump blocked ${esc(a.boss)}'s hits` : `${esc(a.boss)} hit you for <b>${a.dmg} HP</b>`} · ${a.missed} missed${a.dodged ? `, ${a.dodged} dodged` : ''}${a.counters ? `, ${a.counters} counter${a.counters === 1 ? '' : 's'}` : ''}${a.status ? ` · ${esc(STATUS[a.status].name)}` : ''}</span></div>` : ''}
   <div class="sec-h"><h2>You</h2><span class="muted small">Block ${pctTxt(C.def)} · Dodge ${pctTxt(C.dodge)} · Crit ${pctTxt(C.crit)}${C.critX > 1.5 ? ` ×${C.critX.toFixed(1)}` : ''}${C.counter ? ` · Counter ${pctTxt(C.counter)}` : ''}</span></div>
@@ -13225,6 +13256,7 @@ function onClick(e){
   if (el.dataset.qadd){ openQuickAdd(el.dataset.qadd); return; }
   if ('newtimer' in el.dataset){ openTimerEditor(null); return; }
   // the Siren's card: wave her off, or draw for a 50/50 blessing or curse (picked from this week's seed, so it can't be rerolled)
+  if ('sirenpill' in el.dataset){ sirenPillOpen = !sirenPillOpen; render(); return; }
   if (el.dataset.siren){ const wk = sirenPending(); if (!wk) return; const now = Date.now(), day = sirenDayOf(wk);
     if (el.dataset.siren === 'off'){ const g = sirenOffPrice(D.lv.level); if (D.balance < g){ toast(`Waving her off costs ${g} G`); return; }
       S.siren.push({wk, day, declined: now}); S.buys.push({kind: 'sirenoff', id: 'siren', ts: now, g, date: D.today}); save(); render(); toast(`She takes ${g} G and flies off.`); return; }
