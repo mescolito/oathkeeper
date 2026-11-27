@@ -990,6 +990,12 @@ html[data-mode="dark"] .qmcard{background:#242220;box-shadow:0 -6px 40px rgba(0,
 .qmitem:active,.qmitem:hover{background:var(--track)}
 .qmitem.danger{color:#c4495a}
 html[data-mode="dark"] .qmitem.danger{color:#f0939d}
+/* push-v1: Reschedule day picker in the task menu, and the Pushed tag on a row */
+.qmpush .chips{gap:6px}
+.qmpush .chip.on{background:var(--ink);color:var(--inv);border-color:var(--ink)}
+.qmpushgo{padding:4px 6px 2px}
+.qmpushgo .btn{width:100%}
+.tname .tpush{margin-left:2px;vertical-align:2px;white-space:nowrap}
 /* floating picker: one style for every choice (editor rows, quick-add chips, move to list) */
 .pk{position:fixed;inset:0;z-index:45;background:rgba(15,14,12,.12)}
 html[data-mode="dark"] .pk{background:rgba(0,0,0,.25)}
@@ -1138,7 +1144,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '1e54245b6f';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '67a9ed6e4b';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1945,7 +1951,11 @@ function sanitize(s, created){
   out.skillLog = (Array.isArray(s.skillLog) ? s.skillLog : []).filter(u => obj(u) && SKILL_BY[u.id]).map(u => { const o = {id: u.id, ts: num(u.ts, 0), date: isDate(u.date) ? u.date : null}; if (u.dmg != null) o.dmg = int(u.dmg, 0, 5000, 0); if (u.cost != null) o.cost = int(u.cost, 0, 1000, 0); if (typeof u.task === 'string') o.task = u.task.slice(0,40);
     if (SKILL_BY[u.id].kind === 'buff' && obj(u.buff) && obj(u.buff.st)){ const st = {}; for (const k of SK) if (u.buff.st[k] != null) st[k] = int(u.buff.st[k], 0, 20, 0); o.buff = {st, days: int(u.buff.days, 1, 7, 2)}; }
     return o; });
-  out.buys = (Array.isArray(s.buys) ? s.buys : []).filter(b => obj(b) && (b.kind === 'reroll' || b.kind === 'skilleq' || b.kind === 'weather' || b.kind === 'weatherbuy' || b.kind === 'weatheruse' || b.kind === 'sirenoff' || b.kind === 'song')).map(b => { const o = {kind: b.kind, id: str(b.id, 40), ts: num(b.ts, 0), g: int(b.g, 0, 100000, 0)}; if (isDate(b.date)) o.date = b.date; return o; });
+  out.buys = (Array.isArray(s.buys) ? s.buys : []).filter(b => obj(b) && (b.kind === 'reroll' || b.kind === 'skilleq' || b.kind === 'weather' || b.kind === 'weatherbuy' || b.kind === 'weatheruse' || b.kind === 'sirenoff' || b.kind === 'song' || b.kind === 'push')).map(b => { const o = {kind: b.kind, id: str(b.id, 40), ts: num(b.ts, 0), g: int(b.g, 0, 100000, 0)}; if (isDate(b.date)) o.date = b.date; return o; });
+  // pushed dailies (only there once one was pushed): known task, real dates, a later day within reach, one per task and day
+  if ('pushes' in s){ const ids = new Set((out.tasks || [...DEFAULT_TASKS, ...ROULETTES]).map(t => t.id));
+    out.pushes = (Array.isArray(s.pushes) ? s.pushes : []).filter(p => obj(p) && typeof p.id === 'string' && ids.has(p.id) && isDate(p.from) && isDate(p.to) && p.to > p.from && dayIdx(p.to) - dayIdx(p.from) <= 800)
+      .map(p => ({id: p.id, from: p.from, to: p.to, ts: num(p.ts, 0), g: int(p.g, 0, 100000, 0)})).filter((p, i, a) => a.findIndex(q => q.id === p.id && q.from === p.from) === i); }
   out.potions = (Array.isArray(s.potions) ? s.potions : []).filter(p => obj(p) && POTION_BY[p.id] && isDate(p.date)).map(p => { const o = {id: p.id, ts: num(p.ts, 0), date: p.date, g: int(p.g, 0, 100000, 0)}; if (p.bag){ o.bag = true; o.g = 0; } return o; });
   out.runeBuys = (Array.isArray(s.runeBuys) ? s.runeBuys : []).filter(r => obj(r) && RUNE_BY[r.id] && isDate(r.date)).map(r => { const o = {id: r.id, ts: num(r.ts, 0), date: r.date, g: int(r.g, 0, 100000, 0)}; if (r.token) o.token = true; if (r.bag){ o.bag = true; o.g = 0; delete o.token; } return o; });
   if (obj(s.todos) && Array.isArray(s.todos.lists)){
@@ -2145,6 +2155,7 @@ function pickFor(t, k, depth = 0){
   if (snap) return {idx: byName(snap.n), name: snap.n, stats: snap.s};
   const lock = S.picks[k] && S.picks[k][t.id];
   if (lock && byName(lock.n) >= 0){ const i = byName(lock.n); return {idx:i, name:pool[i].name, stats:pool[i].stats}; }
+  { const pp = depth < 6 && S.pushes && S.pushes.length ? pushTo(k, t.id) : null; if (pp && !isDueBase(t, k)) return pickFor(t, pp.from, depth + 1); }   // a pushed copy keeps its routine
   let cands = pool.map((o,i) => i);
   if (n > 1 && depth < 6){ const pd = prevDue(t,k); if (pd){ const pp = pickFor(t, pd, depth+1); const c2 = cands.filter(i => pool[i].name !== pp.name); if (c2.length) cands = c2; } }
   const idx = cands[hash(k + '|' + t.id) % cands.length];
@@ -2265,7 +2276,9 @@ function repStart(rp, from, days){
   const m = f.getDate() <= want ? new Date(f.getFullYear(), f.getMonth(), 1) : new Date(f.getFullYear(), f.getMonth() + 1, 1);
   return dkey(m);
 }
-const isDue = (t, k) => { const sc = schedAt(t,k); if (sc.cad === 'day' && sc.rep) return repDue(sc.rep, k, sc.days); return !sc.days || !sc.days.length || sc.days.includes(parseKey(k).getDay()); };
+const isDueBase = (t, k) => { const sc = schedAt(t,k); if (sc.cad === 'day' && sc.rep) return repDue(sc.rep, k, sc.days); return !sc.days || !sc.days.length || sc.days.includes(parseKey(k).getDay()); };
+// a daily pushed to day k (see PUSH_MUL) is due there once, on top of its own schedule
+const isDue = (t, k) => isDueBase(t, k) || (!!S.pushes && S.pushes.length > 0 && schedAt(t, k).cad === 'day' && !!pushTo(k, t.id));
 const offOn = (t, k) => (t.off && t.off.length) ? t.off.some(([a,b]) => a <= k && (!b || k < b)) : !!t.archived;
 // a task that hasn't started yet on day k (a future start date, or a pause that ends later) returns the day it starts
 const startOf = (t, k) => { if (t.archived) return null; const c = t.created || S.created; if (c > k) return c;
@@ -2273,8 +2286,36 @@ const startOf = (t, k) => { if (t.archived) return null; const c = t.created || 
   const sc = schedAt(t, k); return sc.rep && sc.rep.first && sc.rep.first > k ? sc.rep.first : null; };
 const dailyOn = (t, k) => schedAt(t,k).cad === 'day' && (t.created || S.created) <= k && !offOn(t,k) && isDue(t,k);
 const done = (k, id) => !!(S.log[k] && S.log[k][id]);
-const waived = (k, id) => !!(S.waives[k] && (S.waives[k][id] || S.waives[k]['*']));
+const waived = (k, id) => !!(S.waives[k] && (S.waives[k][id] || S.waives[k]['*'])) || !!pushFrom(k, id);
 const covered = (k, id) => done(k,id) || waived(k,id);
+/* Reschedule ("push", push-v1): a daily due today that won't come up again tomorrow can be pushed to a later day, up to the
+   day before it next comes up on its own (PUSH_MAX_DAYS at most). It costs pushCost(level) gold up front, logged in S.buys as
+   kind 'push'; that buy only counts while its push is live, so a sync can't charge twice. The day it was pushed from counts
+   as rested, like Second Wind (no miss, no boss heal or hit, streaks hold). On the new day it's due once, and finishing it
+   there is worth PUSH_MUL of the usual XP, gold and boss damage; missing it is a normal miss. One push per instance: a
+   pushed copy can't be pushed again. S.pushes = [{id, from, to, ts, g}] is only written once a push is made.
+   A push is void if the task got done on its from-day anyway (two devices): that day counts as done, the gold comes back. */
+const PUSH_MUL = 0.5, PUSH_MAX_DAYS = 30;
+const pushCost = lv => Math.min(200, 20 + 10 * Math.floor((Math.max(1, lv || 1) - 1) / 5));   // 20 G at Lv 1–5, +10 G every 5 levels, 200 G at most
+const pushLive = p => !(S.log[p.from] && S.log[p.from][p.id]);
+const pushTo = (k, id) => (S.pushes && S.pushes.length && S.pushes.find(p => p.to === k && p.id === id && pushLive(p))) || null;
+const pushFrom = (k, id) => (S.pushes && S.pushes.length && S.pushes.find(p => p.from === k && p.id === id && pushLive(p))) || null;
+const pushPaid = b => !!(S.pushes && S.pushes.some(p => p.id === b.id && p.from === b.date && p.ts === b.ts && pushLive(p)));
+// what finishing a daily on day k is worth: PUSH_MUL on the day it was pushed to, 1 everywhere else
+const pushHalf = (t, k) => S.pushes && S.pushes.length && schedAt(t, k).cad === 'day' && pushTo(k, t.id) && !isDueBase(t, k) ? PUSH_MUL : 1;
+// the days a daily due on k can be pushed to: tomorrow up to the day before it next comes up on its own (none if that's tomorrow)
+function pushDays(t, k){
+  const out = [];
+  for (let i = 1; i <= 800; i++){ const d = addDays(k, i);
+    if (schedAt(t, d).cad !== 'day') return out;                 // it turns into a habit first
+    if (offOn(t, d)) continue;                                    // paused that day
+    if (isDueBase(t, d)) return out;                              // comes up again on its own
+    if (i <= PUSH_MAX_DAYS) out.push(d); }
+  return [];                                                      // never comes up again: nothing to push it next to
+}
+const canPush = (t, k) => !!t && !t.archived && dailyOn(t, k) && isDueBase(t, k) && !done(k, t.id) && !waived(k, t.id) && !pushTo(k, t.id) && pushDays(t, k).length > 0;
+// a push made on day k can be taken back that same day while the pushed copy isn't done
+const pushUndo = (t, k) => { const p = t && pushFrom(k, t.id); return p && !done(p.to, t.id) ? p : null; };
 function weekTarget(t, k){ const wk = weekKey(k); if (wk === weekKey(todayKey())) return t.target || 1; let tg = ((S.wkTg[wk]||{})[t.id]) || 0; for (let i=0;i<7;i++){ const sn = (S.snap[addDays(wk,i)]||{})[t.id]; if (sn && sn.w) tg = Math.max(tg, sn.tg || 1); } if (wk === weekKey(todayKey()) || !tg) tg = Math.max(tg, t.target || 1); return tg; }
 const effTarget = (t, k) => Math.max(1, weekTarget(t,k) - (((S.lightens[weekKey(k)]||{})[t.id]) || 0));
 const active = () => S.tasks.filter(t => !t.archived);
@@ -2485,8 +2526,8 @@ function derive(){
         const stats = sn ? sn.s : statsFor(t, d), prim = stats[0];
         const r = sn ? {xp:sn.xp, gold:sn.g} : rewardOf(t), lull = lullAt(F, e.ts) && !miniLive(e.ts);
         if (lull) giveKey(d, d + '|' + e.tid, e.ts);
-        const sirX = sirenBlessed(e.tid, d, e.ts) ? SIREN_MUL : 1;
-        if (!lull){ xp += Math.round(r.xp * (1 + fx.xp) * boost * sirX); gold += Math.round(r.gold * (1 + fx.gold) * boost * sirX); }
+        const sirX = sirenBlessed(e.tid, d, e.ts) ? SIREN_MUL : 1, hv = pushHalf(t, d);   // hv: a pushed daily is worth half on its new day
+        if (!lull){ xp += Math.round(r.xp * (1 + fx.xp) * boost * sirX * hv); gold += Math.round(r.gold * (1 + fx.gold) * boost * sirX * hv); }
         const sl = statLvNow(); C = combatOf(sl, lvlNow(), fx);
         const foe = bossAlive() ? F.boss : miniLive(e.ts) ? mini.m : null;
         if (foe && !innAtD(d, e.ts)){
@@ -2494,6 +2535,7 @@ function derive(){
           let dmg = (10 + 2*(live ? sl[prim] + (fx.st[prim]||0) : sl[prim]) + (live ? C.atk : (fx.flat||0))) * (weak ? 2 : 1) * (1 + fx.all + (fx.pct[prim]||0)) * boost;
           if (live && roll('crit|' + d + '|' + e.tid) < C.crit) dmg *= C.critX;
           if (statusOn('para', d)) dmg *= 0.5;
+          if (hv !== 1) dmg *= hv;
           if (foe === F.boss) hitBoss(F, d, e.tid, Math.round(dmg), e.ts); else hitMini(e.tid, Math.round(dmg), d, e.ts);
         }
         stats.forEach((x,i) => stat[x] += Math.round((i===0 ? 10 : 5) * (1 + (fx.sxp[x]||0)) * sirX));
@@ -2538,7 +2580,7 @@ function derive(){
         if (id === 'pot_remedy' || id === 'pot_elixir') status.para = null;
         if (id === 'pot_elixir'){ hp = C.maxHP; mp = C.maxMP; }
       } else if (e.k === 'rune'){ dyn += e.r.g || 0; }
-      else if (e.k === 'buy'){ dyn += e.b.g || 0; if (e.b.kind === 'weather' || e.b.kind === 'weatheruse') smog = 0; }
+      else if (e.k === 'buy'){ if (e.b.kind !== 'push' || pushPaid(e.b)) dyn += e.b.g || 0; if (e.b.kind === 'weather' || e.b.kind === 'weatheruse') smog = 0; }
       else if (e.k === 'sell'){ dyn += e.x.cost; gold += e.x.g; }
       else if (e.k === 'tlog'){ if (e.x.kind === 'reset'){ dyn += e.x.cost || 0; hp = Math.max(1, hp - (e.x.hp || 0)); } else { xp += e.x.xp || 0; gold += e.x.g || 0; lvUp(fx); } }
     }
@@ -2802,6 +2844,7 @@ function mergeSaves(a, b){
   if (o.innFeeFrom && (!out.innFeeFrom || o.innFeeFrom < out.innFeeFrom)) out.innFeeFrom = o.innFeeFrom;
   if (o.miniFrom && (!out.miniFrom || o.miniFrom < out.miniFrom)) out.miniFrom = o.miniFrom;
   if (Array.isArray(o.siren)){ if (!Array.isArray(out.siren)) out.siren = []; for (const x of o.siren){ const i = out.siren.findIndex(y => y.wk === x.wk); if (i < 0) out.siren.push(x); else if ((x.drawn || x.declined || 0) < (out.siren[i].drawn || out.siren[i].declined || 0)) out.siren[i] = x; } }   // the first answer for a week wins
+  if (Array.isArray(o.pushes)){ if (!Array.isArray(out.pushes)) out.pushes = []; for (const x of o.pushes) if (x && !out.pushes.some(y => y && y.id === x.id && y.from === x.from)) out.pushes.push(x); }   // pushed dailies: one per task and day, the newer save's wins
   // timers: each device's copy of a timer, the newer edit wins; a payout or reset logged on either device counts once
   if (Array.isArray(o.timers)){ if (!Array.isArray(out.timers)) out.timers = []; for (const t of o.timers){ const i = out.timers.findIndex(x => x.id === t.id); if (i < 0) out.timers.push(t); else { const m = out.timers[i]; if ((t.edited || 0) > (m.edited || 0)) out.timers[i] = t; if (t.deleted && !m.deleted) out.timers[i].deleted = t.deleted; } } }
   if (Array.isArray(o.timerLog)){ if (!Array.isArray(out.timerLog)) out.timerLog = []; const seen = new Set(out.timerLog.map(x => x.tid + '#' + x.key)); for (const x of o.timerLog) if (!seen.has(x.tid + '#' + x.key)){ seen.add(x.tid + '#' + x.key); out.timerLog.push(x); } }
@@ -11345,6 +11388,7 @@ const ICON = {
   sword:'<path d="M20 4l-9.5 9.5M6.5 13.5l4 4M4 20l3.5-3.5"/>',
   broom:'<path d="M12 2v9"/><path d="M8.5 11h7L18 21H6z"/><path d="M10 15v6M12 15v6M14 15v6"/>',
   calendar:'<rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16M8.5 3v4M15.5 3v4"/>',
+  cycle:'<path d="M4.8 13.9A7.5 7.5 0 0 1 14.6 5"/><path d="M19.2 10.1A7.5 7.5 0 0 1 9.4 19"/><path d="M15.7 1.8L18.2 6.3 13.3 8Z M8.3 22.2L5.8 17.7 10.7 16Z" fill="currentColor"/>',
   timer:'<path d="M10 2h4M12 14l3-3"/><circle cx="12" cy="14" r="8"/>',
   menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
   bag:'<rect x="4" y="8" width="16" height="12" rx="2"/><path d="M4 13h16M10 13v2h4v-2M8 8V6.5A2.5 2.5 0 0110.5 4h3A2.5 2.5 0 0116 6.5V8"/>',
@@ -11385,6 +11429,8 @@ function repText(rp, days){
   if (rp.unit === 'week') return (n === 1 ? 'Every week' : n === 2 ? 'Every other week' : `Every ${n} weeks`) + (days && days.length ? ' on ' + daysText(days) : '');
   return (n === 1 ? 'Every month' : `Every ${n} months`) + ' on the ' + (rp.dom === 'last' ? 'last day' : ordinal(rp.dom));
 }
+// a pushed daily's day: "Sat" within the week, "Mon 7" past it (push-v1)
+const pushLabel = (d, from) => { const p = parseKey(d), w = p.toLocaleDateString('en-US', {weekday:'short'}); return dayIdx(d) - dayIdx(from) > 6 ? `${w} ${p.getDate()}` : w; };
 // the next day a repeating task comes up, today included
 function nextDue(t){ if (!D) return null; let d = D.today; for (let i = 0; i < 800; i++, d = addDays(d, 1)) if (!offOn(t, d) && isDue(t, d)) return d; return null; }
 const nextText = t => { const n = nextDue(t); return !n ? '' : n === D.today ? ' · due today' : ' · next ' + parseKey(n).toLocaleDateString('en-US', {month:'short', day:'numeric'}); };
@@ -11492,12 +11538,15 @@ function taskRow(t, k){
   const stats = isPool ? pick.stats : t.stats, prim = stats[0];
   const boss = D.cur.boss, weak = stats.some(s => boss.weak.includes(s)) && D.cur.status === 'now';
   const cad = schedAt(t,k).cad;
-  const isD = done(k, t.id), r = rewardOf(t, cad), rested = cad === 'day' && !isD && waived(k, t.id);
+  // pf: pushed away from this day (waits in Not today); pt: the pushed copy, due here once for half
+  const isD = done(k, t.id), pf = cad === 'day' && !isD ? pushFrom(k, t.id) : null, pt = cad === 'day' && !pf && pushHalf(t, k) !== 1;
+  const r0 = rewardOf(t, cad), r = pt ? {xp: Math.round(r0.xp * PUSH_MUL), gold: Math.round(r0.gold * PUSH_MUL)} : r0, rested = cad === 'day' && !isD && !pf && waived(k, t.id);
   let meta = '', disabled = false, wk = '', thru = '';
-  if (cad === 'day' && rested){ disabled = true; meta = 'Rested with a skill · streak holds'; }
+  if (cad === 'day' && pf){ disabled = true; meta = thru = `Pushed to ${pushLabel(pf.to, k)}`; }
+  else if (cad === 'day' && rested){ disabled = true; meta = 'Rested with a skill · streak holds'; }
   else if (cad === 'day'){
     if (!isDue(t,k)){ disabled = !isD; meta = 'Rest day'; }
-    else { const s = streak(t); meta = (s ? `${s}-day streak` : 'Start a streak') + ` · +${r.xp} xp`; }
+    else { const s = streak(t); meta = (s ? `${s}-day streak` : 'Start a streak') + ` · +${r.xp} xp` + (pt ? ` · +${r.gold} G` : ''); if (pt && !isD) thru = `+${r.xp} xp · +${r.gold} G`; }
   } else {
     const n = weekCount(t.id, k), tg = effTarget(t, k);
     wk = `<div class="wk">${bar(100*n/tg, STATS[prim].c)}<span class="wkn"><b>${n}</b> of ${tg}</span></div>`;
@@ -11513,7 +11562,7 @@ function taskRow(t, k){
     }
   }
   const sw = startOf(t, k); if (sw){ disabled = true; meta = `Starts ${fmtDow(sw)}`; wk = ''; thru = ''; }
-  const closed = sw || (!isD && !rested && !isDue(t,k));
+  const closed = sw || !!pf || (!isD && !rested && !isDue(t,k));
   const name = isPool ? pick.name : t.name;
   let rr = '';
   if (isPool && !isD){
@@ -11525,7 +11574,7 @@ function taskRow(t, k){
   }
   return `<div class="trow ${isD?'done':''} ${rested?'rested':''} ${closed?'closed':''}" data-qm="t|${esc(t.id)}">
     <span class="ticon" style="background:${STATS[prim].c}">${tIcon(t, prim)}</span>
-    <div class="tbody">${isPool || t.archived ? `<span class="tkick">${isPool ? esc(t.name) : ''}${t.archived ? (isPool ? ' · ' : '') + (k === D.today ? 'Archived · last day today' : 'Archived') : ''}</span>` : ''}<span class="tname">${esc(name)}${sirenTag('t', t.id)}${thru ? ` <span class="tthru">${thru}</span>` : ''}${t.note ? ` <span class="notedot" aria-label="Has notes">${svg('note',12,2.2)}</span>` : ''}</span>${isD ? '' : wk}
+    <div class="tbody">${isPool || t.archived ? `<span class="tkick">${isPool ? esc(t.name) : ''}${t.archived ? (isPool ? ' · ' : '') + (k === D.today ? 'Archived · last day today' : 'Archived') : ''}</span>` : ''}<span class="tname">${esc(name)}${sirenTag('t', t.id)}${pt && !sw ? ' <span class="tagtier tpush">Pushed</span>' : ''}${thru ? ` <span class="tthru">${thru}</span>` : ''}${t.note ? ` <span class="notedot" aria-label="Has notes">${svg('note',12,2.2)}</span>` : ''}</span>${isD ? '' : wk}
       <span class="tmeta">${isD ? `<span>Done${cad === 'week' ? ` · ${weekCount(t.id,k)} of ${effTarget(t,k)} this week` : ''}</span>` : `${stats.map(chipS).join('')}${weak ? '<span class="chip-weak">2× dmg</span>' : ''}<span>${esc(meta)}</span>`}</span>${rr}</div>
     <button class="check" data-toggle="${esc(t.id)}" aria-pressed="${isD}" aria-label="${isD ? 'Undo' : 'Complete'} ${esc(name)}" ${disabled?'disabled':''}>${svg('check',18,2.8)}</button>
     ${checklistBlock(t, k, disabled || closed)}
@@ -11564,7 +11613,8 @@ var todayTab = (() => { try { const v = localStorage.getItem(TODAY_TAB_KEY); ret
 // a tab's tasks split into Anytime / Morning / Afternoon / Evening, each a group you can fold away (like To-do priorities)
 function todGroups(all, cad, k){
   // tasks that aren't scheduled for this day (rest days, closed days) leave the groups and wait in a folded "Not today" group
-  const list = all.filter(t => !startOf(t,k) && (isDue(t,k) || done(k,t.id))), off = all.filter(t => startOf(t,k) || (!isDue(t,k) && !done(k,t.id)));
+  const away = t => cad === 'day' && !done(k, t.id) && !!pushFrom(k, t.id);   // pushed to a later day
+  const list = all.filter(t => !startOf(t,k) && !away(t) && (isDue(t,k) || done(k,t.id))), off = all.filter(t => startOf(t,k) || away(t) || (!isDue(t,k) && !done(k,t.id)));
   const restKey = 'show:rest-' + cad, restOpen = clOpen.has(restKey);
   const rest = off.length && !S.settings.hideRest ? `<div class="tdgroup todgrp" data-tod="rest">
       <div class="tdhead"><button class="tdpill tod-rest" data-clopen="${restKey}" aria-expanded="${restOpen}">NOT TODAY (${off.length})<span class="chev ${restOpen ? '' : 'up'}">${svg('back',14,2.6)}</span></button></div>
@@ -11765,7 +11815,7 @@ function renderToday(){
   const dailiesAll = shown.filter(t => schedAt(t,k).cad === 'day'), weekliesAll = shown.filter(t => schedAt(t,k).cad === 'week');
   const dailies = hide ? dailiesAll.filter(t => !done(k,t.id)) : dailiesAll, weeklies = (hide ? weekliesAll.filter(t => !done(k,t.id)) : weekliesAll).slice().sort((a,b) => (isDue(a,k) ? 0 : 1) - (isDue(b,k) ? 0 : 1));
   const wkk = weekKey(k), lv = D.lv, st = stage(lv.level);
-  const dueD = dailiesAll.filter(t => isDue(t,k) && !startOf(t,k));
+  const dueD = dailiesAll.filter(t => isDue(t,k) && !startOf(t,k) && !(pushFrom(k, t.id) && !done(k, t.id)));
   const doneD = dueD.filter(t => done(k,t.id)).length;
   const weekLeft = weekliesAll.filter(t => !startOf(t,k) && weekCount(t.id,k) < effTarget(t,k)).length;
   const wkEnd = addDays(wkk,6), wkRange = wkEnd.slice(0,7) === wkk.slice(0,7) ? `${fmt(wkk)}–${parseKey(wkEnd).getDate()}` : `${fmt(wkk)} – ${fmt(wkEnd)}`;
@@ -13470,8 +13520,10 @@ function renderQuick(){
     html = `<div class="qmhead">${esc(x.detail.title)}</div>` + (secs.length ? `<div class="qmsecs">${secs.map(v => `<div class="qmsec">${v}</div>`).join('')}</div>` : '') + acts; }
   else if (qmCtx.kind === 'siren'){ const c = sirenCard(); if (!c){ qmCtx = null; qm.hidden = true; return; }   // her card: title, then what / when / her note between the sheet's dividers (no actions)
     html = `<div class="qmhead">${svg(c.bless ? 'star' : 'flame', 18, 2.2)} ${esc(c.title)}</div><div class="qmsecs">${[`<span class="qminfo">${esc(c.what)}</span>`, esc(c.when), `<span class="qmnotetxt">${esc(c.note)}</span>`].map(v => `<div class="qmsec">${v}</div>`).join('')}</div>`; }
-  else if (qmCtx.kind === 't'){ const t = S.tasks.find(x => x.id === qmCtx.id);
-    html = qmTop(t.name, t.note, '', qmCtx.meta) + `${item('copy', 'copy', 'Make a copy')}${item('edit', 'pencil', 'Edit task')}${item('del', 'trash', qmCtx.del ? 'Tap again to delete' : 'Delete task', 'danger')}`; }
+  else if (qmCtx.kind === 't'){ const t = S.tasks.find(x => x.id === qmCtx.id), pk = vday === 'today' && !recoveryMode, k = D.today;
+    if (qmCtx.push && !(pk && canPush(t, k))) qmCtx.push = null;
+    if (qmCtx.push) html = pushSheet(t, k);
+    else html = qmTop(t.name, t.note, '', qmCtx.meta) + `${pk && canPush(t, k) ? item('push', 'cycle', 'Reschedule') : ''}${pk && pushUndo(t, k) ? item('unpush', 'reroll', 'Cancel push') : ''}${item('copy', 'copy', 'Make a copy')}${item('edit', 'pencil', 'Edit task')}${item('del', 'trash', qmCtx.del ? 'Tap again to delete' : 'Delete task', 'danger')}`; }
   else if (qmCtx.kind === 'm'){ const tm = timersLive().find(x => x.id === qmCtx.id), cost = Math.min(TIMER_RESET_G, Math.max(0, D.balance));
     html = qmTop(tm.name, tm.note, timerInfo(tm)) + item('edit', 'pencil', 'Edit timer') + (tm.done ? item('again', 'reroll', 'Start again') : item('reset', 'reroll', qmCtx.reset ? `Tap again to reset: −${Math.ceil(D.C.maxHP * TIMER_RESET_HP)} HP, −${cost} G` : 'Reset timer', qmCtx.reset ? 'danger' : '')) + item('del', 'trash', qmCtx.del ? 'Tap again to delete' : 'Delete timer', 'danger'); }
   else { const {L, it} = todoFind(qmCtx.lid, qmCtx.iid), plain = L.kind === 'plain';
@@ -13481,6 +13533,14 @@ function renderQuick(){
   clearTimeout(qmHideT); qm.classList.remove('closing'); qm.hidden = false;
 }
 let qmHideT = 0;
+// Reschedule (push-v1): the days it can go to as chips, the price and what it's worth, one button to confirm
+function pushSheet(t, k){
+  const days = pushDays(t, k), to = days.includes(qmCtx.push.to) ? qmCtx.push.to : days[0], g = pushCost(D.lv.level), ok = D.balance >= g;
+  qmCtx.push.to = to;
+  return `<div class="qmhead">${esc(t.name)}</div><div class="qmsecs"><div class="qmsec qmpush"><div class="chips" role="group" aria-label="Push to">${days.map(d => `<button class="chip ${d === to ? 'on' : ''}" data-qmact="pto|${d}" aria-pressed="${d === to}" aria-label="${esc(fmtDow(d))}">${pushLabel(d, k)}</button>`).join('')}</div></div>`
+    + `<div class="qmsec"><span>${g} G now · Worth half when done</span></div></div>`
+    + `<div class="qmpushgo"><button class="btn gold" data-qmact="pgo" ${ok ? '' : 'disabled'}>${ok ? `Push to ${pushLabel(to, k)} · ${g} G` : `Not enough gold · ${g} G`}</button></div>`;
+}
 // the name on top; a note, if there is one, sits between two dividers above the actions
 // the name on top, then the small print and the note, each in its own section between light dividers
 const qmTop = (name, note, info, infoHtml) => { const secs = [infoHtml || (info ? esc(info) : ''), note && note.trim() ? `<span class="qmnotetxt">${esc(note.trim())}</span>` : ''].filter(Boolean);
@@ -13618,6 +13678,17 @@ function quickAct(act){
   if (c.kind === 't'){ const t = S.tasks.find(x => x.id === c.id); if (!t) return closeQuick();
     if (act === 'edit'){ closeQuick(); openEditor(t); return; }
     if (act === 'copy'){ closeQuick(); openEditor(t); runAction({copytask: ''}); return; }
+    if (act === 'push'){ if (vday !== 'today' || !canPush(t, D.today)) return closeQuick(); c.push = {to: null}; renderQuick(); return; }
+    if (act.slice(0, 4) === 'pto|'){ if (c.push) c.push.to = act.slice(4); renderQuick(); return; }
+    if (act === 'pgo'){ const k = D.today, to = c.push && c.push.to, g = pushCost(D.lv.level);
+      if (vday !== 'today' || !canPush(t, k) || !pushDays(t, k).includes(to)) return closeQuick();
+      if (D.balance < g){ toast(`Not enough gold: ${g} G`); return; }
+      const ts = Date.now(); (S.pushes || (S.pushes = [])).push({id: t.id, from: k, to, ts, g}); S.buys.push({kind: 'push', id: t.id, ts, g, date: k});
+      closeQuick(); save(); render(); toast(`Pushed to ${pushLabel(to, k)} · −${g} G`); return; }
+    if (act === 'unpush'){ const k = D.today, p = vday === 'today' && pushUndo(t, k); if (!p) return closeQuick();
+      S.pushes = S.pushes.filter(x => x !== p); if (!S.pushes.length) delete S.pushes;
+      S.buys = S.buys.filter(b => !(b.kind === 'push' && b.id === p.id && b.date === p.from && b.ts === p.ts));
+      closeQuick(); save(); render(); toast(`Push cancelled · +${p.g} G back`); return; }
     if (act === 'del'){ if (!c.del){ c.del = true; renderQuick(); return; } closeQuick(); draft = clone(t); runAction({archive: '1', confirmed: '1'}); toast(`Deleted ${t.name}`); return; } }
   if (c.kind === 'm'){ const tm = timersLive().find(x => x.id === c.id); if (!tm) return closeQuick();
     if (act === 'edit'){ closeQuick(); openTimerEditor(tm.id); return; }
