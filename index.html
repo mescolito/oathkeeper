@@ -1092,7 +1092,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'c32ed4d643';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'f2108c0688';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -10813,16 +10813,39 @@ const HERO_Z = [[0, 0, 3, 1], [1, 1, 1, 1], [0, 2, 3, 1]], HERO_PAUSE = [[0, 0, 
 /* the figure alone on a clear 128 x 128 canvas. o.lv level; o.motion false = frame 0 (Reduce Motion);
    o.state: 'sleep' = dimmed, 'sad' = pop colour drained, 'cheer' = the bright top-of-breath frame, 'paused' = held on frame 0 */
 function heroFig(o){
-  const N = 128, frames = heroFramesAll(heroBuild(), heroSt(o.lv), heroArm()), pal = heroPal(popId(), o.state === 'sad');
-  const f = !o.motion || o.state === 'paused' ? 0 : o.state === 'cheer' ? 14 : HERO.tick % HERO_DATA.n;
-  const pc = heroCv('px', N, N), key = HERO.figKey + '|' + HERO.palKey + '|' + f + '|' + (o.state === 'sleep');
+  const N = 128, frames = heroFramesAll(heroBuild(), heroSt(o.lv), heroArm()), pal = heroPal(popId(), o.state === 'sad'), asleep = o.state === 'sleep';
+  let f = !o.motion || o.state === 'paused' ? 0 : o.state === 'cheer' ? 14 : HERO.tick % HERO_DATA.n;
+  if (asleep) f = heroLidFrame(frames, f, o.lv);   // asleep: the blink is skipped (a blink frame shows the frame before it)
+  const pc = heroCv('px', N, N), key = HERO.figKey + '|' + HERO.palKey + '|' + f + '|' + asleep;
   if (HERO.pxKey !== key){
     const pg = pc.getContext('2d'); if (!HERO.img) HERO.img = pg.createImageData(N, N);
-    const d = new Uint32Array(HERO.img.data.buffer), fr = frames[f]; for (let i = 0; i < N * N; i++) d[i] = fr[i] ? pal[fr[i]] : 0;
+    const lid = asleep ? heroLids(frames[f], o.lv) : null, fr = lid ? lid.fr : frames[f];
+    const d = new Uint32Array(HERO.img.data.buffer); for (let i = 0; i < N * N; i++) d[i] = fr[i] ? pal[fr[i]] : 0;
     pg.putImageData(HERO.img, 0, 0);
-    if (o.state === 'sleep'){ pg.globalCompositeOperation = 'source-atop'; pg.fillStyle = 'rgba(20,19,18,0.5)'; pg.fillRect(0, 0, N, N); pg.globalCompositeOperation = 'source-over'; }
+    if (asleep){ pg.globalCompositeOperation = 'source-atop'; pg.fillStyle = 'rgba(20,19,18,0.5)'; pg.fillRect(0, 0, N, N); pg.globalCompositeOperation = 'source-over';
+      pg.fillStyle = HERO_LID.col; for (const [x, y] of lid.lids) pg.fillRect(x - (HERO_LID.w >> 1), y + HERO_LID.dy, HERO_LID.w, 1); }   // closed lids, over the dimming
     HERO.pxKey = key; }
   return pc;
+}
+// asleep (owner: "eyes reduced to half height, same width, and grey"): every eye of every eye option is a bright core pixel in a 1 px glow,
+// a 3 x 3 plus in all; a closed eye is that glyph's width at a third of its height: a 3 x 1 lid in dim grey on the core's row, the glow put
+// back to the face colour under it. The eyes are found by colour (the pop ramp) inside the head's box, so every eye option and body works.
+const HERO_LID = {col: '#57514b', w: 3, dy: 0};
+function heroEyeBox(lv){ const [top, right] = heroHeadBox(lv); return [right - 20, top - 2, right + 2, top + 16]; }
+function heroLids(fr, lv){
+  const P0 = 1 + HERO_DATA.grey.length, P1 = P0 + HERO_DATA.pop.length, [x0, y0, x1, y1] = heroEyeBox(lv), W = HERO_DATA.w, out = fr.slice(), lids = [];
+  const isPop = v => v >= P0 && v < P1, isCore = v => v >= P0 && v < P0 + 5;   // the core is a full ramp step (A2 idle, A3 at the cheer); the glow is the dimmed A0s
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (isCore(fr[y * W + x])) lids.push([x, y]);
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++){ const i = y * W + x; if (!isPop(fr[i])) continue;
+    const n = {}; let best = 0, bv = 0;   // the face colour: the commonest non-pop colour round it
+    for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++){ const v = fr[(y + dy) * W + x + dx]; if (v && !isPop(v)){ n[v] = (n[v] || 0) + 1; if (n[v] > best){ best = n[v]; bv = v; } } }
+    out[i] = bv || fr[i]; }
+  return {fr: out, lids};
+}
+function heroLidFrame(frames, f, lv){
+  const P0 = 1 + HERO_DATA.grey.length, [x0, y0, x1, y1] = heroEyeBox(lv), W = HERO_DATA.w, open = k => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++){ const v = frames[k][y * W + x]; if (v >= P0 && v < P0 + 5) return true; } return false; };
+  for (let k = 0; k < 4 && !open(f); k++) f = (f + frames.length - 1) % frames.length;
+  return f;
 }
 // a state mark beside the head, drawn into g with the figure's top-left at (ox, oy): asleep, small thin Zs (heroZzz); paused, the pause mark (3 px to a mark pixel)
 function heroMark(g, o, ox, oy, ink){
