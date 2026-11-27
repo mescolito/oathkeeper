@@ -1101,6 +1101,13 @@ html[data-mode="dark"] .edpill:not(.primary){background:var(--track)}
 .eqdeck::-webkit-scrollbar{display:none}
 .eqpage{flex:0 0 100%;min-width:0;box-sizing:border-box;padding:0 18px 2px;scroll-snap-align:start;scroll-snap-stop:always}
 .slot.oghost .slotart{opacity:.38}.slot.oghost .slotn{color:var(--muted)}
+/* bag: what's in use on the panel you're on is greyed out (like owned items in the shop) */
+.invpage .tile.eq{box-shadow:0 1px 0 var(--line)}.invpage .tile.eq canvas{filter:grayscale(1);opacity:.45}.invpage .tile.eq b{opacity:.6}
+/* shop Try on */
+.tryonbox canvas.chestbig{width:220px;height:220px}
+/* Battle tabs under the boss */
+.btabs{margin-top:6px}
+.sec-h.youline{justify-content:flex-start}
 </style>
 </head>
 <body>
@@ -1131,7 +1138,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '5c636d9043';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'c3203fbf3f';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -2170,10 +2177,12 @@ function runesAt(ts, d){ return S.runeBuys.filter(r => r.date && r.date <= d && 
 // hats give stats now, so every change is logged with a time like gear
 // what the hero is drawn wearing: the outfit where a slot is set (and still yours), the real gear everywhere else.
 // Looks only: nothing that works out stats reads this. A two-handed weapon (or a blade-only one) clears an off hand it can't hold.
-function looks(){ const o = (S && S.outfit) || {}, pick = k => o[k] && owns(o[k]) ? o[k] : null;
-  const weapon = pick('weapon') || S.gear.weapon || null; let offhand = pick('offhand') || S.gear.offhand || null;
+// TRYON: the shop's Try on preview, {slot: id} laid over everything while it's open (null in a slot = that slot shows empty). Never saved.
+let TRYON = null;
+function looks(){ const o = (S && S.outfit) || {}, t = TRYON || {}, pick = k => o[k] && owns(o[k]) ? o[k] : null, val = (k, g) => k in t ? t[k] : (pick(k) || g || null);
+  const weapon = val('weapon', S.gear.weapon); let offhand = val('offhand', S.gear.offhand);
   if (offhand && weapon && offhandBlock(weapon, offhand)) offhand = null;
-  return {weapon, offhand, armor: pick('armor') || S.gear.armor || null, hat: pick('hat') || S.equip.hat || null}; }
+  return {weapon, offhand, armor: val('armor', S.gear.armor), hat: val('hat', S.equip.hat)}; }
 const looksGear = () => { const L = looks(); return {weapon: L.weapon, offhand: L.offhand, armor: L.armor}; };
 function setHat(id){ id = id || null; if (S.equip.hat === id) return; S.equip.hat = id; S.gearLog.push({ts: Date.now(), slot:'hat', id}); }
 /* Build-based skills: stat levels gate learning; your build's lean decides which branch skills you can use in battle.
@@ -11832,7 +11841,7 @@ function skillCards(){
     ${skillSwap ? `<p class="how small">Pick a slot above for <b>${esc(SKILL_BY[skillSwap].name)}</b>, or <button class="linkbtn" data-skswapcancel>cancel</button>.</p>` : ''}
     ${rest.length ? `<div class="skmore ${open ? 'open' : ''}" id="skmore"><button class="skmorehead" data-clopen="skmore" aria-expanded="${open}"><b>Other skills (${rest.length})</b><span class="small muted">Equip costs ${SKILL_EQ_FEE} G · taking one off is free</span><span class="clchev">${svg(open ? 'up' : 'down',16,2.4)}</span></button>${open ? `<div class="sprows">${restRows}</div>` : ''}</div>` : ''}`;
 }
-let battleSec = 'skills';
+let battleSec = 'you';   // which Battle tab: you, skills, info, inn
 function innCard(){
   const st = D.inn;
   const how = `<details class="howto"><summary>How the Inn works</summary><ul class="howlist">
@@ -11933,8 +11942,7 @@ function innPanel(){
   <section class="game boss innrest" aria-label="Resting at the Inn">
     <canvas class="visitorcv" data-visitor="inn" width="128" height="128" role="img" aria-label="The Inn, asleep: lit windows under drooping blinds, a lantern by the door"></canvas>
     <div class="dlg"><div class="dlg-in"><div class="dlg-h"><span class="dlg-name">Resting at the Inn</span><span>Day ${days}</span></div><p>Fight paused · ${D.innFee} G a day</p></div></div>
-  </section>
-  <div class="card inn on"><span class="innic">${svg('bed',22,2)}</span><span class="tbody"><b>${D.innSpent} G so far</b><span class="small muted">Gold covers ${left} more night${left === 1 ? '' : 's'}</span></span><button class="btn primary" data-inn="out">Check out</button></div>`;
+  </section>`;
 }
 // the paused fight in one row, in the old Today battle card's pink style: the foe Battle would show (mini-boss, a beaten mini-boss, or the boss)
 function innPausedCard(){
@@ -11950,10 +11958,13 @@ function innPausedCard(){
 }
 function renderBattle(){
   if (!D.inn) return visitorPanel() + renderBattleMain();
-  const m = renderBattleMain(), i = m.indexOf('<div class="bdiv"');
+  const m = renderBattleMain(), i = m.indexOf('<div class="tdtabs btabs"');
   if (i < 0) return innPanel() + visitorPanel() + m;   // the boss block's layout changed: show it whole rather than guess
-  return innPanel() + visitorPanel() + innPausedCard() + (D.mini ? runRow() : inLull() ? altarPanel() : '') + m.slice(i);
+  return innPanel() + visitorPanel() + (D.mini ? runRow() : inLull() ? altarPanel() : '') + m.slice(i);   // the Inn takes the boss's place; check out is in the Inn tab
 }
+// the Battle tabs: they sit right under the boss (or the Inn) and swipe like the to-do lists
+const BSECS = [['you','You'],['skills','Skills'],['info','Boss Info'],['inn','Inn']];
+const battleTabs = () => `<div class="tdtabs btabs" role="tablist" aria-label="Battle" id="skillsH">${BSECS.map(([k, l]) => `<button role="tab" class="tdtab ${battleSec === k ? 'on' : ''}" data-bsec="${k}" aria-selected="${battleSec === k}">${l}</button>`).join('')}</div>`;
 function renderBattleMain(){
   const f = D.cur, b = f.boss, daysLeft = dayIdx(f.end) - dayIdx(D.today) + 1, C = D.C;
   const hits = Object.entries(f.hits).sort((a,b) => b[1]-a[1]).slice(0,5);
@@ -11962,17 +11973,13 @@ function renderBattleMain(){
   const tag = bb => bb.final ? 'Final' : bb.rite ? 'Rite' : bb.seasonal ? 'Holiday' : bb.titan ? 'Titan' : 'Next';
   const a = D.lastAttack;
   const battleBottom = () => `
-  <div class="bdiv" role="separator" aria-label="Your side"></div>
+  ${battleTabs()}
+  ${battleSec === 'you' ? `
   ${slumpNote()}
   ${a ? `<div class="card attack"><b>Last night</b><span>${a.shield ? `The Slump blocked ${esc(a.boss)}'s hits` : `${esc(a.boss)} hit you for <b>${a.dmg} HP</b>`} · ${a.missed} missed${a.dodged ? `, ${a.dodged} dodged` : ''}${a.counters ? `, ${a.counters} counter${a.counters === 1 ? '' : 's'}` : ''}${a.status ? ` · ${esc(STATUS[a.status].name)}` : ''}</span></div>` : ''}
-  <div class="sec-h"><h2>You</h2><span class="muted small">Block ${pctTxt(C.def)} · Dodge ${pctTxt(C.dodge)} · Crit ${pctTxt(C.crit)}${C.critX > 1.5 ? ` ×${C.critX.toFixed(1)}` : ''}${C.counter ? ` · Counter ${pctTxt(C.counter)}` : ''}</span></div>
+  <div class="sec-h youline"><span class="muted small">Block ${pctTxt(C.def)} · Dodge ${pctTxt(C.dodge)} · Crit ${pctTxt(C.crit)}${C.critX > 1.5 ? ` ×${C.critX.toFixed(1)}` : ''}${C.counter ? ` · Counter ${pctTxt(C.counter)}` : ''}</span></div>
   ${vitals()}
-  ${potionRow()}
-  <div class="seg wide" role="tablist" aria-label="Battle actions" id="skillsH">
-    <button role="tab" data-bsec="skills" class="${battleSec==='skills'?'on':''}" aria-selected="${battleSec==='skills'}">Skills</button>
-    <button role="tab" data-bsec="info" class="${battleSec==='info'?'on':''}" aria-selected="${battleSec==='info'}">Boss Info</button>
-    <button role="tab" data-bsec="inn" class="${battleSec==='inn'?'on':''}" aria-selected="${battleSec==='inn'}">Inn${D.inn ? ' · zzz' : ''}</button></div>
-  ${battleSec === 'inn' ? innCard() : battleSec === 'info' ? `
+  ${potionRow()}` : battleSec === 'inn' ? innCard() : battleSec === 'info' ? `
   ${D.mini ? `<div class="card kv">
     <b>Mini-boss</b><span>${esc(D.mini.m.name)}</span>
     <b>Your damage so far</b><span>${D.mini.dmg}</span>
@@ -12202,6 +12209,7 @@ function renderShop(){
         + (sellable ? `<button class="btn sm sellbtn ${sellArm === it.id ? 'armed' : ''}" data-sell="${it.id}">${sellArm === it.id ? `Tap again to sell${s.eq ? ' (takes it off)' : ''}` : `Sell · ${half} G`}</button>` : ''); }
     else if (!s.ok) btn = `<button class="btn" disabled>Needs ${reqText(it)}</button>`;
     else btn = `<button class="btn gold" ${it.gear ? `data-buygear="${it.id}"` : `data-buy="${it.id}"`} ${s.afford ? '' : 'disabled'}>Buy · ${it.price} G</button>`;
+    if (it.gear || it.kind === 'hat') btn = `<button class="btn ghost" data-tryon="${it.id}">Try on</button>` + btn;
     const lockd = !s.owned && (!s.ok || !s.afford);   // above your level/stats or price: the art dims to gray
     const have = (it.potion || it.rune) && D.bag[it.id] || 0, own = s.owned && !it.potion && !it.rune;
     return {key: 's:' + it.id, art: itemArt(it), name: esc(it.name) + (have ? ` (${have})` : ''), cls: `${s.eq ? 'eq' : ''} ${own ? 'owned' : ''} ${lockd ? 'locked' : ''}`,
@@ -12362,6 +12370,28 @@ function openNextBoss(){
   const step = now => { if (!cv.isConnected) return; drawBoss(cv, b, Math.floor((now - t0) / 120), motionOK, false, false); if (motionOK) requestAnimationFrame(step); };
   requestAnimationFrame(step);
 }
+
+/* ---------- Try on: the hero on the dark panel wearing a shop item over what it wears now (outfit, then gear). Looks only, never saved. ---------- */
+function openTryOn(id){
+  const el = document.getElementById('award'), g = GEAR_BY[id], h = !g && ITEM[id] && ITEM[id].kind === 'hat' ? ITEM[id] : null; if (!el || !(g || h)) return;
+  const k = g ? g.slot : 'hat', L = looks(); TRYON = {[k]: id};
+  if (k === 'offhand' && L.weapon && offhandBlock(L.weapon, id)) TRYON.weapon = null;   // a shield you couldn't hold with that weapon: shown with the main hand empty
+  const it = g ? {...g, name: gearName(g), gear: true, kind: g.slot === 'offhand' ? 'weapon' : g.slot} : h, s = itemState(it);
+  const buy = s.owned ? '<span class="ownedtag">Owned</span>' : !s.ok ? `<button class="btn" disabled>Needs ${reqText(it)}</button>`
+    : `<button class="btn gold" ${g ? `data-buygear="${id}"` : `data-buy="${id}"`} data-tryoff ${s.afford ? '' : 'disabled'}>Buy · ${it.price} G</button>`;
+  el.innerHTML = `<div class="awardin chestbox tryonbox" role="dialog" aria-modal="true" aria-label="Trying on ${esc(it.name)}">
+    <span class="kick">Try on</span>
+    <canvas class="chestbig tocv" width="128" height="128" role="img" aria-label="${esc(S.petName)} wearing ${esc(it.name)}"></canvas>
+    <b class="awn">${esc(it.name)}</b>
+    <div class="row" style="gap:8px;justify-content:center;flex-wrap:wrap">${buy}<button class="btn" data-tryoff>Done</button></div>
+  </div>`;
+  el.hidden = false;
+  document.querySelectorAll('.app, .nav').forEach(x => x.inert = true);
+  const cv = el.querySelector('.tocv');
+  const step = () => { if (!cv.isConnected || !TRYON) return; drawHeroBadge(cv, {lv: D.lv.level, motion: motionOK, state: ''}); if (motionOK) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+function closeTryOn(){ TRYON = null; const aw = document.getElementById('award'); if (aw && aw.querySelector('.tryonbox')){ aw.hidden = true; aw.innerHTML = ''; } document.querySelectorAll('.app, .nav').forEach(n => n.inert = false); }
 
 /* ---------- the Rune Altar ---------- */
 const inLull = () => D.cur.status === 'won' && D.cur.wonTs && S.altarFrom && D.cur.wonTs >= S.altarFrom;
@@ -13902,7 +13932,7 @@ function onClick(e){
   if (el.dataset.collapse){ const k = el.dataset.collapse; if (k !== 'vitals' && k !== 'boss') return; S.settings.collapse[k] = !S.settings.collapse[k]; save(); render(); return; }
   if ('popgo' in el.dataset && el.closest('#tpop')){ if (!el.closest('#tpop').dataset.swiped) popGo(el.dataset.popgo); return; }
   if (el.dataset.dismiss){ const k = el.dataset.dismiss; if (!DISMISS_KEY.test(k)) return; S.settings.dismissed = Object.fromEntries(Object.entries(S.settings.dismissed).filter(([kk, v]) => dismissKeep(kk, v))); S.settings.dismissed[k] = D.today; save(); render(); return; }
-  if (el.dataset.bsec){ battleSec = ['inn','info'].includes(el.dataset.bsec) ? el.dataset.bsec : 'skills'; render(); return; }
+  if (el.dataset.bsec){ battleSec = ['inn','info','skills'].includes(el.dataset.bsec) ? el.dataset.bsec : 'you'; render(); return; }
   if (el.dataset.inn){
     if (el.dataset.inn === 'in'){ if (innNow()) return; if (D.balance < D.innFee){ toast('Not enough gold for a night at the Inn'); return; }
       S.inn.push({from: D.today, to: null, ts: Date.now()}); save(); render(); if (tab === 'battle') scrollTo({top: 0, behavior: motionOK ? 'smooth' : 'auto'}); toast(`Checked in. The fight is paused · ${D.innFee} G a day`); return; }
@@ -14048,6 +14078,8 @@ function onClick(e){
       S.owned.push(it.id);
       if (it.slot === 'offhand' && offhandBlock(S.gear.weapon, it.id)){ save(); render(); toast(`Bought ${gearName(it)}. It's in your inventory (${offhandBlock(S.gear.weapon, it.id).toLowerCase()}).`); return; }
       const freed = wearGear(it, it.id); save(); render(); toast(`Equipped ${gearName(it)}${freed ? `. Your ${freed} went back to your bag` : ''}`); } return; }
+  if (el.dataset.tryon){ closeQuick(); openTryOn(el.dataset.tryon); return; }
+  if ('tryoff' in el.dataset){ const buying = el.dataset.buy || el.dataset.buygear; closeTryOn(); if (!buying){ render(); return; } }
   if (el.dataset.eqpane){ const d = el.closest('section') && el.closest('section').querySelector('.eqdeck'); if (d) d.scrollTo({left: el.dataset.eqpane === 'outfit' ? d.clientWidth : 0, behavior: motionOK ? 'smooth' : 'auto'}); return; }
   if (el.dataset.outfit){ const id = el.dataset.outfit, g = GEAR_BY[id], h = !g && ITEM[id] && ITEM[id].kind === 'hat'; if (!(g || h) || !owns(id)) return;   // looks only: no level or stat needs
     const o = S.outfit || (S.outfit = {weapon:null, offhand:null, armor:null, hat:null}), k = g ? g.slot : 'hat', next = o[k] === id ? null : id;
@@ -14415,7 +14447,7 @@ document.addEventListener('pointercancel', e => { if (sdrag && e.pointerId === s
   const EASE = 'cubic-bezier(.22,.8,.24,1)', EDGE = 16;
   const swipeBlocked = t => {
     if (busy || recoveryMode || drag || sdrag || pkCtx || document.body.classList.contains('dragmode')) return true;
-    if (tab !== 'today' && tab !== 'todo') return true;
+    if (tab !== 'today' && tab !== 'todo' && tab !== 'battle') return true;
     if (['sheet', 'drawer', 'qm', 'pk', 'qa', 'award'].some(id => { const o = document.getElementById(id); return o && !o.hidden; })) return true;
     if (!t || !t.closest || !(t.closest('#view') || t === document.documentElement || t === document.body || t === document.getElementById('view').parentElement)) return true;
     if (t.closest('input, textarea, select, form, [contenteditable], [data-drag], [data-sdrag], .tdgrip, .sgrip, .tdmenu, .lofimenu, .dragging')) return true;
@@ -14429,6 +14461,7 @@ document.addEventListener('pointercancel', e => { if (sdrag && e.pointerId === s
     const s = strip(), host = s.parentElement, cs = getComputedStyle(host), hr = host.getBoundingClientRect(), top = s.getBoundingClientRect().bottom;
     let html;
     if (to.dataset.todaytab){ const k = todayTab; todayTab = to.dataset.todaytab; try { html = renderToday(); } finally { todayTab = k; } }
+    else if (to.dataset.bsec){ const k = battleSec; battleSec = to.dataset.bsec; try { html = renderBattle(); } finally { battleSec = k; } }
     else { const k = [todoList, todoMenu, todoRename, todoAdd, todoDelArm]; todoList = to.dataset.todolist; todoMenu = false; todoRename = false; todoAdd = null; todoDelArm = null; try { html = renderTodo(); } finally { [todoList, todoMenu, todoRename, todoAdd, todoDelArm] = k; } }
     const tmp = document.createElement('div'); tmp.innerHTML = html; const s2 = tmp.querySelector('.tdtabs'); if (!s2) return null;
     const g = document.createElement('div'); g.className = 'slideghost'; g.style.cssText = `top:${top}px;left:0;width:${W()}px;height:${Math.max(0, innerHeight - top)}px`;
@@ -14499,7 +14532,7 @@ document.addEventListener('pointercancel', e => { if (sdrag && e.pointerId === s
   // a tap on a name slides too
   document.addEventListener('click', e => {
     const to = e.target.closest && e.target.closest('#view .tdtab'); if (!to || noSlide || !motionOK || to.classList.contains('on')) return;
-    if (busy || tab !== 'today' && tab !== 'todo'){ if (busy){ e.stopPropagation(); e.preventDefault(); } return; }
+    if (busy || tab !== 'today' && tab !== 'todo' && tab !== 'battle'){ if (busy){ e.stopPropagation(); e.preventDefault(); } return; }
     const all = names(), dir = all.indexOf(to) > all.findIndex(b => b.classList.contains('on')) ? 1 : -1;
     e.stopPropagation(); e.preventDefault();
     const st = begin(dir); st.to[dir] = to; need(st, dir); if (!st.panes[dir]){ clean(st); land(to); return; }
