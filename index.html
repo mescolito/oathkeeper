@@ -525,6 +525,18 @@ html[data-mode="dark"] .tdplus{background:#2d2a26;color:var(--ink)}
 .inn .btn{flex:none}
 .innic{width:44px;height:44px;border-radius:50%;background:#e9dcc4;display:flex;align-items:center;justify-content:center;flex:none;color:#171614}
 .inn.on{box-shadow:inset 0 0 0 2px var(--ink)}
+/* resting at the Inn: the paused fight as one compact row in the old Today battle card's pink */
+.innpause{display:grid;grid-template-columns:1fr 64px;gap:12px;align-items:center;background:var(--pink);color:#171614;border-radius:22px;padding:12px 12px 12px 16px}
+.innpause .ipbody{display:flex;flex-direction:column;gap:3px;min-width:0}
+.innpause .ipk{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600}
+.innpause .ipk > span:last-child{opacity:.75}
+.innpause .ippill{background:#171614;color:#f1eee4;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.innpause .ipname{font-size:16px;font-weight:700;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.innpause .iphp{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;font-variant-numeric:tabular-nums}
+.innpause .iphp > span:last-child{opacity:.75;white-space:nowrap}
+.innpause .pbar{height:5px;background:rgba(23,22,20,.14)}
+.innpause canvas{width:64px;height:auto;aspect-ratio:1;border-radius:14px;background:#141312;padding:3px;image-rendering:pixelated;filter:saturate(.35) brightness(.7)}
+html[data-mode="dark"] .innpause{color:#171614}
 
 /* focus timer: full-bleed dark page like Tiimo's focus mode */
 .iconbtn.ticking{background:var(--ink);color:var(--inv)}
@@ -1111,7 +1123,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '2497974b0b';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '0a01aa3b23';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -3939,7 +3951,149 @@ function drawSlumpNpc(cv, f, A){
 // Riff and the Siren visit on the Battle page, each on a full boss tile (the bosses' dark dithered panel, the figure layer 13 px down);
 // the Slump stays on Today, at the hero's feet. Every frame is drawn once per Pop colour and cached.
 const NPC = {cache: new Map(), pop: null, grid: null};
-const NPC_TILE = {riff: [(c, f, A) => drawRiffTile(c, f, A), RIFF_LOOP], siren: [(c, f, A) => drawSirenTile(c, f, A), SIREN_LOOP]};
+/* The Inn (Battle tile while you rest, boss scale): "the Sleepy Inn". A jettied timber inn front, asleep, its two upstairs windows its
+   eyes: lit panes (halo, iris, inner light, a catchlight on one side, a black pupil where the mullions cross) under slatted blinds that
+   droop like heavy lids, louvred shutters folded back. Light-ramp timbers frame the near-black plaster; the roof wears courses of tiny
+   shingles, carved bargeboards and a finial; a crescent moon is cut through a round gable window; a brick chimney with two pots. A carved
+   bed sign hangs on chains from a scrolled bracket; a barrel, a potted plant, a stone foundation and a doorstep. Pop only on the window
+   eyes, the lantern's flame (prop accent) and the warm light spilling from the door left ajar (ground effect, with drips).
+   128 x 104 figure layer, loop 60 ticks at 10 fps: the upper storey, roof and chimney breathe 1 px on a 3 s cycle over the fixed ground
+   floor; the door light swells on each out-breath; once a loop the blinds sink shut and lift (the right a beat behind); the sign swings
+   on its chains a beat behind the breath; the lantern flame flickers gently; a moth circles the lantern; smoke curls up from a pot and
+   breaks apart; thin Zs drift up from the left window. */
+const INN_LOOP = 60;
+const innMd = (u, n) => ((u % n) + n) % n;
+// the hero's thin Z (heroZzz): 1 px top bar, diagonal, bottom bar; w 4..7
+function innZ(R, x, y, w, col){ const h = Math.min(w, 6); x = Math.round(x); y = Math.round(y); R(col, x, y, w, 1); R(col, x, y + h - 1, w, 1); for (let r = 1; r < h - 1; r++) R(col, x + Math.round((w - 1) * (1 - r / (h - 1))), y + r, 1, 1); }
+function drawInnTile(cv, f, A){
+  const C = NPC_C, Kt = npcKit(128, 104), {L, R, ell, path, line} = Kt;
+  const K = C.K, G1 = C.G1, G2 = C.G2, G3 = C.G3, G4 = C.G4, G5 = C.G5, L0 = C.L0, L1 = C.L1, L2 = C.L2, L3 = C.L3, P1 = '#8f877c', P2 = C.PALE;
+  const t = innMd(f, INN_LOOP), md = innMd, TAU = Math.PI * 2;
+  const arcS = (x, y, rx, ry, a0, a1, w = 1) => cc => { cc.lineWidth = w; cc.ellipse(x, y, rx, ry, 0, a0, a1); cc.stroke(); };
+  const up = md(t, 30) >= 6 && md(t, 30) < 20 ? -1 : 0, br = md(t, 30) >= 20 ? 1 : 0;      // in-breath: the top lifts; out-breath: the door light swells
+  const Lu = (c, fn) => { Kt.XF = [1, 0, 0, 1, 0, up]; L(c, fn); Kt.XF = null; }, Ru = (c, x, y, w = 1, h = 1) => R(c, x, y + up, w, h);
+  const onK = (x, y) => Kt.get(x, y) === K;
+  // ---- ground: the door's light in hard bands, drips and splashes at its rim; a small pool under the lantern
+  Kt.pool(64, 93.6, [[A[0], 41, 5.6], [A[1], 28 + br * 2, 3.9], [A[2], 16 + br, 2.5], [A[3], 7, 1.2]]);
+  for (const [x, y, c, w] of [[22, 95, 1, 2], [27, 97, 0, 1], [37, 97.5, 1, 3], [91, 97, 1, 3], [100, 95.6, 0, 2], [46, 98, 2, 1], [80, 98, 2, 1], [17, 93, 0, 1]]) R(A[c], x, y, w, 1);
+  Kt.pool(103, 93.8, [[A[0], 9, 1.8], [A[1], 4, 0.9]]);
+  // ---- a barrel by the wall (light-object ramp: staves, a lit band, hoops, a lid with planks, a bung)
+  L(K, path([[13, 73.5], [31, 73.5], [33.8, 80, 33.8, 86, 31.8, 92.4], [12.2, 92.4], [10.2, 86, 10.2, 80, 13, 73.5]]));
+  L(L1, path([[14, 74.5], [30, 74.5], [32.6, 80, 32.6, 86, 30.8, 91.4], [13.2, 91.4], [11.4, 86, 11.4, 80, 14, 74.5]]));
+  L(L0, path([[27.6, 75], [30, 74.5], [32.6, 80, 32.6, 86, 30.8, 91.4], [28, 91.4], [29.4, 86, 29.4, 80, 27.6, 75]]));        // shadow side
+  L(L2, path([[15.6, 75], [18.6, 75], [17.8, 80, 17.8, 86, 18.4, 91], [15.6, 91], [14.6, 86, 14.6, 80, 15.6, 75]]));          // lit band
+  for (const x of [20, 24, 28]) L(L0, line([[x, 76], [x + (x - 22) * 0.1, 90.6]]));
+  L(L3, line([[13.4, 76.6], [12, 83], [13.2, 89.6]])); L(L3, line([[16.4, 76], [15.8, 79]]));
+  for (const y of [77.2, 83, 88.6]){ L(K, line([[11.6 + (y === 83 ? -1 : 0), y], [32.4 + (y === 83 ? 1 : 0), y]], 1.5)); R(L2, 13, Math.round(y) - 1, 4, 1); R(L1, 30, Math.round(y) - 1, 1, 1); }
+  L(L0, ell(25, 80.4, 1.1, 1)); R(K, 25, 80, 1, 1);
+  L(K, ell(22, 74, 10, 2.6)); L(L2, ell(22, 73.8, 9, 1.8)); L(L0, line([[16, 73.6], [28, 73.6]])); R(L3, 14, 72, 7, 1); R(L1, 27, 75, 3, 1);
+  // ---- ground floor, set back under the jetty: plaster, light-ramp timbers, a stone foundation
+  L(K, path([[40, 63], [90, 63], [90.6, 74, 91, 83, 91.6, 92.4], [38.4, 92.4], [39, 83, 39.4, 74, 40, 63]]));
+  for (const [x, y] of [[47, 70], [80, 72], [84, 79], [44, 79], [51, 67]]) R(G1, x, y, 1, 1);                                     // plaster texture
+  for (const s of [-1, 1]){ const x = s < 0 ? 40.6 : 89.4;
+    L(L0, line([[x, 65], [x - s * 0.4, 84]], 2)); L(s < 0 ? L1 : L0, line([[x - s * 0.8, 65], [x - s * 1.2, 84]]));                // corner posts
+    L(L0, line([[64 + s * 22.4, 66], [64 + s * 11, 83]], 2)); L(L1, line([[64 + s * 23.2, 66.4], [64 + s * 11.8, 83.4]]));        // braces
+    R(L2, Math.round(64 + s * 21.6) - (s > 0 ? 1 : 0), 67, 1, 1); R(L2, Math.round(64 + s * 11.8) - (s > 0 ? 1 : 0), 82, 1, 1); }
+  L(L0, line([[39.4, 84.6], [90.8, 84.6]], 2)); L(L1, line([[39.6, 83.8], [90.6, 83.8]])); for (let x = 43; x < 90; x += 7) R(L2, x, 84, 1, 1);   // sill beam
+  // foundation: one course of rounded stones (dark greys, a lit top edge), mortar between
+  for (const [x0, x1] of [[39, 55], [73, 92]]){ let x = x0, k = 0; while (x < x1 - 1){ const w = Math.min(x1 - x, [6, 5, 7, 5][k % 4]);
+      L(G2, path([[x + 0.6, 86.6], [x + w - 0.6, 86.6], [x + w - 0.2, 89, x + w - 0.4, 91.6, x + w - 0.9, 92.2], [x + 0.9, 92.2], [x + 0.4, 91.6, x + 0.2, 89, x + 0.6, 86.6]]));
+      R(G3, x + 1, 86, w - 2, 1); if (k % 3 === 0) R(G4, x + 1, 86, 2, 1); R(G1, x + w - 2, 88, 1, 3); x += w; k++; } }
+  // the door: a light-ramp arched surround, plank leaf with iron straps and a ring, left ajar; light down its edge
+  L(L0, path([[54.6, 92.4], [54.6, 77], [54.6, 70, 64, 67.6, 64, 67.6], [64, 67.6, 73.4, 70, 73.4, 77], [73.4, 92.4]]));
+  L(L1, arcS(64, 77, 9.2, 9.2, Math.PI * 1.05, Math.PI * 1.5)); L(L1, line([[55.2, 77], [55.2, 92]]));
+  L(L2, path([[62.4, 67.4], [65.6, 67.4], [65.2, 70.4], [62.8, 70.4]])); R(L3, 63, 67, 2, 1);                                  // keystone
+  L(G1, path([[57, 92.4], [57, 78], [57, 72.6, 64, 70.8, 64, 70.8], [64, 70.8, 71, 72.6, 71, 78], [71, 92.4]]));
+  for (const x of [61, 64, 67]) L(G2, line([[x + 0.5, 73 + Math.abs(x - 64) * 0.4], [x + 0.5, 91.6]]));
+  for (const y of [76, 87]){ L(G3, line([[59.6, y], [70.4, y]], 1.2)); R(G5, 60, y - 1, 1, 1); R(G4, 66, y, 1, 1); R(G4, 69, y, 1, 1); }
+  L(G4, Kt.ring(67.6, 82.2, 1.3, 1)); R(G3, 68, 83, 1, 1);
+  R(A[0], 57, 72, 1, 2); R(A[1], 57, 74, 1, 18); R(A[2], 57, 79, 1, 13); R(A[3], 57, 85, 1, 7); R(A[2], 58, 86 + (br ? 0 : 2), 1, br ? 6 : 4); R(A[3], 56, 90, 3, 2);
+  L(L1, path([[51, 91.2], [77, 91.2], [78, 93.6], [50, 93.6]])); R(L3, 51, 91, 26, 1); R(L0, 50, 93, 28, 1); R(L0, 66, 92, 1, 1); R(L2, 53, 92, 1, 1);   // the step
+  R(A[1], 55, 91, 5, 1); R(A[2], 56, 91, 2, 1);                                                                                       // door light on the step
+  // ---- a potted plant by the door (light-ramp pot, leaves one tone up from the wall)
+  { const sway = md(t + 5, 30) < 15 ? 0 : 0.5;
+    for (const [a, l] of [[-2.3, 7], [-1.85, 9], [-1.45, 10.5], [-1.05, 8.6], [-0.7, 6.6]]){ const ex = 49 + Math.cos(a) * l + sway, ey = 83 + Math.sin(a) * l;
+      L(G2, ell((49 + ex) / 2, (83 + ey) / 2, l / 2 + 0.4, 2, a)); L(G3, ell((49 + ex) / 2 - 0.3, (83 + ey) / 2 - 0.4, l / 2, 1.3, a)); L(G4, line([[49, 83], [ex, ey]])); R(G5, Math.round(ex), Math.round(ey), 1, 1); }
+    L(K, path([[44.4, 84.4], [53.6, 84.4], [52.4, 92.4], [45.6, 92.4]])); L(L1, path([[45.4, 85.4], [52.6, 85.4], [51.6, 91.6], [46.4, 91.6]]));
+    L(L0, path([[50, 85.4], [52.6, 85.4], [51.6, 91.6], [49.6, 91.6]])); R(L3, 46, 86, 1, 4);
+    L(L2, path([[43.8, 83], [54.2, 83], [54.2, 85.4], [43.8, 85.4]])); R(L3, 44, 83, 10, 1); R(L0, 44, 85, 10, 1); }
+  // ---- the lantern by the door: a scrolled iron bracket; the lantern hangs and sways a pixel; a pop flame flickers behind the glass
+  { const sw = Math.round(Math.sin(t / INN_LOOP * TAU * 2) * 0.9), lx = 103 + sw, ly = 71, fl = [0, 0, 1, 0, 2, 1, 0, 1, 0, 0][md(t >> 1, 10)];
+    L(K, line([[91, 66.6], [103, 66.6]], 1.6)); L(K, arcS(95, 69.4, 2.4, 2.4, Math.PI * 1.05, Math.PI * 2.6)); L(K, line([[91, 71], [95, 68]], 1.2)); R(G3, 92, 66, 11, 1);
+    L(G3, line([[103, 67.6], [lx, ly - 1.4]])); R(G4, 103, 68, 1, 1);
+    L(K, path([[lx - 4.4, ly + 2.6], [lx - 1.6, ly - 0.6], [lx + 1.6, ly - 0.6], [lx + 4.4, ly + 2.6]])); R(G3, lx - 2, ly, 2, 1); R(G4, lx - 3, ly + 1, 1, 1);
+    L(K, ell(lx, ly + 7.4, 4.6, 5.8)); L(A[0], ell(lx, ly + 7.4, 3.6, 4.8)); L(A[1], ell(lx, ly + 7.2, 3, 4.1)); L(A[2], ell(lx, ly + 7, 2.2, 3.3));
+    L(A[3], path([[lx - 1.2, ly + 9.4], [lx - 1.4, ly + 7.6, lx - 0.4, ly + 6 - fl * 0.6, lx, ly + 4.6 - fl * 0.7], [lx + 0.5, ly + 6.2 - fl * 0.5, lx + 1.4, ly + 7.6, lx + 1.2, ly + 9.4]]));
+    R(K, lx, ly + 9, 1, 2); R(K, lx - 5, ly + 4, 1, 7); R(K, lx + 5, ly + 4, 1, 7); R(G3, lx - 5, ly + 4, 1, 4);
+    L(K, path([[lx - 3.4, ly + 12.4], [lx + 3.4, ly + 12.4], [lx + 1.6, ly + 14.6], [lx - 1.6, ly + 14.6]])); R(G3, lx - 3, ly + 12, 2, 1); R(K, lx, ly + 15, 1, 1);
+    // a moth circling the lantern, wings beating
+    const a = t / INN_LOOP * TAU * 3, mx = Math.round(lx + Math.cos(a) * 8), my = Math.round(ly + 6 + Math.sin(a) * 4.5), open = t % 2 === 0;
+    if (open){ R(P1, mx - 2, my - 1, 2, 1); R(P1, mx + 1, my - 1, 2, 1); R(G5, mx - 1, my, 1, 1); R(G5, mx + 1, my, 1, 1); } else { R(P1, mx - 1, my - 2, 1, 2); R(P1, mx + 1, my - 2, 1, 2); }
+    R(G4, mx, my - 1, 1, 2); }
+  // ---- upper storey, jettied out over the ground floor (it and everything above it breathe together)
+  Lu(K, path([[34, 44], [96, 44], [96, 64], [34, 64]]));
+  for (const x of [34.8, 95.2, 64.5]){ Lu(L0, line([[x, 45], [x, 62]], 2)); Lu(L1, line([[x - 0.8, 45], [x - 0.8, 62]])); }
+  for (const s of [-1, 1]){ Lu(L0, line([[64 + s * 28, 61.6], [64 + s * 24.4, 47]], 1.6)); Lu(L1, line([[64 + s * 28.8, 61.4], [64 + s * 25.2, 46.8]])); }
+  Ru(L1, 33, 64, 64, 1); Ru(L3, 34, 64, 18, 1); Ru(K, 33, 65, 64, 1);
+  for (let x = 36; x < 96; x += 6){ Ru(L0, x, 65, 2, 2); Ru(L2, x, 65, 1, 1); }                                                 // jetty beam and joist ends
+  // the eyes: lit windows in light-ramp frames, louvred shutters folded back, slatted blinds sagging like heavy lids (a slow blink)
+  const lid = ph => { const u = md(t - ph, INN_LOOP); return u < 34 ? 4 : u < 36 ? 5 : u < 38 ? 7 : u < 42 ? 9 : u < 44 ? 7 : u < 47 ? 5 : 4; };
+  for (const [wx, ph] of [[44, 0], [73, 4]]){ const wy = 50, ww = 13, wh = 9, d = lid(ph);
+    Ru(L0, wx - 2, wy - 2, ww + 4, wh + 4); Ru(L1, wx - 2, wy - 2, ww + 4, 1); Ru(L1, wx - 2, wy - 1, 1, wh + 2); Ru(L3, wx - 2, wy - 2, 4, 1);
+    for (const [sx, s] of [[wx - 6, -1], [wx + ww + 2, 1]]){ Ru(K, sx, wy - 2, 4, wh + 4); Ru(L0, sx + (s < 0 ? 0 : 1), wy - 2, 3, wh + 4);
+      for (let y = wy - 1; y < wy + wh + 2; y += 2) Ru(L1, sx + (s < 0 ? 0 : 1), y, 3, 1); Ru(s < 0 ? L2 : L0, sx + (s < 0 ? 0 : 3), wy - 2, 1, wh + 4); }
+    const gl = md(t - ph, INN_LOOP) >= 14 && md(t - ph, INN_LOOP) < 24 ? 1 : 0;                                                     // a slow sideways glance
+    Ru(A[0], wx - 1, wy - 1, ww + 2, wh + 2); Ru(A[2], wx, wy, ww, wh); Ru(A[1], wx, wy, ww, 1);
+    Ru(A[3], wx + 2, wy + 6, ww - 4, 2); Ru(A[3], wx + 3, wy + 5, ww - 6, 1); Ru(A[1], wx + 1, wy + wh - 1, ww - 2, 1);              // inner light, low in the pane
+    Ru(A[1], wx + 3, wy, 1, wh); Ru(A[1], wx + ww - 4, wy, 1, wh); Ru(L0, wx, wy + 2, ww, 1);                                          // dim glazing bars, a transom
+    Ru(K, wx + 5 + gl, wy + 5, 3, 3); Ru(K, wx + 4 + gl, wy + 6, 5, 1);                                                                // the pupil, round-ish
+    if (d < 7) Ru(A[4], wx + 1, wy + d, 1, 1);                                                                                         // catchlight, one side
+    for (let i = -1; i <= ww; i++){ Ru(G2, wx + i, wy - 1, 1, d); Ru(K, wx + i, wy - 1 + d, 1, 1); }                                    // the blind: a heavy lid
+    for (let y = wy; y < wy - 1 + d; y += 2) Ru(G3, wx, y, ww, 1);
+    Ru(G4, wx + 1, wy - 1, 3, 1);
+    Lu(L1, path([[wx - 2, wy + wh + 2], [wx + ww + 2, wy + wh + 2], [wx + ww + 1, wy + wh + 5], [wx - 1, wy + wh + 5]])); Ru(L3, wx - 2, wy + wh + 2, ww + 4, 1); Ru(L0, wx - 1, wy + wh + 4, ww + 2, 1);   // window box
+    for (let x = wx - 1; x < wx + ww + 1; x += 2){ const hi = md(x * 7, 3) ? 0 : 1; Ru(G3, x, wy + wh + 1, 1, 1); Ru(md(x, 4) ? G4 : G5, x + 1, wy + wh - hi + 1, 1, 1); }
+    Ru(G2, wx + 1, wy + wh + 5, 1, 2); Ru(G2, wx + ww - 3, wy + wh + 5, 1, 1); }
+  // ---- roof: a steep gable, eaves flicked out, courses of tiny shingles, carved light-ramp bargeboards, a finial; a round gable window with a crescent moon cut through
+  Lu(K, path([[24, 46.5], [41, 33, 53, 19, 64, 9], [75, 19, 87, 33, 104, 46.5], [102, 48.5], [64, 44.5], [26, 48.5]]));
+  for (let y = 15; y < 45; y += 3){ const g = (a, b) => Kt.get(a, b + up) === K;
+    for (let x = 26; x < 103; x++) if (g(x, y) && g(x - 2, y - 2) && g(x + 2, y - 2) && g(x, y + 1)) Ru(G1, x, y, 1, 1);
+    for (let x = 27 + (y % 2 ? 0 : 2); x < 102; x += 4) if (g(x, y - 1) && g(x + 1, y - 1) && g(x - 2, y - 3) && g(x + 3, y - 3)) { Ru(x < 52 ? G3 : G2, x, y - 1, 2, 1); if (x < 46 && md(x + y, 3) === 0) Ru(G4, x, y - 1, 1, 1); } }
+  Lu(L0, line([[26.6, 46], [41.6, 32.6, 53.4, 19.6, 63.2, 10.4]], 2)); Lu(L1, line([[25.6, 45.2], [40.8, 31.8, 52.6, 18.8, 62.6, 9.6]]));
+  Lu(L0, line([[64.8, 10.4], [74.6, 19.6, 86.4, 32.6, 101.4, 46]], 2));
+  for (const u of [0.18, 0.38, 0.58, 0.78]){ Ru(L2, Math.round(26 + u * 37.6), Math.round(46 - u * 36), 1, 1); Ru(L1, Math.round(102 - u * 37.6), Math.round(46 - u * 36), 1, 1); }
+  Lu(L1, path([[63, 10], [64, 4.6], [65, 10]])); Ru(L3, 64, 5, 1, 1); Lu(L0, ell(64, 10, 1.6, 1.2));                                 // finial
+  Lu(L0, ell(64, 29, 7, 7)); Lu(L1, arcS(64, 29, 6.4, 6.4, Math.PI * 0.95, Math.PI * 1.6)); Lu(K, ell(64, 29, 5.2, 5.2));
+  Lu(null, ell(63.4, 29.8, 3.6, 3.9)); Lu(K, ell(65.4, 28, 3.2, 3.6)); Ru(G4, 60, 31, 1, 1); Ru(P1, 66, 31, 1, 1);   // a crescent cut through (tilted), a star in the gap for (const a of [0, 1, 2, 3]) Ru(L2, Math.round(64 + Math.cos(a * Math.PI / 2 + 0.78) * 6.6), Math.round(29 + Math.sin(a * Math.PI / 2 + 0.78) * 6.6));
+  Ru(G4, 51, 22, 2, 1); Ru(G4, 44, 30, 1, 1); Ru(G4, 36, 39, 1, 1);
+  // ---- chimney on the right slope: brick courses, a lit edge, a slab and two pots
+  Lu(K, path([[81, 34], [81, 18], [90, 18], [90, 40]]));
+  for (let y = 20; y < 34; y += 3){ Ru(G1, 81, y, 9, 1); for (let x = 81 + (y % 2 ? 1 : 3); x < 89; x += 4) Ru(G2, x, y + 1, 2, 1); } Lu(G3, line([[81.4, 19], [81.4, 33]]));
+  Lu(L1, path([[79.4, 15.4], [91.6, 15.4], [91.6, 18.4], [79.4, 18.4]])); Ru(L3, 79, 15, 13, 1); Ru(L0, 80, 18, 11, 1);
+  Lu(G2, path([[82, 15.6], [82, 11.4], [85, 11.4], [85, 15.6]])); Ru(G4, 82, 11, 3, 1); Lu(G2, path([[86.4, 15.6], [86.4, 12.8], [89, 12.8], [89, 15.6]])); Ru(G3, 86, 12, 3, 1);
+  // smoke: puffs curl up from the left pot, grow, drift and break apart
+  for (let i = 0; i < 4; i++){ const p = (t / INN_LOOP + i / 4) % 1; if (p > 0.95) continue;
+    const r = 1.6 + p * 3.6, px = 83.5 + p * 15 + Math.sin(p * 7 + i) * 1.6, py = 9 + up - p * 14;
+    if (p < 0.7){ Kt.L(p < 0.4 ? G4 : G3, ell(px + 0.4, py + 0.5, r, r * 0.8)); Kt.L(p < 0.4 ? G5 : G4, ell(px - 0.3, py - 0.2, r * 0.85, r * 0.68)); Kt.L(p < 0.4 ? P1 : G5, ell(px - r * 0.35, py - r * 0.3, r * 0.4, r * 0.32)); }
+    else { for (const [dx, dy, s] of [[-r * 0.6, 0.4, 0.5], [r * 0.5, -0.6, 0.42]]) Kt.L(G3, ell(px + dx, py + dy, r * s, r * s * 0.8)); } }
+  L(G4, arcS(87.6, 4.6, 2, 1.6, Math.PI * 1.1, Math.PI * 2.1));
+  // ---- the bed sign on a scrolled bracket: chains of links, a light-ramp board with grain, a carved bed; it swings a beat behind the breath
+  Lu(K, line([[34, 47.6], [14, 47.6]], 1.8)); Lu(K, arcS(17.6, 50.6, 3, 3, Math.PI * 1.0, Math.PI * 2.2, 1.4)); Lu(K, line([[34, 55], [27, 48.2]], 1.4)); Lu(K, arcS(30.6, 51.6, 1.8, 1.8, Math.PI * 0.2, Math.PI * 1.3)); Ru(G3, 15, 47, 19, 1); Ru(G4, 15, 47, 3, 1);
+  { const a = Math.sin((t - 4) / INN_LOOP * TAU * 2) * 0.045; Kt.rot(a, 23, 49); Kt.XF[5] += up; const X = Kt.XF, Ls = (c, fn) => { Kt.XF = X; L(c, fn); };
+    for (const cx of [16.5, 29.5]) for (let y = 49; y < 54; y += 2){ Ls(G5, line([[cx, y], [cx, y + 0.6]])); Ls(G3, line([[cx, y + 1.2], [cx, y + 1.6]])); }
+    Ls(K, path([[12.4, 53.4], [33.6, 53.4], [33.6, 66.6], [12.4, 66.6]])); Ls(L1, path([[13.4, 54.4], [32.6, 54.4], [32.6, 65.6], [13.4, 65.6]]));
+    Ls(L0, path([[13.4, 63.8], [32.6, 63.8], [32.6, 65.6], [13.4, 65.6]])); Ls(L3, line([[14, 54.6], [32, 54.6]])); Ls(L2, line([[13.6, 55], [13.6, 63]]));
+    Ls(L0, line([[22, 56.6], [27, 56.6]])); Ls(L2, line([[15, 64.6], [20, 64.6]]));
+    Ls(K, line([[16.4, 57], [16.4, 63.4]], 1.4)); Ls(K, line([[29.8, 59.6], [29.8, 63.4]], 1.4)); Ls(K, line([[16.4, 61.6], [29.8, 61.6]], 1.6));   // the carved bed: head and foot boards, mattress,
+    Ls(K, path([[21.6, 61], [22.6, 59, 27, 58.8, 29, 60.4], [29, 61]])); Ls(L3, ell(19.4, 60, 1.6, 1)); Ls(L2, line([[17.4, 62.8], [29.2, 62.8]]));   // a sleeper's hump, the pillow, a bevel
+    Kt.XF = null; }
+  // ---- the inn sleeps: thin Zs drift up from the left window and fade
+  for (let i = 0; i < 3; i++){ const p = (t / INN_LOOP + i / 3) % 1; if (p > 0.94) continue;
+    innZ(R, 40 - p * 20 + Math.sin(p * TAU) * 1.5, 44 + up - p * 28, 4 + Math.round(p * 3), p < 0.4 ? P2 : p < 0.72 ? P1 : G4); }
+  for (const [x, y, c] of [[112, 84, K], [6, 90, K], [110, 34, K], [8, 60, G3], [118, 66, G3]]) R(c, x, y + (c === G3 ? md(t >> 3, 2) : 0), c === K ? 2 : 1, c === K ? 2 : 1);
+  Kt.out(cv);
+}
+const NPC_TILE = {riff: [(c, f, A) => drawRiffTile(c, f, A), RIFF_LOOP], siren: [(c, f, A) => drawSirenTile(c, f, A), SIREN_LOOP], inn: [(c, f, A) => drawInnTile(c, f, A), INN_LOOP]};
 function npcFrame(key, w, h, draw){
   const acc = popId(); if (NPC.pop !== acc){ NPC.cache.clear(); NPC.pop = acc; }
   let c = NPC.cache.get(key); if (!c){ c = document.createElement('canvas'); c.width = w; c.height = h; draw(c, POP_RAMPS[acc] || POP_RAMPS.blush); NPC.cache.set(key, c); }
@@ -11750,7 +11904,37 @@ function visitorPanel(){
 // Today keeps one short tap-through line while a visitor waits (the dot on the Battle tab is easy to miss, and the Siren's offer ends with her week)
 function visitorLine(){ const s = sirenWaiting(), r = riffWaiting(); if (!s && !r) return '';
   return `<button class="card vline" data-tab="battle">${svg(s ? 'flame' : 'music', 18, 2)}<span><b>${s && r ? 'The Siren and Riff are' : s ? 'The Siren is' : 'Riff is'} waiting on the Battle page.</b></span><span class="vgo" aria-hidden="true">›</span></button>`; }
-function renderBattle(){ return visitorPanel() + renderBattleMain(); }
+// resting at the Inn: the Inn takes the monster slot at the top of Battle (above any visitor), with the Inn's own Check out button;
+// the fight shrinks to one compact paused row (thumbnail, name, days left, slim HP bar), then the divider and You.
+// Display only: the Inn's rules, costs and saves are untouched.
+function innPanel(){
+  const st = D.inn; if (!st) return '';
+  const days = dayIdx(D.today) - dayIdx(st.from) + 1, left = Math.max(0, Math.floor(D.balance / D.innFee));
+  return `
+  <section class="game boss innrest" aria-label="Resting at the Inn">
+    <canvas class="visitorcv" data-visitor="inn" width="128" height="128" role="img" aria-label="The Inn, asleep: lit windows under drooping blinds, a lantern by the door"></canvas>
+    <div class="dlg"><div class="dlg-in"><div class="dlg-h"><span class="dlg-name">Resting at the Inn</span><span>Day ${days}</span></div><p>Fight paused · ${D.innFee} G a day</p></div></div>
+  </section>
+  <div class="card inn on"><span class="innic">${svg('bed',22,2)}</span><span class="tbody"><b>${D.innSpent} G so far</b><span class="small muted">Gold covers ${left} more night${left === 1 ? '' : 's'}</span></span><button class="btn primary" data-inn="out">Check out</button></div>`;
+}
+// the paused fight in one row, in the old Today battle card's pink style: the foe Battle would show (mini-boss, a beaten mini-boss, or the boss)
+function innPausedCard(){
+  const f = D.cur, mm = D.mini, md = miniDown(), n = s => `${s}d left`;
+  const p = mm ? {name: mm.m.name, tag: `Mini-boss · ${n(dayIdx(mm.flees) - dayIdx(D.today))}`, rem: mm.rem, hp: mm.hp}
+    : md ? {name: md.m.name, tag: 'Defeated', rem: 0, hp: md.hp || 0}
+    : {name: f.boss.name, tag: f.status === 'won' ? 'Defeated' : (f.boss.seasonal ? 'Holiday · ' : f.boss.titan ? 'Titan · ' : '') + n(dayIdx(f.end) - dayIdx(D.today) + 1), rem: f.rem, hp: f.hp};
+  return `<div class="innpause" role="group" aria-label="${esc(p.name)}, paused while you rest. ${p.hp ? `${p.rem} of ${p.hp} HP` : ''}">
+    <span class="ipbody"><span class="ipk"><span class="ippill">Paused</span><span>${esc(p.tag)}</span></span><b class="ipname">${esc(p.name)}</b>
+      <span class="iphp">${bar(p.hp ? 100 * p.rem / p.hp : 0, '#171614')}<span>${p.hp ? `${p.rem}/${p.hp} HP` : '0 HP'}</span></span></span>
+    <canvas id="bossCv" width="128" height="128" aria-hidden="true"></canvas>
+  </div>`;
+}
+function renderBattle(){
+  if (!D.inn) return visitorPanel() + renderBattleMain();
+  const m = renderBattleMain(), i = m.indexOf('<div class="bdiv"');
+  if (i < 0) return innPanel() + visitorPanel() + m;   // the boss block's layout changed: show it whole rather than guess
+  return innPanel() + visitorPanel() + innPausedCard() + (D.mini ? runRow() : inLull() ? altarPanel() : '') + m.slice(i);
+}
 function renderBattleMain(){
   const f = D.cur, b = f.boss, daysLeft = dayIdx(f.end) - dayIdx(D.today) + 1, C = D.C;
   const hits = Object.entries(f.hits).sort((a,b) => b[1]-a[1]).slice(0,5);
@@ -13689,10 +13873,10 @@ function onClick(e){
   if (el.dataset.bsec){ battleSec = ['inn','info'].includes(el.dataset.bsec) ? el.dataset.bsec : 'skills'; render(); return; }
   if (el.dataset.inn){
     if (el.dataset.inn === 'in'){ if (innNow()) return; if (D.balance < D.innFee){ toast('Not enough gold for a night at the Inn'); return; }
-      S.inn.push({from: D.today, to: null, ts: Date.now()}); save(); render(); toast(`Checked in. The fight is paused · ${D.innFee} G a day`); return; }
+      S.inn.push({from: D.today, to: null, ts: Date.now()}); save(); render(); if (tab === 'battle') scrollTo({top: 0, behavior: motionOK ? 'smooth' : 'auto'}); toast(`Checked in. The fight is paused · ${D.innFee} G a day`); return; }
     const st = innNow(); if (!st) return;
     if (st.from >= D.today) S.inn = S.inn.filter(x => x !== st); else st.to = D.yest;
-    save(); render(); toast('Checked out. The fight is back on.'); return; }
+    save(); render(); if (tab === 'battle') scrollTo({top: 0, behavior: motionOK ? 'smooth' : 'auto'}); toast('Checked out. The fight is back on.'); return; }
   if ('musicmenu' in el.dataset){ musicMenu = !musicMenu; sfxInit(); render(); return; }
   if (el.dataset.breath){ breathCmd(el.dataset.breath); return; }
   if (el.dataset.sleep){ sleepCmd(el.dataset.sleep); return; }
