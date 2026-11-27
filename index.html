@@ -1138,7 +1138,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'f49c72ac28';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '1e54245b6f';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -13003,8 +13003,8 @@ function drawIcons(root){
 function draw(heroOnly){   // heroOnly: just the canvases the new hero is on (its own 10 fps step)
   const now = Date.now();
   const sc = document.getElementById('scene');
-  if (sc){ const so = {smog: D.inn || !D.smog.pts ? 0 : D.smog.pts >= 9 ? 3 : D.smog.pts >= 4 ? 2 : 1, slump: D.slump && D.slump.on, bg: D.inn ? 'inn' : S.equip.bg, color:S.equip.color, hat:looks().hat, gear:looksGear(), stage:stage(D.lv.level), cls: petCls(), mood: now < jumpUntil ? 'happy' : D.mood, f:frame, motion:motionOK, jump: now < jumpUntil && (Math.floor(now/120)%2===0)};
-    if (heroOn()) drawHeroScene(sc, Object.assign(so, {lv: D.lv.level, cheer: now < jumpUntil})); else drawScene(sc, so); }
+  if (sc){ const so = {smog: D.inn || !D.smog.pts ? 0 : D.smog.pts >= 9 ? 3 : D.smog.pts >= 4 ? 2 : 1, slump: D.slump && D.slump.on, bg: D.inn ? 'inn' : S.equip.bg, color:S.equip.color, hat:looks().hat, gear:looksGear(), stage:stage(D.lv.level), cls: petCls(), mood: D.inn ? 'sleep' : now < jumpUntil ? 'happy' : D.mood, f:frame, motion:motionOK, jump: !D.inn && now < jumpUntil && (Math.floor(now/120)%2===0)};   // resting at the Inn: asleep all day, no hop
+    if (heroOn()) drawHeroScene(sc, Object.assign(so, {lv: D.lv.level, cheer: !D.inn && now < jumpUntil})); else drawScene(sc, so); }
   if (heroOnly === true){ const hs = document.getElementById('spaceCv'), hn = document.getElementById('nightCv'); if (hs) drawSpace(hs); if (hn) drawNight(hn); return; }
   if (heroOn()) heroThumbs();   // Settings > Character tiles (only the ones not drawn yet)
   const hurt = now < hurtUntil && Math.floor(now/90)%2 === 0;
