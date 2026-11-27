@@ -1138,7 +1138,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '1d78955f21';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'f49c72ac28';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1429,7 +1429,10 @@ function runeName(r){ return SK.includes(r.id.slice(5)) ? `Rune of ${STATS[r.id.
 function runeText(r){ return `${fxText(r.fx)} for ${r.days} days`; }
 /* Skills spend from one shared MP pool. Tasks refill it; stronger skills cost more. */
 // gold per day at the Inn: cheap early, pricier as you level (5 G at Lv 1-4, +5 G every 5 levels, max 50)
-const innFee = lv => Math.min(50, 5 * (1 + Math.floor(Math.max(0, lv - 1) / 5)));
+// the Inn's nightly price by level. From S.innFeeFrom (the day the doubled price arrived) it's 10 G a night, +10 every 5 levels, up to 100 G;
+// nights before that keep the old price (5 G, +5, up to 50 G), so past gold never changes.
+const innStep = d => S && S.innFeeFrom && d && d >= S.innFeeFrom ? 10 : 5;
+const innFee = (lv, d) => { const st = innStep(d); return Math.min(st * 10, st * (1 + Math.floor(Math.max(0, lv - 1) / 5))); };
 // days you're checked into the Inn: no boss attacks, healing, poison or mood loss; the fight pauses
 function innOn(d){ return (S.inn || []).some(st => st.from <= d && (!st.to || d <= st.to)); }
 const innNow = () => (S.inn || []).find(st => !st.to) || null;
@@ -1977,6 +1980,7 @@ function sanitize(s, created){
   if (isDate(s.smogFrom)) out.smogFrom = s.smogFrom; else delete out.smogFrom;
   if (isDate(s.sirenFrom)) out.sirenFrom = s.sirenFrom; else delete out.sirenFrom;
   if (isDate(s.bossFrom)) out.bossFrom = s.bossFrom; else delete out.bossFrom;
+  if (isDate(s.innFeeFrom)) out.innFeeFrom = s.innFeeFrom; else delete out.innFeeFrom;
   if (isDate(s.miniFrom)) out.miniFrom = s.miniFrom; else delete out.miniFrom;
   out.runs = (Array.isArray(s.runs) ? s.runs : []).filter(r => obj(r) && isDate(r.from) && isDate(r.d) && [RUN_ODDS, RUN_RUNE, RUN_POT].includes(Number(r.odds))).map(r => ({from: r.from, d: r.d, ts: num(r.ts, 0), odds: Number(r.odds), ok: !!r.ok, ...(r.ok && int(r.g, 0, 1000000, 0) ? {g: int(r.g, 0, 1000000, 0)} : {})}));
   out.miniLog = {}; if (obj(s.miniLog)) for (const [d, r] of Object.entries(s.miniLog)) if (isDate(d) && obj(r) && MINI_BY[r.id] && isDate(r.on)) out.miniLog[d] = {id: r.id, lvl: int(r.lvl, 1, 999, 1), hp: int(r.hp, 1, 100000, 1), dmg: int(r.dmg, 0, 1000000, 0), status: ['won', 'ran'].includes(r.status) ? r.status : 'fled', on: r.on, ts: Number.isFinite(Number(r.ts)) ? Number(r.ts) : 0, g: int(r.g, 0, 100000, 0), xp: int(r.xp, 0, 100000, 0), prize: r.prize === 'chests' ? 'chests' : 'keys'};
@@ -2456,11 +2460,11 @@ function derive(){
     let C = combatOf(statLvNow(), lvlNow(), fxAt(parseKey(d).getTime(), d));
     if (hp === null){ hp = C.maxHP; mp = Math.round(C.maxMP / 2); }
     const live = d >= combatFrom;
-    if (innOnD(d)){ const fee = innFee(lvlNow()), bal = gold - staticSpent - dyn - lost;
+    if (innOnD(d)){ const fee = innFee(lvlNow(), d), bal = gold - staticSpent - dyn - lost;
       // only an open stay is checked, and only for days after the last day it was confirmed paid (the check-in day is paid up front)
       if (bal < fee){ for (const st of (S.inn || [])) if (!st.to && stayOn(st, d) && d > (st.paid || st.from)){ cut.set(st, d); newInnEnds.push({st, to: addDays(d,-1)}); } } }
     const inn = innOnD(d);
-    if (inn){ const fee = innFee(lvlNow()); dyn += fee; const open = innNowD(); if (open && d >= open.from) innSpent += fee; }
+    if (inn){ const fee = innFee(lvlNow(), d); dyn += fee; const open = innNowD(); if (open && d >= open.from) innSpent += fee; }
     if (live && !inn && !slump && statusOn('poison', d)){ hp -= Math.ceil(C.maxHP * 0.06); if (hp <= 0) faint(d, C); }
     const mood = moodOf(d), boost = live ? MOOD_BOOST[mood] : 1;
     let checked = false, rewardedTodos = 0;
@@ -2675,7 +2679,7 @@ function derive(){
     status: M.wonOn || (M.frozen && M.frozen.status === 'won') ? 'won' : M.ranOn || (M.frozen && M.frozen.status === 'ran') ? 'ran' : M.fledOn || (M.frozen && M.frozen.status === 'fled') ? 'fled' : 'now',
     on: M.wonOn || M.ranOn || M.fledOn || (M.frozen ? M.frozen.on : null)});
   const miniList = minis.map(miniOut), miniNow = miniList.length && miniList[miniList.length - 1].status === 'now' ? miniList[miniList.length - 1] : null;
-  return {mini: miniNow, minis: miniList, newMinis, ranToday: (S.runs || []).some(r => r.d === today), sirenLog, smog: {pts: smog, log: smogLog, last: smogLog[yest] || null, on: smogOn(today), price: weatherPrice(levelInfo(xp).level), clear: weatherClearPrice(levelInfo(xp).level, smog), owned: weatherOwned}, slump: {on: !!slump, from: slump ? slump.from : null, back: slump ? slump.back : 0, emptyRun, bites: slumpBites, taken: slumpTaken, todayActive: actDay.has(today)}, newSlump, habits: HAB, nextRite, ritesWon, pomo: pomoInfo, inn: innNowD(), newInnEnds, innPaid: (() => { const o = innNowD(); return o && (o.paid || o.from) < today ? o : null; })(), innSpent, innFee: innFee(levelInfo(xp).level), statBonus: fxNow.st, bag, newDrops, newResults, newFaints, newLegends: pomoInfo.rolls.filter(r => !r.kept), todoPaid, partial, altar: {keys: keysAll.filter(k => !(S.altarUsed || {})[k.key]).map(k => k.key), all: new Set(keysAll.map(k => k.key)), got: altarInfo.got, wins: altarInfo.wins, won: altarInfo.won}, freezeBefore, points, skills, readyCount, weakLv, today, yest, xp, lv, gold, spent, lost, balance: gold - spent - lost, stat, statLv, fx: fxNow, C, hp, mp, status: statusNow, attacks, lastAttack: attacks[yest] || null, faints, lastFaint: faints.length ? faints[faints.length-1] : null, mood: face, moodKey: moodToday, statusText, streak: lastCheck && lastCheck >= prevActiveD(today) ? streak : 0, checkedToday: lastCheck === today, mystery, tokens, perfectWeeks, castDeficit, fights, cur, drops, weeks, T, activeRunes: runesAt(nowMs, today), activeBuffs: buffsAt(nowMs, today)};
+  return {mini: miniNow, minis: miniList, newMinis, ranToday: (S.runs || []).some(r => r.d === today), sirenLog, smog: {pts: smog, log: smogLog, last: smogLog[yest] || null, on: smogOn(today), price: weatherPrice(levelInfo(xp).level), clear: weatherClearPrice(levelInfo(xp).level, smog), owned: weatherOwned}, slump: {on: !!slump, from: slump ? slump.from : null, back: slump ? slump.back : 0, emptyRun, bites: slumpBites, taken: slumpTaken, todayActive: actDay.has(today)}, newSlump, habits: HAB, nextRite, ritesWon, pomo: pomoInfo, inn: innNowD(), newInnEnds, innPaid: (() => { const o = innNowD(); return o && (o.paid || o.from) < today ? o : null; })(), innSpent, innFee: innFee(levelInfo(xp).level, today), statBonus: fxNow.st, bag, newDrops, newResults, newFaints, newLegends: pomoInfo.rolls.filter(r => !r.kept), todoPaid, partial, altar: {keys: keysAll.filter(k => !(S.altarUsed || {})[k.key]).map(k => k.key), all: new Set(keysAll.map(k => k.key)), got: altarInfo.got, wins: altarInfo.wins, won: altarInfo.won}, freezeBefore, points, skills, readyCount, weakLv, today, yest, xp, lv, gold, spent, lost, balance: gold - spent - lost, stat, statLv, fx: fxNow, C, hp, mp, status: statusNow, attacks, lastAttack: attacks[yest] || null, faints, lastFaint: faints.length ? faints[faints.length-1] : null, mood: face, moodKey: moodToday, statusText, streak: lastCheck && lastCheck >= prevActiveD(today) ? streak : 0, checkedToday: lastCheck === today, mystery, tokens, perfectWeeks, castDeficit, fights, cur, drops, weeks, T, activeRunes: runesAt(nowMs, today), activeBuffs: buffsAt(nowMs, today)};
 }
 
 /* ---------- persistence ---------- */
@@ -2795,6 +2799,7 @@ function mergeSaves(a, b){
   if (o.smogFrom && (!out.smogFrom || o.smogFrom < out.smogFrom)) out.smogFrom = o.smogFrom;
   if (o.sirenFrom && (!out.sirenFrom || o.sirenFrom < out.sirenFrom)) out.sirenFrom = o.sirenFrom;
   if (o.bossFrom && (!out.bossFrom || o.bossFrom < out.bossFrom)) out.bossFrom = o.bossFrom;
+  if (o.innFeeFrom && (!out.innFeeFrom || o.innFeeFrom < out.innFeeFrom)) out.innFeeFrom = o.innFeeFrom;
   if (o.miniFrom && (!out.miniFrom || o.miniFrom < out.miniFrom)) out.miniFrom = o.miniFrom;
   if (Array.isArray(o.siren)){ if (!Array.isArray(out.siren)) out.siren = []; for (const x of o.siren){ const i = out.siren.findIndex(y => y.wk === x.wk); if (i < 0) out.siren.push(x); else if ((x.drawn || x.declined || 0) < (out.siren[i].drawn || out.siren[i].declined || 0)) out.siren[i] = x; } }   // the first answer for a week wins
   // timers: each device's copy of a timer, the newer edit wins; a payout or reset logged on either device counts once
@@ -11849,7 +11854,7 @@ function innCard(){
     <li>Your streaks wait for you instead of breaking.</li>
     <li>Tasks still earn XP and gold, but can't damage the boss.</li>
     <li>Inn weeks don't count as perfect.</li>
-    <li>${D.innFee} G a day at your level; the price grows 5 G every 5 levels.</li>
+    <li>${D.innFee} G a day at your level; the price grows ${innStep(D.today)} G every 5 levels.</li>
     <li>Checking out makes today a normal day again.</li></ul></details>`;
   if (st){ const days = dayIdx(D.today) - dayIdx(st.from) + 1;
     return `<div class="card inn on"><span class="innic">${svg('bed',22,2)}</span><span class="tbody"><b>Resting at the Inn</b><span class="small muted">Day ${days} · ${D.innSpent} G so far · gold covers ${Math.max(0, Math.floor(D.balance / D.innFee))} more night${Math.floor(D.balance / D.innFee) === 1 ? '' : 's'}</span></span><button class="btn primary" data-inn="out">Check out</button></div>${how}`; }
@@ -12953,7 +12958,8 @@ function renderInner(){
   if (!S.slumpFrom && !recoveryMode){ S.slumpFrom = D.today; save(true); D = derive(); }
   if (!S.smogFrom && !recoveryMode){ S.smogFrom = D.today; save(true); D = derive(); }   // toxic air only counts nights after today
   if (!S.sirenFrom && !recoveryMode){ S.sirenFrom = D.today; save(true); }   // the Siren starts visiting from today
-  if (!S.bossFrom && !recoveryMode){ S.bossFrom = D.today; save(true); D = derive(); }   // tougher bosses from the next fight on
+  if (!S.bossFrom && !recoveryMode){ S.bossFrom = D.today; save(true); D = derive(); }
+  if (!S.innFeeFrom && !recoveryMode){ S.innFeeFrom = D.inn ? addDays(D.today, 1) : D.today; save(true); D = derive(); }   // the doubled Inn price: from today, or from tomorrow if tonight is already paid   // tougher bosses from the next fight on
   if (!S.miniFrom && !recoveryMode){ S.miniFrom = D.today; save(true); D = derive(); }   // mini-bosses can show up from tomorrow on
   const nm = Object.keys(D.newMinis || {}).filter(d => !(S.miniLog || {})[d]);
   if (nm.length && !recoveryMode){ if (!S.miniLog) S.miniLog = {}; nm.forEach(d => S.miniLog[d] = D.newMinis[d]); save(true); D = derive(); }   // settled mini-boss fights are written down for good
