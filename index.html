@@ -960,6 +960,50 @@ body.breathmode .app:has(> #view > .brhome) > #view{flex:1 0 auto}
 .brstar{flex:none;width:48px;border:0;background:none;color:#8f889c;cursor:pointer;display:grid;place-items:center}
 .brstar.on{color:var(--pink)}
 .brstar.on svg{fill:currentColor}
+/* stopwatch-v1 */
+body.focusmode.stwmode,body.focusmode.stwmode[data-pomo]{--g1:#1c6a5d;--g2:#0f2723}
+body.stwrun .nav{display:none}
+#stwCv{position:absolute;left:17%;top:17%;width:66%;height:66%;border-radius:50%;image-rendering:pixelated;background:#141312}
+.stwpage{display:flex;flex-direction:column;gap:8px;color:#f1eee4;padding-bottom:12px}
+.stwtop{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:start}
+.stwcard{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:20px;background:rgba(241,238,228,.08);box-shadow:inset 0 0 0 1px rgba(241,238,228,.1);min-width:0}
+.stwcard > b{font-size:13px;font-weight:600;color:#bdb6c8}
+.stwin{width:100%;box-sizing:border-box;border:0;border-radius:12px;background:rgba(241,238,228,.1);color:#f1eee4;font:inherit;font-size:15px;padding:9px 10px;min-height:40px}
+.stwin::placeholder{color:#8f889c}
+.stwpill{border:0;border-radius:999px;background:rgba(241,238,228,.14);color:#f1eee4;font:inherit;font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;padding:8px 12px;min-height:40px;cursor:pointer}
+.stwup{font-size:28px;font-weight:300;font-variant-numeric:tabular-nums;line-height:1.1;text-align:center;padding:5px 0 4px}
+.stwupc{display:flex;gap:6px}
+.stwupc .btn{flex:1;min-width:0;padding:0 6px}
+.stwlaps{list-style:none;margin:0;padding:0;max-height:104px;overflow:auto;font-size:13px;color:#bdb6c8}
+.stwlaps li{display:flex;justify-content:space-between;padding:3px 2px;border-top:1px solid rgba(241,238,228,.1)}
+.stwlaps b{color:#f1eee4;font-variant-numeric:tabular-nums;font-weight:600}
+.stwic{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--pink);color:#171614}
+.stwnm{display:flex;flex-direction:column;gap:1px;min-width:0}
+.stwnm b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stwnm small{font-size:13px;font-weight:500;color:#bdb6c8;font-variant-numeric:tabular-nums}
+.stwnew{align-self:flex-start;display:flex;align-items:center;gap:6px;border:0;background:none;color:#f1eee4;font:inherit;font-size:15px;font-weight:600;padding:10px 6px;min-height:44px;cursor:pointer}
+.stwnext{display:flex;justify-content:space-between;gap:10px;width:100%;max-width:320px;font-size:15px;color:#bdb6c8;font-variant-numeric:tabular-nums}
+.stwnext span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stwdots{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;max-width:300px}
+.stwdots i{width:8px;height:8px;border-radius:50%;background:rgba(241,238,228,.22)}
+.stwdots i.d{background:#7fe0c8}
+.stwdots i.on{background:#f1eee4}
+.stwbar{width:100%;max-width:300px;height:6px;border-radius:3px;background:rgba(241,238,228,.18);overflow:hidden}
+.stwbar i{display:block;height:100%;background:#7fe0c8}
+.stwof{font-size:13px;color:#bdb6c8}
+.stwctrl{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:22px;width:100%;margin-top:6px}
+.stwcb{justify-self:end;border:0;background:rgba(241,238,228,.1);color:#f1eee4;width:56px;height:56px;border-radius:50%;display:grid;place-items:center;cursor:pointer}
+.stwcb:last-child{justify-self:start}
+.stwhd{display:flex;justify-content:space-between;align-items:center}
+.stwtot{font-variant-numeric:tabular-nums;color:var(--muted);font-weight:600}
+.edstep.stwstep{grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:0 10px 0 16px;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:pan-y}
+.stwstep .stwpill{background:var(--track);color:var(--ink);font-size:14px;padding:6px 12px;min-height:34px}
+.stwsbtn{border:0;background:none;font:inherit;font-size:16px;font-weight:700;color:var(--ink);text-align:left;padding:14px 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+.stwsbtn.ph{color:var(--muted)}
+.stwqin{width:calc(100% - 28px);box-sizing:border-box;border:1px solid var(--line);border-radius:12px;background:transparent;color:var(--ink);font:inherit;font-size:16px;font-weight:600;padding:10px 12px;margin:0 14px}
+.stwh{margin-bottom:4px}
+.brgo .stwic{flex:none;width:34px}
+body.focusmode.stwmode .sheet{color:var(--ink)}
 @media (prefers-reduced-motion: reduce){
   .brring{display:none}
   .brarc{display:block}
@@ -1154,7 +1198,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = 'a6e45fc833';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '9ff3ac51bb';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -1922,6 +1966,37 @@ function mergeBreath(nw, od){
   out.total = Math.max(Number(out.total) || 0, Number(od.total) || 0);
   return out;
 }
+/* stopwatch-v1: saved multi-step timers (S.stopwatch, only once one is saved). Timers are kept by id with an updated time; a deleted
+   timer leaves a tombstone (gone[id] = when) so a sync can't bring it back. No game rewards. */
+const STW_MAX = 100, STW_STEPS = 200, STW_SEC_MAX = 86400, STW_REST_MAX = 3600, STW_ID = /^[\w-]{1,40}$/;
+function cleanStopwatch(b){
+  const gone = {};
+  if (obj(b.gone)) Object.entries(b.gone).filter(([id, ts]) => STW_ID.test(id) && !PROTO_KEYS.has(id) && Number.isFinite(Number(ts)) && Number(ts) > 0).sort((x, y) => Number(y[1]) - Number(x[1])).slice(0, 500).forEach(([id, ts]) => { gone[id] = Number(ts); });
+  const seen = new Set(), timers = [];
+  for (const t of (Array.isArray(b.timers) ? b.timers : [])){
+    if (!obj(t) || typeof t.id !== 'string' || !STW_ID.test(t.id) || PROTO_KEYS.has(t.id) || seen.has(t.id)) continue;
+    const upd = num(t.updated, 0); if (gone[t.id] && gone[t.id] >= upd) continue;
+    const sids = new Set(), steps = (Array.isArray(t.steps) ? t.steps : []).filter(obj).slice(0, STW_STEPS).map((x, i) => {
+      let id = typeof x.id === 'string' && STW_ID.test(x.id) && !sids.has(x.id) ? x.id : 's' + i + 'x'; while (sids.has(id)) id += 'x'; sids.add(id);
+      return {id, name: str(x.name, 40).trim(), s: int(x.s, 1, STW_SEC_MAX, 30)}; });
+    if (!steps.length) continue;
+    seen.add(t.id);
+    const o = {id: t.id, name: str(t.name, 40).trim() || 'Timer', steps, rest: int(t.rest, 0, STW_REST_MAX, 0), updated: upd, created: num(t.created, upd)};
+    if (taskIconOk(t.icon)) o.icon = t.icon; if (t.speak === true) o.speak = true; if (t.chime === false) o.chime = false; if (t.wait === true) o.wait = true;
+    timers.push(o); if (timers.length >= STW_MAX) break;
+  }
+  return {timers, gone};
+}
+// two devices: each timer by id, the newer edit wins; tombstones join (the later one) and hide anything not edited since
+function mergeStopwatch(nw, od){
+  if (!obj(nw)) return od; if (!obj(od)) return nw;
+  const gone = Object.assign({}, obj(od.gone) ? od.gone : {});
+  for (const [id, ts] of Object.entries(obj(nw.gone) ? nw.gone : {})) if (!(Number(gone[id]) >= Number(ts))) gone[id] = ts;
+  const A = Array.isArray(nw.timers) ? nw.timers.filter(obj) : [], B = Array.isArray(od.timers) ? od.timers.filter(obj) : [], byB = new Map(B.map(t => [t.id, t]));
+  const out = A.map(t => { const o = byB.get(t.id); return o && Number(o.updated) > Number(t.updated) ? o : t; });
+  for (const t of B) if (!A.some(x => x.id === t.id)) out.push(t);
+  return {timers: clone(out.filter(t => !(Number(gone[t.id]) >= Number(t.updated)))), gone};
+}
 function sanitize(s, created){
   const out = {};
   out.created = isDate(s.created) ? s.created : created;
@@ -2004,6 +2079,7 @@ function sanitize(s, created){
   if (obj(s.pomo)){ const c = obj(s.pomo.cfg) ? s.pomo.cfg : {}; const r = s.pomo.run;
     out.pomo = {cfg: {focus: int(c.focus, 5, 90, 25), short: int(c.short, 1, 30, 5), long: int(c.long, 5, 60, 15), every: int(c.every, 2, 8, 4), sound: c.sound !== false, music: c.music !== false, lofi: LOFI_KEYS.includes(c.lofi) ? c.lofi : 'chill', haptic: c.haptic !== false, sleepSnd: ['orange', 'deeper', 'deepest'].includes(c.sleepSnd) ? c.sleepSnd : 'orange', sleepHrs: [8, 10, 12, 0].includes(c.sleepHrs) ? c.sleepHrs : 8, sleepVol: [20, 40, 60, 80, 100].includes(c.sleepVol) ? c.sleepVol : 60},
       run: obj(r) && ['focus','short','long'].includes(r.phase) ? {phase: r.phase, startTs: num(r.startTs, 0), pausedMs: num(r.pausedMs, 0), pauseAt: r.pauseAt ? num(r.pauseAt, 0) : null, n: int(r.n, 0, 999, 0), idle: !!r.idle, ...(r.mins ? {mins: int(r.mins, 5, 90, 25)} : {}), ...(r.extra ? {extra: int(r.extra, 0, 3600000, 0)} : {})} : null}; }
+  if ('stopwatch' in s) out.stopwatch = cleanStopwatch(obj(s.stopwatch) ? s.stopwatch : {});   /* stopwatch-v1 */ // saved multi-step timers (absent until one is saved)
   if ('breath' in s) out.breath = cleanBreath(obj(s.breath) ? s.breath : {});   // Breathe: settings and finished sessions (absent until it is used)
   out.pomoLog = (Array.isArray(s.pomoLog) ? s.pomoLog : []).filter(x => obj(x)).map(x => ({ts: num(x.ts, 0), mins: int(x.mins, 1, 90, 25)})).filter(x => x.ts > 0);
   out.testGold = PREVIEW && Array.isArray(s.testGold) ? s.testGold.filter(x => obj(x)).map(x => ({ts: num(x.ts, 0), g: int(x.g, 0, 100000, 0)})) : [];
@@ -2864,6 +2940,7 @@ function mergeSaves(a, b){
   if (o.habitFrom && (!out.habitFrom || o.habitFrom < out.habitFrom)) out.habitFrom = o.habitFrom;
   if (o.habitWk) out.habitWk = 1;
   if (out.breath || o.breath) out.breath = mergeBreath(out.breath, o.breath);
+  if (out.stopwatch || o.stopwatch) out.stopwatch = mergeStopwatch(out.stopwatch, o.stopwatch);   /* stopwatch-v1 */
   if (o.slumpFrom && (!out.slumpFrom || o.slumpFrom < out.slumpFrom)) out.slumpFrom = o.slumpFrom;
   if (o.smogFrom && (!out.smogFrom || o.smogFrom < out.smogFrom)) out.smogFrom = o.smogFrom;
   if (o.sirenFrom && (!out.sirenFrom || o.sirenFrom < out.sirenFrom)) out.sirenFrom = o.sirenFrom;
@@ -12162,6 +12239,9 @@ const ICON = {
   calendar:'<rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16M8.5 3v4M15.5 3v4"/>',
   cycle:'<path d="M4.8 13.9A7.5 7.5 0 0 1 14.6 5"/><path d="M19.2 10.1A7.5 7.5 0 0 1 9.4 19"/><path d="M15.7 1.8L18.2 6.3 13.3 8Z M8.3 22.2L5.8 17.7 10.7 16Z" fill="currentColor"/>',
   timer:'<path d="M10 2h4M12 14l3-3"/><circle cx="12" cy="14" r="8"/>',
+  stopwatch:'<circle cx="12" cy="13.5" r="7.5"/><path d="M10 2.5h4M12 2.5V6M12 13.5V9.5M18 7l1.6-1.6"/>',   /* stopwatch-v1 */
+  skipf:'<path d="M6 6.5l8 5.5-8 5.5z"/><path d="M18 6v12"/>',
+  skipb:'<path d="M18 6.5L10 12l8 5.5z"/><path d="M6 6v12"/>',
   menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
   bag:'<rect x="4" y="8" width="16" height="12" rx="2"/><path d="M4 13h16M10 13v2h4v-2M8 8V6.5A2.5 2.5 0 0110.5 4h3A2.5 2.5 0 0116 6.5V8"/>',
   bars:'<path d="M5 20V11M12 20V5M19 20v-7"/>',
@@ -12214,11 +12294,11 @@ function daysText(days){
   const run = idx.every((v,i) => i===0 || v === idx[i-1]+1);
   return run && s.length > 2 ? `${DOW[s[0]]}–${DOW[s[s.length-1]]}` : s.map(d => DOW[d]).join(', ');
 }
-const TITLES = {today:'Today', battle:'Battle', todo:'To-dos', shop:'Shop', settings:'Settings', focus:'Focus', sleep:'Sleep', breathe:'Breath', riff:'Riff’s stall', stats:'Stats', skills:'Skill tree', inv:'Inventory', beasts:'Bestiary'};
-const PAGE_TABS = ['settings', 'focus', 'sleep', 'breathe', 'stats', 'skills', 'inv', 'riff', 'beasts'];   // full pages opened from the side menu, with a back button
+const TITLES = {today:'Today', battle:'Battle', todo:'To-dos', shop:'Shop', settings:'Settings', focus:'Focus', sleep:'Sleep', breathe:'Breath', stopwatch:'Stopwatch', riff:'Riff’s stall', stats:'Stats', skills:'Skill tree', inv:'Inventory', beasts:'Bestiary'};
+const PAGE_TABS = ['settings', 'focus', 'sleep', 'breathe', 'stopwatch', 'stats', 'skills', 'inv', 'riff', 'beasts'];   // full pages opened from the side menu, with a back button
 function renderHeader(){
   const d = parseKey(D.today).toLocaleDateString('en-US', {weekday:'long', month:'short', day:'numeric'});
-  const dark = tab === 'focus' || tab === 'sleep' || tab === 'breathe'; document.body.classList.toggle('focusmode', dark); document.documentElement.classList.toggle('focusmode', dark); document.body.classList.toggle('sleepmode', tab === 'sleep'); document.body.dataset.pomo = pomoState();
+  const dark = tab === 'focus' || tab === 'sleep' || tab === 'breathe' || tab === 'stopwatch'; document.body.classList.toggle('stwmode', tab === 'stopwatch'); document.body.classList.toggle('stwrun', tab === 'stopwatch' && !!stwRun); document.body.classList.toggle('focusmode', dark); document.documentElement.classList.toggle('focusmode', dark); document.body.classList.toggle('sleepmode', tab === 'sleep'); document.body.dataset.pomo = pomoState();
   { const br = tab === 'breathe', run = br && !!breathRun; if (!br) breathChrome = false; document.body.classList.toggle('breathmode', br); document.body.classList.toggle('breathrun', run); document.body.classList.toggle('brshow', run && (!!breathRun.pauseAt || breathChrome)); }
   if (tab === 'focus'){
     document.getElementById('top').innerHTML = `<button class="fpill" data-back aria-label="Back to ${TITLES[prevTab] || 'Today'}">${svg('back',20,2.4)} Back</button><span class="row" style="gap:8px">${musicBtn()}<span class="fpill" aria-label="${D.balance} gold"><i class="gdot"></i>${D.balance} G</span></span>`;
@@ -12228,6 +12308,10 @@ function renderHeader(){
     document.getElementById('top').innerHTML = (breathInner() ? `<button class="fpill" data-breath="up" aria-label="Back to ${breathRun ? BREATH_BY[breathRun.ex].name : 'Breath'}">${svg('back',20,2.4)} Back</button>` : `<button class="fpill" data-back aria-label="Back to ${TITLES[prevTab] || 'Today'}">${svg('back',20,2.4)} Back</button>`) + (breathRun
       ? `<button class="iconbtn brib" data-breath="stop" aria-label="End the session">${svg('x',20,2.4)}</button>`
       : `<span class="fpill" aria-label="${D.balance} gold"><i class="gdot"></i>${D.balance} G</span>`);
+    return;
+  }
+  if (tab === 'stopwatch'){   /* stopwatch-v1 */
+    document.getElementById('top').innerHTML = `<button class="fpill" data-back aria-label="Back to ${TITLES[prevTab] || 'Today'}">${svg('back',20,2.4)} Back</button><span></span>`;
     return;
   }
   if (tab === 'sleep'){
@@ -12241,7 +12325,7 @@ function renderHeader(){
   }
   document.getElementById('top').innerHTML = `<div class="ttlblk"><h1>${TITLES[tab]}</h1><span class="eyebrow">${d}</span></div>
     <div class="row" style="gap:8px"><span class="goldpill" aria-label="${D.balance} gold"><i></i>${D.balance} G</span>
-    <button class="iconbtn sm ${(S.pomo.run && !S.pomo.run.idle) || sleepRun || breathRun ? 'dotted' : ''}" data-drawer aria-label="Menu" aria-haspopup="dialog">${svg('menu',21,2.2)}</button></div>`;
+    <button class="iconbtn sm ${(S.pomo.run && !S.pomo.run.idle) || sleepRun || breathRun || stwBusy() ? 'dotted' : ''}" data-drawer aria-label="Menu" aria-haspopup="dialog">${svg('menu',21,2.2)}</button></div>`;
 }
 /* ---------- side menu: slides in from the right. Add a feature by adding a line to DRAWER_ITEMS ---------- */
 const DRAWER_ITEMS = [
@@ -12249,6 +12333,7 @@ const DRAWER_ITEMS = [
     {tab: 'focus', label: 'Focus', icon: 'timer', status: () => S.pomo.run && !S.pomo.run.idle ? (S.pomo.run.pauseAt ? 'Paused' : 'Running') : ''},
     {tab: 'sleep', label: 'Sleep', icon: 'moon', status: () => sleepRun ? (sleepRun.paused ? 'Paused' : 'Playing') : ''},
     {tab: 'breathe', label: 'Breath', icon: 'wind', status: () => breathRun ? (breathRun.pauseAt ? 'Paused' : 'Running') : ''},
+    {tab: 'stopwatch', label: 'Stopwatch', icon: 'stopwatch', status: () => stwStatus()},   /* stopwatch-v1 */
   ],
   [   // your character
     {tab: 'inv', label: 'Inventory', icon: 'bag'},
@@ -13809,7 +13894,7 @@ function renderInner(){
   renderHeader();
   const v = document.getElementById('view');
   if (tab === 'stats' || tab === 'skills'){ sheetMode = 'stats'; statsSec = tab; } else if (tab === 'inv') sheetMode = 'inv'; else if (sheetMode === 'stats' || sheetMode === 'inv') sheetMode = null;
-  v.innerHTML = tab === 'today' ? renderToday() : tab === 'battle' ? renderBattle() : tab === 'todo' ? renderTodo() : tab === 'shop' ? renderShop() : tab === 'focus' ? renderFocus() : tab === 'sleep' ? renderSleep() : tab === 'breathe' ? renderBreath() : tab === 'stats' || tab === 'skills' ? `<div class="pagewrap">${renderStatsPanel(tab)}</div>` : tab === 'inv' ? `<div class="pagewrap">${renderInventory()}</div>` : tab === 'riff' ? `<div class="pagewrap">${renderRiff()}</div>` : tab === 'beasts' ? `<div class="pagewrap">${renderBeasts()}</div>` : renderSettings();
+  v.innerHTML = tab === 'today' ? renderToday() : tab === 'battle' ? renderBattle() : tab === 'todo' ? renderTodo() : tab === 'shop' ? renderShop() : tab === 'focus' ? renderFocus() : tab === 'sleep' ? renderSleep() : tab === 'breathe' ? renderBreath() : tab === 'stopwatch' ? renderStopwatch() : tab === 'stats' || tab === 'skills' ? `<div class="pagewrap">${renderStatsPanel(tab)}</div>` : tab === 'inv' ? `<div class="pagewrap">${renderInventory()}</div>` : tab === 'riff' ? `<div class="pagewrap">${renderRiff()}</div>` : tab === 'beasts' ? `<div class="pagewrap">${renderBeasts()}</div>` : renderSettings();
   document.querySelectorAll('#tabs button[data-tab]').forEach(b => b.setAttribute('aria-current', b.dataset.tab === tab ? 'page' : 'false'));
   { const bt = document.querySelector('#tabs button[data-tab="battle"]'), w = !recoveryMode && D && visitorWaiting(); if (bt){ bt.classList.toggle('badge', !!w && tab !== 'battle'); bt.setAttribute('aria-label', w ? 'Battle, a visitor is waiting' : 'Battle'); } }
   centerTabs(v);
@@ -13842,7 +13927,7 @@ function draw(heroOnly){   // heroOnly: just the canvases the new hero is on (it
   const sc = document.getElementById('scene');
   if (sc){ const so = {smog: D.inn || !D.smog.pts ? 0 : D.smog.pts >= 9 ? 3 : D.smog.pts >= 4 ? 2 : 1, slump: D.slump && D.slump.on, bg: D.inn ? 'inn' : S.equip.bg, color:S.equip.color, hat:looks().hat, gear:looksGear(), stage:stage(D.lv.level), cls: petCls(), mood: D.inn ? 'sleep' : now < jumpUntil ? 'happy' : D.mood, f:frame, motion:motionOK, jump: !D.inn && now < jumpUntil && (Math.floor(now/120)%2===0)};   // resting at the Inn: asleep all day, no hop
     if (heroOn()) drawHeroScene(sc, Object.assign(so, {lv: D.lv.level, cheer: !D.inn && now < jumpUntil})); else drawScene(sc, so); }
-  if (heroOnly === true){ const hs = document.getElementById('spaceCv'), hn = document.getElementById('nightCv'); if (hs) drawSpace(hs); if (hn) drawNight(hn); return; }
+  if (heroOnly === true){ const hs = document.getElementById('spaceCv'), hn = document.getElementById('nightCv'); if (hs) drawSpace(hs); if (hn) drawNight(hn); const hw = document.getElementById('stwCv'); if (hw) stwDrawCv(hw); return; }
   if (heroOn()) heroThumbs();   // Settings > Character tiles (only the ones not drawn yet)
   const hurt = now < hurtUntil && Math.floor(now/90)%2 === 0;
   const foe = D.mini ? D.mini.m : D.cur.boss, down = !D.mini && D.cur.status === 'won';
@@ -13850,7 +13935,7 @@ function draw(heroOnly){   // heroOnly: just the canvases the new hero is on (it
   const tf = todayFoe();   // the Today card and the Battle page both show a mini-boss you just beat, until the next boss or mini-boss
   if (!fx || hurt){ const m = document.getElementById('bossMiniCv'); if (m && !NEW_ART[tf.foe.shape]) drawBoss(m, tf.foe, frame, motionOK, hurt, tf.down);
   const b = document.getElementById('bossCv'); if (b && !NEW_ART[tf.foe.shape]) drawBoss(b, tf.foe, frame, motionOK, hurt, tf.down); }   // redrawn bosses run on their own steady 10 fps loop below
-  const sp = document.getElementById('spaceCv'); if (sp) drawSpace(sp);
+  const sp = document.getElementById('spaceCv'); if (sp) drawSpace(sp); const swc = document.getElementById('stwCv'); if (swc) stwDrawCv(swc);
   const nc = document.getElementById('nightCv'); if (nc) drawNight(nc);
   const shc = document.getElementById('shopCv'); if (shc) drawShopFront(shc, motionOK ? frame : 0);
   const rc = document.getElementById('riffCv'); if (rc) drawVisitorTile(rc, 'riff', motionOK ? visTick : 0);
@@ -13866,7 +13951,7 @@ function drawNewBoss(still){ if (recoveryMode || !D) return; const foe = D.mini 
   const b = document.getElementById('bossCv'); if (b && NEW_ART[tf.foe.shape]) drawBoss(b, tf.foe, frame, motionOK, hurt, tf.down); }
 // the new hero's idle steps on the same 100 ms clock; it holds still with Reduce Motion on or while the page is hidden
 function heroStep(){ if (recoveryMode || !D || !heroOn() || !motionOK || document.hidden) return; HERO.tick++;
-  if (document.getElementById('scene') || document.getElementById('spaceCv') || document.getElementById('nightCv')) draw(true); }
+  if (document.getElementById('scene') || document.getElementById('spaceCv') || document.getElementById('nightCv') || document.getElementById('stwCv')) draw(true); }
 // the visitors' tiles step on the same 100 ms clock; they hold still with Reduce Motion on or while the page is hidden
 function visitorStep(){ if (recoveryMode || !D || !motionOK || document.hidden) return; const cs = document.querySelectorAll('canvas.visitorcv, #riffCv'); if (!cs.length) return;
   visTick++; cs.forEach(c => drawVisitorTile(c, c.id === 'riffCv' ? 'riff' : c.dataset.visitor, visTick)); }
@@ -14185,6 +14270,7 @@ function renderSheet(){
     drawIcons(body); body.scrollTop = y;
   } else if (sheetMode === 'todo') renderTodoEditor();
   else if (sheetMode === 'timer') renderTimerEditor();
+  else if (sheetMode === 'stw') stwRenderEditor();   /* stopwatch-v1 */
   else renderEditor();
   sheetFull(sheetMode !== 'stats' && sheetMode !== 'inv');
 }
@@ -14273,7 +14359,7 @@ function readEditorFields(){
   if (draft.checklist) draft.checklist.forEach((c,i) => { const el = document.getElementById('clText'+i); if (el) c.text = el.value; });
 }
 function readStatFields(){ if (!statDraft) return; const n = document.getElementById('stName'), b = document.getElementById('stBlurb'); if (n) statDraft.name = n.value; if (b) statDraft.blurb = b.value; }
-function closeEditor(){ document.getElementById('sheet').hidden = true; sheetFull(false); tdraft = null; mdraft = null; archArm = false; draft = null; sheetMode = null; statEdit = null; statDraft = null; document.querySelectorAll('.app, .nav').forEach(n => n.inert = false); showAward(); }
+function closeEditor(){ document.getElementById('sheet').hidden = true; sheetFull(false); tdraft = null; mdraft = null; stwDraft = null; archArm = false; draft = null; sheetMode = null; statEdit = null; statDraft = null; document.querySelectorAll('.app, .nav').forEach(n => n.inert = false); showAward(); }
 
 
 /* ---------- quick menu, to-do editor and quick add ---------- */
@@ -14298,6 +14384,7 @@ function renderQuick(){
   const item = (act, icon, label, cls = '') => `<button class="qmitem ${cls}" data-qmact="${act}" role="menuitem">${svg(icon, 19, 2)}<span>${label}</span></button>`;
   let html = '';
   if (qmCtx.kind === 'breath') html = breathSheetHtml();
+  else if (String(qmCtx.kind).slice(0, 3) === 'stw'){ html = stwQuickHtml(); if (!qmCtx){ qm.hidden = true; return; } }   /* stopwatch-v1 */
   else if (qmCtx.kind === 'i'){ const x = tileInfo[qmCtx.key]; if (!x || !x.detail){ qmCtx = null; qm.hidden = true; return; }
     // the item's own buttons (buy, sell, equip…) become menu lines; they keep their data so the usual handlers run
     const tmp = document.createElement('div'); tmp.innerHTML = x.detail.btn || '';
@@ -14344,6 +14431,7 @@ function closePick(){ pkCtx = null; document.getElementById('pk').hidden = true;
 const pkOpt = (v, l, on, icon, more) => ({v: String(v), l, on: !!on, icon, ...(more || {})});
 function pickOpts(key){
   const [ns, k] = key.split('.');
+  if (ns === 'stw') return stwPickOpts(k);   /* stopwatch-v1 */
   if (ns === 'qa' && qaCtx){ const c = qaCtx;
     if (k === 'pri') return {title: 'Priority', opts: PRI.map(([g, l, m]) => pkOpt(g, `${m ? m + ' ' : ''}${g === 'none' ? 'No priority' : l}`, c.pri === g))};
     if (k === 'tod') return {title: 'Time of day', opts: TODS.map(g => pkOpt(g.k, g.label, c.tod === g.k, g.icon))};
@@ -14385,7 +14473,7 @@ function renderPick(){
   const P = pickOpts(pkCtx.key); if (!P){ closePick(); return; }
   const fresh = document.querySelector(`[data-pk="${pkCtx.key}"]`); if (fresh) pkCtx.el = fresh;
   let html = `<div class="pkh">${esc(P.title)}</div>`;
-  if (P.grid){ const tmr = pkCtx.key === 'tm.icon', t = tmr ? mdraft : draft, pre = tmr ? 'tm.icon' : 't.icon';
+  if (P.grid){ const stw = pkCtx.key === 'stw.icon', tmr = pkCtx.key === 'tm.icon' || stw, t = stw ? stwDraft : tmr ? mdraft : draft, pre = stw ? 'stw.icon' : tmr ? 'tm.icon' : 't.icon';
     html += `<div class="pkgrid"><button data-pick="${pre}|" class="${!t.icon ? 'on' : ''}" aria-pressed="${!t.icon}" aria-label="${tmr ? 'Use the timer icon' : "Use the main stat's icon"}">Auto</button>${TASK_ICONS.map(ic => `<button data-pick="${pre}|${ic}" class="${t.icon === ic ? 'on' : ''}" aria-pressed="${t.icon === ic}" aria-label="Icon ${ic}">${svg(ic, 18, 2)}</button>`).join('')}</div>
       ${P.colors ? `<div class="pkh sec">Color</div><div class="pkswatch">${STAT_COLORS.map(c => `<button data-pick="tm.color|${c}" class="${(mdraft.color || '#eeb7d8') === c ? 'on' : ''}" style="background:${c}" aria-label="Color ${c}" aria-pressed="${(mdraft.color || '#eeb7d8') === c}"></button>`).join('')}</div>` : ''}
       <input class="pkemoji" type="text" id="pkEmoji" maxlength="16" autocomplete="off" value="${t.icon && t.icon.startsWith('e:') ? esc(t.icon.slice(2)) : ''}" placeholder="Or type an emoji 🙂" aria-label="Emoji icon">`; }
@@ -14396,7 +14484,7 @@ function renderPick(){
   if (P.cal) html += calHTML(P.cal);
   const keepScroll = !pk.hidden && card.dataset.key === pkCtx.key ? card.scrollTop : null;
   card.innerHTML = html; card.dataset.key = pkCtx.key; card.classList.toggle('cal', !!P.cal); pk.hidden = false; placePick(card);
-  if (P.num && !pkCtx.focused){ pkCtx.focused = true; const n = document.getElementById('pkNum'); if (n) setTimeout(() => n.focus(), 20); }
+  if (P.num && !pkCtx.focused && !pkCtx.key.startsWith('stw.')){ pkCtx.focused = true; const n = document.getElementById('pkNum'); if (n) setTimeout(() => n.focus(), 20); }
   if (keepScroll != null) card.scrollTop = keepScroll;
   else { const on = card.querySelector('[aria-checked="true"]'); if (on && on.offsetTop + on.offsetHeight > card.clientHeight) card.scrollTop = on.offsetTop - card.clientHeight / 2; }
 }
@@ -14427,6 +14515,7 @@ function placePick(card){
 }
 function applyPick(key, v){
   const [ns, k] = key.split('.');
+  if (ns === 'stw'){ stwApplyPick(k, v); return; }   /* stopwatch-v1 */
   if (ns === 'qa' && qaCtx){ const txt = (document.getElementById('qaText') || {}).value || ''; closePick();
     if (k === 'target') qaCtx.target = clamp(parseInt(v) || 3, 1, 7); else qaCtx[k] = v;
     renderQuickAdd(txt); const i = document.getElementById('qaText'); if (i) i.focus(); return; }
@@ -14462,6 +14551,7 @@ function applyPick(key, v){
 }
 function quickAct(act){
   const c = qmCtx;
+  if (c && String(c.kind).slice(0, 3) === 'stw'){ stwQuickAct(act); return; }   /* stopwatch-v1 */
   if (c.kind === 't'){ const t = S.tasks.find(x => x.id === c.id); if (!t) return closeQuick();
     if (act === 'edit'){ closeQuick(); openEditor(t); return; }
     if (act === 'copy'){ closeQuick(); openEditor(t); runAction({copytask: ''}); return; }
@@ -14488,6 +14578,249 @@ function quickAct(act){
     if (act === 'move'){ const b = document.querySelector('#qmcard [data-qmact="move"]'); if (b) openPick('m.move', b); return; }
     if (act === 'del'){ if (!todoDeletable(L, it)) return closeQuick(); if (!c.del){ c.del = true; renderQuick(); return; } closeQuick(); L.items = L.items.filter(x => x.id !== it.id); save(); render(); toast('Deleted'); return; } }
 }
+/* ---------- stopwatch-v1: Stopwatch page: a quick timer, a count-up stopwatch and saved multi-step timers (yoga flows, home circuits) ----------
+   One timer at a time, no game rewards. A run is wall-clock based (elapsed = base + now - anchor), so coming back from the background lands
+   on the right step; rests between steps are added at run time, never stored. Quick timer and count-up are single use (never saved). */
+var stwRun = null, stwUp = null, stwDraft = null, stwQuick = {name: '', s: 60}, stwLock = null, stwDelArm = false;
+const STW_REST_OPTS = [0, 5, 10, 15, 20, 30], STW_TIMES = [5, 10, 15, 20, 30, 45, 60, 90, 120, 180, 240, 300, 420, 600, 900, 1200, 1800, 2700, 3600];
+const stwT = s => { s = Math.max(0, Math.round(s)); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return h ? `${h}:${String(m).padStart(2, '0')}:${String(x).padStart(2, '0')}` : `${m}:${String(x).padStart(2, '0')}`; };
+const stwLeft = ms => stwT(Math.ceil(Math.max(0, ms) / 1000));
+const stwTimers = () => (S.stopwatch && S.stopwatch.timers) || [];
+const stwTotal = t => t.steps.reduce((a, x) => a + x.s, 0) + (t.rest || 0) * Math.max(0, t.steps.length - 1);
+const stwIcon = (t, s) => t && t.icon ? (t.icon.startsWith('e:') ? `<span class="temoji">${esc(t.icon.slice(2))}</span>` : svg(t.icon, s || 18, 2)) : svg('stopwatch', s || 18, 2);
+const stwBusy = () => !!stwRun || !!(stwUp && (stwUp.anchor || stwUp.base > 0));
+const stwStatus = () => stwRun ? (stwRun.anchor ? 'Running' : 'Paused') : stwUp && (stwUp.anchor || stwUp.base > 0) ? (stwUp.anchor ? 'Running' : 'Paused') : '';
+const stwEl = (r, now) => r.base + (r.anchor ? now - r.anchor : 0);
+// the run: each step, and a rest after every step but the last
+function stwPlan(t){
+  const plan = [], n = t.steps.length; let at = 0;
+  t.steps.forEach((x, i) => { plan.push({k: 'step', i, name: x.name || `Step ${i + 1}`, s: x.s, at}); at += x.s * 1000;
+    if (t.rest && i < n - 1){ plan.push({k: 'rest', i, name: 'Rest', s: t.rest, at}); at += t.rest * 1000; } });
+  return {plan, total: at};
+}
+function stwSay(text){ try { if (!stwRun || !stwRun.cfg.speak || document.visibilityState !== 'visible' || !window.speechSynthesis) return; speechSynthesis.cancel(); speechSynthesis.speak(new SpeechSynthesisUtterance(text)); } catch(e){} }
+function stwChime(kind){ try { if (!stwRun || !stwRun.cfg.chime || document.visibilityState !== 'visible') return; sfxInit(); if (!actx) return; const t0 = actx.currentTime + 0.02;
+  for (const [f, dt, d] of SFX[kind === 'done' ? 'focusDone' : kind === 'start' ? 'start' : 'breakDone']) tone(f, t0 + dt, d, 0.2); } catch(e){} }
+function stwAwake(on){ try {
+  if (!on){ if (stwLock){ const l = stwLock; stwLock = null; l.release().catch(() => {}); } return; }
+  if (stwLock || !navigator.wakeLock || document.visibilityState !== 'visible') return;
+  navigator.wakeLock.request('screen').then(l => { if (stwRun && stwRun.anchor && !stwLock){ stwLock = l; l.addEventListener('release', () => { if (stwLock === l) stwLock = null; }); } else l.release().catch(() => {}); }).catch(() => {}); } catch(e){} }
+// one timer at a time: starting another while one runs asks first
+function stwAsk(next){ qmCtx = {kind: 'stwask', next}; renderQuick(); }
+function stwGo(next){
+  if (stwBusy()) return stwAsk(next);
+  if (next.up){ stwUp = {base: 0, anchor: Date.now(), laps: []}; render(); return; }
+  const t = next.timer, {plan, total} = stwPlan(t);
+  stwRun = {id: next.quick ? null : t.id, quick: !!next.quick, name: t.name || 'Quick timer', icon: t.icon, n: t.steps.length, plan, total, cfg: {speak: !!t.speak, chime: t.chime !== false, wait: !!t.wait}, base: 0, anchor: Date.now(), seg: 0, waiting: false, backAt: 0};
+  if (!PAGE_TABS.includes(tab)) prevTab = tab; tab = 'stopwatch'; closeQuick(); render(); window.scrollTo(0, 0);
+  stwChime('start'); stwSay(plan[0].name); stwAwake(true);
+}
+function stwStop(done){
+  const r = stwRun; stwRun = null; stwAwake(false); try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch(e){}
+  if (done && r){ const keep = r.cfg; stwRun = {cfg: keep}; stwChime('done'); stwSay('Done'); stwRun = null; toast(`${r.name} done`); }
+  render();
+}
+function stwSeek(i, say){ const r = stwRun; if (!r) return; if (i >= r.plan.length) return stwStop(true);
+  i = Math.max(0, i); r.seg = i; r.base = r.plan[i].at; r.waiting = false; if (r.anchor) r.anchor = Date.now(); if (say) stwSay(r.plan[i].name); stwRefresh(true); }
+// back: restart the step (in a rest: the step before it); twice within 1.5 s: the step before that
+function stwBack(){ const r = stwRun; if (!r) return; const now = Date.now(), dbl = now - r.backAt < 1500; r.backAt = now;
+  let c = r.seg; if (r.plan[c].k === 'rest') c--;
+  if (dbl){ let j = c - 1; while (j >= 0 && r.plan[j].k !== 'step') j--; if (j >= 0) c = j; }
+  stwSeek(Math.max(0, c), true); }
+// move the run on to now: every step end it passed (from the background too) in one go; with "pause between steps" it holds at the first
+function stwTick(){
+  const r = stwRun; if (!r || !r.anchor) return stwPaintUp();
+  const now = Date.now(), el = stwEl(r, now); let crossed = 0;
+  while (r.seg < r.plan.length && el >= r.plan[r.seg].at + r.plan[r.seg].s * 1000){
+    const p = r.plan[r.seg];
+    if (r.cfg.wait && p.k === 'step' && r.seg < r.plan.length - 1){ r.base = p.at + p.s * 1000; r.anchor = null; r.waiting = true; r.seg++; crossed++; break; }
+    r.seg++; crossed++; }
+  if (r.seg >= r.plan.length) return stwStop(true);
+  if (crossed){ stwChime('step'); if (!r.waiting) stwSay(r.plan[r.seg].name); if (r.waiting) stwAwake(false); stwRefresh(true); } else stwPaint();
+}
+function stwRefresh(full){ if (tab === 'stopwatch' && full) render(); else stwPaint(); }
+// the live numbers without a re-render
+function stwPaint(){ const r = stwRun; if (!r || tab !== 'stopwatch') return;
+  const now = Date.now(), el = stwEl(r, now), p = r.plan[r.seg], into = el - p.at, frac = Math.min(1, Math.max(0, into / (p.s * 1000)));
+  const ring = document.getElementById('stwRing'); if (ring){ const c = 2 * Math.PI * 42; ring.style.strokeDashoffset = (c * (1 - frac)).toFixed(2); }
+  const tm = document.getElementById('stwTime'); if (tm) tm.textContent = stwLeft(p.s * 1000 - into);
+  const tl = document.getElementById('stwTotalLeft'); if (tl) tl.textContent = stwLeft(r.total - el) + ' left'; }
+function stwUpEl(){ return stwUp ? stwUp.base + (stwUp.anchor ? Date.now() - stwUp.anchor : 0) : 0; }
+const stwCs = ms => { const t = Math.floor(ms / 100), m = Math.floor(t / 600), s = Math.floor(t / 10) % 60; return `${m}:${String(s).padStart(2, '0')}.${t % 10}`; };
+function stwPaintUp(){ const u = document.getElementById('stwUp'); if (u) u.textContent = stwCs(stwUpEl()); }
+setInterval(() => { if (recoveryMode || !D) return; try { stwTick(); } catch(e){ console.error(e); } }, 200);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && stwRun){ stwTick(); if (stwRun && stwRun.anchor) stwAwake(true); } });
+// the page
+function renderStopwatch(){
+  if (stwRun) return stwRunHtml();
+  const up = stwUp, upOn = up && up.anchor, upEl = stwUpEl(), T = stwTimers();
+  const laps = up && up.laps.length ? `<ol class="stwlaps">${up.laps.map((l, i) => `<li><span>Lap ${i + 1}</span><b>${stwCs(l - (i ? up.laps[i - 1] : 0))}</b></li>`).reverse().join('')}</ol>` : '';
+  return `<section class="stwpage">
+    <h2 class="ptitle stwh">Stopwatch</h2>
+    <div class="stwtop">
+      <div class="stwcard"><b>Quick timer</b><input class="stwin" id="stwQName" maxlength="40" value="${esc(stwQuick.name)}" placeholder="Name" aria-label="Quick timer name"><button type="button" class="stwpill" data-pk="stw.quick" aria-label="Time">${stwT(stwQuick.s)}</button><button class="btn primary sm stwgo" data-stw="quick">Start</button></div>
+      <div class="stwcard"><b>Count up</b><div class="stwup" id="stwUp" aria-live="off">${stwCs(upEl)}</div><div class="stwupc"><button class="btn sm ${upOn ? '' : 'primary'}" data-stw="${upOn ? 'uppause' : 'upgo'}">${upOn ? 'Pause' : up && up.base ? 'Resume' : 'Start'}</button><button class="btn sm" data-stw="uplap" ${upOn ? '' : 'disabled'} aria-label="Lap">Lap</button><button class="btn sm" data-stw="upstop" ${up ? '' : 'disabled'} aria-label="Stop">${svg('x', 14, 2.6)}</button></div>${laps}</div>
+    </div>
+    <h3 class="brh">Saved timers</h3>
+    ${T.length ? `<div class="brrows">${T.map(t => `<div class="brline"><button class="brgo stwrow" data-stw="start|${t.id}" aria-label="Start ${esc(t.name)}"><span class="stwic">${stwIcon(t, 18)}</span><span class="stwnm"><b>${esc(t.name)}</b><small>${stwT(stwTotal(t))} · ${t.steps.length} step${t.steps.length === 1 ? '' : 's'}</small></span></button><button class="brstar" data-stw="menu|${t.id}" aria-label="${esc(t.name)}: more">${svg('dots', 18, 2.2)}</button></div>`).join('')}</div>` : ''}
+    <button type="button" class="stwnew" data-stw="new">${svg('plus', 16, 2.6)} New timer</button>
+  </section>`;
+}
+function stwRunHtml(){
+  const r = stwRun, now = Date.now(), el = stwEl(r, now), p = r.plan[r.seg], into = el - p.at, frac = Math.min(1, Math.max(0, into / (p.s * 1000)));
+  const R = 42, circ = 2 * Math.PI * R, rest = p.k === 'rest', stepI = p.i, nx = r.plan.slice(r.seg + 1).find(x => x.k === 'step');
+  const playIc = !r.anchor ? '<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>' : '<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
+  const doneN = rest ? stepI + 1 : stepI;
+  const prog = r.n <= 24 ? `<div class="stwdots" aria-label="Step ${stepI + 1} of ${r.n}">${Array.from({length: r.n}, (_, i) => `<i class="${i < doneN ? 'd' : i === stepI && !rest ? 'on' : ''}"></i>`).join('')}</div>`
+    : `<div class="stwbar" aria-label="Step ${stepI + 1} of ${r.n}"><i style="width:${(100 * doneN / r.n).toFixed(1)}%"></i></div><small class="stwof">Step ${stepI + 1} of ${r.n}</small>`;
+  return `<section class="space stwrunv" aria-label="${esc(r.name)}">
+    <h2 class="ptitle">${esc(p.name)}</h2>
+    <div class="psub">${esc(r.name)}${r.waiting ? ' · Tap play to go on' : !r.anchor ? ' · Paused' : ''}</div>
+    <div class="ringwrap"><svg class="ring" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="${R}" class="rtrack"/><circle id="stwRing" cx="50" cy="50" r="${R}" class="rbar ${r.anchor ? (rest ? 'st-long' : 'st-short') : 'st-paused'}" stroke-dasharray="${circ.toFixed(2)}" stroke-dashoffset="${(circ * (1 - frac)).toFixed(2)}"/></svg>
+      <canvas id="stwCv" width="38" height="38" role="img" aria-label="${esc(S.petName)}"></canvas></div>
+    <div class="ptime" id="stwTime" aria-live="off">${stwLeft(p.s * 1000 - into)}</div>
+    <div class="stwnext"><span>${nx ? `Next · ${esc(nx.name)}` : 'Last step'}</span><span id="stwTotalLeft">${stwLeft(r.total - el)} left</span></div>
+    ${prog}
+    <div class="stwctrl">
+      <button class="stwcb" data-stw="back" aria-label="Back (twice: previous step)">${svg('skipb', 24, 2.2)}</button>
+      <button class="pmain" data-stw="${r.anchor ? 'pause' : 'resume'}" aria-label="${r.anchor ? 'Pause' : 'Resume'}">${playIc}</button>
+      <button class="stwcb" data-stw="skip" aria-label="Skip">${svg('skipf', 24, 2.2)}</button>
+    </div>
+    <button class="ptext stwstop" data-stw="stop">Stop</button>
+  </section>`;
+}
+function stwDrawCv(cv){ if (heroOn()) return drawHeroBadge(cv, {lv: D.lv.level, motion: motionOK, state: stwRun && !stwRun.anchor ? 'paused' : ''}); drawSpace(cv); }
+// the half menu: a saved timer's actions, or "stop the one running?"
+function stwQuickHtml(){
+  const c = qmCtx, item = (act, icon, label, cls = '') => `<button class="qmitem ${cls}" data-qmact="${act}" role="menuitem">${svg(icon, 19, 2)}<span>${label}</span></button>`;
+  if (c.kind === 'stwask'){ const cur = stwRun ? stwRun.name : 'Stopwatch';
+    return `<div class="qmhead">Stop ${esc(cur)}?</div><div class="qmsecs"><div class="qmsec"><span class="qminfo">One timer runs at a time.</span></div></div>` + item('swap', 'stopwatch', 'Stop it and start this one') + item('keep', 'x', 'Keep it running'); }
+  if (c.kind === 'stwstep'){ const st = stwDraft && stwDraft.steps, i = st ? st.findIndex(x => x.id === c.sid) : -1; if (i < 0){ qmCtx = null; return ''; } const x = st[i];
+    return `<div class="qmhead" id="stwSHead">${esc(x.name || `Step ${i + 1}`)}</div><div class="qmsecs"><div class="qmsec"><input class="stwqin" id="stwSName" maxlength="40" value="${esc(x.name)}" placeholder="Step ${i + 1}" aria-label="Step name" autocomplete="off"></div></div>`
+      + item('time', 'clock', `Time · ${stwT(x.s)}`) + item('dup', 'copy', 'Duplicate step') + (st.length > 1 ? item('del', 'trash', c.del ? 'Tap again to delete' : 'Delete step', 'danger') : ''); }
+  const t = stwTimers().find(x => x.id === c.id); if (!t){ qmCtx = null; return ''; }
+  return qmTop(t.name, '', `${stwT(stwTotal(t))} · ${t.steps.length} step${t.steps.length === 1 ? '' : 's'}${t.rest ? ` · ${t.rest} s rests` : ''}`) + item('start', 'stopwatch', 'Start') + item('edit', 'pencil', 'Edit timer') + item('dup', 'copy', 'Duplicate') + item('del', 'trash', c.del ? 'Tap again to delete' : 'Delete', 'danger');
+}
+function stwQuickAct(act){
+  const c = qmCtx;
+  if (c.kind === 'stwask'){ if (act === 'swap'){ const nx = c.next; closeQuick(); stwRun = null; stwUp = null; stwAwake(false); stwGo(nx); return; } closeQuick(); return; }
+  if (c.kind === 'stwstep'){ const st = stwDraft && stwDraft.steps, i = st ? st.findIndex(x => x.id === c.sid) : -1; if (i < 0) return closeQuick();
+    if (act === 'time'){ const b = document.querySelector('#qmcard [data-qmact="time"]'); if (b) openPick('stw.s~' + c.sid, b); return; }
+    if (act === 'dup'){ closeQuick(); if (st.length < STW_STEPS) st.splice(i + 1, 0, {...st[i], id: stwSid()}); stwRenderEditor(); return; }
+    if (act === 'del'){ if (st.length < 2) return closeQuick(); if (!c.del){ c.del = true; renderQuick(); return; } closeQuick(); stwDraft.steps = st.filter(x => x.id !== c.sid); stwRenderEditor(); return; }
+    return; }
+  const t = stwTimers().find(x => x.id === c.id); if (!t) return closeQuick();
+  if (act === 'start'){ closeQuick(); stwGo({timer: t}); return; }
+  if (act === 'edit'){ closeQuick(); stwOpenEditor(t.id); return; }
+  if (act === 'dup'){ closeQuick(); const now = Date.now(), cp = clone(t); cp.id = 'w' + now.toString(36); cp.name = (t.name + ' copy').slice(0, 40); cp.created = cp.updated = now;
+    const T = S.stopwatch.timers; T.splice(T.indexOf(t) + 1, 0, cp); save(); render(); toast(`Made ${cp.name}`); return; }
+  if (act === 'del'){ if (!c.del){ c.del = true; renderQuick(); return; } closeQuick(); const now = Date.now(); S.stopwatch.timers = stwTimers().filter(x => x.id !== t.id); S.stopwatch.gone[t.id] = now; save(); render(); toast(`Deleted ${t.name}`); }
+}
+// buttons on the page, the running screen and the editor (data-stw="action|arg")
+function stwClick(el){
+  const [a, v] = el.dataset.stw.split('|');
+  if (a === 'quick'){ const n = document.getElementById('stwQName'); stwQuick.name = n ? n.value.trim().slice(0, 40) : ''; stwGo({quick: true, timer: {name: stwQuick.name || 'Quick timer', steps: [{name: stwQuick.name || 'Quick timer', s: stwQuick.s}], rest: 0}}); return true; }
+  if (a === 'start'){ const t = stwTimers().find(x => x.id === v); if (t) stwGo({timer: t}); return true; }
+  if (a === 'menu'){ if (stwTimers().some(x => x.id === v)){ qmCtx = {kind: 'stw', id: v, del: false}; renderQuick(); } return true; }
+  if (a === 'new'){ stwOpenEditor(null); return true; }
+  if (a === 'upgo'){ if (stwRun) return stwAsk({up: true}), true; if (!stwUp) stwUp = {base: 0, anchor: 0, laps: []}; stwUp.anchor = Date.now(); render(); return true; }
+  if (a === 'uppause'){ if (stwUp && stwUp.anchor){ stwUp.base = stwUpEl(); stwUp.anchor = 0; } render(); return true; }
+  if (a === 'uplap'){ if (stwUp && stwUp.anchor) stwUp.laps = stwUp.laps.concat(stwUpEl()).slice(-99); render(); return true; }
+  if (a === 'upstop'){ stwUp = null; render(); return true; }
+  const r = stwRun;
+  if (a === 'pause'){ if (r && r.anchor){ r.base = stwEl(r, Date.now()); r.anchor = null; stwAwake(false); render(); } return true; }
+  if (a === 'resume'){ if (r && !r.anchor){ r.anchor = Date.now(); const w = r.waiting; r.waiting = false; if (w) stwSay(r.plan[r.seg].name); stwAwake(true); render(); } return true; }
+  if (a === 'skip'){ if (r) stwSeek(r.seg + 1, true); return true; }
+  if (a === 'back'){ stwBack(); return true; }
+  if (a === 'stop'){ stwStop(false); return true; }
+  // the editor
+  if (!stwDraft) return false;
+  if (a === 'save'){ stwSave(); return true; }
+  if (a === 'add'){ stwRead(); if (stwDraft.steps.length >= STW_STEPS) return true; const last = stwDraft.steps[stwDraft.steps.length - 1], sid = stwSid(); stwDraft.steps.push({id: sid, name: '', s: last ? last.s : 30}); stwRenderEditor();
+    qmCtx = {kind: 'stwstep', sid, del: false}; renderQuick(); setTimeout(() => { const i = document.getElementById('stwSName'); if (i) i.focus(); }, 60); return true; }
+  // a step row: a tap opens its half menu (name, time, duplicate, delete); press and hold, then drag, moves it
+  if (a === 'smenu'){ if (stwDragged){ stwDragged = false; return true; } stwRead(); if (stwDraft.steps.some(x => x.id === v)){ qmCtx = {kind: 'stwstep', sid: v, del: false}; renderQuick(); } return true; }
+  if (a === 'tdel'){ if (!stwDelArm){ stwDelArm = true; stwRenderEditor(); return true; } const id = stwDraft.id, t = stwTimers().find(x => x.id === id); closeEditor(); stwDraft = null;
+    if (t){ S.stopwatch.timers = stwTimers().filter(x => x.id !== id); S.stopwatch.gone[id] = Date.now(); save(); toast(`Deleted ${t.name}`); } render(); return true; }
+  return false;
+}
+// the editor: the task editor's rows and pill pickers
+var stwSidN = 0;
+const stwSid = () => 's' + Date.now().toString(36) + (stwSidN++).toString(36);
+function stwOpenEditor(id){
+  const t = id && stwTimers().find(x => x.id === id);
+  stwDraft = t ? {...clone(t), isNew: false} : {id: 'w' + Date.now().toString(36), name: '', steps: [{id: stwSid(), name: '', s: 60}], rest: 0, isNew: true};
+  stwDelArm = false; sheetMode = 'stw'; stwRenderEditor(); showSheet(stwDraft.isNew ? 'New timer' : 'Edit timer'); sheetFull(true);
+  setTimeout(() => { const n = document.getElementById('stwName'); if (n && stwDraft && stwDraft.isNew) n.focus(); }, 30);
+}
+function stwRead(){ if (!stwDraft || document.getElementById('sheet').hidden) return;
+  const n = document.getElementById('stwName'); if (n) stwDraft.name = n.value;
+  for (const k of ['speak', 'chime', 'wait']){ const el = document.getElementById('stwO' + k); if (el) stwDraft[k] = el.checked; } }
+function stwRenderEditor(){
+  const t = stwDraft, ro = STW_REST_OPTS.includes(t.rest || 0);
+  document.getElementById('sheetBody').innerHTML = `
+    <div class="edhead"><button class="edx" data-close aria-label="Close without saving">${svg('x',20,2.4)}</button><b>${t.isNew ? 'New timer' : 'Edit timer'}</b><button class="edok" data-stw="save" aria-label="Save">${svg('check',20,2.8)}</button></div>
+    <div class="ednamewrap"><input class="edname" type="text" id="stwName" maxlength="40" value="${esc(t.name)}" placeholder="Name this timer" aria-label="Name"><button type="button" class="edicon" data-pk="stw.icon" style="background:var(--pink)" aria-label="Icon">${stwIcon(t, 18)}</button></div>
+    <div class="edcard"><div class="edhd stwhd"><span>Steps</span><span class="stwtot" id="stwTot">${stwT(stwTotal(t))}</span></div>
+      <div class="edsteps" data-sdlist="stw">${t.steps.map((x, i) => `<div class="edstep stwstep" data-sid="${esc(x.id)}"><button type="button" class="stwsbtn ${x.name ? '' : 'ph'}" data-stw="smenu|${esc(x.id)}" aria-label="Step ${i + 1}: ${esc(x.name || 'no name')}. Tap for options, press and hold to move">${esc(x.name || `Step ${i + 1}`)}</button><button type="button" class="stwpill" data-pk="stw.s~${esc(x.id)}" aria-label="Step ${i + 1} time">${stwT(x.s)}</button></div>`).join('')}</div>
+      ${t.steps.length < STW_STEPS ? edAdd('data-stw="add"') : ''}</div>
+    <div class="edcard">
+      ${edRow('stw.rest', 'Rest between steps', t.rest ? `${t.rest} s` : 'Off', 'bed')}
+      <label class="edrow" for="stwOspeak"><span>Speak step names</span><input type="checkbox" class="tog" id="stwOspeak" ${t.speak ? 'checked' : ''}></label>
+      <label class="edrow" for="stwOchime"><span>Chime at each step end</span><input type="checkbox" class="tog" id="stwOchime" ${t.chime !== false ? 'checked' : ''}></label>
+      <label class="edrow" for="stwOwait"><span>Pause between steps<span class="edsub">Wait for a tap</span></span><input type="checkbox" class="tog" id="stwOwait" ${t.wait ? 'checked' : ''}></label>
+    </div>
+    <p class="how small" id="stwErr" role="alert"></p>
+    <div class="edfoot">${t.isNew ? '<span></span>' : `<button type="button" class="edtrashbtn ${stwDelArm ? 'armed' : ''}" data-stw="tdel" aria-label="Delete timer">${svg('trash',18,2.2)}${stwDelArm ? '<span>Tap again to delete</span>' : ''}</button>`}<button type="button" class="btn primary" data-stw="save">Save</button></div>`;
+}
+function stwSave(){
+  stwRead(); const t = stwDraft, name = (t.name || '').trim().slice(0, 40), now = Date.now();
+  if (!name){ const e = document.getElementById('stwErr'); if (e) e.textContent = 'Give the timer a name first.'; return; }
+  const o = {id: t.id, name, steps: t.steps.slice(0, STW_STEPS).map(x => ({id: x.id, name: (x.name || '').trim().slice(0, 40), s: clamp(Math.round(x.s) || 1, 1, STW_SEC_MAX)})), rest: clamp(Math.round(t.rest) || 0, 0, STW_REST_MAX), updated: now, created: t.created || now};
+  if (taskIconOk(t.icon)) o.icon = t.icon; if (t.speak) o.speak = true; if (t.chime === false) o.chime = false; if (t.wait) o.wait = true;
+  if (!S.stopwatch) S.stopwatch = {timers: [], gone: {}};
+  const T = S.stopwatch.timers, i = T.findIndex(x => x.id === o.id); if (i >= 0) T[i] = o; else T.push(o); delete S.stopwatch.gone[o.id];
+  save(); closeEditor(); stwDraft = null; render(); toast(t.isNew ? `Saved ${name}` : 'Saved');
+}
+// the floating picker: a time (presets, or seconds typed in), the rest, the icon
+function stwPickOpts(k){
+  if (k === 'icon') return stwDraft ? {title: 'Icon', grid: true} : null;
+  if (k === 'rest'){ if (!stwDraft) return null; const r = stwDraft.rest || 0;
+    return {title: 'Rest between steps', num: {val: STW_REST_OPTS.includes(r) ? '' : r, ph: 'Seconds, like 45'}, opts: STW_REST_OPTS.map(v => pkOpt(v, v ? `${v} s` : 'Off', r === v))}; }
+  let cur;
+  if (k === 'quick') cur = stwQuick.s;
+  else if (k.startsWith('s~') && stwDraft){ const x = stwDraft.steps.find(y => y.id === k.slice(2)); if (!x) return null; cur = x.s; }
+  else return null;
+  return {title: 'Time', num: {val: STW_TIMES.includes(cur) ? '' : cur, ph: 'Seconds, like 75'}, opts: STW_TIMES.map(v => pkOpt(v, stwT(v), cur === v))};
+}
+function stwApplyPick(k, v){
+  const n = parseInt(v); closePick();
+  if (k === 'quick'){ const q = document.getElementById('stwQName'); if (q) stwQuick.name = q.value; if (n > 0) stwQuick.s = clamp(n, 1, STW_SEC_MAX); render(); return; }
+  if (!stwDraft) return; stwRead();
+  if (k === 'icon'){ stwDraft.icon = TASK_ICONS.includes(v) ? v : undefined; }
+  else if (k === 'rest'){ stwDraft.rest = clamp(n || 0, 0, STW_REST_MAX); }
+  else if (k.startsWith('s~')){ const x = stwDraft.steps.find(y => y.id === k.slice(2)); if (x && n > 0) x.s = clamp(n, 1, STW_SEC_MAX); }
+  stwRenderEditor(); if (qmCtx && qmCtx.kind === 'stwstep') renderQuick();
+}
+function stwEmoji(val){ if (!stwDraft) return; stwRead(); const v = (val || '').trim();
+  if (v){ const em = cleanEmoji(v); if (em) stwDraft.icon = 'e:' + em; } else if (stwDraft.icon && stwDraft.icon.startsWith('e:')) stwDraft.icon = undefined;
+  stwRenderEditor(); document.querySelectorAll('#pkcard .pkgrid button').forEach(b => b.classList.toggle('on', !stwDraft.icon && b.dataset.pick.endsWith('.icon|'))); }
+
+// press and hold a step row (not its time pill), then drag: the checklist drag lifts it; a small move first means a scroll, so it lets go
+var stwHold = null, stwDragged = false;
+document.addEventListener('pointerdown', e => { const row = e.target.closest && e.target.closest('.stwstep[data-sid]');
+  if (!row || !stwDraft || e.target.closest('.stwpill') || sdrag || drag || (e.pointerType === 'mouse' && e.button !== 0)) return;
+  stwDragged = false; if (stwHold) clearTimeout(stwHold.t); const list = row.closest('[data-sdlist]'), pid = e.pointerId;
+  stwHold = {pid, x: e.clientX, y: e.clientY, row, on: false, t: setTimeout(() => { if (!stwHold || stwHold.row !== row || !row.isConnected) return; stwHold.on = true; stwDragged = true;
+    row.classList.add('sdragging'); document.body.classList.add('dragmode'); sdrag = {row, list, pid}; try { if (navigator.vibrate) navigator.vibrate(12); } catch(err){} }, 380)};
+}, true);
+document.addEventListener('pointermove', e => { const h = stwHold; if (!h || h.on || e.pointerId !== h.pid) return; if (Math.abs(e.clientX - h.x) + Math.abs(e.clientY - h.y) > 8){ clearTimeout(h.t); stwHold = null; } }, true);
+['pointerup', 'pointercancel'].forEach(ev => document.addEventListener(ev, e => { const h = stwHold; if (h && e.pointerId === h.pid){ clearTimeout(h.t); stwHold = null; } }, true));
+document.addEventListener('touchmove', e => { if (stwHold && stwHold.on && sdrag && e.cancelable) e.preventDefault(); }, {passive: false});
+document.addEventListener('contextmenu', e => { if (e.target.closest && e.target.closest('.stwstep')) e.preventDefault(); });
+document.addEventListener('input', e => { if (!e.target || e.target.id !== 'stwSName' || !stwDraft || !qmCtx || qmCtx.kind !== 'stwstep') return;
+  const st = stwDraft.steps, i = st.findIndex(x => x.id === qmCtx.sid); if (i < 0) return; st[i].name = e.target.value.slice(0, 40);
+  const hd = document.getElementById('stwSHead'); if (hd) hd.textContent = st[i].name || `Step ${i + 1}`; stwRenderEditor(); });
 /* ---------- timer editor ---------- */
 let mdraft = null, tmDelArm = false;
 const localDT = ms => { const d = new Date(ms - new Date(ms).getTimezoneOffset() * 60000); return d.toISOString().slice(0, 16); };
@@ -14658,6 +14991,7 @@ function onClick(e){
   // tapping a task or to-do anywhere but its buttons opens its quick menu
   if (!e.target.closest('button, input, select, textarea, a, form, .tdgrip, .sgrip, .cl') && e.target.closest('[data-qm]') && !recoveryMode){ const q = e.target.closest('[data-qm]'); openQuick(q.dataset.qm, q); return; }
   const el = e.target.closest('button'); if (!el) return;
+  if (el.dataset.stw !== undefined && stwClick(el)) return;   /* stopwatch-v1 */
   if ('drawer' in el.dataset){ openDrawer(); return; }
   if ('drawerclose' in el.dataset){ closeDrawer(); return; }
   if (el.closest('#drawer')) closeDrawer();   // a menu item: close the menu, then go where it points
@@ -14880,6 +15214,7 @@ function onClick(e){
     if (!el.dataset.plus){ if (tab === 'inv') render(); return; } }   // a filter pill on the Inventory page; the bag row (data-plus) carries on below and opens the page
   // the big + adds whatever you're looking at: a daily, a habit, a timer, or an item in the open to-do list
   if (el.dataset.plus === 'task'){
+    if (tab === 'stopwatch'){ stwOpenEditor(null); return; }   /* stopwatch-v1 */
     if (tab === 'today' && todayTab === 'timer'){ openTimerEditor(null); return; }
     if (tab === 'today' && todayTab === 'week'){ openQuickAdd('task|week'); return; }
     if (tab === 'todo'){ const L = curTodoList(); if (L){ openQuickAdd(`todo|${L.id}|none`); return; } }
@@ -15140,6 +15475,7 @@ document.getElementById('drawer').addEventListener('click', e => { if (e.target.
 document.getElementById('qa').addEventListener('input', e => { if (e.target.id !== 'qaText') return; const b = document.querySelector('#qa .qasend'); if (b) b.disabled = !e.target.value.trim(); });
 // the emoji box inside the icon picker
 document.getElementById('pk').addEventListener('input', e => { if (e.target.id !== 'pkEmoji') return;
+  if (pkCtx && pkCtx.key === 'stw.icon'){ stwEmoji(e.target.value); return; }   /* stopwatch-v1 */
   const tmr = pkCtx && pkCtx.key === 'tm.icon', dr = tmr ? mdraft : draft; if (!dr) return; if (tmr) readTimerFields(); else readEditorFields(); const v = e.target.value.trim();
   if (v){ const em = cleanEmoji(v); if (em) dr.icon = 'e:' + em; } else if (dr.icon && dr.icon.startsWith('e:')) dr.icon = undefined;
   if (tmr) renderTimerEditor(); else renderEditor(); document.querySelectorAll('#pkcard .pkgrid button').forEach(b => b.classList.toggle('on', !dr.icon && b.dataset.pick.endsWith('.icon|'))); });
@@ -15196,7 +15532,7 @@ async function checkForUpdate(opts = {}){
   } catch(e){}
 }
 var updateWaiting = false;
-function updateBusy(){ try { return !!(lofi || (typeof sleepRun !== 'undefined' && sleepRun) || (typeof breathRun !== 'undefined' && breathRun) || (S.pomo && S.pomo.run && !S.pomo.run.idle)); } catch(e){ return false; } }
+function updateBusy(){ try { return !!(lofi || (typeof sleepRun !== 'undefined' && sleepRun) || (typeof breathRun !== 'undefined' && breathRun) || (typeof stwBusy === 'function' && stwBusy()) || (S.pomo && S.pomo.run && !S.pomo.run.idle)); } catch(e){ return false; } }
 if (PAGES){ setInterval(checkForUpdate, 30 * 60 * 1000); setTimeout(checkForUpdate, 3000); setInterval(() => { if (updateWaiting && !updateBusy()){ updateWaiting = false; checkForUpdate(); } }, 15000); }
 if (PAGES){ document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { checkForUpdate(); gistPull(); } }); window.addEventListener('online', () => gistPull()); if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {}); }
 initCloud().finally(() => { if (migratedNow){ migratedNow = false; save(); render(); } });
@@ -15301,6 +15637,7 @@ function sdragEnd(){
     // inputs moved with their rows, so read each one's text by its row before re-rendering
     d.list.querySelectorAll(':scope > [data-sid]').forEach(r => { const inp = r.querySelector('input'); if (inp && byId[r.dataset.sid]) byId[r.dataset.sid].text = inp.value; });
     draft.checklist = sortBy(draft.checklist); renderEditor(); return; }
+  if (kind === 'stw' && stwDraft){ stwRead(); stwDraft.steps = sortBy(stwDraft.steps); stwRenderEditor(); return; }   /* stopwatch-v1 */
   if (kind === 'tded' && tdraft){ readTodoFields(); tdraft.steps = sortBy(tdraft.steps); renderTodoEditor(); return; }
   if (kind.startsWith('td|')){ const [, lid, iid] = kind.split('|'); const L = S.todos.lists.find(x => x.id === lid); const it = L && L.items.find(x => x.id === iid);
     if (it && it.steps && !it.doneOn && todoEdit){ const next = sortBy(it.steps); if (next.some((x, i) => x !== it.steps[i])){ it.steps = next; save(); } } render(); }
