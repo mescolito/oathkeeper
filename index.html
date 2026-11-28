@@ -1198,7 +1198,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '5755704e02';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '134e26ad3e';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -12184,6 +12184,7 @@ Object.assign(HBG_GEN, {
 });
 /* innbg-v1 */
 // innbg-v1: the Inn background (owner-approved concept, /tmp/v2/inn/inn.py inn_mix): shown on Today while checked in, in place of the equipped one.
+// innbg-v2: the dither fades to black at the top and into the floor (as on the shop front), the window sits 4 px lower.
 // A moonlit arched window on the left (crescent, twinkling stars, a slanted moonbeam) and a stone hearth on the right (flames, sparks, a candle
 // with its smoke). Same rules as the other backgrounds: the panel's two tones, shapes cut (dark) or filled (light), particles flipped; black below the feet.
 // A line-for-line port of the Python; its random tables are data. It keeps moving while the hero sleeps (only Reduce Motion holds it).
@@ -12191,10 +12192,10 @@ const HBG_INN = {ws: [[11.95878751599675, 39.45207542339729, 25.399997616188827,
 function hbgInnArch(x, y, cx, top, w, h, r){ const sp = top + r; return (Math.abs(x - cx) <= w && y >= sp && y <= top + h) || (Math.hypot(x - cx, (y - sp) * w / r) <= w && y < sp); }
 HBG_GEN.inn = function(k){
   const f = hbgFx(), D = f.dark, Lt = f.light = new Uint8Array(16384), t = HBG_TAU * k / HBG_NF, FOOT = HBG_FOOT;
-  const win = new Uint8Array(16384), cx = 20, top = 12, w = 13, h = 44, mx = 25, my = 25, sw = .6 * Math.sin(t);
+  const win = new Uint8Array(16384), cx = 20, top = 16, w = 13, h = 44, mx = 25, my = 29, sw = .6 * Math.sin(t), B = (hbgInit(), HBG_BAY);
   for (let y = 0; y < 128; y++) for (let x = 0; x < 128; x++){ const q = y * 128 + x;
     if (hbgInnArch(x, y, cx, top, w, h, w)){ win[q] = 1; D[q] = 1; if (Math.hypot(x - mx, y - my) < 5 && !(Math.hypot(x - mx + 2.5, y - my + 1.2) < 4.6)) Lt[q] = 1; } }
-  for (const [x, y, ph] of HBG_INN.ws){ const b = .5 + .5 * Math.cos(HBG_TAU * (k - ph) / HBG_NF * 2);
+  for (const [x, y0, ph] of HBG_INN.ws){ const y = y0 + 4, b = .5 + .5 * Math.cos(HBG_TAU * (k - ph) / HBG_NF * 2);
     if (b > .35 && win[Math.trunc(y) * 128 + Math.trunc(x)] && !(Math.abs(x - mx) < 6 && Math.abs(y - my) < 6)) hbgPx(f, x, y, 'light'); }
   // window: the muntins (the wall's dither shows through), the sill and the moonbeam; hearth: mantel, jamb, mouth, flames, logs, candle
   const fl = [[104, .8], [110, 1.1], [116, .95], [122, .8]].map(([x0, a], i) => [x0, 20 * a + 4 * Math.sin(t * (2 + i % 2) + i * 1.7) + 2 * Math.sin(t * 5 + i), i]);
@@ -12219,6 +12220,9 @@ HBG_GEN.inn = function(k){
   for (let y = 44 + (k % 6 === 0 ? 1 : 0); y <= 46; y++) hl[y * 128 + 117] = 1;
   for (const [, , ph] of [[106, 34, 0], [114, 28, 11], [110, 20, 23]]){ const p = hbgMod(k + ph, HBG_NF) / HBG_NF; if (p < .7) hbgPx(g, 117 + 2 * Math.sin(p * HBG_TAU * 1.5 + ph), 43 - p * 20, 'inv'); }
   for (let q = 0; q < 16384; q++){ if (hd[q]) D[q] = 1; if (hl[q]) Lt[q] = 1; if (hd[q] && !hl[q]) Lt[q] = 0; }
+  // the dither fades to black at the top (the tile sits 4 px up) and into the floor like Rain; the moonbeam fades with it, the flames don't
+  for (let y = 0; y < 128; y++){ const vf = hbgClip((y - (FOOT - 18)) / 18), vt = hbgClip((18 - y) / 14); for (let x = 0; x < 128; x++){ const q = y * 128 + x, b = B[q] * .95 + .02, fade = vf > b;
+    if (fade || vt > b) D[q] = 1; if (fade && x < 94) Lt[q] = 0; } }
   return f;
 };
 HERO_BG.gen.hb_inn = 'inn';
