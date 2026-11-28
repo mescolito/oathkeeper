@@ -1234,7 +1234,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '892d76a205';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = 'd7473303e9';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -13532,6 +13532,18 @@ function drawAltar(cv, bob, glow, open){   // icons3-hd-v1: any multiple of 32 p
 function drawAltarIcons(root){ (root || document).querySelectorAll('canvas.altaricon, canvas.altarbig').forEach(cv => { if (cv.closest('.altarbox')) return;
   if (cv.classList.contains('altaricon')){ const g = cv.getContext('2d'); g.clearRect(0, 0, cv.width, cv.width); stampShaded(g, 'keystone', cv.width, 0); }   // the Keystone count card shows a Keystone
   else drawAltar(cv, 0, false, false); }); }
+/* altarwake-v1 */ // the Rune Altar's "Meditating..." (Awakening): the bowl lights, the rune trembles and rays of light crack out of it,
+// lengthen, then pull back in for the answer. Pop colour and white, drawn on the art grid (32) at the canvas's scale.
+function altarAwaken(cv, t, W, leg){
+  const g = cv.getContext('2d'), K = Math.max(1, Math.round(cv.width / 32)), CX = 16, CY = 7, u = Math.min(1, t / W), P = POP_RAMPS[popId()] || POP_RAMPS.blush;
+  const ease = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2, px = (x, y, c) => { g.fillStyle = c; g.fillRect(Math.round(x) * K, Math.round(y) * K, K, K); };
+  drawAltar(cv, 0, leg && u > .65, u > .2);
+  if (u > .3 && u < .88 && (Math.floor(t * 24) % 2)){ const h = 14 * K, d = g.getImageData(0, 0, cv.width, h); g.clearRect(0, 0, cv.width, h); g.putImageData(d, K, 0); }   // the tremble
+  const dirs = leg ? [[0, -1], [1, -1], [1, 0], [1, 1], [-1, 1], [-1, 0], [-1, -1], [0, 1]] : [[0, -1], [1, -1], [1, 0], [-1, 0], [-1, -1], [1, 1]];
+  const grow = u < .8 ? ease(Math.min(1, Math.max(0, (u - .15) / .65))) : 1 - (u - .8) / .2, len = Math.round(grow * 8);
+  dirs.forEach(([dx, dy], k) => { for (let s = 0; s < len; s++){ const d = 5 + s; if ((s + Math.floor(t * 20) + k) % 6 === 0) continue;
+    px(CX + dx * d, CY + dy * d * (dy && dx ? .8 : .9), s === len - 1 ? PW : s > len / 2 ? P[2] : P[1]); } });
+}
 function openAltarUI(key, outcome){
   const el = document.getElementById('award'); if (!el) return;
   const leg = outcome.kind === 'legendary', left = D.altar.keys.length, lr = leg ? LRUNE_BY[outcome.id] : null;
@@ -13546,14 +13558,12 @@ function openAltarUI(key, outcome){
   const cv = el.querySelector('.chestbig'), box = el.querySelector('.chestprize'), msg = el.querySelector('.altarmsg');
   const reveal = () => { drawAltar(cv, 0, leg, true); if (msg) msg.hidden = true; box.hidden = false; starburst(cv.getBoundingClientRect(), leg); if (leg && typeof confetti === 'function') confetti(cv.getBoundingClientRect()); const b = box.querySelector('button.primary, button'); if (b) b.focus(); };
   if (!motionOK){ reveal(); return; }
-  // the keystone settles into the plinth, the stone bobs and orbiting pixels gather, then it answers (longer for a legendary)
+  // the rune awakens (altarAwaken), then it answers (longer for a legendary)
   const t0 = performance.now(), wait = leg ? 2.2 : 1.3, g = cv.getContext('2d');
   const step = now => {
     const t = (now - t0) / 1000; if (!cv.isConnected) return;
     if (t < wait){
-      drawAltar(cv, Math.round(Math.sin(t * 4) * 1), leg && t > 1 && Math.sin(t * 20) > -0.3, t > 0.3);
-      const n = 6, r = Math.max(3, 11 - t / wait * 7); g.fillStyle = PW;
-      for (let i = 0; i < n; i++){ const a = t * (3 + t) + i * Math.PI * 2 / n; g.fillRect(Math.round(16 + Math.cos(a) * r), Math.round(7 + Math.sin(a) * r * 0.7), 1, 1); }
+      altarAwaken(cv, t, wait, leg);
       requestAnimationFrame(step);
     } else reveal();
   };
