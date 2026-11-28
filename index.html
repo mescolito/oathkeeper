@@ -1198,7 +1198,7 @@ const LS_KEY = 'tidekeeper-save-v1';   // the app was called Tidekeeper first; t
 const ANCHOR = '2026-11-16';           // Monday: boss cycle 0 begins
 const CYCLE = 14;                       // days per boss
 const PAGES = /*PAGES*/true;
-const BUILD = '14de4b3836';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
+const BUILD = '5755704e02';            // the Pages build stamps its version here, so an open app can tell when a newer one is out      // the GitHub Pages build: saves sync through your own GitHub gist
 const PREVIEW = /*PREVIEW*/false;   // the preview build flips this on: test gold only exists there
 const STATS = {
   MGT:{name:'Might',   c:'#f2d982', blurb:'Lifting and strength work'},
@@ -12182,13 +12182,53 @@ Object.assign(HBG_GEN, {
       for (const [px, py] of hbgLine(x0, y0, x0 + Math.cos(a) * L, y0 + Math.sin(a) * L * .8)) hbgPx(f, px, py); }
     return f; },
 });
+/* innbg-v1 */
+// innbg-v1: the Inn background (owner-approved concept, /tmp/v2/inn/inn.py inn_mix): shown on Today while checked in, in place of the equipped one.
+// A moonlit arched window on the left (crescent, twinkling stars, a slanted moonbeam) and a stone hearth on the right (flames, sparks, a candle
+// with its smoke). Same rules as the other backgrounds: the panel's two tones, shapes cut (dark) or filled (light), particles flipped; black below the feet.
+// A line-for-line port of the Python; its random tables are data. It keeps moving while the hero sleeps (only Reduce Motion holds it).
+const HBG_INN = {ws: [[11.95878751599675, 39.45207542339729, 25.399997616188827, 0.4791004720574512], [13.184344349453667, 42.94953417880838, 32.314172078137105, 0.5124562396375931], [20.12201968328028, 24.025916358871157, 0.12722522441188655, 0.3710466916321078], [22.04869993237098, 18.355001948232584, 31.750040874278604, 0.23225271643321965], [13.584678833589287, 17.439404166140413, 39.90244835477263, 0.7386877519689609], [29.000948501843645, 36.94026302563078, 1.3628023733990702, 0.32892934635392834], [19.941255633935107, 19.93753355786018, 38.078564684960455, 0.3684466408433329], [11.715513361875136, 43.79532106971571, 4.995084049884344, 0.9279438631202989], [18.87506225605582, 34.768097749110865, 13.71685695688225, 0.4847036387853144]], hsp: [[120.3470355357708, 0.9486057779931771, 0.8924333440485793, 0.5249643850674612], [113.02459899148617, 0.4237474082349614, 0.5300880101180064, 0.8187175259284546], [104.22393746586444, 0.444573573873013, 0.2210391731572191, 2.859056401314425], [100.5448732847705, 0.08577408627625116, 0.7100082002449101, 2.6467815163677777], [111.27794633663183, 0.7342090787834955, 0.3589963597861997, 0.3616257750536014], [117.2282518355311, 0.5891234827720049, 0.6579127100998954, 3.9018043868075734], [121.35617500673706, 0.36279251847810845, 0.759786612243531, 2.316508727946517], [112.58502918621917, 0.660532109250318, 0.3143911106361865, 0.5386959566462708], [110.42946129968686, 0.7179140037527991, 0.5906096979341702, 2.81142106290081], [114.13232624231924, 0.18202921598408917, 0.17853995065083117, 2.0320597186222686]]};
+function hbgInnArch(x, y, cx, top, w, h, r){ const sp = top + r; return (Math.abs(x - cx) <= w && y >= sp && y <= top + h) || (Math.hypot(x - cx, (y - sp) * w / r) <= w && y < sp); }
+HBG_GEN.inn = function(k){
+  const f = hbgFx(), D = f.dark, Lt = f.light = new Uint8Array(16384), t = HBG_TAU * k / HBG_NF, FOOT = HBG_FOOT;
+  const win = new Uint8Array(16384), cx = 20, top = 12, w = 13, h = 44, mx = 25, my = 25, sw = .6 * Math.sin(t);
+  for (let y = 0; y < 128; y++) for (let x = 0; x < 128; x++){ const q = y * 128 + x;
+    if (hbgInnArch(x, y, cx, top, w, h, w)){ win[q] = 1; D[q] = 1; if (Math.hypot(x - mx, y - my) < 5 && !(Math.hypot(x - mx + 2.5, y - my + 1.2) < 4.6)) Lt[q] = 1; } }
+  for (const [x, y, ph] of HBG_INN.ws){ const b = .5 + .5 * Math.cos(HBG_TAU * (k - ph) / HBG_NF * 2);
+    if (b > .35 && win[Math.trunc(y) * 128 + Math.trunc(x)] && !(Math.abs(x - mx) < 6 && Math.abs(y - my) < 6)) hbgPx(f, x, y, 'light'); }
+  // window: the muntins (the wall's dither shows through), the sill and the moonbeam; hearth: mantel, jamb, mouth, flames, logs, candle
+  const fl = [[104, .8], [110, 1.1], [116, .95], [122, .8]].map(([x0, a], i) => [x0, 20 * a + 4 * Math.sin(t * (2 + i % 2) + i * 1.7) + 2 * Math.sin(t * 5 + i), i]);
+  const hd = new Uint8Array(16384), hl = new Uint8Array(16384);
+  for (let y = 0; y < 128; y++) for (let x = 0; x < 128; x++){ const q = y * 128 + x;
+    if (((x === cx) || (y === top + 26)) && win[q] && y > top + 2) D[q] = 0;
+    if (x >= cx - w - 2 && x <= cx + w + 2 && y >= top + h && y <= top + h + 2) D[q] = 1;
+    if (y > top + h + 3 && y <= FOOT && (x - (cx - w + 2) - (y - top - h) * 1.05) >= 0 && (x - (cx + w - 2 + sw) - (y - top - h) * 1.35) <= 0) Lt[q] = 1;
+    if (x >= 94 && y >= 56 && y <= 60) hd[q] = 1;
+    if (y === 58 && x >= 96) hd[q] = 0;
+    if (x >= 94 && x <= 99 && y > 60 && y <= FOOT) hd[q] = 1;
+    if ((y === 70 || y === 82 || y === 94) && x >= 94 && x <= 99) hd[q] = 0;
+    const mouth = (x >= 100 && y >= 66 && y <= FOOT) || (x >= 100 && y >= 63 && y < 66 && x >= 103);
+    if (mouth){ hd[q] = 1; let on = false;
+      for (const [x0, hgt, i] of fl){ const fy = hbgClip((FOOT - 3 - y) / hgt), wv = 1.6 * Math.sin(HBG_TAU * y / 14 + t * 3 + i) * fy;
+        if (Math.abs(x - x0 - wv) <= 4.5 * Math.pow(1 - fy, 1.3) && y <= FOOT - 3 && fy < 1){ on = true; break; } }
+      if (on) hl[q] = 1; if (y >= FOOT - 3) hl[q] = 0; } }
+  const g = {dark: hd, light: hl, inv: f.inv};
+  for (const [x0, y0, , ph] of HBG_INN.hsp){ const y = FOOT - 12 - hbgMod(y0 * 40 + k * 40 * 2 / HBG_NF, 40), x = x0 + 1.5 * Math.sin(2 * t + ph + y * .1);
+    if (y > 64 && ((k + Math.trunc(ph * 5)) % 7)) hbgPx(g, x, y, 'light'); }
+  for (let y = 48; y < 56; y++) for (let x = 116; x <= 118; x++) hd[y * 128 + x] = 1;
+  for (let y = 44 + (k % 6 === 0 ? 1 : 0); y <= 46; y++) hl[y * 128 + 117] = 1;
+  for (const [, , ph] of [[106, 34, 0], [114, 28, 11], [110, 20, 23]]){ const p = hbgMod(k + ph, HBG_NF) / HBG_NF; if (p < .7) hbgPx(g, 117 + 2 * Math.sin(p * HBG_TAU * 1.5 + ph), 43 - p * 20, 'inv'); }
+  for (let q = 0; q < 16384; q++){ if (hd[q]) D[q] = 1; if (hl[q]) Lt[q] = 1; if (hd[q] && !hl[q]) Lt[q] = 0; }
+  return f;
+};
+HERO_BG.gen.hb_inn = 'inn';
 const HBG_NOFLOOR = {stars: 1, nebula: 1, meteors: 1, constellations: 1, warp: 1}, HBG_FADE = {rain: 1, cave: 1, clouds: 1};
 // the panel's light pixels for background id at frame k (render() of env13 without the hero): 1 = light (#2f2b28), 0 = dark (#141312)
 function heroBgMask(id, k){
   hbgInit(); const g = HERO_BG.gen[id], f = HBG_GEN[g](k), m = new Uint8Array(16384), B = HBG_BAY;
-  if (!HBG_NOFLOOR[g]){ for (let q = (HBG_FOOT + 1) * 128; q < 16384; q++){ f.inv[q] = 0; f.dark[q] = 1; }
+  if (!HBG_NOFLOOR[g]){ for (let q = (HBG_FOOT + 1) * 128; q < 16384; q++){ f.inv[q] = 0; f.dark[q] = 1; if (f.light) f.light[q] = 0; }
     if (HBG_FADE[g]) for (let y = 0; y < 128; y++){ const v = hbgClip((y - (HBG_FOOT - 18)) / 18); for (let x = 0; x < 128; x++) if (v > B[y * 128 + x] * .95 + .02) f.dark[y * 128 + x] = 1; } }
-  for (let q = 0; q < 16384; q++) m[q] = (HBG_PAN[q] & (f.dark[q] ^ 1)) ^ f.inv[q];
+  for (let q = 0; q < 16384; q++) m[q] = ((HBG_PAN[q] & (f.dark[q] ^ 1)) | (f.light ? f.light[q] : 0)) ^ f.inv[q];   // innbg-v1: shapes filled light
   return m;
 }
 // the background as a 128 x 128 canvas for frame k: the 40-frame ones are kept per frame; Clouds (640 frames) are drawn into one canvas each frame
@@ -12213,7 +12253,7 @@ function drawHeroBgPreview(cv, id){
 function drawHeroScene(canvas, o){
   const N = 128; if (canvas.width !== N || canvas.height !== N){ canvas.width = N; canvas.height = N; }
   const g = canvas.getContext('2d'); g.imageSmoothingEnabled = false; g.fillStyle = PB; g.fillRect(0, 0, N, N);
-  const hbg = heroBg(); g.drawImage(hbg ? heroBgCanvas(hbg, heroBgK({motion: o.motion, state: heroMood(o.mood, o.cheer)})) : heroPanel(), 0, hbg ? -HERO_SQ_UP : 0);   // backgrounds-v1: moves up with the hero
+  const inn = o.bg === 'inn', hbg = inn ? 'hb_inn' : heroBg(); g.drawImage(hbg ? heroBgCanvas(hbg, heroBgK({motion: o.motion, state: inn ? '' : heroMood(o.mood, o.cheer)})) : heroPanel(), 0, hbg ? -HERO_SQ_UP : 0);   // innbg-v1: checked in, the Inn's own background (moving while the hero sleeps)   // backgrounds-v1: moves up with the hero
   const foot = HERO_FOOT - HERO_SQ_UP, ox = o.slump ? -HERO_SQ_SLUMP : 0;
   if (o.smog) heroSmogSq(g, o, (foot + 1) >> 1);
   const ho = {lv: o.lv, motion: o.motion, state: heroMood(o.mood, o.cheer)}, oy = -HERO_SQ_UP - (o.jump ? 2 : 0);
